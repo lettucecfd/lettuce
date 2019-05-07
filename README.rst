@@ -1,0 +1,97 @@
+=======
+lettuce
+=======
+
+
+.. .. image:: https://img.shields.io/pypi/v/lettuce.svg
+        :target: https://pypi.python.org/pypi/lettuce
+
+.. .. image:: https://img.shields.io/travis/Olllom/lettuce.svg
+        :target: https://travis-ci.org/Olllom/lettuce
+
+.. .. image:: https://readthedocs.org/projects/lettuce/badge/?version=latest
+        :target: https://lettuce.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
+
+
+GPU-acclerated Lattice Boltzmann in Python
+
+
+* Free software: MIT license
+.. .. * Documentation: https://lettuce.readthedocs.io.
+
+Features
+--------
+* Single-GPU performance (2D): 650 MLUPS on V100
+
+
+Getting Started
+---------------
+
+* Install the anaconda package manager from www.anaconda.org
+* Create a new conda repository and install all dependencies::
+
+    conda create -n lettuce pytorch matplotlib pytest matplotlib click cudatoolkit -c pytorch -c conda-forge
+
+
+* Activate the conda environment::
+
+    conda activate lettuce
+
+* Clone this repository from github
+* Change into the cloned directory
+* Run the install script::
+
+    python setup.py install
+
+* Run the test cases::
+
+    python setup.py test
+
+* Check out the convergence order, running on CPU::
+
+    lettuce --no-cuda convergence
+
+
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found,
+  make sure that cuda drivers are installed and compatible with the installed cudatoolkit
+  (see conda install command above).
+
+* Check out the performance, running on CPU::
+
+    lettuce benchmark
+
+
+Next steps
+----------
+* Jonas Latt's approach of storing f_i-w_i instead of f_i, for better numerical accuracy at 16-bit precision;
+  this can be added as a different Lattice class.
+* Benchmark storage formats for f (either Qx... or ...xQ) -- also add as a different Lattice class?
+* Standard Streaming and BGK collision as C++ functions, as an example and for testing performance gains
+  https://pytorch.org/tutorials/advanced/cpp_extension.html
+* Boundary Conditions.
+* Multi-block lattices.
+* Semi-Lagrangian streaming step (specific benefit from half-precision, utilization of tensor cores on Volta cards).
+
+
+Future Ideas
+------------
+* Utilize multiple CPUs. Starting point: https://github.com/pytorch/pytorch/issues/9873
+* Utilize MPI to scale across multiple nodes. Starting point: https://pytorch.org/tutorials/intermediate/dist_tuto.html
+
+
+Credits
+-------
+We use the following third-party packages
+* pytorch
+* numpy
+* pytest
+* click
+* matplotlib
+* versioneer
+
+
+This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage

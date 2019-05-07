@@ -36,8 +36,8 @@ def main(ctx, cuda, gpu_id, precision):
 
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=100, help="Number of time steps.")
-@click.option("-r", "--resolution", type=int, default=256, help="Grid Resolution")
+@click.option("-s", "--steps", type=int, default=10, help="Number of time steps.")
+@click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
 @click.option( "--profile/--no-profile", default=False, help="Whether to write profiling information (default=False).")
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile):
@@ -51,7 +51,7 @@ def benchmark(ctx, steps, resolution, profile):
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=steps)
 
-    click.echo("Finished {} steps in {} bit precision. MLUPS: {:.2}".format(
+    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
         steps, str(dtype).replace("torch.float",""), mlups))
     if profile:
         pass

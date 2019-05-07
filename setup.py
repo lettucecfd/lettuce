@@ -41,7 +41,7 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce']),
+    packages=find_packages(include=['lettuce','lettuce.flows']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

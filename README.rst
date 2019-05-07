@@ -76,7 +76,7 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
 
     lattice = Lattice(D2Q9, "cuda:0", dtype)
     flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.unit_conversion.relaxation_parameter_lu)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=1000)

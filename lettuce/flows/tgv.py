@@ -10,7 +10,7 @@ from lettuce.unit import UnitConversion
 class TaylorGreenVortex2D(object):
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution
-        self.unit_conversion = UnitConversion(
+        self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
             characteristic_length_lu=resolution, characteristic_length_pu=2*np.pi,
@@ -18,7 +18,7 @@ class TaylorGreenVortex2D(object):
         )
 
     def analytic_solution(self, x, t=0):
-        nu = self.unit_conversion.viscosity_pu
+        nu = self.units.viscosity_pu
         u = np.array([np.sin(x[0]) * np.cos(x[1]) * np.exp(-2*nu*t), -np.cos(x[0]) * np.sin(x[1]) * np.exp(-2*nu*t)])
         p = 0.25 * (np.cos(2*x[0]) + np.cos(2*x[1]))* np.exp(-4 * nu * t)
         return p, u

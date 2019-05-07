@@ -7,7 +7,7 @@ import numpy as np
 
 
 class StandardStreaming(object):
-
+    """Standard Streaming step on a regular grid."""
     def __init__(self, lattice):
         self.lattice = lattice
 

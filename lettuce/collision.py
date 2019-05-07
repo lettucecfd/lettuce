@@ -3,13 +3,6 @@ Collision models and related functions
 """
 
 
-import torch
-
-
-def density(f):
-    return torch.sum(f, dim=0)
-
-
 class BGKCollision(object):
     def __init__(self, lattice, tau):
         self.lattice = lattice

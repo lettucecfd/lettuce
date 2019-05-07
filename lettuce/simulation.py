@@ -14,8 +14,8 @@ class Simulation(object):
         self.streaming = streaming
 
         p, u = flow.initial_solution(flow.grid)
-        u = lattice.convert_to_tensor(flow.unit_conversion.convert_velocity_to_lu(u))
-        rho = lattice.convert_to_tensor(flow.unit_conversion.convert_pressure_pu_to_density_lu(p))
+        u = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
+        rho = lattice.convert_to_tensor(flow.units.convert_pressure_pu_to_density_lu(p))
         self.f = lattice.quadratic_equilibrium(rho, lattice.convert_to_tensor(u))
 
         self.reporters = []

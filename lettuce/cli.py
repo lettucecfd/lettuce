@@ -46,7 +46,7 @@ def benchmark(ctx, steps, resolution, profile):
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
     lattice = Lattice(D2Q9, device, dtype)
     flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.unit_conversion.relaxation_parameter_lu)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=steps)
@@ -75,7 +75,7 @@ def convergence(ctx):
 
         # Simulation
         flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=10000, mach_number=mach_number, lattice=lattice)
-        collision = BGKCollision(lattice, tau=flow.unit_conversion.relaxation_parameter_lu)
+        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
         streaming = StandardStreaming(lattice)
         simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)

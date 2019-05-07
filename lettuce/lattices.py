@@ -4,7 +4,7 @@ Stencils and Lattices.
 A Stencil, like the D1Q3 class, provides particle velocities (e), weights (w), and speeds of sound.
 Velocities and weights are stored as numpy arrays.
 
-In contrast, the Lattice lives on the Device (usually a GPU), and its
+In contrast, the Lattice lives on the Device (usually a GPU) and its vectors are stored as torch tensors.
 """
 
 import warnings
@@ -52,6 +52,9 @@ class Lattice(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return torch.tensor(array, device=self.device, dtype=self.dtype)
+
+    def convert_to_numpy(self, tensor):
+        return tensor.cpu().numpy()
 
     def rho(self, f):
         """density"""

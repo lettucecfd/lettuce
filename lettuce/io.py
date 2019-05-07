@@ -37,8 +37,8 @@ class ErrorReporter(object):
         if t % self.interval == 0:
             t = self.flow.unit_conversion.convert_time_to_pu(t)
             pref, uref = self.flow.analytic_solution(self.flow.grid, t=t)
-            u = self.flow.unit_conversion.convert_velocity_to_pu(self.lattice.u(f)).numpy()
-            p = self.flow.unit_conversion.convert_density_lu_to_pressure_pu(self.lattice.rho(f)).numpy()
+            u = self.flow.unit_conversion.convert_velocity_to_pu(self.lattice.u(f)).cpu().numpy()
+            p = self.flow.unit_conversion.convert_density_lu_to_pressure_pu(self.lattice.rho(f)).cpu().numpy()
 
             num_gridpoints = p.size
 

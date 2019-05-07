@@ -31,7 +31,8 @@ Getting Started
 * Install the anaconda package manager from www.anaconda.org
 * Create a new conda repository and install all dependencies::
 
-    conda create -n lettuce pytorch matplotlib pytest matplotlib click cudatoolkit -c pytorch -c conda-forge
+    conda create -n lettuce -c pytorch -c conda-forge\
+         "pytorch>=1.1" matplotlib pytest matplotlib click cudatoolkit
 
 
 * Activate the conda environment::
@@ -62,6 +63,27 @@ Getting Started
     lettuce benchmark
 
 
+A first example
+---------------
+
+The following Python code will run a two-dimensional Taylor-Green vortex on a GPU::
+
+    import torch
+    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
+
+    device = "cuda:0"
+    dtype = torch.float32
+
+    lattice = Lattice(D2Q9, "cuda:0", dtype)
+    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.unit_conversion.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    mlups = simulation.step(num_steps=steps)
+
+    print("Performance in MLUPS:", mlups)
+
+
 Next steps
 ----------
 * Jonas Latt's approach of storing f_i-w_i instead of f_i, for better numerical accuracy at 16-bit precision;
@@ -82,7 +104,8 @@ Future Ideas
 
 Credits
 -------
-We use the following third-party packages
+We use the following third-party packages:
+
 * pytorch
 * numpy
 * pytest

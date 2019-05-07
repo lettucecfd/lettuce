@@ -32,7 +32,7 @@ Getting Started
 * Create a new conda repository and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.1" matplotlib pytest matplotlib click cudatoolkit
+         "pytorch>=1.1" matplotlib pytest click cudatoolkit
 
 
 * Activate the conda environment::
@@ -79,7 +79,7 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
     collision = BGKCollision(lattice, tau=flow.unit_conversion.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    mlups = simulation.step(num_steps=steps)
+    mlups = simulation.step(num_steps=1000)
 
     print("Performance in MLUPS:", mlups)
 

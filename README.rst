@@ -74,7 +74,7 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
     device = "cuda:0"
     dtype = torch.float32
 
-    lattice = Lattice(D2Q9, "cuda:0", dtype)
+    lattice = Lattice(D2Q9, device, dtype)
     flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)

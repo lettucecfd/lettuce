@@ -10,7 +10,10 @@ import torch
 
 
 class UnitConversion(object):
-
+    """
+    Provides unit conversions between physical units (pu) and lattice units (lu).
+    Conversion methods should work for floats, torch.tensors and np.arrays.
+    """
     def __init__(self, lattice, reynolds_number, mach_number=0.05, characteristic_length_pu=1,
                  characteristic_velocity_pu=1, characteristic_length_lu=1, origin_pu=None,
                  characteristic_density_lu=1, characteristic_density_pu=1):

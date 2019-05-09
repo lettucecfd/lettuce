@@ -1,5 +1,5 @@
 """
-Taylor-Green vortex in 2D and 3D
+Taylor-Green vortex in 2D and 3D.
 """
 
 import numpy as np
@@ -34,7 +34,7 @@ class TaylorGreenVortex2D(object):
 
     @property
     def boundaries(self):
-        return {}
+        return []
 
 
 

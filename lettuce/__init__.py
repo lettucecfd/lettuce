@@ -15,8 +15,9 @@ from lettuce.io import write_png
 
 from lettuce.collision import BGKCollision
 from lettuce.streaming import StandardStreaming
+from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
 from lettuce.io import ErrorReporter
 from lettuce.simulation import Simulation
-from lettuce.flows.tgv import TaylorGreenVortex2D
+from lettuce.flows.taylorgreen import TaylorGreenVortex2D
 
 

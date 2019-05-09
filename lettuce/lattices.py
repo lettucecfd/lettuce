@@ -5,6 +5,7 @@ A Stencil, like the D1Q3 class, provides particle velocities (e), weights (w), a
 Velocities and weights are stored as numpy arrays.
 
 In contrast, the Lattice lives on the Device (usually a GPU) and its vectors are stored as torch tensors.
+Its stencil is still accessible trough Lattice.stencil.
 """
 
 import warnings
@@ -20,12 +21,14 @@ class D1Q3(Stencil):
     e = np.array([[0], [1], [-1]])
     w = np.array([2.0/3.0, 1.0/6.0, 1.0/6.0])
     cs = 1/np.sqrt(3)
+    opposite = [0, 2, 1]
 
 
 class D2Q9(Stencil):
     e = np.array([[0,0],[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]])
     w = np.array([4.0/9.0] + [1.0/9.0]*4 + [1.0/36.0]*4)
     cs = 1/np.sqrt(3)
+    opposite = [0, 3, 4, 1, 2, 7, 8, 5, 6]
 
 
 class Lattice(object):
@@ -51,9 +54,13 @@ class Lattice(object):
     def convert_to_tensor(self, array):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return torch.tensor(array, device=self.device, dtype=self.dtype)
+            if isinstance(array, np.ndarray) and array.dtype in [np.bool, np.uint8]:
+                return torch.tensor(array, device=self.device, dtype=torch.uint8)  # that's how torch stores its masks
+            else:
+                return torch.tensor(array, device=self.device, dtype=self.dtype)
 
-    def convert_to_numpy(self, tensor):
+    @staticmethod
+    def convert_to_numpy(tensor):
         return tensor.cpu().numpy()
 
     def rho(self, f):

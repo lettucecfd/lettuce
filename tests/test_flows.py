@@ -1,11 +1,11 @@
 
 import pytest
 from lettuce import TaylorGreenVortex2D, CouetteFlow2D
-from lettuce import Lattice, LatticeOfVector, D2Q9, Simulation, BGKCollision, StandardStreaming
+from lettuce import Lattice, LatticeAoS, D2Q9, Simulation, BGKCollision, StandardStreaming
 
 
 @pytest.mark.parametrize("IncompressibleFlow", [TaylorGreenVortex2D, CouetteFlow2D])
-@pytest.mark.parametrize("Ltc", [Lattice, LatticeOfVector])
+@pytest.mark.parametrize("Ltc", [Lattice, LatticeAoS])
 def test_flow(IncompressibleFlow, Ltc, dtype_device):
     dtype, device = dtype_device
     lattice = Ltc(D2Q9, dtype=dtype, device=device)

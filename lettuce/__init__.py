@@ -10,7 +10,7 @@ __version__ = get_versions()['version']
 del get_versions
 
 from lettuce.unit import UnitConversion
-from lettuce.lattices import Stencil, D1Q3, D2Q9, Lattice, LatticeOfVector
+from lettuce.lattices import Stencil, D1Q3, D2Q9, Lattice, LatticeAoS
 from lettuce.io import write_png
 
 from lettuce.collision import BGKCollision

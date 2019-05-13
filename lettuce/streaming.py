@@ -4,7 +4,7 @@ Streaming Step
 
 import torch
 import numpy as np
-from lettuce import LatticeOfVector, Lattice
+from lettuce import LatticeAoS, Lattice
 
 
 class StandardStreaming(object):
@@ -14,7 +14,7 @@ class StandardStreaming(object):
 
     def __call__(self, f):
         for i in range(self.lattice.Q):
-            if isinstance(self.lattice, LatticeOfVector):
+            if isinstance(self.lattice, LatticeAoS):
                 f[...,i] = torch.roll(f[...,i],
                                       shifts=tuple(self.lattice.stencil.e[i]),
                                       dims=tuple(np.arange(self.lattice.D)))

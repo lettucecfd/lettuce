@@ -88,12 +88,12 @@ class Lattice(object):
         return feq
 
 
-class LatticeOfVector(Lattice):
+class LatticeAoS(Lattice):
     """
     Lattice class with inverse storage order
     """
     def __init__(self, stencil, device, dtype=torch.float):
-        super(LatticeOfVector,self).__init__(stencil, device, dtype)
+        super(LatticeAoS,self).__init__(stencil, device, dtype)
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
 

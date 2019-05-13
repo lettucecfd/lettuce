@@ -3,6 +3,9 @@
 """Console script for lettuce."""
 
 import sys
+import cProfile
+import pstats
+
 import click
 import torch
 import numpy as np
@@ -41,11 +44,17 @@ def main(ctx, cuda, gpu_id, precision, lov):
 @main.command()
 @click.option("-s", "--steps", type=int, default=10, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
-@click.option( "--profile/--no-profile", default=False, help="Whether to write profiling information (default=False).")
+@click.option("-o", "--profile-out", type=str, default="",
+              help="File to write profiling information to (default=""; no profiling information gets written).")
 @click.pass_context  # pass parameters to sub-commands
-def benchmark(ctx, steps, resolution, profile):
+def benchmark(ctx, steps, resolution, profile_out):
     """Run a short simulation and print performance in MLUPS.
     """
+    # start profiling
+    profile = cProfile.Profile()
+    profile.enable()
+
+    # setup and run simulation
     device, dtype, lov = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['lov']
     if lov:
         lattice = LatticeOfVector(D2Q9, device, dtype)
@@ -59,9 +68,16 @@ def benchmark(ctx, steps, resolution, profile):
 
     click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
         steps, str(dtype).replace("torch.float",""), mlups))
-    if profile:
-        pass
-    #TODO: write profiling information
+
+    # write profiling output
+    profile.disable()
+    if profile_out:
+        stats = pstats.Stats(profile)
+        stats.sort_stats('cumulative')
+        stats.print_stats()
+        profile.dump_stats(profile_out)
+        print(f"Saved profiling information to {profile_out}.")
+
     return 0
 
 

@@ -11,8 +11,8 @@ from lettuce import *
 
 
 @pytest.mark.parametrize("Collision", [BGKCollision])
-def test_collision_conserves_mass(Collision, f_lattice):
-    f, lattice = f_lattice
+def test_collision_conserves_mass(Collision, f_all_lattices):
+    f, lattice = f_all_lattices
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
     f = collision(f)
@@ -20,8 +20,8 @@ def test_collision_conserves_mass(Collision, f_lattice):
 
 
 @pytest.mark.parametrize("Collision", [BGKCollision])
-def test_collision_conserves_momentum(Collision, f_lattice):
-    f, lattice = f_lattice
+def test_collision_conserves_momentum(Collision, f_all_lattices):
+    f, lattice = f_all_lattices
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
     f = collision(f)
@@ -29,8 +29,8 @@ def test_collision_conserves_momentum(Collision, f_lattice):
 
 
 @pytest.mark.parametrize("Collision", [BGKCollision])
-def test_collision_fixpoint_2x(Collision, f_lattice):
-    f, lattice = f_lattice
+def test_collision_fixpoint_2x(Collision, f_all_lattices):
+    f, lattice = f_all_lattices
     f_old = copy(f)
     collision = Collision(lattice, 0.5)
     f = collision(collision(f))

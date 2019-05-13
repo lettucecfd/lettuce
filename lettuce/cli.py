@@ -8,7 +8,8 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation, ErrorReporter
+from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeOfVector
+from lettuce import D2Q9, TaylorGreenVortex2D, Simulation, ErrorReporter
 
 
 @click.group()
@@ -17,11 +18,12 @@ from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenV
 @click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="single",
               help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
+@click.option("--lov/--no-lov", default=False, help="Use lattice-of-vector data storage order.")
 @click.pass_context  # pass parameters to sub-commands
-def main(ctx, cuda, gpu_id, precision):
+def main(ctx, cuda, gpu_id, precision, lov):
     """Pytorch-accelerated Lattice Boltzmann Solver
     """
-    ctx.obj = {'device': None, 'dtype': None}
+    ctx.obj = {'device': None, 'dtype': None, 'lov': None}
     if cuda:
         if not torch.cuda.is_available():
             print("CUDA not found.")
@@ -33,6 +35,7 @@ def main(ctx, cuda, gpu_id, precision):
 
     ctx.obj['device'] = device
     ctx.obj['dtype'] = dtype
+    ctx.obj['lov'] = lov
 
 
 @main.command()
@@ -43,8 +46,11 @@ def main(ctx, cuda, gpu_id, precision):
 def benchmark(ctx, steps, resolution, profile):
     """Run a short simulation and print performance in MLUPS.
     """
-    device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
+    device, dtype, lov = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['lov']
+    if lov:
+        lattice = LatticeOfVector(D2Q9, device, dtype)
+    else:
+        lattice = Lattice(D2Q9, device, dtype)
     flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
@@ -63,8 +69,11 @@ def benchmark(ctx, steps, resolution, profile):
 @click.pass_context
 def convergence(ctx):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
-    device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
+    device, dtype, lov = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['lov']
+    if lov:
+        lattice = LatticeOfVector(D2Q9, device, dtype)
+    else:
+        lattice = Lattice(D2Q9, device, dtype)
     error_u_old = None
     error_p_old = None
     print(("{:>15} " * 5).format("resolution", "error (u)", "order (u)", "error (p)", "order (p)"))

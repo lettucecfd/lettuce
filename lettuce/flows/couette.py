@@ -9,7 +9,7 @@ from lettuce.unit import UnitConversion
 from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
 
 
-class CouetteFlow(object):
+class CouetteFlow2D(object):
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution
         self.units = UnitConversion(
@@ -27,7 +27,7 @@ class CouetteFlow(object):
         return p, u
 
     def initial_solution(self, x):
-        return 0*x[0], np.array(0*x[0],0*x[1])
+        return np.array([0*x[0]], dtype=float), np.array([0*x[0],0*x[1]], dtype=float)
 
     @property
     def grid(self):

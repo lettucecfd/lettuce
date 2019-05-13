@@ -66,9 +66,6 @@ def benchmark(ctx, steps, resolution, profile_out):
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=steps)
 
-    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
-        steps, str(dtype).replace("torch.float",""), mlups))
-
     # write profiling output
     profile.disable()
     if profile_out:
@@ -76,8 +73,10 @@ def benchmark(ctx, steps, resolution, profile_out):
         stats.sort_stats('cumulative')
         stats.print_stats()
         profile.dump_stats(profile_out)
-        print(f"Saved profiling information to {profile_out}.")
+        click.echo(f"Saved profiling information to {profile_out}.")
 
+    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
+        steps, str(dtype).replace("torch.float",""), mlups))
     return 0
 
 

@@ -2,7 +2,8 @@
 lettuce
 =======
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
-
+        :target: https://travis-ci.com/Olllom/lettuce
+        
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
 

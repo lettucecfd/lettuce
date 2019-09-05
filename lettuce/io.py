@@ -45,8 +45,8 @@ class ErrorReporter(object):
 
             num_gridpoints = torch.prod(self.lattice.convert_to_tensor(p.size()))
 
-            err_u = np.linalg.norm(u-uref)/num_gridpoints
-            err_p = np.linalg.norm(p-pref)/num_gridpoints
+            err_u = torch.norm(u-uref)/num_gridpoints
+            err_p = torch.norm(p-pref)/num_gridpoints
 
             if isinstance(self.out, list):
                 self.out.append([err_u, err_p])

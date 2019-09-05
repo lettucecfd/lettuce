@@ -49,7 +49,7 @@ class ErrorReporter(object):
             err_p = torch.norm(p-pref)/num_gridpoints
 
             if isinstance(self.out, list):
-                self.out.append([err_u, err_p])
+                self.out.append([err_u.item(), err_p.item()])
             else:
                 print(err_u, err_p, file=self.out)
 

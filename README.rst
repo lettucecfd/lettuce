@@ -3,7 +3,7 @@ lettuce
 =======
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce
-        
+
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
 
@@ -67,7 +67,9 @@ Getting Started
 A first example
 ---------------
 
-The following Python code will run a two-dimensional Taylor-Green vortex on a GPU::
+The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
+
+.. code:: python
 
     import torch
     from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation

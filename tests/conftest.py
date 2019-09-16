@@ -3,7 +3,6 @@ Fixtures for unit tests.
 """
 import pytest
 
-import lettuce
 from lettuce import *
 import numpy as np
 import torch

@@ -2,12 +2,11 @@
 Test functions for collision models and related functions.
 """
 
-import numpy as np
-import torch
 import pytest
-from copy import copy
 
 from lettuce import *
+
+from copy import copy
 
 
 @pytest.mark.parametrize("Collision", [BGKCollision])

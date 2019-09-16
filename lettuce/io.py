@@ -9,11 +9,18 @@ import sys
 import logging
 import numpy as np
 import torch
-from matplotlib import pyplot as plt
 
 
-def write_png(filename, array2d):
-    pass
+def write_image(filename, array2d):
+    from matplotlib import pyplot as plt
+    fig, ax = plt.subplots()
+    plt.tight_layout()
+    ax.imshow(array2d)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    plt.savefig(filename)
 
 
 def write_vtk(filename, grid, field_data):
@@ -52,4 +59,5 @@ class ErrorReporter:
                 self.out.append([err_u.item(), err_p.item()])
             else:
                 print(err_u.item(), err_p.item(), file=self.out)
+
 

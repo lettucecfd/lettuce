@@ -20,7 +20,12 @@ def moment_tensor(e, multiindex):
 
 
 def get_default_moment_transform(lattice):
-    pass
+    if lattice.stencil == D1Q3:
+        return D1Q3Transform(lattice)
+    if lattice.stencil == D2Q9:
+        return D2Q9Lallemand(lattice)
+    else:
+        raise LettuceException(f"No default moment transform for lattice {lattice}.")
 
 
 class Moments:

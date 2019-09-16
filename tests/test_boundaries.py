@@ -35,7 +35,7 @@ def test_equilibrium_boundary_pu(f_lattice):
     units = UnitConversion(lattice, reynolds_number=1)
     pressure = 0
     velocity = 0.1*np.ones(lattice.D)
-    feq = lattice.quadratic_equilibrium(
+    feq = lattice.equilibrium(
             lattice.convert_to_tensor(units.convert_pressure_pu_to_density_lu(pressure)),
             lattice.convert_to_tensor(units.convert_velocity_to_lu(velocity))
         )

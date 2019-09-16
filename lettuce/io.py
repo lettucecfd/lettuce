@@ -2,7 +2,7 @@
 Input/output routines.
 
 TODO: Logging
-TODO: VTK i/o
+TODO: VTK field/o
 """
 
 import sys
@@ -23,7 +23,7 @@ def write_vtk(filename, grid, field_data):
     raise NotImplementedError
 
 
-class ErrorReporter(object):
+class ErrorReporter:
     """Reports numerical errors with respect to analytic solution."""
     def __init__(self, lattice, flow, interval=1, out=sys.stdout):
         assert hasattr(flow, "analytic_solution")
@@ -43,13 +43,13 @@ class ErrorReporter(object):
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
 
-            num_gridpoints = torch.prod(self.lattice.convert_to_tensor(p.size()))
+            resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())),1/self.lattice.D)
 
-            err_u = torch.norm(u-uref)/num_gridpoints
-            err_p = torch.norm(p-pref)/num_gridpoints
+            err_u = torch.norm(u-uref)/resolution
+            err_p = torch.norm(p-pref)/resolution
 
             if isinstance(self.out, list):
                 self.out.append([err_u.item(), err_p.item()])
             else:
-                print(err_u, err_p, file=self.out)
+                print(err_u.item(), err_p.item(), file=self.out)
 

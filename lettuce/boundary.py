@@ -8,7 +8,7 @@ condition operates.
 import torch
 
 
-class BounceBackBoundary(object):
+class BounceBackBoundary:
     def __init__(self, mask, lattice):
         self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
@@ -18,7 +18,7 @@ class BounceBackBoundary(object):
         return f
 
 
-class EquilibriumBoundaryPU(object):
+class EquilibriumBoundaryPU:
     """Sets distributions on this boundary to equilibrium with predefined velocity and pressure.
     Note that this behavior is generally not compatible with the Navier-Stokes equations.
     This boundary condition should only be used if no better options are available.
@@ -33,9 +33,7 @@ class EquilibriumBoundaryPU(object):
     def __call__(self, f):
         rho = self.units.convert_pressure_pu_to_density_lu(self.pressure)
         u = self.units.convert_velocity_to_lu(self.velocity)
-        feq = self.lattice.quadratic_equilibrium(rho, u)
-        indices = "q" if len(feq.size()) == 1 else "q..."
-        feq = torch.einsum("{},q...->q...".format(indices), feq, torch.ones_like(f))
+        feq = self.lattice.equilibrium(rho, u)
+        feq = self.lattice.einsum("q,q->q", [feq, torch.ones_like(f)])
         f = torch.where(self.mask, feq, f)
-        print(self.mask.size(), feq.size(), f.size())
         return f

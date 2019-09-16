@@ -11,14 +11,14 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeAoS
-from lettuce import D2Q9, TaylorGreenVortex2D, Simulation, ErrorReporter
+from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
+from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
 
 
 @click.group()
 @click.version_option(version=lettuce.__version__)
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
-@click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
+@click.option("-field", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="single",
               help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
 @click.option("--aos/--no-aos", default=False, help="Use array-of-structure data storage order.")
@@ -104,10 +104,13 @@ def convergence(ctx):
         simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
-        simulation.step(num_steps=10*resolution)
+        for i in range(10*resolution):
+            simulation.step(1)#num_steps=10*resolution)
+            #print(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f))[0,0,0])
 
         # error calculation
-        error_u, error_p = np.mean(error_reporter.out, axis=0).tolist()
+        #print(error_reporter.out)
+        error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
         factor_p = 0 if error_p_old is None else error_p_old / error_p
         error_u_old = error_u

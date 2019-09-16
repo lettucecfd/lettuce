@@ -5,18 +5,14 @@ import pytest
 
 import lettuce
 from lettuce import *
-import inspect
 import numpy as np
 import torch
 
-
-def get_subclasses(classname, module=lettuce):
-    for name, obj in inspect.getmembers(module):
-        if hasattr(obj, "__bases__") and classname in obj.__bases__:
-            yield obj
+from lettuce.stencils import Stencil
 
 
-STENCILS = list(get_subclasses(Stencil))
+STENCILS = list(get_subclasses(Stencil, lettuce))
+TRANSFORMS = list(get_subclasses(Transform, lettuce))
 
 
 @pytest.fixture(
@@ -86,3 +82,13 @@ def f_all_lattices(request, lattice):
     Ltc = request.param
     ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype)
     return ltc.convert_to_tensor(f), ltc
+
+
+@pytest.fixture(params=TRANSFORMS)
+def f_transform(request, f_all_lattices):
+    Transform = request.param
+    f, lattice = f_all_lattices
+    if lattice.stencil in Transform.supported_stencils:
+        return f, Transform(lattice)
+    else:
+        pytest.skip("Stencil not supported for this transform.")

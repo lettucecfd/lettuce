@@ -12,26 +12,14 @@ import warnings
 import numpy as np
 import torch
 
-
-class Stencil(object):
-    pass
-
-
-class D1Q3(Stencil):
-    e = np.array([[0], [1], [-1]])
-    w = np.array([2.0/3.0, 1.0/6.0, 1.0/6.0])
-    cs = 1/np.sqrt(3)
-    opposite = [0, 2, 1]
+from lettuce.util import LettuceException
+from lettuce.equilibrium import QuadraticEquilibrium
 
 
-class D2Q9(Stencil):
-    e = np.array([[0,0],[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]])
-    w = np.array([4.0/9.0] + [1.0/9.0]*4 + [1.0/36.0]*4)
-    cs = 1/np.sqrt(3)
-    opposite = [0, 3, 4, 1, 2, 7, 8, 5, 6]
+class Lattice:
 
+    field_index = 0
 
-class Lattice(object):
     def __init__(self, stencil, device, dtype=torch.float):
         self.stencil = stencil
         self.device = device
@@ -39,6 +27,7 @@ class Lattice(object):
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
         self.cs = self.convert_to_tensor(stencil.cs)
+        self.equilibrium = QuadraticEquilibrium(self)
 
     def __str__(self):
         return f"Lattice (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
@@ -52,6 +41,9 @@ class Lattice(object):
         return self.stencil.e.shape[0]
 
     def convert_to_tensor(self, array):
+        try:
+            array = np.moveaxis(array, 0, self.field_index)
+        except: array = array
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             if isinstance(array, np.ndarray) and array.dtype in [np.bool, np.uint8]:
@@ -59,101 +51,110 @@ class Lattice(object):
             else:
                 return torch.tensor(array, device=self.device, dtype=self.dtype)
 
-    @staticmethod
-    def convert_to_numpy(tensor):
-        return tensor.cpu().numpy()
+    @classmethod
+    def convert_to_numpy(cls, tensor):
+        return np.moveaxis(tensor.detach().cpu().numpy(), cls.field_index, 0)
 
     def rho(self, f):
         """density"""
-        return torch.sum(f, dim=0)[None, :]
+        return torch.sum(f, dim=self.field_index)[self.field(None)]
 
     def j(self, f):
         """momentum"""
-        j = torch.einsum("qd,q...->d...", [self.e, f])
-        if self.D == 1:
-            return j
-        else:
-            return j
+        return self.einsum("qd,q->d", [self.e, f])
 
     def u(self, f):
         """velocity"""
         return self.j(f) / self.rho(f)
 
-    def quadratic_equilibrium(self, rho, u):
-        exu = torch.einsum("qd,d...->q...", [self.e, u])
-        uxu = torch.einsum("d...,d...->...", [u,u])
-        feq = torch.einsum(
-            "q,q...->q...",
-            [self.w, rho * ((2 * exu - uxu) / (2 * self.cs ** 2) + 0.5 * (exu / (self.cs ** 2)) ** 2 + 1)])
-        return feq
+    def field(self, index=None):
+        """Generate indices for multidimensional fields.
+
+        All lattice fields are stored as tensors of dimension [M, Nx, Ny, Nz], (in 3D),
+        where N... are the grid dimensions and M depends on the quantity
+        (density: M=1, velocity: M=D, distribution functions: M=Q).
+
+        Note that one-dimensional quantities such as density are NOT stored in the shape [Nx, Ny, Nz],
+        but [1, Nx, Ny, Nz]. lattice.field is used to transform between these two shapes.
+
+        Parameters
+        ----------
+        index: int or None
+            If None, transform a tensor of elements to a field: [Nx, Ny, Nz] -> [1, Nx, Ny, Nz].
+            If int, get the i-th element from a field: [M, Nx, Ny, Nz] -> [Nx, Ny, Nz].
+
+        Returns
+        -------
+        indices: (Multiindex)
+            An index for a multidimensional array.
+
+        Notes
+        -----
+        This method is important to allow different underlying storage orders and support LatticeAoS.
+
+        Examples
+        --------
+        >>> lattice = Lattice(D2Q9, "cpu")
+        >>> f = torch.ones(9,16,16)
+        >>> f0 = f[lattice.field(0)]  # -> shape [Nx, Ny]
+        >>> rho = torch.sum(f, dim=lattice.field_index) # -> shape [Nx, Ny]
+        >>> rho = rho[lattice.field()] # -> shape [1, Nx, Ny]
+        """
+        return index, Ellipsis
+
+    #def moment(self, f, multiindex):
+    #    return torch.einsum("q,q...->...",moment_tensor(self.e, multiindex), f)
+
+    def mv(self, m, v):
+        """matrix-vector multiplication"""
+        return self.einsum("ij,j->i", [m,v])
+
+    def einsum(self, equation, fields, **kwargs):
+        """Einstein summation on local fields."""
+        input, output = equation.split("->")
+        inputs = input.split(",")
+        for i,inp in enumerate(inputs):
+            if len(inp) == len(fields[i].shape):
+                pass
+            elif len(inp) == len(fields[i].shape) - self.D:
+                inputs[i] += "..."
+                if not output.endswith("..."):
+                    output += "..."
+            else:
+                raise LettuceException("Bad dimension.")
+        equation = ",".join(inputs) + "->" + output
+        return torch.einsum(equation, fields, **kwargs)
 
 
 class LatticeAoS(Lattice):
     """
-    Lattice class with inverse storage order
+    Lattice class with inverse storage order (array of structure).
     """
+
+    field_index = -1
+
     def __init__(self, stencil, device, dtype=torch.float):
         super(LatticeAoS,self).__init__(stencil, device, dtype)
-        self.e = self.convert_to_tensor(stencil.e)
-        self.w = self.convert_to_tensor(stencil.w)
-
-    def convert_to_tensor(self, array):
-        try:
-            a = np.moveaxis(array, 0, -1)
-        except: a = array
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            if isinstance(a, np.ndarray) and a.dtype in [np.bool, np.uint8]:
-                return torch.tensor(a, device=self.device, dtype=torch.uint8)  # that's how torch stores its masks
-            else:
-                return torch.tensor(a, device=self.device, dtype=self.dtype)
 
     def __str__(self):
         return f"LatticeOfArray (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
 
-    @staticmethod
-    def convert_to_numpy(tensor):
-        return np.moveaxis(tensor.cpu().numpy(), -1, 0)
+    def field(self, index=None):
+        return Ellipsis, index
 
-    @staticmethod
-    def add_last_dimension(tensor):
-        return tensor.view(list(tensor.shape) + [1])
-
-    def rho(self, f):
-        """density"""
-        return self.check_rho_dim(self.add_last_dimension(torch.sum(f, dim=-1)))
-
-    def j(self, f):
-        """momentum"""
-        return self.check_j_dim(torch.einsum("dq,...q->...d", [self.e, f]))
-
-    def u(self, f):
-        """velocity"""
-        return self.check_j_dim(self.j(f) / self.rho(f))
-
-    def quadratic_equilibrium(self, rho, u):
-        exu = self.check_dim(torch.einsum("dq,...d->...q", [self.e, u]), length=self.D+1, last=self.Q)
-        uxu = self.check_dim(self.add_last_dimension(torch.einsum("...d,...d->...", [u,u])), length=self.D+1, last=1)
-        feq = torch.einsum(
-            "q,...q->...q",
-            [self.w, rho * ((2 * exu - uxu) / (2 * self.cs ** 2) + 0.5 * (exu / (self.cs ** 2)) ** 2 + 1)])
-        return feq
-
-    def check_rho_dim(self, rho):
-        assert len(rho.size()) == self.D + 1
-        assert rho.size()[-1] == 1
-        return rho
-
-    def check_j_dim(self, j):
-        assert len(j.size()) == self.D + 1
-        assert j.size()[-1] == self.D
-        return j
-
-    @staticmethod
-    def check_dim(tensor, length=None, first=None, last=None):
-        size = tensor.size()
-        if length is not None: assert len(size) == length
-        if first is not None: assert size[0] == first
-        if last is not None: assert size[-1] == last
-        return tensor
-
+    def einsum(self, equation, fields, **kwargs):
+        """Einstein summation on local fields."""
+        input, output = equation.split("->")
+        inputs = input.split(",")
+        for i,inp in enumerate(inputs):
+            if len(inp) == len(fields[i].shape):
+                pass
+            elif len(inp) == len(fields[i].shape) - self.D:
+                inputs[i] += "..."
+                if not output.endswith("..."):
+                    output += "..."
+            else:
+                raise LettuceException("Bad dimension.")
+            inputs[i] = inputs[i][::-1]
+        equation = ",".join(inputs) + "->" + output[::-1]
+        return torch.einsum(equation, fields, **kwargs)

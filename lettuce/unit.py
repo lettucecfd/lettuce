@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 
-class UnitConversion(object):
+class UnitConversion:
     """
     Provides unit conversions between physical units (pu) and lattice units (lu).
     Conversion methods should work for floats, torch.tensors and np.arrays.
@@ -73,11 +73,11 @@ class UnitConversion(object):
 
     def convert_density_lu_to_pressure_pu(self, density_lu):
         cs = self.lattice.cs if isinstance(density_lu, torch.Tensor) else self.lattice.stencil.cs
-        return self.convert_pressure_to_pu((density_lu-self.characteristic_density_lu) / cs**2)
+        return self.convert_pressure_to_pu((density_lu-self.characteristic_density_lu) * cs**2)
 
     def convert_pressure_pu_to_density_lu(self, pressure_pu):
         cs = self.lattice.cs if isinstance(pressure_pu, torch.Tensor) else self.lattice.stencil.cs
-        return self.convert_pressure_to_lu(pressure_pu * cs**2) + self.characteristic_density_lu
+        return self.convert_pressure_to_lu(pressure_pu) / cs**2 + self.characteristic_density_lu
 
     def convert_density_to_pu(self, density_lu):
         return density_lu / self.characteristic_density_lu * self.characteristic_density_pu

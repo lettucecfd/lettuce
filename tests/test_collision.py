@@ -36,3 +36,4 @@ def test_collision_fixpoint_2x(Collision, f_all_lattices):
     f = collision(collision(f))
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
 
+

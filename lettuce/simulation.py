@@ -1,7 +1,7 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException
+from lettuce import LettuceException, io
 import pickle
 
 
@@ -33,12 +33,15 @@ class Simulation:
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
         start = timer()
-        for _ in range(num_steps):
+        for i in range(num_steps):
             self.i += 1
             self.f = self.streaming(self.f)
             self.f = self.collision(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
+            if i % 10 == 0:
+                io.write_vtk("output_vtk", [self.flow.resolution, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
+                print(i)
         end = timer()
         seconds = end-start
         num_grid_points = self.lattice.rho(self.f).numel()

@@ -5,8 +5,9 @@ Moments and cumulants of the distribution function.
 import warnings
 import torch
 import lettuce
-from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses
+from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses, ExperimentalWarning
 from lettuce.stencils import *
+from lettuce.equilibrium import Equilibrium
 
 
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
@@ -56,13 +57,11 @@ class Transform:
     def equilibrium(self, m):
         """A very inefficient and basic implementation of the equilibrium moments.
         """
-        if not hasattr(self, "warning_has_been_printed"):
-            warnings.warn(
-                "Transform.equilibrium is a poor man's implementation of the moment equilibrium."
-                "Please consider implementing the equilibrium moments for your transform by hand.",
-                InefficientCodeWarning
-            )
-            self.warning_has_been_printed = True
+        warnings.warn(
+            "Transform.equilibrium is a poor man's implementation of the moment equilibrium."
+            "Please consider implementing the equilibrium moments for your transform by hand.",
+            InefficientCodeWarning
+        )
         f = self.inverse_transform(m)
         feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
         return self.transform(feq)
@@ -99,6 +98,7 @@ class D1Q3Transform(Transform):
 
 
 class D2Q9Dellar(Transform):
+
     matrix = np.array(
         [[1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 1, 0, -1, 0, 1, -1, -1, 1],
@@ -137,12 +137,26 @@ class D2Q9Dellar(Transform):
     def inverse_transform(self, m):
         return self.lattice.mv(self.inverse, m)
 
-    #def equilibrium(self, m):
-    #    pi0 = self.lattice.cs**2 * m[0]
-    #    return torch.cat(m[:3], lattice)
+    def equilibrium(self, m):
+        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
+        meq = torch.zeros_like(m)
+        rho = m[self.lattice.field(0)]
+        jx = m[self.lattice.field(1)]
+        jy = m[self.lattice.field(2)]
+        Pi_xx = jx*jx/rho*9/2
+        Pi_xy = jx*jy/rho*9
+        Pi_yy = jy*jy/rho*9/2
+        meq[self.lattice.field(0)] = rho
+        meq[self.lattice.field(1)] = jx
+        meq[self.lattice.field(2)] = jy
+        meq[self.lattice.field(3)] = Pi_xx
+        meq[self.lattice.field(4)] = Pi_xy
+        meq[self.lattice.field(5)] = Pi_yy
+        return meq
 
 
 class D2Q9Lallemand(Transform):
+
     matrix = np.array(
         [[1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 1, 0, -1, 0, 1, -1, -1, 1],
@@ -181,8 +195,36 @@ class D2Q9Lallemand(Transform):
     def inverse_transform(self, m):
         return self.lattice.mv(self.inverse, m)
 
-    #def equilibrium(self, m):
-    #    pass
+    def equilibrium(self, m):
+        """From Lallemand and Luo"""
+        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
+        meq = torch.zeros_like(m)
+        rho = m[self.lattice.field(0)]
+        jx = m[self.lattice.field(1)]
+        jy = m[self.lattice.field(2)]
+        c1 = -2
+        alpha2 = -8
+        alpha3 = 4
+        gamma1 = 2/3
+        gamma2 = 18
+        gamma3 = 2/3
+        gamma4 = -18
+        e = 1/4*alpha2*rho+1/6*gamma2*(jx**2 + jy**2)
+        eps = 1/4*alpha3*rho + 1/6*gamma4*(jx**2+jy**2)
+        qx = 1/2*c1*jx
+        qy = 1/2*c1*jy
+        pxx = 1/2*gamma1*(jx**2-jy**2)
+        pxy = 1/2*gamma3*(jx*jy)
+        meq[self.lattice.field(0)] = rho
+        meq[self.lattice.field(1)] = jx
+        meq[self.lattice.field(2)] = jy
+        meq[self.lattice.field(3)] = pxx
+        meq[self.lattice.field(4)] = pxy
+        meq[self.lattice.field(5)] = e
+        meq[self.lattice.field(6)] = qx
+        meq[self.lattice.field(7)] = qy
+        meq[self.lattice.field(8)] = eps
+        return meq
 
 
 """

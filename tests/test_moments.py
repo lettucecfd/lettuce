@@ -49,3 +49,26 @@ def test_getitem(dtype_device):
     moments = D2Q9Lallemand(Lattice(D2Q9, device, dtype))
     assert moments["jx", "jy"] == [1,2]
     assert moments["rho"] == [0]
+
+
+def test_moment_equilibrium_dellar(dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(D2Q9, device, dtype)
+    moments = D2Q9Dellar(lattice)
+    np.random.seed(1)
+    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    meq1 = lattice.convert_to_numpy(moments.transform(lattice.equilibrium(lattice.rho(f), lattice.u(f))))
+    meq2 = lattice.convert_to_numpy(moments.equilibrium(moments.transform(f)))
+    assert meq1 == pytest.approx(meq2, abs=1e-5)
+
+
+def test_moment_equilibrium_lallemand(dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(D2Q9, device, dtype)
+    moments = D2Q9Lallemand(lattice)
+    np.random.seed(1)
+    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    meq1 = lattice.convert_to_numpy(moments.transform(lattice.equilibrium(lattice.rho(f), lattice.u(f))))
+    meq2 = lattice.convert_to_numpy(moments.equilibrium(moments.transform(f)))
+    same_moments = moments["rho", "jx", "jy", "qx", "qy"]
+    assert meq1[same_moments] == pytest.approx(meq2[same_moments], abs=1e-5)

@@ -1,9 +1,10 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
 import pickle
 import copy
+import warnings
 import torch
 
 
@@ -48,7 +49,13 @@ class Simulation:
         return mlups
 
     def initialize(self, max_num_steps=500, tol_pressure=0.001):
-        """Iterative initialization to get moments consistent with the initial velocity."""
+        """Iterative initialization to get moments consistent with the initial velocity.
+
+        Using the initialization does not better TGV convergence. Maybe use a better scheme?
+        """
+        warnings.warn("Iterative initialization does not work well and solutions may diverge. Use with care. "
+                      "At some point, we may need to implement a better scheme.",
+                      ExperimentalWarning)
         transform = get_default_moment_transform(self.lattice)
         collision = BGKInitialization(self.lattice, self.flow, transform)
         streaming = self.streaming

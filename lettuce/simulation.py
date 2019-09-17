@@ -7,11 +7,12 @@ import pickle
 
 class Simulation:
     """High-level API for simulations."""
-    def __init__(self, flow, lattice, collision, streaming):
+    def __init__(self, flow, lattice, collision, streaming, boundary):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
         self.streaming = streaming
+        self.boundary = boundary
         self.i = 0
 
         grid = flow.grid
@@ -40,7 +41,7 @@ class Simulation:
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
             if i % 10 == 0:
-                io.write_vtk("output_vtk", [self.flow.resolution, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
+                io.write_vtk("output_vtk", [self.flow.resolution*2, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
                 print(i)
         end = timer()
         seconds = end-start

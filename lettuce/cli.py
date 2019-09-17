@@ -13,7 +13,8 @@ import numpy as np
 import lettuce
 from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
-
+from lettuce.flows import channel, couette
+from lettuce.boundary import BounceBackBoundary
 
 @click.group()
 @click.version_option(version=lettuce.__version__)
@@ -79,6 +80,54 @@ def benchmark(ctx, steps, resolution, profile_out):
         steps, str(dtype).replace("torch.float",""), mlups))
     return 0
 
+@main.command()
+@click.option("-s", "--steps", type=int, default=300, help="Number of time steps.")
+@click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
+@click.option("-o", "--profile-out", type=str, default="",
+              help="File to write profiling information to (default=""; no profiling information gets written).")
+@click.pass_context  # pass parameters to sub-commands
+def channelflow(ctx, steps, resolution, profile_out):
+    """Run a short simulation and print performance in MLUPS.
+    """
+    # start profiling
+    profile = cProfile.Profile()
+    profile.enable()
+
+    # setup and run simulation
+    device, dtype, aos = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['aos']
+    if aos:
+        lattice = LatticeAoS(D2Q9, device, dtype)
+    else:
+        lattice = Lattice(D2Q9, device, dtype)
+    flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    a = np.zeros((resolution, resolution*2), dtype=bool)
+    a[:, 1] = True
+    a[:, -1] = True
+    a[1, :] = True
+    a[-1, :] = True
+    #a = bytes(a.any())
+    boundary = BounceBackBoundary(mask=a, lattice=lattice)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
+    mlups = simulation.step(num_steps=steps)
+
+#    x = flow.grid()
+ #   nx = x[:,1]
+    #print(simulation.p)
+
+    # write profiling output
+    profile.disable()
+    if profile_out:
+        stats = pstats.Stats(profile)
+        stats.sort_stats('cumulative')
+        stats.print_stats()
+        profile.dump_stats(profile_out)
+        click.echo(f"Saved profiling information to {profile_out}.")
+
+    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
+        steps, str(dtype).replace("torch.float",""), mlups))
+    return 0
 
 @main.command()
 @click.pass_context

@@ -12,6 +12,16 @@ import torch
 from pyevtk.hl import *
 from matplotlib import pyplot as plt
 
+def write_image(filename, array2d):
+    from matplotlib import pyplot as plt
+    fig, ax = plt.subplots()
+    plt.tight_layout()
+    ax.imshow(array2d)
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    plt.savefig(filename)
 
 def write_png(filename, array2d):
     pass

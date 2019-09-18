@@ -17,6 +17,10 @@ class InefficientCodeWarning(LettuceWarning):
     pass
 
 
+class ExperimentalWarning(LettuceWarning):
+    pass
+
+
 def get_subclasses(classname, module):
     for name, obj in inspect.getmembers(module):
         if hasattr(obj, "__bases__") and classname in obj.__bases__:

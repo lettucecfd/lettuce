@@ -1,8 +1,11 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, io
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, io
 import pickle
+import copy
+import warnings
+import torch
 
 
 class Simulation:
@@ -48,9 +51,26 @@ class Simulation:
         mlups = num_steps * num_grid_points / 1e6 / seconds
         return mlups
 
-    def initialize(self, max_num_steps, tol_pressure=-1.0):
-        """Iterative initialization to get moments consistent with the initial velocity."""
-        raise NotImplementedError
+    def initialize(self, max_num_steps=500, tol_pressure=0.001):
+        """Iterative initialization to get moments consistent with the initial velocity.
+
+        Using the initialization does not better TGV convergence. Maybe use a better scheme?
+        """
+        warnings.warn("Iterative initialization does not work well and solutions may diverge. Use with care. "
+                      "At some point, we may need to implement a better scheme.",
+                      ExperimentalWarning)
+        transform = get_default_moment_transform(self.lattice)
+        collision = BGKInitialization(self.lattice, self.flow, transform)
+        streaming = self.streaming
+        p_old = 0
+        for i in range(max_num_steps):
+            self.f = streaming(self.f)
+            self.f = collision(self.f)
+            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(self.f))
+            if (torch.max(torch.abs(p-p_old))) < tol_pressure:
+                break
+            p_old = copy.deepcopy(p)
+        return i
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

@@ -1,7 +1,7 @@
 """
 Boundary Conditions.
 
-Boundary conditions take a mask, which is a boolean numpy array and specifies the grid points on which the boundary
+Boundary conditions take a mask (a boolean numpy array) and specifies the grid points on which the boundary
 condition operates.
 """
 

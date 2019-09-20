@@ -20,7 +20,7 @@ class ChannelFlow2D(object):
     def analytic_solution(self, x, t=0):
         u = np.array([x[0]*0.0, x[1]*0.0])
         p = np.array([x[0]*0.0+0.33])
-        p[0,:,0:70] = 0.35
+        #p[0,:,0:70] = 0.35
         return p, u
 
     def initial_solution(self, x):

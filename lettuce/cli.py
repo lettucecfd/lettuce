@@ -81,7 +81,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     return 0
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=2, help="Number of time steps.")
+@click.option("-s", "--steps", type=int, default=1000, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
@@ -100,12 +100,12 @@ def channelflow(ctx, steps, resolution, profile_out):
     else:
         lattice = Lattice(D2Q9, device, dtype)
     flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
-    collision = BGKCollision(lattice, tau=0.6)
+    collision = BGKCollision(lattice, tau=0.55)
     print(flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     a = np.zeros((resolution, resolution*2), dtype=bool)
-    a[:, 1] = True
-    a[:, -1] = True
+    #a[:, 1] = True
+    #a[:, -1] = True
     a[1, :] = True
     a[-1, :] = True
     a[80:120,80:120] = True

@@ -27,22 +27,24 @@ def write_png(filename, array2d):
     pass
 
 
-def write_vtk(filename, resolution, field_data, id):
+def write_vtk(filename, resolution, field_data_u, field_data_q, id):
     # https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python
     # https://anaconda.org/e3sm/evtk
     # https://pypi.org/project/pyevtk/
     data_1 = np.zeros((resolution[0], resolution[1], resolution[2]))
     data_2 = np.zeros((resolution[0], resolution[1], resolution[2]))
 
-    u = field_data.astype('float64')
+    u = field_data_u.astype('float64')
     u = np.transpose(u, (2, 1, 0))
 
+    q = field_data_q.astype('float64')
+    q = np.transpose(q, (2, 1, 0))
 
     data_1[:, :, 0] = u[:, :, 0]
     data_2[:, :, 0] = u[:, :, 1]
 
-    gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
-              np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2})
+    gridToVTK("/Volumes/IMSD2012/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
+              np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2, "rho": q})
 
     #raise NotImplementedError
 

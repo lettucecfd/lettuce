@@ -41,10 +41,11 @@ class Simulation:
             self.i += 1
             self.f = self.streaming(self.f)
             self.f = self.collision(self.f)
+            self.f = self.boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
             if i % 10 == 0:
-                io.write_vtk("output_vtk", [self.flow.resolution*2, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
+                io.write_vtk("output_vtk", [self.flow.resolution*2, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), self.lattice.convert_to_numpy(self.collision.lattice.rho(self.f)), str(i))
                 print(i)
         end = timer()
         seconds = end-start

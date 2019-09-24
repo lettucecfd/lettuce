@@ -55,12 +55,12 @@ class KBCCollision:
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        self.B[i, j, k] = lattice.e[0] ** i * lattice.e[1] ** j * lattice.e[2] ** k
+                        self.M[i, j, k] = lattice.e[0] ** i * lattice.e[1] ** j * lattice.e[2] ** k
         else:
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        self.B[i, j, k] = lattice.e[:,0] ** i * lattice.e[:,1] ** j * lattice.e[:,2] ** k
+                        self.M[i, j, k] = lattice.e[:,0] ** i * lattice.e[:,1] ** j * lattice.e[:,2] ** k
 
     def kbc_moment_transform(self,f):
         if isinstance(self.lattice,LatticeAoS):

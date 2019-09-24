@@ -22,29 +22,45 @@ class BGKCollision:
         return f
 
 
+class MRTCollision:
+    """Multiple relaxation time collision operator
+
+    This is an MRT operator in the most general sense of the word.
+    The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
+    """
+    def __init__(self, lattice, transform, relaxation_parameters):
+        self.lattice = lattice
+        self.transform = transform
+        self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
+
+    def __call__(self, f):
+        m = self.transform.transform(f)
+        meq = self.transform.equilibrium(m)
+        m = m - self.lattice.einsum("q,q->q", [1/self.relaxation_parameters, m-meq])
+        f = self.transform.inverse_transform(m)
+        return f
+
+
 class KBCCollision:
     def __init__(self, lattice, tau):
         self.lattice = lattice
         assert lattice.Q == 27, \
             LettuceException("KBC only realized for D3Q27")
-        #assert isinstance(lattice,LatticeAoS)!=1, \
-         #   LettuceException("KBC only realized for LatticeSoA")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
         ##Build a matrix that contains the indices
-        B = np.zeros([3, 3, 3, 27])
+        self.B = torch.zeros([3, 3, 3, 27], dtype=lattice.dtype)
         if isinstance(lattice,LatticeAoS):
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        B[i, j, k] = lattice.e[0] ** i * lattice.e[1] ** j * lattice.e[2] ** k
+                        self.B[i, j, k] = lattice.e[0] ** i * lattice.e[1] ** j * lattice.e[2] ** k
         else:
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        B[i, j, k] = lattice.e[:,0] ** i * lattice.e[:,1] ** j * lattice.e[:,2] ** k
-        self.M = torch.tensor(B,dtype=lattice.dtype)
+                        self.B[i, j, k] = lattice.e[:,0] ** i * lattice.e[:,1] ** j * lattice.e[:,2] ** k
 
     def kbc_moment_transform(self,f):
         if isinstance(self.lattice,LatticeAoS):
@@ -73,6 +89,7 @@ class KBCCollision:
         k = torch.zeros_like(f)
         s = torch.zeros_like(f)
         seq = torch.zeros_like(f)
+
         k[self.lattice.field(0)] = m[0,0,0]
         k[self.lattice.field(1)] = m[0,0,0] / 6. * (3. * m[1,0,0])
         k[self.lattice.field(2)] = m[0,0,0] / 6. * (3. * -m[1,0,0])
@@ -101,8 +118,6 @@ class KBCCollision:
         s[self.lattice.field(17)] = -1. / 4 * m[0,0,0] * Pi_xy
         s[self.lattice.field(18)] = -1. / 4 * m[0,0,0] * Pi_xy
 
-        h = f - k - s
-
         m = self.kbc_moment_transform(feq)
         T = m[2, 0, 0] + m[0, 2, 0] + m[0, 0, 2]
         N_xz = m[2, 0, 0] - m[0, 0, 2]
@@ -117,7 +132,7 @@ class KBCCollision:
         seq[self.lattice.field(3)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
         seq[self.lattice.field(4)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
         seq[self.lattice.field(5)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
-        seq[self.lattice.field(6)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)   
+        seq[self.lattice.field(6)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
         seq[self.lattice.field(7)] = 1. / 4 * m[0,0,0] * Pi_yz
         seq[self.lattice.field(8)] = 1. / 4 * m[0,0,0] * Pi_yz
         seq[self.lattice.field(9)] = - 1. / 4 * m[0,0,0] * Pi_yz
@@ -131,39 +146,19 @@ class KBCCollision:
         seq[self.lattice.field(17)] = -1. / 4 * m[0,0,0] * Pi_xy
         seq[self.lattice.field(18)] = -1. / 4 * m[0,0,0] * Pi_xy
 
-        heq = feq - k - seq
-
         delta_s = s - seq
-        delta_h = h - heq
+        delta_h = f - feq - delta_s
 
         delta_seq = delta_s * delta_h / feq
-        delta_heq = delta_h * delta_h / feq
-
         sum_s = self.lattice.rho(delta_seq)
+        del delta_seq
+
+        delta_heq = delta_h * delta_h / feq
         sum_h = self.lattice.rho(delta_heq)
 
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
 
-        return f
-
-
-class MRTCollision:
-    """Multiple relaxation time collision operator
-
-    This is an MRT operator in the most general sense of the word.
-    The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
-    """
-    def __init__(self, lattice, transform, relaxation_parameters):
-        self.lattice = lattice
-        self.transform = transform
-        self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
-
-    def __call__(self, f):
-        m = self.transform.transform(f)
-        meq = self.transform.equilibrium(m)
-        m = m - self.lattice.einsum("q,q->q", [1/self.relaxation_parameters, m-meq])
-        f = self.transform.inverse_transform(m)
         return f
 
 

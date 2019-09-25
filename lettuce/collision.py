@@ -50,7 +50,7 @@ class KBCCollision:
         self.beta = 1. / (2 * tau)
 
         ##Build a matrix that contains the indices
-        self.M = torch.zeros([3, 3, 3, 27], dtype=lattice.dtype)
+        self.M = torch.zeros([3, 3, 3, 27], device=lattice.device, dtype=lattice.dtype)
         if isinstance(lattice,LatticeAoS):
             for i in range(3):
                 for j in range(3):

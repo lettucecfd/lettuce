@@ -61,3 +61,23 @@ class ErrorReporter:
                 print(err_u.item(), err_p.item(), file=self.out)
 
 
+class EnergyReporter:
+    """Reports the kinetic energy with respect to analytic solution."""
+    def __init__(self, lattice, flow, interval=1, out=sys.stdout):
+        self.lattice = lattice
+        self.flow = flow
+        self.interval = interval
+        self.out = [] if out is None else out
+        if not isinstance(self.out, list):
+            print("time      kinetic energy", file=self.out)
+
+    def __call__(self, i, t, f):
+        if t % self.interval == 0:
+            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            kinE= torch.sqrt(self.lattice.einsum("d,d->", [u,u])[self.lattice.field()])
+            nr_grid_points = self.lattice.rho(f).numel()
+            kinE=kinE.sum()/nr_grid_points
+            print(t, kinE.item())
+
+
+

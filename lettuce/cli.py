@@ -15,6 +15,7 @@ from lettuce import BGKCollision, MRTCollision, StandardStreaming, Lattice, Latt
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
 from lettuce.flows import channel, couette
 from lettuce.boundary import BounceBackBoundary
+from lettuce.force import guo
 
 @click.group()
 @click.version_option(version=lettuce.__version__)
@@ -81,7 +82,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     return 0
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=1000, help="Number of time steps.")
+@click.option("-s", "--steps", type=int, default=3001, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
@@ -100,8 +101,8 @@ def channelflow(ctx, steps, resolution, profile_out):
     else:
         lattice = Lattice(D2Q9, device, dtype)
     flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
-    collision = BGKCollision(lattice, tau=0.55)
-    print(flow.units.relaxation_parameter_lu)
+    collision = BGKCollision(lattice, tau=0.6, F=torch.tensor([0.00001, 0.00005]))
+    forcing = guo(lattice, tau=0.6, F=torch.tensor([0.00001, 0.00005]))
     streaming = StandardStreaming(lattice)
     a = np.zeros((resolution, resolution*2), dtype=bool)
     #a[:, 1] = True
@@ -111,7 +112,7 @@ def channelflow(ctx, steps, resolution, profile_out):
     a[80:120,80:120] = True
     #a = bytes(a.any())
     boundary = BounceBackBoundary(mask=a, lattice=lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, forcing=forcing, streaming=streaming, boundary=boundary)
     mlups = simulation.step(num_steps=steps)
 
 #    x = flow.grid()

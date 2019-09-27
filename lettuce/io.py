@@ -43,7 +43,7 @@ def write_vtk(filename, resolution, field_data_u, field_data_q, id):
     data_1[:, :, 0] = u[:, :, 0]
     data_2[:, :, 0] = u[:, :, 1]
 
-    gridToVTK("/Volumes/IMSD2012/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
+    gridToVTK("/Users/mariobedrunka/Downloads/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
               np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2, "rho": q})
 
     #raise NotImplementedError

@@ -6,14 +6,15 @@ from lettuce.equilibrium import QuadraticEquilibrium
 
 
 class BGKCollision:
-    def __init__(self, lattice, tau):
+    def __init__(self, lattice, tau, F):
         self.lattice = lattice
         self.tau = tau
-
+        self.F = F
     def __call__(self, f):
         rho = self.lattice.rho(f)
         #u = self.lattice.u(f)
-        u = self.lattice.u_fs_guo(f)
+        u = self.lattice.u_guo(f, self.F)
+        #u = self.lattice.u_fs_guo(f)
         feq = self.lattice.equilibrium(rho, u)
         f = f - 1.0/self.tau * (f-feq)
         return f

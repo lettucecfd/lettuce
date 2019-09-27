@@ -40,6 +40,10 @@ class Lattice:
     def Q(self):
         return self.stencil.e.shape[0]
 
+    @property
+    def TE(self):
+        return self.stencil.e.shape[0]
+
     def convert_to_tensor(self, array):
         try:
             array = np.moveaxis(array, 0, self.field_index)
@@ -67,17 +71,20 @@ class Lattice:
         """velocity"""
         return self.j(f) / self.rho(f)
 
-    def u_fs_guo(self, f):
+    def u_guo(self, f, F):
         """velocity related to forcing scheme Guo et al."""
         force = np.zeros([2, 200, 400])
         force[1,:,:] = 0.001
-        #test = self.j(f) / self.rho(f) + .5 * (self.stencil.e[0,:]*0.01+self.stencil.e[1,:]*0.0) / self.rho(f)
-        #print(self.j(f).shape)
-        #force = 0.5 * self.convert_to_tensor(self.stencil.e[0, :]) * 0.01 / self.rho(f)
-        #print(self.stencil.e.shape)
-        uu= self.j(f) / self.rho(f) + 0.5 * self.convert_to_tensor(force) / self.rho(f)
-       # print(force.shape)
-        return uu
+
+        first = self.j(f) / self.rho(f)
+
+
+        #Form = torch.ones([self.D, f.shape[1], f.shape[2]])
+        Form = torch.ones([2,200,400])
+        FF = self.einsum("a,a->a", [Form, F])
+        #q = self.rho(f)
+        second = 0.5 * FF / self.rho(f)
+        return first + second
 
     def field(self, index=None):
         """Generate indices for multidimensional fields.

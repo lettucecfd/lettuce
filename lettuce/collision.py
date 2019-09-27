@@ -12,7 +12,7 @@ class BGKCollision:
     def __call__(self, f):
         rho = self.lattice.rho(f)
         #u = self.lattice.u(f)
-        u = self.lattice.u(f, self.F)
+        u = self.lattice.u(f)
         #u = self.lattice.u_fs_guo(f)
         feq = self.lattice.equilibrium(rho, u)
         f = f - 1.0/self.tau * (f-feq)

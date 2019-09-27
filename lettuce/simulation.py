@@ -10,11 +10,10 @@ import torch
 
 class Simulation:
     """High-level API for simulations."""
-    def __init__(self, flow, lattice, collision, forcing, streaming, boundary):
+    def __init__(self, flow, lattice, collision, streaming, boundary=None):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
-        self.forcing = forcing
         self.streaming = streaming
         self.boundary = boundary
         self.i = 0
@@ -41,13 +40,12 @@ class Simulation:
         for i in range(num_steps):
             self.i += 1
             self.f = self.streaming(self.f)
-            #temp = self.forcing(self.f)
-            self.f = self.collision(self.f) + self.forcing(self.f)
-            self.f = self.boundary(self.f)
+            self.f = self.collision(self.f)
+            if self.boundary is not None: self.f = self.boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
             if i % 50 == 0:
-                io.write_vtk("output_vtk", [self.flow.resolution*2, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), self.lattice.convert_to_numpy(self.collision.lattice.rho(self.f)), str(i))
+                #io.write_vtk("output_vtk", [self.flow.resolution*2, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), self.lattice.convert_to_numpy(self.collision.lattice.rho(self.f)), str(i))
                 print("running... ",i)
         end = timer()
         seconds = end-start

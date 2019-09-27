@@ -15,7 +15,7 @@ from lettuce import BGKCollision, BGKCollision_guo, MRTCollision, StandardStream
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
 from lettuce.flows import channel, couette
 from lettuce.boundary import BounceBackBoundary
-from lettuce.force import guo
+from lettuce.force import Guo
 
 @click.group()
 @click.version_option(version=lettuce.__version__)
@@ -82,7 +82,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     return 0
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=3001, help="Number of time steps.")
+@click.option("-s", "--steps", type=int, default=1, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
@@ -96,29 +96,16 @@ def channelflow(ctx, steps, resolution, profile_out):
 
     # setup and run simulation
     device, dtype, aos = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['aos']
-    if aos:
-        lattice = LatticeAoS(D2Q9, device, dtype)
-    else:
-        lattice = Lattice(D2Q9, device, dtype)
-    flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
-    Kraft = torch.tensor([0.00001, 0.00005],device=lattice.device,dtype=lattice.dtype)
-    collision = BGKCollision_guo(lattice, tau=0.6, F=Kraft)
-    forcing = guo(lattice, tau=0.6, F=torch.tensor([0.00001, 0.00005]))
-    streaming = StandardStreaming(lattice)
-    a = np.zeros((resolution, resolution*2), dtype=bool)
-    #a[:, 1] = True
-    #a[:, -1] = True
-    a[1, :] = True
-    a[-1, :] = True
-    a[80:120,80:120] = True
-    #a = bytes(a.any())
-    boundary = BounceBackBoundary(mask=a, lattice=lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, forcing=forcing, streaming=streaming, boundary=boundary)
-    mlups = simulation.step(num_steps=steps)
+    lattice = Lattice(D2Q9, device, dtype)
 
-#    x = flow.grid()
- #   nx = x[:,1]
-    #print(simulation.p)
+    flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
+    force= Guo(lattice, tau=0.6, F=flow.F)
+
+    collision = BGKCollision_guo(lattice, tau=0.6, force=force)
+    streaming = StandardStreaming(lattice)
+    boundary = BounceBackBoundary(mask=flow.bc, lattice=lattice)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
+    mlups = simulation.step(num_steps=steps)
 
     # write profiling output
     profile.disable()

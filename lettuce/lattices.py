@@ -71,19 +71,13 @@ class Lattice:
         """velocity"""
         return self.j(f) / self.rho(f)
 
-    def u_guo(self, f, F):
+    def u_force(self, f, force=None):
         """velocity related to forcing scheme Guo et al."""
-        force = np.zeros([2, 200, 400])
-        force[1,:,:] = 0.001
-
         first = self.j(f) / self.rho(f)
-
-
-        #Form = torch.ones([self.D, f.shape[1], f.shape[2]])
-        Form = torch.ones([2,200,400])
-        FF = self.einsum("a,a->a", [Form, F])
-        #q = self.rho(f)
-        second = 0.5 * FF / self.rho(f)
+        if force is not None:
+            second = force.A * self.einsum("a,a->a", [torch.ones([2,200,400]), force.F]) / self.rho(f)
+        else:
+            second = 0
         return first + second
 
     def field(self, index=None):

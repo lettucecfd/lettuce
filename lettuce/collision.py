@@ -3,6 +3,7 @@ Collision models
 """
 
 from lettuce.equilibrium import QuadraticEquilibrium
+import torch
 
 
 class BGKCollision:
@@ -11,26 +12,28 @@ class BGKCollision:
         self.tau = tau
     def __call__(self, f):
         rho = self.lattice.rho(f)
-        #u = self.lattice.u(f)
         u = self.lattice.u(f)
-        #u = self.lattice.u_fs_guo(f)
         feq = self.lattice.equilibrium(rho, u)
         f = f - 1.0/self.tau * (f-feq)
         return f
 
 class BGKCollision_guo:
-    def __init__(self, lattice, tau, F):
+    def __init__(self, lattice, tau, force=None):
+        self.force = force
         self.lattice = lattice
         self.tau = tau
-        self.F = F
     def __call__(self, f):
         rho = self.lattice.rho(f)
-        #u = self.lattice.u(f)
-        u = self.lattice.u_guo(f, self.F)
-        #u = self.lattice.u_fs_guo(f)
+        u = self.lattice.u_force(f, force=self.force)
         feq = self.lattice.equilibrium(rho, u)
-        f = f - 1.0/self.tau * (f-feq)
-        return f
+
+        #Is there a shorthand syntax or a cleaner way to to this?
+        if self.force is not None:
+            Si = self.force(f, u)
+        else:
+            Si = 0
+
+        return f - 1.0/self.tau * (f-feq) + Si
 
 
 class MRTCollision:

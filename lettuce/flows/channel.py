@@ -3,6 +3,7 @@ Cannel flows in 2D.
 """
 
 import numpy as np
+import torch
 
 from lettuce.unit import UnitConversion
 
@@ -25,6 +26,19 @@ class ChannelFlow2D(object):
 
     def initial_solution(self, x):
         return self.analytic_solution(x, t=0)
+
+    @property
+    def bc(self):
+        bc = np.zeros((self.resolution, self.resolution*2), dtype=bool)
+        bc[1, :] = True
+        bc[-1, :] = True
+        bc[80:120, 80:120] = True
+        return bc
+
+    @property
+    def F(self):
+        F = torch.tensor([0.00001, 0.00005]) #, device=lattice.device, dtype=lattice.dtype
+        return F
 
     @property
     def grid(self):

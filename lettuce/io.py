@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import torch
 from pyevtk.hl import *
+#import pyevtk.hl as vtk
 from matplotlib import pyplot as plt
 
 def write_image(filename, array2d):

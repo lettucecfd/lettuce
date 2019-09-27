@@ -82,7 +82,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     return 0
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=1, help="Number of time steps.")
+@click.option("-s", "--steps", type=int, default=2001, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")

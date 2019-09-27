@@ -29,6 +29,7 @@ class ChannelFlow2D(object):
 
     @property
     def bc(self):
+        # Boundary Conditions
         bc = np.zeros((self.resolution, self.resolution*2), dtype=bool)
         bc[1, :] = True
         bc[-1, :] = True

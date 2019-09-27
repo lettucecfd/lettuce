@@ -11,7 +11,7 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, MRTCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
+from lettuce import BGKCollision, BGKCollision_guo, MRTCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
 from lettuce.flows import channel, couette
 from lettuce.boundary import BounceBackBoundary
@@ -102,7 +102,7 @@ def channelflow(ctx, steps, resolution, profile_out):
         lattice = Lattice(D2Q9, device, dtype)
     flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
     Kraft = torch.tensor([0.00001, 0.00005],device=lattice.device,dtype=lattice.dtype)
-    collision = BGKCollision(lattice, tau=0.6, F=Kraft)
+    collision = BGKCollision_guo(lattice, tau=0.6, F=Kraft)
     forcing = guo(lattice, tau=0.6, F=torch.tensor([0.00001, 0.00005]))
     streaming = StandardStreaming(lattice)
     a = np.zeros((resolution, resolution*2), dtype=bool)

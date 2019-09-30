@@ -41,13 +41,13 @@ def write_vtk(filename, resolution, field_data, id, uu, pp):
     u = field_data.astype('float64')
     u = np.transpose(u, (2, 1, 0))
 
+    q = pp.astype('float64')
+    q = np.transpose(q, (2, 1, 0))
+
     print(id)
 
-    data_1[:, :, 0] = u[:, :, 0]
-    data_2[:, :, 0] = u[:, :, 1]
-
-    vtk.gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + "output_grid_" + id, np.arange(0, 1024), np.arange(0, 1024),
-              np.arange(0, 1024), pointData={"ux": data_1, "uy": data_2})
+    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + "output_grid_" + id, np.arange(0, 1024), np.arange(0, 1024),
+              np.arange(0, 1024), pointData={"ux": data_1, "uy": data_2, "rho": q})
 
     #raise NotImplementedError
 class VTKReporter:
@@ -70,7 +70,7 @@ class VTKReporter:
 
             resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.D)
 
-            write_vtk("output_vtk", resolution, self.lattice.convert_to_numpy(self.lattice.u(f)), str(t), u, p)
+            write_vtk("output_vtk", resolution, self.lattice.convert_to_numpy(self.lattice.u(f)), str(t), self.lattice.convert_to_numpy(u), self.lattice.convert_to_numpy(p))
 
             #write_vtk("output_vtk", [self.flow.resolution * 2, self.flow.resolution, 1],
             #             self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)),

@@ -1,7 +1,7 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, io
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
 import pickle
 import copy
 import warnings

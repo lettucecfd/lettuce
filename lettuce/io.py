@@ -9,7 +9,8 @@ import sys
 import logging
 import numpy as np
 import torch
-from pyevtk.hl import *
+#from pyevtk.hl import *
+import pyevtk.hl as vtk
 from matplotlib import pyplot as plt
 
 def write_image(filename, array2d):
@@ -27,10 +28,11 @@ def write_png(filename, array2d):
     pass
 
 
-def write_vtk(filename, resolution, field_data, id):
+def write_vtk(filename, resolution, field_data, id, uu, pp):
     # https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python
     # https://anaconda.org/e3sm/evtk
     # https://pypi.org/project/pyevtk/
+    a=1
     #data_1 = np.zeros((resolution[0], resolution[1], resolution[2]))
     #data_2 = np.zeros((resolution[0], resolution[1], resolution[2]))
     data_1 = np.zeros((1024, 1024, 1))
@@ -44,8 +46,8 @@ def write_vtk(filename, resolution, field_data, id):
     data_1[:, :, 0] = u[:, :, 0]
     data_2[:, :, 0] = u[:, :, 1]
 
-    gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
-              np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2})
+    vtk.gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + "output_grid_" + id, np.arange(0, 1024), np.arange(0, 1024),
+              np.arange(0, 1024), pointData={"ux": data_1, "uy": data_2})
 
     #raise NotImplementedError
 class VTKReporter:
@@ -68,9 +70,11 @@ class VTKReporter:
 
             resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.D)
 
-            write_vtk("output_vtk", [resolution, resolution, 1],self.lattice.convert_to_numpy(self.lattice.u(f)), str(t))
+            write_vtk("output_vtk", resolution, self.lattice.convert_to_numpy(self.lattice.u(f)), str(t), u, p)
 
-
+            #write_vtk("output_vtk", [self.flow.resolution * 2, self.flow.resolution, 1],
+            #             self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)),
+            #             self.lattice.convert_to_numpy(self.collision.lattice.rho(self.f)), str(i))
 
 
 class ErrorReporter:

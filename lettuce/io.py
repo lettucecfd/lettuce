@@ -9,8 +9,10 @@ import sys
 import logging
 import numpy as np
 import torch
-from pyevtk.hl import *
-#import pyevtk.hl as vtk
+#from pyevtk.hl import *
+import pyevtk.hl as vtk
+import pyevtk.vtk as VTKGroup
+
 from matplotlib import pyplot as plt
 
 def write_image(filename, array2d):
@@ -28,26 +30,32 @@ def write_png(filename, array2d):
     pass
 
 
-def write_vtk(filename, resolution, field_data_u, field_data_q, id):
-    # https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python
-    # https://anaconda.org/e3sm/evtk
-    # https://pypi.org/project/pyevtk/
-    data_1 = np.zeros((resolution[0], resolution[1], resolution[2]))
-    data_2 = np.zeros((resolution[0], resolution[1], resolution[2]))
-
-    u = field_data_u.astype('float64')
+def write_vtk(filename, res, u, p, t):
     u = np.transpose(u, (2, 1, 0))
+    ux = np.zeros((res[0], res[1], res[2]))
+    ux[:, :, 0] = u[:, :, 0]
+    uy = np.zeros((res[0], res[1], res[2]))
+    uy[:, :, 0] = u[:, :, 1]
+    p = np.transpose(p, (2, 1, 0))
 
-    q = field_data_q.astype('float64')
-    q = np.transpose(q, (2, 1, 0))
+    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + filename + "_" + str(t), np.arange(0, res[0]), np.arange(0, res[1]),
+              np.arange(0, res[2]), pointData={"ux": ux, "uy": uy, "p": p})
 
-    data_1[:, :, 0] = u[:, :, 0]
-    data_2[:, :, 0] = u[:, :, 1]
+class VTKReporter:
+    """General VTK Reporter for velocity and pressure"""
+    def __init__(self, lattice, flow, filename, interval=50):
+        self.lattice = lattice
+        self.flow = flow
+        self.interval = interval
+        self.filename = filename
 
-    gridToVTK("/Users/mariobedrunka/Downloads/data/" + "output_grid_" + id, np.arange(0, resolution[0]), np.arange(0, resolution[1]),
-              np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2, "rho": q})
-
-    #raise NotImplementedError
+    def __call__(self, i, t, f):
+        if t % self.interval == 0:
+            t = self.flow.units.convert_time_to_pu(t)
+            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+            write_vtk(self.filename, self.flow.res,
+                      self.lattice.convert_to_numpy(u), self.lattice.convert_to_numpy(p), t)
 
 
 class ErrorReporter:

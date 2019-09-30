@@ -12,7 +12,7 @@ import numpy as np
 
 import lettuce
 from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
-from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
+from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 
 
 @click.group()
@@ -64,6 +64,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    simulation.reporters.append(VTKReporter(lattice, flow, interval=1))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

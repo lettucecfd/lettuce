@@ -42,9 +42,9 @@ class Simulation:
             self.f = self.collision(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
-            if i % 10 == 0:
-                io.write_vtk("output_vtk", [self.flow.resolution, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
-                print(i)
+            #if i % 10 == 0:
+            #    io.write_vtk("output_vtk", [self.flow.resolution, self.flow.resolution, 1], self.lattice.convert_to_numpy(self.collision.lattice.u(self.f)), str(i))
+
         end = timer()
         seconds = end-start
         num_grid_points = self.lattice.rho(self.f).numel()

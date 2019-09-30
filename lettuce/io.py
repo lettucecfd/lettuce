@@ -31,12 +31,15 @@ def write_vtk(filename, resolution, field_data, id):
     # https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python
     # https://anaconda.org/e3sm/evtk
     # https://pypi.org/project/pyevtk/
-    data_1 = np.zeros((resolution[0], resolution[1], resolution[2]))
-    data_2 = np.zeros((resolution[0], resolution[1], resolution[2]))
+    #data_1 = np.zeros((resolution[0], resolution[1], resolution[2]))
+    #data_2 = np.zeros((resolution[0], resolution[1], resolution[2]))
+    data_1 = np.zeros((1024, 1024, 1))
+    data_2 = np.zeros((1024, 1024, 1))
 
     u = field_data.astype('float64')
     u = np.transpose(u, (2, 1, 0))
 
+    print(id)
 
     data_1[:, :, 0] = u[:, :, 0]
     data_2[:, :, 0] = u[:, :, 1]
@@ -45,6 +48,29 @@ def write_vtk(filename, resolution, field_data, id):
               np.arange(0, resolution[2]), pointData={"ux": data_1, "uy": data_2})
 
     #raise NotImplementedError
+class VTKReporter:
+    """General VTK Reporter for velocity and pressure"""
+    def __init__(self, lattice, flow, interval=50):
+        assert hasattr(flow, "analytic_solution")
+        self.lattice = lattice
+        self.flow = flow
+        self.interval = interval
+
+
+    def __call__(self, i, t, f):
+        if t % self.interval == 0:
+            t = self.flow.units.convert_time_to_pu(t)
+            #pref, uref = self.flow.analytic_solution(self.flow.grid, t=t)
+            #pref = self.lattice.convert_to_tensor(pref)
+            #uref = self.lattice.convert_to_tensor(uref)
+            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+
+            resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.D)
+
+            write_vtk("output_vtk", [resolution, resolution, 1],self.lattice.convert_to_numpy(self.lattice.u(f)), str(t))
+
+
 
 
 class ErrorReporter:

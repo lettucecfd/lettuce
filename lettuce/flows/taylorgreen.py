@@ -37,11 +37,6 @@ class TaylorGreenVortex2D:
     def boundaries(self):
         return []
 
-    @property
-    def res(self):
-        res = np.array([self.resolution, self.resolution, 1])
-        return res
-
 
 
 class TaylorGreenVortex3D:

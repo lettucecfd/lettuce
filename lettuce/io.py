@@ -30,16 +30,14 @@ def write_png(filename, array2d):
     pass
 
 
-def write_vtk(filename, res, u, p, t):
-    u = np.transpose(u, (2, 1, 0))
-    ux = np.zeros((res[0], res[1], res[2]))
-    ux[:, :, 0] = u[:, :, 0]
-    uy = np.zeros((res[0], res[1], res[2]))
-    uy[:, :, 0] = u[:, :, 1]
-    p = np.transpose(p, (2, 1, 0))
-    print(t)
-    vtk.gridToVTK("/Volumes/IMSD2012/" + filename + "_" + t.replace('.',','), np.arange(0, res[0]), np.arange(0, res[1]),
-              np.arange(0, res[2]), pointData={"ux": ux, "uy": uy, "p": p})
+#def write_vtk(filename, res, ux, uy, p, t):
+def write_vtk(filename, point_dict, id):
+
+    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + filename + "_" + str(id),
+                  np.arange(0, point_dict["p"].shape[0]),
+                  np.arange(0, point_dict["p"].shape[1]),
+                  np.arange(0, point_dict["p"].shape[2]),
+                  pointData=point_dict)
 
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
@@ -48,15 +46,17 @@ class VTKReporter:
         self.flow = flow
         self.interval = interval
         self.filename = filename
+        self.point_dict = dict()
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
             t = self.flow.units.convert_time_to_pu(t)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
-            write_vtk(self.filename, self.flow.res,
-                      self.lattice.convert_to_numpy(u), self.lattice.convert_to_numpy(p), str(i))
-
+            self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
+            for i in range(self.lattice.D):
+                self.point_dict[f"u{'xyz'[i]}"] = self.lattice.convert_to_numpy(u[i, ..., None])
+            write_vtk(self.filename, self.point_dict, i)
 
 class ErrorReporter:
     """Reports numerical errors with respect to analytic solution."""

@@ -106,7 +106,7 @@ def channelflow(ctx, steps, resolution, profile_out):
     streaming = StandardStreaming(lattice)
     boundary = BounceBackBoundary(mask=flow.bc, lattice=lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="data", interval=25))
+    simulation.reporters.append(VTKReporter(lattice, flow, filename="data_channelflow", interval=25))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

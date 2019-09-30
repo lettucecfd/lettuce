@@ -12,7 +12,7 @@ import numpy as np
 
 import lettuce
 from lettuce import BGKCollision, BGKCollision_guo, MRTCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
-from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
+from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import channel, couette
 from lettuce.boundary import BounceBackBoundary
 from lettuce.force import Guo
@@ -66,7 +66,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data", interval=1))
+    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data", interval=100))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
@@ -83,7 +83,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     return 0
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=2001, help="Number of time steps.")
+@click.option("-s", "--steps", type=int, default=3001, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
@@ -106,6 +106,7 @@ def channelflow(ctx, steps, resolution, profile_out):
     streaming = StandardStreaming(lattice)
     boundary = BounceBackBoundary(mask=flow.bc, lattice=lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
+    simulation.reporters.append(VTKReporter(lattice, flow, filename="data", interval=25))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

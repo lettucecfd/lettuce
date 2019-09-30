@@ -51,3 +51,8 @@ class ChannelFlow2D(object):
     def boundaries(self):
         print('test')
         return []
+
+    @property
+    def res(self):
+        res = np.array([self.resolution*2, self.resolution, 1])
+        return res

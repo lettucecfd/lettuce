@@ -37,13 +37,13 @@ def write_vtk(filename, res, u, p, t):
     uy = np.zeros((res[0], res[1], res[2]))
     uy[:, :, 0] = u[:, :, 1]
     p = np.transpose(p, (2, 1, 0))
-
-    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + filename + "_" + str(t), np.arange(0, res[0]), np.arange(0, res[1]),
+    print(t)
+    vtk.gridToVTK("/Volumes/IMSD2012/" + filename + "_" + t.replace('.',','), np.arange(0, res[0]), np.arange(0, res[1]),
               np.arange(0, res[2]), pointData={"ux": ux, "uy": uy, "p": p})
 
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
-    def __init__(self, lattice, flow, filename, interval=50):
+    def __init__(self, lattice, flow, filename, interval):
         self.lattice = lattice
         self.flow = flow
         self.interval = interval
@@ -55,7 +55,7 @@ class VTKReporter:
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
             write_vtk(self.filename, self.flow.res,
-                      self.lattice.convert_to_numpy(u), self.lattice.convert_to_numpy(p), t)
+                      self.lattice.convert_to_numpy(u), self.lattice.convert_to_numpy(p), str(i))
 
 
 class ErrorReporter:

@@ -74,10 +74,9 @@ class Lattice:
     def u_force(self, f, force=None):
         """velocity related to forcing scheme Guo et al."""
         first = self.j(f) / self.rho(f)
-        if force is not None:
-            second = force.A * self.einsum("a,a->a", [torch.ones([2,200,400]), force.F]) / self.rho(f)
-        else:
-            second = 0
+        second = 0 if force is None else \
+            force[0] * self.einsum("a,a->a", [torch.ones(f[0:2].shape), force[1]]) / self.rho(f)
+
         return first + second
 
     def field(self, index=None):

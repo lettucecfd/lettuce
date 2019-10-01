@@ -9,7 +9,7 @@ from lettuce.unit import UnitConversion
 
 
 class ChannelFlow2D(object):
-    def __init__(self, resolution, reynolds_number, lattice):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution
         self.units = UnitConversion(
             lattice,
@@ -27,32 +27,22 @@ class ChannelFlow2D(object):
     def initial_solution(self, x):
         return self.analytic_solution(x, t=0)
 
-    @property
-    def bc(self):
-        # Boundary Conditions
-        bc = np.zeros((self.resolution, self.resolution*2), dtype=bool)
-        bc[1, :] = True
-        bc[-1, :] = True
-        bc[80:120, 80:120] = True
-        return bc
 
     @property
     def F(self):
-        F = torch.tensor([0.00001, 0.00005]) #, device=lattice.device, dtype=lattice.dtype
+        F = torch.tensor([0.00005, 0.0]) #, device=lattice.device, dtype=lattice.dtype
         return F
 
     @property
     def grid(self):
-        x = np.arange(self.resolution*2)
-        y = np.arange(self.resolution)
-        return np.meshgrid(x, y)
+        x = np.arange(500)
+        y = np.arange(60)
+        #z = 1
+        return np.meshgrid(x, y, indexing='ij')
 
     @property
     def boundaries(self):
-        print('test')
-        return []
-
-    @property
-    def res(self):
-        res = np.array([self.resolution*2, self.resolution, 1])
-        return res
+        boundaries = np.zeros(self.grid[0].shape, dtype=bool)
+        boundaries[:, [0,-1]] = True
+        boundaries[80:120, 10:50] = True
+        return boundaries

@@ -33,7 +33,7 @@ def write_png(filename, array2d):
 #def write_vtk(filename, res, ux, uy, p, t):
 def write_vtk(filename, point_dict, id):
 
-    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + filename + "_" + str(id),
+    vtk.gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + filename + "_" + str(id),
                   np.arange(0, point_dict["p"].shape[0]),
                   np.arange(0, point_dict["p"].shape[1]),
                   np.arange(0, point_dict["p"].shape[2]),

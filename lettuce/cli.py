@@ -11,9 +11,9 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, BGKCollision_guo, MRTCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
+from lettuce import BGKCollision, MRTCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
-from lettuce.flows import channel, couette
+from lettuce.flows import channel, couette, flow_by_name
 from lettuce.boundary import BounceBackBoundary
 from lettuce.force import Guo
 
@@ -44,12 +44,13 @@ def main(ctx, cuda, gpu_id, precision, aos):
 
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=10, help="Number of time steps.")
-@click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
+@click.option("-s", "--steps", type=int, default=200, help="Number of time steps.")
+@click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
+@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="TCF2D")
 @click.pass_context  # pass parameters to sub-commands
-def benchmark(ctx, steps, resolution, profile_out):
+def benchmark(ctx, steps, resolution, profile_out, flow):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
@@ -62,51 +63,16 @@ def benchmark(ctx, steps, resolution, profile_out):
         lattice = LatticeAoS(D2Q9, device, dtype)
     else:
         lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+
+    flow_class = flow_by_name(flow)
+    flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
+    force = Guo(lattice, tau=0.6, F=flow.F)
+    collision = BGKCollision(lattice, tau=0.6, force=force)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data", interval=100))
-    mlups = simulation.step(num_steps=steps)
-
-    # write profiling output
-    profile.disable()
-    if profile_out:
-        stats = pstats.Stats(profile)
-        stats.sort_stats('cumulative')
-        stats.print_stats()
-        profile.dump_stats(profile_out)
-        click.echo(f"Saved profiling information to {profile_out}.")
-
-    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
-        steps, str(dtype).replace("torch.float",""), mlups))
-    return 0
-
-@main.command()
-@click.option("-s", "--steps", type=int, default=3001, help="Number of time steps.")
-@click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
-@click.option("-o", "--profile-out", type=str, default="",
-              help="File to write profiling information to (default=""; no profiling information gets written).")
-@click.pass_context  # pass parameters to sub-commands
-def channelflow(ctx, steps, resolution, profile_out):
-    """Run a short simulation and print performance in MLUPS.
-    """
-    # start profiling
-    profile = cProfile.Profile()
-    profile.enable()
-
-    # setup and run simulation
-    device, dtype, aos = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['aos']
-    lattice = Lattice(D2Q9, device, dtype)
-
-    flow = channel.ChannelFlow2D(resolution=resolution, reynolds_number=1, lattice=lattice)
-    force= Guo(lattice, tau=0.6, F=flow.F)
-
-    collision = BGKCollision_guo(lattice, tau=0.6, force=force)
-    streaming = StandardStreaming(lattice)
-    boundary = BounceBackBoundary(mask=flow.bc, lattice=lattice)
+    boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="data_channelflow", interval=25))
+    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data_bench", interval=100))
+
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
@@ -161,7 +127,12 @@ def convergence(ctx):
             resolution, error_u, factor_u/2, error_p, factor_p/2))
     return 0
 
+def flow_by_namee():
+    FlowDictorary = {
+        "TGV2D": TaylorGreenVortex2D,
+        "TCF2D": ChannelFlow2D}
+    return FlowDictorary
+
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
-

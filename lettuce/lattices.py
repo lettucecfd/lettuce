@@ -67,6 +67,25 @@ class Lattice:
         """velocity"""
         return self.j(f) / self.rho(f)
 
+    def energy(self, f):
+        """kinetic energy"""
+        return self.einsum("d,d->", [self.u(f),self.u(f)])
+
+    def entropy(self, f):
+        """entropy according to the H-theorem"""
+        f_log = -torch.log(self.einsum("q,q->q",[f,1/self.w]))
+        return self.einsum("q,q->", [f,f_log])
+
+    def pseudo_entropy_global(self,f):
+        """pseudo_entropy derived by a Taylor expansion around the weights"""
+        f_w = self.einsum("q,q->q", [f, 1 / self.w])
+        return self.rho(f) - self.einsum("q,q->", [f,f_w])
+
+    def pseudo_entropy_local(self,f):
+        """pseudo_entropy derived by a Taylor expansion around the local equilibrium"""
+        f_feq = f/self.equilibrium(self.rho(f),self.u(f))
+        return self.rho(f) - self.einsum("q,q->", [f,f_feq])
+
     def field(self, index=None):
         """Generate indices for multidimensional fields.
 

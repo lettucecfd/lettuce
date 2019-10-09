@@ -74,10 +74,14 @@ class EnergyReporter:
     def __call__(self, i, t, f):
         if t % self.interval == 0:
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
-            kinE= torch.sqrt(self.lattice.einsum("d,d->", [u,u])[self.lattice.field()])
-            nr_grid_points = self.lattice.rho(f).numel()
-            kinE=kinE.sum()/nr_grid_points
-            print(t, kinE.item())
+            dx = self.flow.units.convert_length_to_pu(1.0)
+
+            kinE=torch.sum(self.lattice.energy(f))
+            kinE*=dx**self.lattice.D
+            if isinstance(self.out, list):
+                self.out.append([t, kinE.item()])
+            else:
+                print(t, kinE.item(), file=self.out)
 
 
 

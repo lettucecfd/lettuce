@@ -2,11 +2,11 @@
 Collision models
 """
 
-from lettuce.equilibrium import QuadraticEquilibrium
-from lettuce.stencils import *
-from lettuce.util import LettuceException
-from lettuce.lattices import Lattice,LatticeAoS
 import torch
+
+from lettuce.equilibrium import QuadraticEquilibrium
+from lettuce.lattices import LatticeAoS
+from lettuce.util import LettuceException
 
 
 class BGKCollision:
@@ -18,7 +18,7 @@ class BGKCollision:
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        f = f - 1.0/self.tau * (f-feq)
+        f = f - 1.0 / self.tau * (f - feq)
         return f
 
 
@@ -28,6 +28,7 @@ class MRTCollision:
     This is an MRT operator in the most general sense of the word.
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
+
     def __init__(self, lattice, transform, relaxation_parameters):
         self.lattice = lattice
         self.transform = transform
@@ -36,8 +37,29 @@ class MRTCollision:
     def __call__(self, f):
         m = self.transform.transform(f)
         meq = self.transform.equilibrium(m)
-        m = m - self.lattice.einsum("q,q->q", [1/self.relaxation_parameters, m-meq])
+        m = m - self.lattice.einsum("q,q->q", [1 / self.relaxation_parameters, m - meq])
         f = self.transform.inverse_transform(m)
+        return f
+
+
+class TRTCollision:
+    """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
+        """
+
+    def __init__(self, lattice, tau, tau_minus=1.0):
+        self.lattice = lattice
+        self.tau_plus = tau
+        self.tau_minus = tau_minus
+
+    def __call__(self, f):
+        rho = self.lattice.rho(f)
+        u = self.lattice.u(f)
+        feq = self.lattice.equilibrium(rho, u)
+        f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
+                2.0 * self.tau_plus)
+        f_diff_neq += ((f - f[self.lattice.stencil.opposite]) - (feq - feq[self.lattice.stencil.opposite])) / (
+                2.0 * self.tau_minus)
+        f = f - f_diff_neq
         return f
 
 
@@ -49,9 +71,9 @@ class KBCCollision:
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
-        ##Build a matrix that contains the indices
+        # Build a matrix that contains the indices
         self.M = torch.zeros([3, 3, 3, 27], device=lattice.device, dtype=lattice.dtype)
-        if isinstance(lattice,LatticeAoS):
+        if isinstance(lattice, LatticeAoS):
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
@@ -60,93 +82,71 @@ class KBCCollision:
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        self.M[i, j, k] = lattice.e[:,0] ** i * lattice.e[:,1] ** j * lattice.e[:,2] ** k
+                        self.M[i, j, k] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j * lattice.e[:, 2] ** k
 
-    def kbc_moment_transform(self,f):
-        if isinstance(self.lattice,LatticeAoS):
+    def kbc_moment_transform(self, f):
+        if isinstance(self.lattice, LatticeAoS):
             m = torch.einsum('abcq,mnoq', self.M, f)
         else:
             m = torch.einsum('abcq,qmno', self.M, f)
-        rho = m[0,0,0]
+        rho = m[0, 0, 0]
         m /= rho
-        m[0,0,0]=rho
+        m[0, 0, 0] = rho
 
         return m
+
+    def compute_s_seq(self, f, m):
+        s = torch.zeros_like(f)
+
+        T = m[2, 0, 0] + m[0, 2, 0] + m[0, 0, 2]
+        N_xz = m[2, 0, 0] - m[0, 0, 2]
+        N_yz = m[0, 2, 0] - m[0, 0, 2]
+        Pi_xy = m[1, 1, 0]
+        Pi_xz = m[1, 0, 1]
+        Pi_yz = m[0, 1, 1]
+
+        s[self.lattice.field(0)] = m[0, 0, 0] * -T
+        s[self.lattice.field(1)] = 1. / 6. * m[0, 0, 0] * (2 * N_xz - N_yz + T)
+        s[self.lattice.field(2)] = s[self.lattice.field(1)]
+        s[self.lattice.field(3)] = 1. / 6. * m[0, 0, 0] * (2 * N_yz - N_xz + T)
+        s[self.lattice.field(4)] = s[self.lattice.field(3)]
+        s[self.lattice.field(5)] = 1. / 6. * m[0, 0, 0] * (-N_xz - N_yz + T)
+        s[self.lattice.field(6)] = s[self.lattice.field(5)]
+        s[self.lattice.field(7)] = 1. / 4 * m[0, 0, 0] * Pi_yz
+        s[self.lattice.field(8)] = s[self.lattice.field(7)]
+        s[self.lattice.field(9)] = - 1. / 4 * m[0, 0, 0] * Pi_yz
+        s[self.lattice.field(10)] = s[self.lattice.field(9)]
+        s[self.lattice.field(11)] = 1. / 4 * m[0, 0, 0] * Pi_xz
+        s[self.lattice.field(12)] = s[self.lattice.field(11)]
+        s[self.lattice.field(13)] = -1. / 4 * m[0, 0, 0] * Pi_xz
+        s[self.lattice.field(14)] = s[self.lattice.field(13)]
+        s[self.lattice.field(15)] = 1. / 4 * m[0, 0, 0] * Pi_xy
+        s[self.lattice.field(16)] = s[self.lattice.field(15)]
+        s[self.lattice.field(17)] = -1. / 4 * m[0, 0, 0] * Pi_xy
+        s[self.lattice.field(18)] = s[self.lattice.field(17)]
+
+        return s
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        m = self.kbc_moment_transform(f)
-
-        T = m[2, 0, 0] + m[0, 2, 0] + m[0, 0, 2]
-        N_xz = m[2, 0, 0] - m[0, 0, 2]
-        N_yz = m[0, 2, 0] - m[0, 0, 2]
-        Pi_xy = m[1, 1, 0]
-        Pi_xz = m[1, 0, 1]
-        Pi_yz = m[0, 1, 1]
-
         k = torch.zeros_like(f)
-        s = torch.zeros_like(f)
-        seq = torch.zeros_like(f)
 
-        k[self.lattice.field(0)] = m[0,0,0]
-        k[self.lattice.field(1)] = m[0,0,0] / 6. * (3. * m[1,0,0])
-        k[self.lattice.field(2)] = m[0,0,0] / 6. * (3. * -m[1,0,0])
-        k[self.lattice.field(3)] = m[0,0,0] / 6. * (3. * m[0,1,0])
-        k[self.lattice.field(4)] = m[0,0,0] / 6. * (3. * -m[0,1,0])
-        k[self.lattice.field(5)] = m[0,0,0] / 6. * (3. * m[0,0,1])
-        k[self.lattice.field(6)] = m[0,0,0] / 6. * (3. * -m[0,0,1])
+        m = self.kbc_moment_transform(f)
+        delta_s = self.compute_s_seq(f, m)
 
-        s[self.lattice.field(0)] = m[0,0,0] * -T
-        s[self.lattice.field(1)] = 1. / 6. * m[0,0,0] * (2 * N_xz - N_yz + T)
-        s[self.lattice.field(2)] = 1. / 6. * m[0,0,0] * (2 * N_xz - N_yz + T)
-        s[self.lattice.field(3)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
-        s[self.lattice.field(4)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
-        s[self.lattice.field(5)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
-        s[self.lattice.field(6)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
-        s[self.lattice.field(7)] = 1. / 4 * m[0,0,0] * Pi_yz
-        s[self.lattice.field(8)] = 1. / 4 * m[0,0,0] * Pi_yz
-        s[self.lattice.field(9)] = - 1. / 4 * m[0,0,0] * Pi_yz
-        s[self.lattice.field(10)] = -1. / 4 * m[0,0,0] * Pi_yz
-        s[self.lattice.field(11)] = 1. / 4 * m[0,0,0] * Pi_xz
-        s[self.lattice.field(12)] = 1. / 4 * m[0,0,0] * Pi_xz
-        s[self.lattice.field(13)] = -1. / 4 * m[0,0,0] * Pi_xz
-        s[self.lattice.field(14)] = -1. / 4 * m[0,0,0] * Pi_xz
-        s[self.lattice.field(15)] = 1. / 4 * m[0,0,0] * Pi_xy
-        s[self.lattice.field(16)] = 1. / 4 * m[0,0,0] * Pi_xy
-        s[self.lattice.field(17)] = -1. / 4 * m[0,0,0] * Pi_xy
-        s[self.lattice.field(18)] = -1. / 4 * m[0,0,0] * Pi_xy
+        k[self.lattice.field(0)] = m[0, 0, 0]
+        k[self.lattice.field(1)] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
+        k[self.lattice.field(2)] = -k[self.lattice.field(1)]
+        k[self.lattice.field(3)] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
+        k[self.lattice.field(4)] = -k[self.lattice.field(3)]
+        k[self.lattice.field(5)] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
+        k[self.lattice.field(6)] = -k[self.lattice.field(5)]
 
         m = self.kbc_moment_transform(feq)
-        T = m[2, 0, 0] + m[0, 2, 0] + m[0, 0, 2]
-        N_xz = m[2, 0, 0] - m[0, 0, 2]
-        N_yz = m[0, 2, 0] - m[0, 0, 2]
-        Pi_xy = m[1, 1, 0]
-        Pi_xz = m[1, 0, 1]
-        Pi_yz = m[0, 1, 1]
+        delta_s -= self.compute_s_seq(f, m)
 
-        seq[self.lattice.field(0)] = m[0,0,0] * -T
-        seq[self.lattice.field(1)] = 1. / 6. * m[0,0,0] * (2 * N_xz - N_yz + T)
-        seq[self.lattice.field(2)] = 1. / 6. * m[0,0,0] * (2 * N_xz - N_yz + T)
-        seq[self.lattice.field(3)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
-        seq[self.lattice.field(4)] = 1. / 6. * m[0,0,0] * (2 * N_yz - N_xz + T)
-        seq[self.lattice.field(5)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
-        seq[self.lattice.field(6)] = 1. / 6. * m[0,0,0] * (-N_xz - N_yz + T)
-        seq[self.lattice.field(7)] = 1. / 4 * m[0,0,0] * Pi_yz
-        seq[self.lattice.field(8)] = 1. / 4 * m[0,0,0] * Pi_yz
-        seq[self.lattice.field(9)] = - 1. / 4 * m[0,0,0] * Pi_yz
-        seq[self.lattice.field(10)] = -1. / 4 * m[0,0,0] * Pi_yz
-        seq[self.lattice.field(11)] = 1. / 4 * m[0,0,0] * Pi_xz
-        seq[self.lattice.field(12)] = 1. / 4 * m[0,0,0] * Pi_xz
-        seq[self.lattice.field(13)] = -1. / 4 * m[0,0,0] * Pi_xz
-        seq[self.lattice.field(14)] = -1. / 4 * m[0,0,0] * Pi_xz
-        seq[self.lattice.field(15)] = 1. / 4 * m[0,0,0] * Pi_xy
-        seq[self.lattice.field(16)] = 1. / 4 * m[0,0,0] * Pi_xy
-        seq[self.lattice.field(17)] = -1. / 4 * m[0,0,0] * Pi_xy
-        seq[self.lattice.field(18)] = -1. / 4 * m[0,0,0] * Pi_xy
-
-        delta_s = s - seq
         delta_h = f - feq - delta_s
 
         delta_seq = delta_s * delta_h / feq
@@ -164,6 +164,7 @@ class KBCCollision:
 
 class BGKInitialization:
     """Keep velocity constant."""
+
     def __init__(self, lattice, flow, moment_transformation):
         self.lattice = lattice
         self.tau = flow.units.relaxation_parameter_lu
@@ -180,8 +181,8 @@ class BGKInitialization:
         feq = self.equilibrium(rho, self.u)
         m = self.moment_transformation.transform(f)
         meq = self.moment_transformation.transform(feq)
-        mnew = m - 1.0/self.tau * (m-meq)
-        mnew[0] = m[0] - 1.0/(self.tau+1) * (m[0]-meq[0])
-        mnew[self.momentum_indices] = rho*self.u
+        mnew = m - 1.0 / self.tau * (m - meq)
+        mnew[0] = m[0] - 1.0 / (self.tau + 1) * (m[0] - meq[0])
+        mnew[self.momentum_indices] = rho * self.u
         f = self.moment_transformation.inverse_transform(mnew)
         return f

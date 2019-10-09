@@ -40,6 +40,8 @@ class Simulation:
             self.i += 1
             self.f = self.streaming(self.f)
             self.f = self.collision(self.f)
+            for boundary in self.flow.boundaries:
+                self.f = boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
         end = timer()

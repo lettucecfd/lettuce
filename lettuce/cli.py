@@ -64,7 +64,7 @@ def benchmark(ctx, steps, resolution, profile_out):
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data", interval=1))
+    simulation.reporters.append(VTKReporter(lattice, flow, interval=1, filename="new_data", filename_base="/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/"))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

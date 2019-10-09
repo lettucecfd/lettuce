@@ -31,21 +31,22 @@ def write_png(filename, array2d):
 
 
 #def write_vtk(filename, res, ux, uy, p, t):
-def write_vtk(filename, point_dict, id):
-
-    vtk.gridToVTK("/Users/mariobedrunka/Downloads/data/" + filename + "_" + str(id),
+def write_vtk(point_dict, id, filename_base="./data/", filename="output"):
+    vtk.gridToVTK(filename_base + filename + "_" + str(id),
                   np.arange(0, point_dict["p"].shape[0]),
                   np.arange(0, point_dict["p"].shape[1]),
                   np.arange(0, point_dict["p"].shape[2]),
                   pointData=point_dict)
+    #print(filename_base+filename + "_" + str(id) +".vtr")
 
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
-    def __init__(self, lattice, flow, filename, interval=50):
+    def __init__(self, lattice, flow, interval=50, filename="output", filename_base="./data/"):
         self.lattice = lattice
         self.flow = flow
         self.interval = interval
         self.filename = filename
+        self.filename_base = filename_base
         self.point_dict = dict()
 
     def __call__(self, i, t, f):
@@ -56,7 +57,7 @@ class VTKReporter:
             self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
             for d in range(self.lattice.D):
                 self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
-            write_vtk(self.filename, self.point_dict, i)
+            write_vtk(self.point_dict, i, self.filename_base, self.filename)
 
 class ErrorReporter:
     """Reports numerical errors with respect to analytic solution."""

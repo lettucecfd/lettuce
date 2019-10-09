@@ -48,7 +48,7 @@ def main(ctx, cuda, gpu_id, precision, aos):
 @click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
-@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="TCF2D")
+@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="TCF2D") #TGV2D; TCF2D
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile_out, flow):
     """Run a short simulation and print performance in MLUPS.
@@ -65,11 +65,12 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
         lattice = Lattice(D2Q9, device, dtype)
 
     flow_class = flow_by_name(flow)
+
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    force = Guo(lattice, tau=0.6, F=flow.F)
+    force = Guo(lattice, tau=0.6, F=flow.F) if hasattr(flow, "F") else None
+    boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice) if hasattr(flow, "boundaries") else None
     collision = BGKCollision(lattice, tau=0.6, force=force)
     streaming = StandardStreaming(lattice)
-    boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
     simulation.reporters.append(VTKReporter(lattice, flow, filename="Data_bench", interval=100))
 
@@ -126,13 +127,6 @@ def convergence(ctx):
         print("{:15} {:15.2e} {:15.1f} {:15.2e} {:15.1f}".format(
             resolution, error_u, factor_u/2, error_p, factor_p/2))
     return 0
-
-def flow_by_namee():
-    FlowDictorary = {
-        "TGV2D": TaylorGreenVortex2D,
-        "TCF2D": ChannelFlow2D}
-    return FlowDictorary
-
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover

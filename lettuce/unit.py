@@ -22,6 +22,7 @@ class UnitConversion:
         self.mach_number = mach_number
         self.characteristic_length_pu = characteristic_length_pu
         self.characteristic_velocity_pu = characteristic_velocity_pu
+        #self.characteristic_force.pu =
         self.characteristic_length_lu = characteristic_length_lu
         self.characteristic_density_lu = characteristic_density_lu
         self.characteristic_density_pu = characteristic_density_pu
@@ -56,6 +57,12 @@ class UnitConversion:
 
     def convert_velocity_to_lu(self, velocity_in_pu):
         return velocity_in_pu / self.characteristic_velocity_pu * self.characteristic_velocity_lu
+
+    def convert_force_to_pu(self, force_in_lu):
+        return force_in_lu / self.characteristic_force_lu * self.characteristic_force_pu
+
+    def convert_force_to_lu(self, force_in_pu):
+        return force_in_pu / self.characteristic_force_pu * self.characteristic_force_lu
 
     def convert_coordinates_to_pu(self, coordinates_in_lu):
         return (coordinates_in_lu / self.characteristic_length_lu * self.characteristic_length_pu) + self.origin_pu

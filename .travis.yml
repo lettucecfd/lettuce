@@ -15,8 +15,8 @@ script:
   # run unit tests
   - tox
   # run integration tests
-  - lettuce --no-cuda --precision single convergence
-  - lettuce --no-cuda --precision single benchmark
+  - lettuce --no-cuda convergence
+  - lettuce --no-cuda benchmark
 
 
 

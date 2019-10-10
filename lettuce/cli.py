@@ -19,7 +19,7 @@ from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
 @click.version_option(version=lettuce.__version__)
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
 @click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
-@click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="single",
+@click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="double",
               help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
 @click.pass_context  # pass parameters to sub-commands
 def main(ctx, cuda, gpu_id, precision):

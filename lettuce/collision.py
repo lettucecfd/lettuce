@@ -95,7 +95,7 @@ class KBCCollision:
 
         return m
 
-    def compute_s_seq(self, f, m):
+    def compute_s_seq_from_m(self, f, m):
         s = torch.zeros_like(f)
 
         T = m[2, 0, 0] + m[0, 2, 0] + m[0, 0, 2]
@@ -134,7 +134,7 @@ class KBCCollision:
         k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
-        delta_s = self.compute_s_seq(f, m)
+        delta_s = self.compute_s_seq_from_m(f, m)
 
         k[self.lattice.field(0)] = m[0, 0, 0]
         k[self.lattice.field(1)] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
@@ -145,16 +145,12 @@ class KBCCollision:
         k[self.lattice.field(6)] = -k[self.lattice.field(5)]
 
         m = self.kbc_moment_transform(feq)
-        delta_s -= self.compute_s_seq(f, m)
 
+        delta_s -= self.compute_s_seq_from_m(f, m)
         delta_h = f - feq - delta_s
 
-        delta_seq = delta_s * delta_h / feq
-        sum_s = self.lattice.rho(delta_seq)
-        del delta_seq
-
-        delta_heq = delta_h * delta_h / feq
-        sum_h = self.lattice.rho(delta_heq)
+        sum_s = self.lattice.rho(delta_s * delta_h / feq)
+        sum_h = self.lattice.rho(delta_h * delta_h / feq)
 
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)

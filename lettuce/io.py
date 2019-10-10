@@ -73,7 +73,6 @@ class EnergyReporter:
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
-            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             dx = self.flow.units.convert_length_to_pu(1.0)
 
             kinE=torch.sum(self.lattice.energy(f))

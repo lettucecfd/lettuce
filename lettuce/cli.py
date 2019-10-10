@@ -97,11 +97,7 @@ def convergence(ctx):
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
         for i in range(10*resolution):
-            simulation.step(1)#num_steps=10*resolution)
-            #print(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f))[0,0,0])
-
-        # error calculation
-        #print(error_reporter.out)
+            simulation.step(1)
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
         factor_p = 0 if error_p_old is None else error_p_old / error_p
@@ -109,7 +105,15 @@ def convergence(ctx):
         error_p_old = error_p
         print("{:15} {:15.2e} {:15.1f} {:15.2e} {:15.1f}".format(
             resolution, error_u, factor_u/2, error_p, factor_p/2))
-    return 0
+    if factor_u/2 < 1.9:
+        print("Velocity convergence order < 2.")
+        return 1
+    if factor_p/2 < 0.9:
+        print("Velocity convergence order < 1.")
+    if factor_u / 2 < 1.9 or factor_p/2 < 0.9:
+        return 1
+    else:
+        return 0
 
 
 if __name__ == "__main__":

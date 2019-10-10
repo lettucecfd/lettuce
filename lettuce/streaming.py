@@ -13,9 +13,7 @@ class StandardStreaming:
 
     def __call__(self, f):
         for i in range(self.lattice.Q):
-            f[self.lattice.field(i)] = torch.roll(f[self.lattice.field(i)],
-                                                  shifts=tuple(self.lattice.stencil.e[i]),
-                                                  dims=tuple(np.arange(self.lattice.D)))
+            f[i] = torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.D)))
         return f
 
 

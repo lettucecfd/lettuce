@@ -54,9 +54,9 @@ class TRTCollision:
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        f_diff_neq = ((f + f[self.lattice.field(self.lattice.stencil.opposite)]) - (feq + feq[self.lattice.field(self.lattice.stencil.opposite)])) / (
+        f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
                 2.0 * self.tau_plus)
-        f_diff_neq += ((f - f[self.lattice.field(self.lattice.stencil.opposite)]) - (feq - feq[self.lattice.field(self.lattice.stencil.opposite)])) / (
+        f_diff_neq += ((f - f[self.lattice.stencil.opposite]) - (feq - feq[self.lattice.stencil.opposite])) / (
                 2.0 * self.tau_minus)
         f = f - f_diff_neq
         return f
@@ -97,25 +97,25 @@ class KBCCollision:
         Pi_xz = m[1, 0, 1]
         Pi_yz = m[0, 1, 1]
 
-        s[self.lattice.field(0)] = m[0, 0, 0] * -T
-        s[self.lattice.field(1)] = 1. / 6. * m[0, 0, 0] * (2 * N_xz - N_yz + T)
-        s[self.lattice.field(2)] = s[self.lattice.field(1)]
-        s[self.lattice.field(3)] = 1. / 6. * m[0, 0, 0] * (2 * N_yz - N_xz + T)
-        s[self.lattice.field(4)] = s[self.lattice.field(3)]
-        s[self.lattice.field(5)] = 1. / 6. * m[0, 0, 0] * (-N_xz - N_yz + T)
-        s[self.lattice.field(6)] = s[self.lattice.field(5)]
-        s[self.lattice.field(7)] = 1. / 4 * m[0, 0, 0] * Pi_yz
-        s[self.lattice.field(8)] = s[self.lattice.field(7)]
-        s[self.lattice.field(9)] = - 1. / 4 * m[0, 0, 0] * Pi_yz
-        s[self.lattice.field(10)] = s[self.lattice.field(9)]
-        s[self.lattice.field(11)] = 1. / 4 * m[0, 0, 0] * Pi_xz
-        s[self.lattice.field(12)] = s[self.lattice.field(11)]
-        s[self.lattice.field(13)] = -1. / 4 * m[0, 0, 0] * Pi_xz
-        s[self.lattice.field(14)] = s[self.lattice.field(13)]
-        s[self.lattice.field(15)] = 1. / 4 * m[0, 0, 0] * Pi_xy
-        s[self.lattice.field(16)] = s[self.lattice.field(15)]
-        s[self.lattice.field(17)] = -1. / 4 * m[0, 0, 0] * Pi_xy
-        s[self.lattice.field(18)] = s[self.lattice.field(17)]
+        s[0] = m[0, 0, 0] * -T
+        s[1] = 1. / 6. * m[0, 0, 0] * (2 * N_xz - N_yz + T)
+        s[2] = s[1]
+        s[3] = 1. / 6. * m[0, 0, 0] * (2 * N_yz - N_xz + T)
+        s[4] = s[3]
+        s[5] = 1. / 6. * m[0, 0, 0] * (-N_xz - N_yz + T)
+        s[6] = s[5]
+        s[7] = 1. / 4 * m[0, 0, 0] * Pi_yz
+        s[8] = s[7]
+        s[9] = - 1. / 4 * m[0, 0, 0] * Pi_yz
+        s[10] = s[9]
+        s[11] = 1. / 4 * m[0, 0, 0] * Pi_xz
+        s[12] = s[11]
+        s[13] = -1. / 4 * m[0, 0, 0] * Pi_xz
+        s[14] = s[13]
+        s[15] = 1. / 4 * m[0, 0, 0] * Pi_xy
+        s[16] = s[15]
+        s[17] = -1. / 4 * m[0, 0, 0] * Pi_xy
+        s[18] = s[17]
 
         return s
 
@@ -128,13 +128,13 @@ class KBCCollision:
         m = self.kbc_moment_transform(f)
         delta_s = self.compute_s_seq_from_m(f, m)
 
-        k[self.lattice.field(0)] = m[0, 0, 0]
-        k[self.lattice.field(1)] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
-        k[self.lattice.field(2)] = -k[self.lattice.field(1)]
-        k[self.lattice.field(3)] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
-        k[self.lattice.field(4)] = -k[self.lattice.field(3)]
-        k[self.lattice.field(5)] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
-        k[self.lattice.field(6)] = -k[self.lattice.field(5)]
+        k[1] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
+        k[0] = m[0, 0, 0]
+        k[2] = -k[1]
+        k[3] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
+        k[4] = -k[3]
+        k[5] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
+        k[6] = -k[5]
 
         m = self.kbc_moment_transform(feq)
 

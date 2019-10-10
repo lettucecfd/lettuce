@@ -107,11 +107,10 @@ def convergence(ctx):
             resolution, error_u, factor_u/2, error_p, factor_p/2))
     if factor_u/2 < 1.9:
         print("Velocity convergence order < 2.")
-        return 1
     if factor_p/2 < 0.9:
         print("Velocity convergence order < 1.")
     if factor_u / 2 < 1.9 or factor_p/2 < 0.9:
-        return 1
+        sys.exit(1)
     else:
         return 0
 

@@ -54,13 +54,6 @@ def f_lattice(lattice):
     return lattice.convert_to_tensor(np.random.random([lattice.Q] + [3]*lattice.D)), lattice
 
 
-@pytest.fixture(params=STENCILS)
-def lattice_of_vector(request, dtype_device):
-    """Run a test for all lattices-of-vector (all stencils, devices and data types available on the device.)"""
-    dtype, device = dtype_device
-    return LatticeAoS(request.param, device=device, dtype=dtype)
-
-
 @pytest.fixture()
 def f_lattice_of_vector(lattice_of_vector):
     """Run a test for all lattices-of-vector;
@@ -71,7 +64,7 @@ def f_lattice_of_vector(lattice_of_vector):
             lattice_of_vector)
 
 
-@pytest.fixture(params=[Lattice, LatticeAoS])
+@pytest.fixture(params=[Lattice])
 def f_all_lattices(request, lattice):
     """Run a test for all lattices and lattices-of-vector;
     return a grid with 3^D sample distribution functions alongside the lattice.

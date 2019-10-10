@@ -5,7 +5,6 @@ Collision models
 import torch
 
 from lettuce.equilibrium import QuadraticEquilibrium
-from lettuce.lattices import LatticeAoS
 from lettuce.util import LettuceException
 
 
@@ -74,23 +73,14 @@ class KBCCollision:
 
         # Build a matrix that contains the indices
         self.M = torch.zeros([3, 3, 3, 27], device=lattice.device, dtype=lattice.dtype)
-        if isinstance(lattice, LatticeAoS):
-            for i in range(3):
-                for j in range(3):
-                    for k in range(3):
-                        self.M[i, j, k] = lattice.e[0] ** i * lattice.e[1] ** j * lattice.e[2] ** k
-        else:
-            for i in range(3):
-                for j in range(3):
-                    for k in range(3):
-                        self.M[i, j, k] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j * lattice.e[:, 2] ** k
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    self.M[i, j, k] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j * lattice.e[:, 2] ** k
 
     def kbc_moment_transform(self, f):
         """Transforms the f into the KBC moment representation"""
-        if isinstance(self.lattice, LatticeAoS):
-            m = torch.einsum('abcq,mnoq', self.M, f)
-        else:
-            m = torch.einsum('abcq,qmno', self.M, f)
+        m = torch.einsum('abcq,qmno', self.M, f)
         rho = m[0, 0, 0]
         m /= rho
         m[0, 0, 0] = rho

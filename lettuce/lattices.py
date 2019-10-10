@@ -115,7 +115,7 @@ class Lattice:
 
         Notes
         -----
-        This method is important to allow different underlying storage orders and support LatticeAoS.
+        This method is important to allow different underlying storage orders.
 
         Examples
         --------
@@ -148,38 +148,4 @@ class Lattice:
             else:
                 raise LettuceException("Bad dimension.")
         equation = ",".join(inputs) + "->" + output
-        return torch.einsum(equation, fields, **kwargs)
-
-
-class LatticeAoS(Lattice):
-    """
-    Lattice class with inverse storage order (array of structure).
-    """
-
-    field_index = -1
-
-    def __init__(self, stencil, device, dtype=torch.float):
-        super(LatticeAoS,self).__init__(stencil, device, dtype)
-
-    def __str__(self):
-        return f"LatticeOfArray (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
-
-    def field(self, index=None):
-        return Ellipsis, index
-
-    def einsum(self, equation, fields, **kwargs):
-        """Einstein summation on local fields."""
-        input, output = equation.split("->")
-        inputs = input.split(",")
-        for i,inp in enumerate(inputs):
-            if len(inp) == len(fields[i].shape):
-                pass
-            elif len(inp) == len(fields[i].shape) - self.D:
-                inputs[i] += "..."
-                if not output.endswith("..."):
-                    output += "..."
-            else:
-                raise LettuceException("Bad dimension.")
-            inputs[i] = inputs[i][::-1]
-        equation = ",".join(inputs) + "->" + output[::-1]
         return torch.einsum(equation, fields, **kwargs)

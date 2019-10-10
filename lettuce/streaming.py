@@ -4,7 +4,6 @@ Streaming Step
 
 import torch
 import numpy as np
-from lettuce import LatticeAoS, Lattice
 
 
 class StandardStreaming:

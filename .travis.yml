@@ -10,9 +10,11 @@ install: pip install -U tox-travis
 
 # Command to run tests, e.g. python setup.py test
 script:
-  # unit tests
+  # install
+  - python setup.py install
+  # run unit tests
   - tox
-  # integration tests
+  # run integration tests
   - lettuce --no-cuda convergence
   - lettuce --no-cuda benchmark
 

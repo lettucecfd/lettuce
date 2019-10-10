@@ -10,7 +10,7 @@ class QuadraticEquilibrium(Equilibrium):
 
     def __call__(self, rho, u, *args):
         exu = self.lattice.einsum("qd,d->q", [self.lattice.e, u])
-        uxu = self.lattice.einsum("d,d->", [u,u])[self.lattice.field()]
+        uxu = self.lattice.einsum("d,d->", [u,u])
         feq = self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,
@@ -26,7 +26,7 @@ class IncompressibleQuadraticEquilibrium(Equilibrium):
 
     def __call__(self, rho, u, *args):
         exu = self.lattice.einsum("qd,d->q", [self.lattice.e, u])
-        uxu = self.lattice.einsum("d,d->", [u,u])[self.lattice.field()]
+        uxu = self.lattice.einsum("d,d->", [u,u])
         feq = self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,

@@ -55,15 +55,16 @@ class TRTCollision:
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
+        f_diff_neq = ((f + f[self.lattice.field(self.lattice.stencil.opposite)]) - (feq + feq[self.lattice.field(self.lattice.stencil.opposite)])) / (
                 2.0 * self.tau_plus)
-        f_diff_neq += ((f - f[self.lattice.stencil.opposite]) - (feq - feq[self.lattice.stencil.opposite])) / (
+        f_diff_neq += ((f - f[self.lattice.field(self.lattice.stencil.opposite)]) - (feq - feq[self.lattice.field(self.lattice.stencil.opposite)])) / (
                 2.0 * self.tau_minus)
         f = f - f_diff_neq
         return f
 
 
 class KBCCollision:
+    """Entropic multi-relaxation time-relaxation time model according to Karlin et al."""
     def __init__(self, lattice, tau):
         self.lattice = lattice
         assert lattice.Q == 27, \
@@ -85,6 +86,7 @@ class KBCCollision:
                         self.M[i, j, k] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j * lattice.e[:, 2] ** k
 
     def kbc_moment_transform(self, f):
+        """Transforms the f into the KBC moment representation"""
         if isinstance(self.lattice, LatticeAoS):
             m = torch.einsum('abcq,mnoq', self.M, f)
         else:

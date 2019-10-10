@@ -11,6 +11,8 @@ from lettuce import *
 @pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision])
 def test_collision_conserves_mass(Collision, f_all_lattices):
     f, lattice = f_all_lattices
+    if (Collision == KBCCollision and lattice.stencil != D3Q27):
+        pytest.skip()
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
     f = collision(f)
@@ -20,6 +22,8 @@ def test_collision_conserves_mass(Collision, f_all_lattices):
 @pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision])
 def test_collision_conserves_momentum(Collision, f_all_lattices):
     f, lattice = f_all_lattices
+    if (Collision == KBCCollision and lattice.stencil != D3Q27):
+        pytest.skip()
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
     f = collision(f)
@@ -37,7 +41,10 @@ def test_collision_fixpoint_2x(Collision, f_all_lattices):
 
 @pytest.mark.parametrize("Collision", [BGKCollision, TRTCollision, KBCCollision])
 def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
+    """checks whether the collision models relax the shear moments according to the prescribed relaxation time"""
     f, lattice = f_all_lattices
+    if (Collision == KBCCollision and lattice.stencil != D3Q27):
+        pytest.skip()
     rho = lattice.rho(f)
     u = lattice.u(f)
     feq = lattice.equilibrium(rho, u)
@@ -52,8 +59,11 @@ def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
 
 
 @pytest.mark.parametrize("Collision", [KBCCollision])
-def test_collision_optimizes_local_entropy(Collision, f_all_lattices):
+def test_collision_optimizes_pseudo_entropy(Collision, f_all_lattices):
+    "checks if the pseudo-entropy of the KBC collision model is at least higher than the BGK pseudo-entropy"
     f, lattice = f_all_lattices
+    if (Collision == KBCCollision and lattice.stencil != D3Q27):
+        pytest.skip()
     tau = 0.5003
     coll_kbc = Collision(lattice, tau)
     coll_bgk = BGKCollision(lattice, tau)
@@ -61,9 +71,7 @@ def test_collision_optimizes_local_entropy(Collision, f_all_lattices):
     f_bgk = coll_bgk(f)
     entropy_kbc = lattice.pseudo_entropy_local(f_kbc)
     entropy_bgk = lattice.pseudo_entropy_local(f_bgk)
-    assert entropy_bgk.cpu().numpy().max() < entropy_kbc.cpu().numpy().max()
-    assert entropy_bgk.cpu().numpy().min() < entropy_kbc.cpu().numpy().min()
-
+    assert (entropy_bgk.cpu().numpy() < entropy_kbc.cpu().numpy()).all()
 
 
 @pytest.mark.parametrize("Transform", [D2Q9Lallemand, D2Q9Dellar])

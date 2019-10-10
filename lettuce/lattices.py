@@ -87,6 +87,7 @@ class Lattice:
         return self.rho(f) - self.einsum("q,q->", [f,f_feq])
 
     def shear_tensor(self, f):
+        """computes the shear tensor of a given f in the sense Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
         shear = self.einsum("qa,qb->qab", [self.e, self.e])
         shear = self.einsum("q,qab->ab", [f, shear])
         return shear

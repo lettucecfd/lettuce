@@ -3,7 +3,7 @@
 from timeit import default_timer as timer
 from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
 import pickle
-import copy
+from copy import deepcopy
 import warnings
 import torch
 
@@ -66,7 +66,7 @@ class Simulation:
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(self.f))
             if (torch.max(torch.abs(p-p_old))) < tol_pressure:
                 break
-            p_old = copy.deepcopy(p)
+            p_old = deepcopy(p)
         return i
 
     def save_checkpoint(self, filename):

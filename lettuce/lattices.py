@@ -86,6 +86,11 @@ class Lattice:
         f_feq = f/self.equilibrium(self.rho(f),self.u(f))
         return self.rho(f) - self.einsum("q,q->", [f,f_feq])
 
+    def shear_tensor(self, f):
+        shear = self.einsum("qa,qb->qab", [self.e, self.e])
+        shear = self.einsum("q,qab->ab", [f, shear])
+        return shear
+
     def field(self, index=None):
         """Generate indices for multidimensional fields.
 

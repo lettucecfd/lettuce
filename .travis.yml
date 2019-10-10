@@ -6,12 +6,12 @@ python:
   - 3.6
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
-install: pip install -U tox-travis
+install:
+  - pip install -U tox-travis
+  - python setup.py install
 
 # Command to run tests, e.g. python setup.py test
 script:
-  # install
-  - python setup.py install
   # run unit tests
   - tox
   # run integration tests

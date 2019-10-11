@@ -10,7 +10,7 @@ import torch
 
 class BounceBackBoundary:
     def __init__(self, mask, lattice):
-        self.mask = lattice.convert_to_tensor(mask)
+        self.mask = mask
         self.lattice = lattice
 
     def __call__(self, f):

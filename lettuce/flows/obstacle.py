@@ -2,8 +2,8 @@ import numpy as np
 import torch
 
 from lettuce.unit import UnitConversion
-from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, ZeroGradientOutletRight, ZeroGradientOutletTop, \
-    ZeroGradientOutletBottom
+from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary#, ZeroGradientOutletRight, ZeroGradientOutletTop, \
+    #ZeroGradientOutletBottom
 
 
 class Obstacle2D(object):
@@ -42,3 +42,36 @@ class Obstacle2D(object):
                 BounceBackBoundary(self.mask, self.units.lattice),
                 ZeroGradientOutletTop(np.abs(x) < 1e-6, self.units.lattice, direction=[1.0, 0.0]),
                 ZeroGradientOutletBottom(np.abs(x) < 1e-6, self.units.lattice, direction=[1.0, 0.0])]
+
+
+class ZeroGradientOutletRight:
+    def __init__(self, mask, lattice, direction):
+        self.mask = lattice.convert_to_tensor(mask)
+        self.lattice = lattice
+        self.direction = direction
+
+    def __call__(self, f):
+        f[:, -1] = f[:, -2]
+        return f
+
+
+class ZeroGradientOutletTop:
+    def __init__(self, mask, lattice, direction):
+        self.mask = lattice.convert_to_tensor(mask)
+        self.lattice = lattice
+        self.direction = direction
+
+    def __call__(self, f):
+        f[:, :, 0] = f[:, :, 1]
+        return f
+
+
+class ZeroGradientOutletBottom:
+    def __init__(self, mask, lattice, direction):
+        self.mask = lattice.convert_to_tensor(mask)
+        self.lattice = lattice
+        self.direction = direction
+
+    def __call__(self, f):
+        f[:, :, -1] = f[:, :, -2]
+        return f

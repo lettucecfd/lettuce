@@ -10,4 +10,6 @@ Development Lead
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Dominik Wilde
+* Mario Bedrunka
+* You?

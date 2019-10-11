@@ -61,31 +61,6 @@ class TRTCollision:
         f = f - f_diff_neq
         return f
 
-
-class TRTCollision:
-    """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
-        """
-
-    def __init__(self, lattice, tau):
-        self.lattice = lattice
-        self.tau_plus = tau
-        self.tau_minus = 1.0
-
-    def __call__(self, f):
-        rho = self.lattice.rho(f)
-        u = self.lattice.u(f)
-        feq = self.lattice.equilibrium(rho, u)
-        f_plus = (f + f[self.lattice.stencil.opposite]) / 2.0
-        feq_plus = (feq + feq[self.lattice.stencil.opposite]) / 2.0
-        f_minus = (f - f[self.lattice.stencil.opposite]) / 2.0
-        feq_minus = (feq - feq[self.lattice.stencil.opposite]) / 2.0
-        return f - 1.0 / self.tau_plus * (f_plus - feq_plus) - self.tau_minus * (f_minus - feq_minus)
-
-
-
-
-
-
 class KBCCollision:
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al."""
     def __init__(self, lattice, tau):

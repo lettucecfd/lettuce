@@ -17,7 +17,7 @@ class Obstacle2D(object):
             characteristic_length_lu=resolution_x * 0.1, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
-        self.mask = 0
+        self.mask = None
 
     def initizialize_object(self, mask, lattice):
         self.boundaries.append(BounceBackBoundary(mask, lattice))

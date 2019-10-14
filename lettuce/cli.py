@@ -71,9 +71,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
     boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice) if hasattr(flow, "boundaries") else None
     collision = BGKCollision(lattice, tau=0.6, force=force)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming, boundary=boundary)
-    simulation.reporters.append(VTKReporter(lattice, flow, filename="Data_bench", interval=100))
-
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    simulation.reporters.append(VTKReporter(lattice, flow, interval=1))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

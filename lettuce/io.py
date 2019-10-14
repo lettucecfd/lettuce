@@ -32,8 +32,7 @@ def write_png(filename, array2d):
 
 #def write_vtk(filename, res, ux, uy, p, t):
 def write_vtk(filename, point_dict, id):
-
-    vtk.gridToVTK("/Users/mariobedrunka/Documents/10_science/10_lattice_boltzmann/10_simulation/10_lettuce/data/" + filename + "_" + str(id),
+    vtk.gridToVTK("/Volumes/IMSD2012/" + filename + "_" + str(id),
                   np.arange(0, point_dict["p"].shape[0]),
                   np.arange(0, point_dict["p"].shape[1]),
                   np.arange(0, point_dict["p"].shape[2]),
@@ -49,10 +48,12 @@ class VTKReporter:
         self.point_dict = dict()
 
     def __call__(self, i, t, f):
-        if t % self.interval == 0:
+        if (t % self.interval == 0) or (i==1):
             t = self.flow.units.convert_time_to_pu(t)
-            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            #u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            u = self.lattice.u(f)
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+            print("t...ux: %.10f" % u[0].max() + " uy: %.10f" % u[1].max())
             self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
             for d in range(self.lattice.D):
                 self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])

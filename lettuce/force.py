@@ -20,8 +20,25 @@ class Guo:
         return (1-1/2*self.tau)*temp_2
 
     def u_eq(self, f, force):
-        return force.A * self.lattice.einsum("a,a->a", [torch.ones(f[0:2].shape), force.F]) / self.lattice.rho(f)
+        a = force.A * self.lattice.einsum("a,a->a", [torch.ones(f[0:2].shape), force.F]) / self.lattice.rho(f)
+        return a
 
     @property
     def A(self):
         return 0.5
+
+class ShanChen:
+    def __init__(self, lattice, tau, F):
+        self.lattice = lattice
+        self.tau = tau
+        self.F = F
+
+    def source_term(self, f, u):
+        return 0
+
+    def u_eq(self, f, force):
+        return force.A * self.lattice.einsum("a,a->a", [torch.ones(f[0:2].shape), force.F]) / self.lattice.rho(f)
+
+    @property
+    def A(self):
+        return self.tau*1

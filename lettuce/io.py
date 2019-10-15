@@ -39,7 +39,7 @@ def write_vtk(point_dict, id=0, filename_base="./data/output"):
 
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
-    def __init__(self, lattice, flow, interval=50, filename_base="./data/output"):
+    def __init__(self, lattice, flow, interval=50, filename_base="/Volumes/IMSD2012/output"):
         self.lattice = lattice
         self.flow = flow
         self.interval = interval
@@ -52,7 +52,8 @@ class VTKReporter:
     def __call__(self, i, t, f):
         if t % self.interval == 0:
             t = self.flow.units.convert_time_to_pu(t)
-            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            # u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            u = self.lattice.u(f)
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
             print("t...ux: %.10f" % u[0].max() + " uy: %.10f" % u[1].max())
             self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])

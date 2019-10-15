@@ -4,7 +4,7 @@ Cannel flows in 2D.
 
 import numpy as np
 import torch
-
+from lettuce.boundary import BounceBackBoundary
 from lettuce.unit import UnitConversion
 
 
@@ -42,7 +42,7 @@ class ChannelFlow2D(object):
 
     @property
     def boundaries(self):
-        boundaries = np.zeros(self.grid[0].shape, dtype=bool)
-        boundaries[:, [0,-1]] = True
-        boundaries[80:120, 10:50] = True
-        return boundaries
+        mask = np.zeros(self.grid[0].shape, dtype=bool)
+        mask[:, [0,-1]] = True
+        mask[80:120, 10:50] = True
+        return [BounceBackBoundary(mask=mask, lattice=self.units.lattice)]

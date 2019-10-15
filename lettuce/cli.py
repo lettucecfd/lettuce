@@ -68,7 +68,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
 
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     force = Guo(lattice, tau=0.6, F=flow.F) if hasattr(flow, "F") else None
-    boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice) if hasattr(flow, "boundaries") else None
+    #boundary = BounceBackBoundary(mask=flow.boundaries, lattice=lattice) if hasattr(flow, "boundaries") else None
     collision = BGKCollision(lattice, tau=0.6, force=force)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)

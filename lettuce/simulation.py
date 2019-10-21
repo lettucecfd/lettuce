@@ -20,9 +20,7 @@ class Simulation:
 
         grid = flow.grid
         p, u = flow.initial_solution(grid)
-        self.u_ref = u
-        #u = u *0.0
-        #u = u*0.0
+
         assert list(p.shape) == [1] + list(grid[0].shape), \
             LettuceException(f"Wrong dimension of initial pressure field. "
                              f"Expected {[1] + list(grid[0].shape)}, "
@@ -31,9 +29,8 @@ class Simulation:
             LettuceException("Wrong dimension of initial velocity field."
                              f"Expected {[lattice.D] + list(grid[0].shape)}, "
                              f"but got {list(u.shape)}.")
-        #u = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-        u = lattice.convert_to_tensor(u)
-        rho = lattice.convert_to_tensor(p*0.0+1)
+        u = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
+        rho = lattice.convert_to_tensor(flow.units.convert_pressure_pu_to_density_lu(p))
         self.f = lattice.equilibrium(rho, lattice.convert_to_tensor(u))
 
         self.reporters = []
@@ -53,16 +50,11 @@ class Simulation:
             self.i += 1
             self.f = self.streaming(self.f)
             self.f = self.collision(self.f)
-            #if self.boundary is not None: self.f = self.boundary(self.f)
-            #for boundary in :
             for boundary in self.flow.boundaries:
                 self.f = boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
-            if self.i % 1000 == 0 or self.i == 0:
-                import matplotlib.pyplot as plt
-                plt.plot(self.flow.grid[1][2] * (self.flow.grid[0].shape[1] - 1), self.u_ref[0][2], self.flow.grid[1][2] * (self.flow.grid[0].shape[1] - 1), self.lattice.u(self.f)[0][2],self.flow.grid[1][2] * (self.flow.grid[0].shape[1] - 1), self.lattice.u(self.f)[1][2])
-                plt.show()
+
             
         end = timer()
         seconds = end-start

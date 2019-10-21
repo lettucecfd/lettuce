@@ -7,20 +7,18 @@ class Guo:
         self.F = F
 
     def source_term(self, f, u):
-        exu = self.lattice.einsum("ia,a->i", [self.lattice.e,u])
-        euxc= self.lattice.einsum("i,ia->a", [exu,self.lattice.e])
-
-        uu= self.lattice.einsum("ia,a->ia", [torch.ones([self.lattice.Q,self.lattice.D]),u])
-        ee= self.lattice.einsum("ia,ia->ia", [torch.ones([self.lattice.Q, self.lattice.D, f.shape[1], f.shape[2]]), self.lattice.e]) #Dritte Dimension berücksichtigen
-        emu= ee - uu
-
-        temp = self.lattice.einsum("i,ia->ia", [self.lattice.w ,emu / self.lattice.cs**2 + euxc / self.lattice.cs**4])
-        temp_2 = self.lattice.einsum("ia,a->i", [temp, self.F])
-
-        return (1-1/2*self.tau)*temp_2
+        e_index = [Ellipsis] + [None] * self.lattice.D
+        emu= self.lattice.e[e_index] - u
+        eu = self.lattice.einsum("ib,b->i", [self.lattice.e, u])
+        eeu = self.lattice.einsum("ia,i->ia", [self.lattice.e, eu])
+        emu_eeu= emu/(self.lattice.cs ** 2) + eeu/(self.lattice.cs ** 4)
+        emu_eeuF = self.lattice.einsum("ia,a->i", [emu_eeu, self.F])
+        weemu_eeuF = self.lattice.einsum("i,i->i", [self.lattice.w, emu_eeuF])
+        return (1-1/(2*self.tau)) * weemu_eeuF
 
     def u_eq(self, f, force):
-        a = force.A * self.lattice.einsum("a,a->a", [torch.ones(f[0:2].shape), force.F]) / self.lattice.rho(f)
+        F = self.lattice.einsum("a,a->a", [torch.ones(f[0:2].shape), force.F])
+        a = force.A * F / self.lattice.rho(f)
         return a
 
     @property

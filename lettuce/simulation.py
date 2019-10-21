@@ -6,6 +6,7 @@ import pickle
 from copy import deepcopy
 import warnings
 import torch
+import numpy as np
 
 
 class Simulation:
@@ -34,8 +35,8 @@ class Simulation:
         self.reporters = []
 
         # Define a mask, where the collision shall not be applied
-        x, y = flow.grid
-        self.no_collision_mask = x != x
+        x = flow.grid
+        self.no_collision_mask = np.zeros_like(x[0],dtype=bool)
         self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask)
         for boundary in self.flow.boundaries:
             if boundary.__class__.__name__ == "BounceBackBoundary":

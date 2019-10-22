@@ -6,6 +6,7 @@ import pickle
 from copy import deepcopy
 import warnings
 import torch
+import numpy as np
 
 
 class Simulation:
@@ -33,13 +34,24 @@ class Simulation:
 
         self.reporters = []
 
+        # Define a mask, where the collision shall not be applied
+        x = flow.grid
+        self.no_collision_mask = np.zeros_like(x[0],dtype=bool)
+        self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask)
+        for boundary in self.flow.boundaries:
+            if boundary.__class__.__name__ == "BounceBackBoundary":
+                self.no_collision_mask = boundary.mask | self.no_collision_mask
+
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
         start = timer()
         for _ in range(num_steps):
             self.i += 1
             self.f = self.streaming(self.f)
-            self.f = self.collision(self.f)
+            #Perform the collision routine everywhere, expect where the no_collision_mask is true
+            self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
+            for boundary in self.flow.boundaries:
+                self.f = boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
         end = timer()

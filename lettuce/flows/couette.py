@@ -38,7 +38,7 @@ class CouetteFlow2D(object):
     @property
     def boundaries(self):
         x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(y-1) < 1e-6, self.units.lattice, np.array([1.0, 0.0])),
+        return [EquilibriumBoundaryPU(np.abs(y-1) < 1e-6, self.units.lattice, self.units, np.array([1.0, 0.0])),
                 BounceBackBoundary(np.abs(y) < 1e-6, self.units.lattice)]
 
 

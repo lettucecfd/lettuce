@@ -16,13 +16,13 @@ class UnitConversion:
     """
     def __init__(self, lattice, reynolds_number, mach_number=0.05, characteristic_length_pu=1,
                  characteristic_velocity_pu=1, characteristic_length_lu=1, origin_pu=None,
-                 characteristic_density_lu=1, characteristic_density_pu=1):
+                 characteristic_density_lu=1, characteristic_density_pu=1, characteristic_force_pu=1):
         self.lattice = lattice
         self.reynolds_number = reynolds_number
         self.mach_number = mach_number
         self.characteristic_length_pu = characteristic_length_pu
         self.characteristic_velocity_pu = characteristic_velocity_pu
-        #self.characteristic_force.pu =
+        self.characteristic_force_pu = characteristic_force_pu
         self.characteristic_length_lu = characteristic_length_lu
         self.characteristic_density_lu = characteristic_density_lu
         self.characteristic_density_pu = characteristic_density_pu
@@ -39,6 +39,10 @@ class UnitConversion:
     @property
     def characteristic_pressure_lu(self):
         return self.characteristic_density_lu * self.characteristic_velocity_lu ** 2
+
+    @property
+    def characteristic_force_lu(self):
+        return self.characteristic_density_lu * self.characteristic_velocity_lu ** 4 * 1 ** 2
 
     @property
     def viscosity_lu(self):

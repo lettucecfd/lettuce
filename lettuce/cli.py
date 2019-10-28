@@ -72,7 +72,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
     collision = BGKCollision(lattice, tau=0.6, force=force)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    simulation.reporters.append(VTKReporter(lattice, flow, interval=1))
+    simulation.reporters.append(VTKReporter(lattice, flow, interval=100, filename_base="/Volumes/IMSD2012/output"))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

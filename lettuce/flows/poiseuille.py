@@ -22,13 +22,15 @@ class PoiseuilleFlow2D(object):
         )
 
     def analytic_solution(self, grid, dpdx=0, Fx=0):
-        x = grid[1] * (grid[0].shape[1] - 1)
-        nu = self.units.viscosity_lu
+        Fx = self.units.convert_force_to_pu(Fx)
+        x = grid[1]*0.5 #* (grid[0].shape[1] - 1)
+        #nu = self.units.viscosity_lu
+        nu = self.units.viscosity_pu
         rho = 1
         u = np.array([-Fx / (2 * rho * nu) * ((x - x.max() / 2) ** 2 - (x.max() / 2) ** 2), np.zeros(grid[1].shape)])
         #print("t0: ux: %.10f " % u[0].max() + "uy: %.10f" % u[1].max())
         p = np.array([x * 0 + self.units.convert_density_lu_to_pressure_pu(rho)])
-        return p, self.units.convert_velocity_to_pu(u)
+        return p, u#self.units.convert_velocity_to_pu(u)
 
     def initial_solution(self, grid):
         return self.analytic_solution(grid, Fx=self.lattice.convert_to_numpy(self.F)[0])
@@ -48,6 +50,6 @@ class PoiseuilleFlow2D(object):
 
     @property
     def F(self):
-        F = self.lattice.convert_to_tensor(np.array([1e-5, 0]))
+        F = self.lattice.convert_to_tensor(np.array([1e-10, 0]))
         return F
 

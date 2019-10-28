@@ -41,7 +41,7 @@ class Transform:
     """
     def __init__(self, lattice, names=None):
         self.lattice = lattice
-        self.names = [f"m{field}" for i in range(lattice.Q)] if names is None else names
+        self.names = [f"m{i}" for i in range(lattice.Q)] if names is None else names
 
     def __getitem__(self, moment_names):
         if not isinstance(moment_names, tuple):
@@ -140,18 +140,18 @@ class D2Q9Dellar(Transform):
     def equilibrium(self, m):
         warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
-        rho = m[self.lattice.field(0)]
-        jx = m[self.lattice.field(1)]
-        jy = m[self.lattice.field(2)]
+        rho = m[0]
+        jx = m[1]
+        jy = m[2]
         Pi_xx = jx*jx/rho*9/2
         Pi_xy = jx*jy/rho*9
         Pi_yy = jy*jy/rho*9/2
-        meq[self.lattice.field(0)] = rho
-        meq[self.lattice.field(1)] = jx
-        meq[self.lattice.field(2)] = jy
-        meq[self.lattice.field(3)] = Pi_xx
-        meq[self.lattice.field(4)] = Pi_xy
-        meq[self.lattice.field(5)] = Pi_yy
+        meq[0] = rho
+        meq[1] = jx
+        meq[2] = jy
+        meq[3] = Pi_xx
+        meq[4] = Pi_xy
+        meq[5] = Pi_yy
         return meq
 
 
@@ -199,9 +199,9 @@ class D2Q9Lallemand(Transform):
         """From Lallemand and Luo"""
         warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
-        rho = m[self.lattice.field(0)]
-        jx = m[self.lattice.field(1)]
-        jy = m[self.lattice.field(2)]
+        rho = m[0]
+        jx = m[1]
+        jy = m[2]
         c1 = -2
         alpha2 = -8
         alpha3 = 4
@@ -215,15 +215,15 @@ class D2Q9Lallemand(Transform):
         qy = 1/2*c1*jy
         pxx = 1/2*gamma1*(jx**2-jy**2)
         pxy = 1/2*gamma3*(jx*jy)
-        meq[self.lattice.field(0)] = rho
-        meq[self.lattice.field(1)] = jx
-        meq[self.lattice.field(2)] = jy
-        meq[self.lattice.field(3)] = pxx
-        meq[self.lattice.field(4)] = pxy
-        meq[self.lattice.field(5)] = e
-        meq[self.lattice.field(6)] = qx
-        meq[self.lattice.field(7)] = qy
-        meq[self.lattice.field(8)] = eps
+        meq[0] = rho
+        meq[1] = jx
+        meq[2] = jy
+        meq[3] = pxx
+        meq[4] = pxy
+        meq[5] = e
+        meq[6] = qx
+        meq[7] = qy
+        meq[8] = eps
         return meq
 
 

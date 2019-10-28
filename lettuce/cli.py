@@ -18,15 +18,14 @@ from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 @click.group()
 @click.version_option(version=lettuce.__version__)
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
-@click.option("-field", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
-@click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="single",
+@click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
+@click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="double",
               help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
-@click.option("--aos/--no-aos", default=False, help="Use array-of-structure data storage order.")
 @click.pass_context  # pass parameters to sub-commands
-def main(ctx, cuda, gpu_id, precision, aos):
+def main(ctx, cuda, gpu_id, precision):
     """Pytorch-accelerated Lattice Boltzmann Solver
     """
-    ctx.obj = {'device': None, 'dtype': None, 'aos': None}
+    ctx.obj = {'device': None, 'dtype': None}
     if cuda:
         if not torch.cuda.is_available():
             print("CUDA not found.")
@@ -38,7 +37,6 @@ def main(ctx, cuda, gpu_id, precision, aos):
 
     ctx.obj['device'] = device
     ctx.obj['dtype'] = dtype
-    ctx.obj['aos'] = aos
 
 
 @main.command()
@@ -55,11 +53,8 @@ def benchmark(ctx, steps, resolution, profile_out):
     profile.enable()
 
     # setup and run simulation
-    device, dtype, aos = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['aos']
-    if aos:
-        lattice = LatticeAoS(D2Q9, device, dtype)
-    else:
-        lattice = Lattice(D2Q9, device, dtype)
+    device, dtype = ctx.obj['device'], ctx.obj['dtype']
+    lattice = Lattice(D2Q9, device, dtype)
     flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
@@ -85,11 +80,8 @@ def benchmark(ctx, steps, resolution, profile_out):
 @click.pass_context
 def convergence(ctx):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
-    device, dtype, aos = ctx.obj['device'], ctx.obj['dtype'], ctx.obj['aos']
-    if aos:
-        lattice = LatticeAoS(D2Q9, device, dtype)
-    else:
-        lattice = Lattice(D2Q9, device, dtype)
+    device, dtype = ctx.obj['device'], ctx.obj['dtype']
+    lattice = Lattice(D2Q9, device, dtype)
     error_u_old = None
     error_p_old = None
     print(("{:>15} " * 5).format("resolution", "error (u)", "order (u)", "error (p)", "order (p)"))
@@ -106,11 +98,7 @@ def convergence(ctx):
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
         for i in range(10*resolution):
-            simulation.step(1)#num_steps=10*resolution)
-            #print(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f))[0,0,0])
-
-        # error calculation
-        #print(error_reporter.out)
+            simulation.step(1)
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
         factor_p = 0 if error_p_old is None else error_p_old / error_p
@@ -118,7 +106,14 @@ def convergence(ctx):
         error_p_old = error_p
         print("{:15} {:15.2e} {:15.1f} {:15.2e} {:15.1f}".format(
             resolution, error_u, factor_u/2, error_p, factor_p/2))
-    return 0
+    if factor_u/2 < 1.9:
+        print("Velocity convergence order < 2.")
+    if factor_p/2 < 0.9:
+        print("Velocity convergence order < 1.")
+    if factor_u / 2 < 1.9 or factor_p/2 < 0.9:
+        sys.exit(1)
+    else:
+        return 0
 
 
 if __name__ == "__main__":

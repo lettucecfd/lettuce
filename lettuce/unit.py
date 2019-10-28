@@ -102,5 +102,8 @@ class UnitConversion:
     def convert_pressure_to_lu(self, pressure_pu):
         return pressure_pu / self.characteristic_pressure_pu * self.characteristic_pressure_lu
 
+    def convert_length_to_pu(self, length):
+        return length * self.characteristic_length_pu / self.characteristic_length_lu
+
 
 

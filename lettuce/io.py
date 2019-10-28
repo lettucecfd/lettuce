@@ -12,8 +12,6 @@ import torch
 import os
 import pyevtk.hl as vtk
 
-from matplotlib import pyplot as plt
-
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
     fig, ax = plt.subplots()
@@ -90,4 +88,28 @@ class ErrorReporter:
                 self.out.append([err_u.item(), err_p.item()])
             else:
                 print(err_u.item(), err_p.item(), file=self.out)
+
+
+class EnergyReporter:
+    """Reports the kinetic energy with respect to analytic solution."""
+    def __init__(self, lattice, flow, interval=1, out=sys.stdout):
+        self.lattice = lattice
+        self.flow = flow
+        self.interval = interval
+        self.out = [] if out is None else out
+        if not isinstance(self.out, list):
+            print("time      kinetic energy", file=self.out)
+
+    def __call__(self, i, t, f):
+        if t % self.interval == 0:
+            dx = self.flow.units.convert_length_to_pu(1.0)
+
+            kinE=torch.sum(self.lattice.energy(f))
+            kinE*=dx**self.lattice.D
+            if isinstance(self.out, list):
+                self.out.append([t, kinE.item()])
+            else:
+                print(t, kinE.item(), file=self.out)
+
+
 

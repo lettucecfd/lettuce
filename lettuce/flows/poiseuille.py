@@ -1,17 +1,15 @@
 """
-Couette Flow
+Poiseuille Flow
 """
 
 import numpy as np
-import torch
 
 from lettuce.unit import UnitConversion
-from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
-import matplotlib.pyplot as plt
+from lettuce.boundary import BounceBackBoundary
 
 
 class PoiseuilleFlow2D(object):
-    def __init__(self, resolution, reynolds_number, mach_number, lattice):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice, initialize_with_zeros=True):
         self.resolution = resolution
         self.lattice = lattice
         self.units = UnitConversion(
@@ -20,25 +18,32 @@ class PoiseuilleFlow2D(object):
             characteristic_length_lu=resolution, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
+        self.initialize_with_zeros = initialize_with_zeros
 
-    def analytic_solution(self, grid, dpdx=0, Fx=0):
-        Fx = self.units.convert_force_to_pu(Fx)
-        x = grid[1]*0.5 #* (grid[0].shape[1] - 1)
-        #nu = self.units.viscosity_lu
+    def analytic_solution(self, grid):
+        half_lattice_spacing = 0.5 / self.resolution
+        x,y = grid
         nu = self.units.viscosity_pu
         rho = 1
-        u = np.array([-Fx / (2 * rho * nu) * ((x - x.max() / 2) ** 2 - (x.max() / 2) ** 2), np.zeros(grid[1].shape)])
-        #print("t0: ux: %.10f " % u[0].max() + "uy: %.10f" % u[1].max())
-        p = np.array([x * 0 + self.units.convert_density_lu_to_pressure_pu(rho)])
-        return p, u#self.units.convert_velocity_to_pu(u)
+        u = np.array([
+            self.acceleration[0] / (2 * rho * nu) * ((y-half_lattice_spacing) * (1 - half_lattice_spacing - y)),
+            np.zeros(x.shape)
+        ])
+        p = np.array([y * 0 + self.units.convert_density_lu_to_pressure_pu(rho)])
+        return p, u
 
     def initial_solution(self, grid):
-        return self.analytic_solution(grid, Fx=self.lattice.convert_to_numpy(self.F)[0])
+        if self.initialize_with_zeros:
+            p = np.array([0 * grid[0]], dtype=float)
+            u = np.array([0 * grid[0], 0 * grid[1]], dtype=float)
+            return p, u
+        else:
+            return self.analytic_solution(grid)
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution, endpoint=True)
-        y = np.linspace(0, 1, num=self.resolution, endpoint=True)
+        x = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
+        y = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
         return np.meshgrid(x, y, indexing='ij')
 
     @property
@@ -49,7 +54,6 @@ class PoiseuilleFlow2D(object):
         return [boundary]
 
     @property
-    def F(self):
-        F = self.lattice.convert_to_tensor(np.array([1e-10, 0]))
-        return F
+    def acceleration(self):
+        return np.array([0.001, 0])
 

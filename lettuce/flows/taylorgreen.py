@@ -38,7 +38,6 @@ class TaylorGreenVortex2D:
         return []
 
 
-
 class TaylorGreenVortex3D:
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution

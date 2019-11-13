@@ -22,6 +22,7 @@ from lettuce.streaming import *
 from lettuce.boundary import *
 from lettuce.io import *
 from lettuce.simulation import *
+from lettuce.force import *
 
 from lettuce.flows import *
 

@@ -12,7 +12,8 @@ import numpy as np
 
 import lettuce
 from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
-from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
+
+from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import flow_by_name
 from lettuce.force import Guo
 
@@ -46,9 +47,13 @@ def main(ctx, cuda, gpu_id, precision):
 @click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
+
 @click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="taylor2D")
 @click.pass_context  # pass parameters to sub-commands
-def benchmark(ctx, steps, resolution, profile_out, flow):
+@click.option("-v", "--vtk-out", type=str, default="",
+              help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
+@click.pass_context  # pass parameters to sub-commands
+def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
@@ -68,6 +73,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    if vtk_out:
+        simulation.reporters.append(VTKReporter(lattice, flow, interval=10))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output

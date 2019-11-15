@@ -9,7 +9,8 @@ import sys
 import logging
 import numpy as np
 import torch
-
+import os
+import pyevtk.hl as vtk
 
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
@@ -23,11 +24,34 @@ def write_image(filename, array2d):
     plt.savefig(filename)
 
 
-def write_vtk(filename, grid, field_data):
-    # https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python
-    # https://anaconda.org/e3sm/evtk
-    # https://pypi.org/project/pyevtk/
-    raise NotImplementedError
+def write_vtk(point_dict, id=0, filename_base="./data/output"):
+    vtk.gridToVTK(f"{filename_base}_{id:08d}",
+                  np.arange(0, point_dict["p"].shape[0]),
+                  np.arange(0, point_dict["p"].shape[1]),
+                  np.arange(0, point_dict["p"].shape[2]),
+                  pointData=point_dict)
+
+class VTKReporter:
+    """General VTK Reporter for velocity and pressure"""
+    def __init__(self, lattice, flow, interval=50, filename_base="./data/output"):
+        self.lattice = lattice
+        self.flow = flow
+        self.interval = interval
+        self.filename_base = filename_base
+        directory = os.path.dirname(filename_base)
+        if not os.path.isdir(directory):
+            os.mkdir(directory)
+        self.point_dict = dict()
+
+    def __call__(self, i, t, f):
+        if t % self.interval == 0:
+            t = self.flow.units.convert_time_to_pu(t)
+            u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+            self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
+            for d in range(self.lattice.D):
+                self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
+            write_vtk(self.point_dict, i, self.filename_base)
 
 
 class ErrorReporter:

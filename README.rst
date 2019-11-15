@@ -33,7 +33,7 @@ Getting Started
 * Create a new conda repository and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.1" matplotlib pytest click cudatoolkit
+         "pytorch>=1.1" matplotlib pytest click cudatoolkit "pyevtk>=1.1"
 
 
 * Activate the conda environment::

@@ -11,11 +11,11 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, StandardStreaming, Lattice, LatticeAoS, D2Q9
-from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
-from lettuce.flows import channel, couette, flow_by_name
-from lettuce.boundary import BounceBackBoundary
+from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter
+from lettuce.flows import flow_by_name
 from lettuce.force import Guo
+
 
 @click.group()
 @click.version_option(version=lettuce.__version__)
@@ -42,11 +42,11 @@ def main(ctx, cuda, gpu_id, precision):
 
 
 @main.command()
-@click.option("-s", "--steps", type=int, default=200, help="Number of time steps.")
-@click.option("-r", "--resolution", type=int, default=200, help="Grid Resolution")
+@click.option("-s", "--steps", type=int, default=10, help="Number of time steps.")
+@click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
-@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="TCF2D") #TGV2D; TCF2D
+@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="taylor2D")
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile_out, flow):
     """Run a short simulation and print performance in MLUPS.
@@ -60,11 +60,14 @@ def benchmark(ctx, steps, resolution, profile_out, flow):
     lattice = Lattice(D2Q9, device, dtype)
     flow_class = flow_by_name(flow)
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    force = Guo(lattice, tau=0.6, F=flow.F) if hasattr(flow, "F") else None
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    force = Guo(
+        lattice,
+        tau=flow.units.relaxation_parameter_lu,
+        acceleration=flow.units.convert_acceleration_to_lu(flow.force)
+    ) if hasattr(flow, "acceleration") else None
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    simulation.reporters.append(VTKReporter(lattice, flow, interval=100, filename_base="/Volumes/IMSD2012/output"))
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
@@ -121,3 +124,4 @@ def convergence(ctx):
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
+

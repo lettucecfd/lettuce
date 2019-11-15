@@ -9,4 +9,3 @@ twine==1.12.1
 
 pytest==4.4.1
 pytest-runner==4.2
-pyevtk==1.1.1

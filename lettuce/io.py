@@ -23,11 +23,7 @@ def write_image(filename, array2d):
     ax.get_yaxis().set_visible(False)
     plt.savefig(filename)
 
-def write_png(filename, array2d):
-    pass
 
-
-#def write_vtk(filename, res, ux, uy, p, t):
 def write_vtk(point_dict, id=0, filename_base="./data/output"):
     vtk.gridToVTK(f"{filename_base}_{id:08d}",
                   np.arange(0, point_dict["p"].shape[0]),
@@ -56,6 +52,7 @@ class VTKReporter:
             for d in range(self.lattice.D):
                 self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
             write_vtk(self.point_dict, i, self.filename_base)
+
 
 class ErrorReporter:
     """Reports numerical errors with respect to analytic solution."""

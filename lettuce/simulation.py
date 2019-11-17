@@ -1,7 +1,7 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, BounceBackBoundary
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
 import pickle
 from copy import deepcopy
 import warnings
@@ -48,6 +48,7 @@ class Simulation:
         for _ in range(num_steps):
             self.i += 1
             self.f = self.streaming(self.f)
+            #Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
             for boundary in self.flow.boundaries:
                 self.f = boundary(self.f)

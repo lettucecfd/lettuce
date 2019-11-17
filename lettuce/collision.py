@@ -81,7 +81,7 @@ class KBCCollision:
         """Transforms the f into the KBC moment representation"""
         m = torch.einsum('abcq,qmno', self.M, f)
         rho = m[0, 0, 0]
-        m /= rho
+        m = m / rho
         m[0, 0, 0] = rho
 
         return m

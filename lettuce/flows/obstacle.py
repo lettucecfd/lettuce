@@ -8,13 +8,13 @@ from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary#, ZeroGra
 
 class Obstacle2D(object):
 
-    def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice):
+    def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution_x * 0.1, characteristic_length_pu=1,
+            characteristic_length_lu=char_length_lu, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
         self.mask = None
@@ -24,24 +24,22 @@ class Obstacle2D(object):
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.characteristic_velocity_lu, 0.05 * self.units.characteristic_velocity_lu * x[1]],
+            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1]*0],
             dtype=float)
 
     @property
     def grid(self):
         x = np.linspace(0, 1, num=self.resolution_x, endpoint=False)
         y = np.linspace(0, 1, num=self.resolution_y, endpoint=False)
-        return np.meshgrid(x, y)
+        return np.meshgrid(x, y, indexing='ij')
 
     @property
     def boundaries(self):
         x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(x - 1) < 1e-6, self.units.lattice, self.units, np.array(
-            [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.01])),
-                ZeroGradientOutletRight(np.abs(x) < 1e-6, self.units.lattice, direction=[1.0, 0.0]),
-                BounceBackBoundary(self.mask, self.units.lattice),
-                ZeroGradientOutletTop(np.abs(x) < 1e-6, self.units.lattice, direction=[1.0, 0.0]),
-                ZeroGradientOutletBottom(np.abs(x) < 1e-6, self.units.lattice, direction=[1.0, 0.0])]
+        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units, np.array(
+            [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.0])),
+                ZeroGradientOutletRight(np.abs(y-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
+                BounceBackBoundary(self.mask, self.units.lattice)]
 
 
 class ZeroGradientOutletRight:
@@ -51,27 +49,7 @@ class ZeroGradientOutletRight:
         self.direction = direction
 
     def __call__(self, f):
-        f[:, -1] = f[:, -2]
-        return f
-
-
-class ZeroGradientOutletTop:
-    def __init__(self, mask, lattice, direction):
-        self.mask = lattice.convert_to_tensor(mask)
-        self.lattice = lattice
-        self.direction = direction
-
-    def __call__(self, f):
-        f[:, :, 0] = f[:, :, 1]
-        return f
-
-
-class ZeroGradientOutletBottom:
-    def __init__(self, mask, lattice, direction):
-        self.mask = lattice.convert_to_tensor(mask)
-        self.lattice = lattice
-        self.direction = direction
-
-    def __call__(self, f):
-        f[:, :, -1] = f[:, :, -2]
+        f[3, -1] = f[3, -2]
+        f[6, -1] = f[6, -2]
+        f[7, -1] = f[7, -2]
         return f

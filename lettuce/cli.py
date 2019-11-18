@@ -47,9 +47,7 @@ def main(ctx, cuda, gpu_id, precision):
 @click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
-
-@click.option("-f", "--flow", type=click.Choice(flow_by_name().keys()), default="taylor2D")
-@click.pass_context  # pass parameters to sub-commands
+@click.option("-f", "--flow", type=click.Choice(flow_by_name.keys()), default="taylor2D")
 @click.option("-v", "--vtk-out", type=str, default="",
               help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
 @click.pass_context  # pass parameters to sub-commands
@@ -63,7 +61,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
     lattice = Lattice(D2Q9, device, dtype)
-    flow_class = flow_by_name(flow)
+    flow_class = flow_by_name[flow]
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     force = Guo(
         lattice,
@@ -89,6 +87,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
         steps, str(dtype).replace("torch.float",""), mlups))
     return 0
+
 
 @main.command()
 @click.pass_context

@@ -67,4 +67,3 @@ class TaylorGreenVortex3D:
     @property
     def boundaries(self):
         return []
-

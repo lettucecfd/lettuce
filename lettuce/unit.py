@@ -57,6 +57,14 @@ class UnitConversion:
     def convert_velocity_to_lu(self, velocity_in_pu):
         return velocity_in_pu / self.characteristic_velocity_pu * self.characteristic_velocity_lu
 
+    def convert_acceleration_to_pu(self, acceleration_in_lu):
+        return (acceleration_in_lu / (self.characteristic_velocity_lu ** 2 / self.characteristic_length_lu)
+                * (self.characteristic_velocity_pu ** 2 / self.characteristic_length_pu))
+
+    def convert_acceleration_to_lu(self, acceleration_in_pu):
+        return (acceleration_in_pu / (self.characteristic_velocity_pu ** 2 / self.characteristic_length_pu)
+                * (self.characteristic_velocity_lu ** 2 / self.characteristic_length_lu))
+
     def convert_coordinates_to_pu(self, coordinates_in_lu):
         return (coordinates_in_lu / self.characteristic_length_lu * self.characteristic_length_pu) + self.origin_pu
 
@@ -93,6 +101,3 @@ class UnitConversion:
 
     def convert_length_to_pu(self, length):
         return length * self.characteristic_length_pu / self.characteristic_length_lu
-
-
-

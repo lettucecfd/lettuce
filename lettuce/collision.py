@@ -62,6 +62,7 @@ class TRTCollision:
         return f
 
 class RegularizedCollision:
+    """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
     def __init__(self, lattice, tau):
         self.lattice = lattice
         self.tau = tau

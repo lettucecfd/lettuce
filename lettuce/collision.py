@@ -61,6 +61,34 @@ class TRTCollision:
         f = f - f_diff_neq
         return f
 
+class RegularizedCollision:
+    def __init__(self, lattice, tau):
+        self.lattice = lattice
+        self.tau = tau
+        self.Q_matrix = torch.zeros([lattice.Q, lattice.D, lattice.D], device=lattice.device, dtype=lattice.dtype)
+
+        for a in range(lattice.Q):
+            for b in range(lattice.D):
+                for c in range(lattice.D):
+                    self.Q_matrix[a, b, c] = lattice.e[a, b] * lattice.e[a, c]
+                    if b==c:
+                        self.Q_matrix[a, b, c] -= lattice.cs * lattice.cs
+
+    def __call__(self, f):
+        rho = self.lattice.rho(f)
+        u = self.lattice.u(f)
+        feq = self.lattice.equilibrium(rho, u)
+        pi_neq = self.lattice.shear_tensor(f) - self.lattice.shear_tensor(feq)
+        cs4 = self.lattice.cs * self.lattice.cs * self.lattice.cs * self.lattice.cs
+
+        pi_neq = self.lattice.einsum("qab,ab->q", [self.Q_matrix, pi_neq])
+        pi_neq = self.lattice.einsum("q,q->q", [self.lattice.w,pi_neq])
+
+        fi1 = pi_neq / (2 * cs4)
+        f = feq + (1. - 1. / self.tau) * fi1
+
+        return f
+
 
 class KBCCollision:
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al."""

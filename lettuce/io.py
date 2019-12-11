@@ -23,11 +23,7 @@ def write_image(filename, array2d):
     ax.get_yaxis().set_visible(False)
     plt.savefig(filename)
 
-def write_png(filename, array2d):
-    pass
 
-
-#def write_vtk(filename, res, ux, uy, p, t):
 def write_vtk(point_dict, id=0, filename_base="./data/output"):
     vtk.gridToVTK(f"{filename_base}_{id:08d}",
                   np.arange(0, point_dict["p"].shape[0]),

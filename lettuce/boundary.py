@@ -10,11 +10,11 @@ import torch
 
 class BounceBackBoundary:
     def __init__(self, mask, lattice):
-        self.mask = mask#lattice.convert_to_tensor(mask)
+        self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
 
     def __call__(self, f):
-        f = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
+        f = torch.where(self.mask.byte(), f[self.lattice.stencil.opposite], f)
         return f
 
 

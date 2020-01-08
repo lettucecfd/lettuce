@@ -4,9 +4,10 @@ import numpy as np
 import torch
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q9, D3Q27
 from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
+from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 # Flows to test
-INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D]
+INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D]
 INCOMPRESSIBLE_3D = [TaylorGreenVortex3D]
 
 

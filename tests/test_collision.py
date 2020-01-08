@@ -8,7 +8,7 @@ import pytest
 from lettuce import *
 
 
-@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision])
+@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision, RegularizedCollision])
 def test_collision_conserves_mass(Collision, f_all_lattices):
     f, lattice = f_all_lattices
     if (Collision == KBCCollision and lattice.stencil != D3Q27):
@@ -19,7 +19,7 @@ def test_collision_conserves_mass(Collision, f_all_lattices):
     assert lattice.rho(f).cpu().numpy() == pytest.approx(lattice.rho(f_old).cpu().numpy())
 
 
-@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision])
+@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision, TRTCollision, RegularizedCollision])
 def test_collision_conserves_momentum(Collision, f_all_lattices):
     f, lattice = f_all_lattices
     if (Collision == KBCCollision and lattice.stencil != D3Q27):
@@ -39,7 +39,7 @@ def test_collision_fixpoint_2x(Collision, f_all_lattices):
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
 
 
-@pytest.mark.parametrize("Collision", [BGKCollision, TRTCollision, KBCCollision])
+@pytest.mark.parametrize("Collision", [BGKCollision, TRTCollision, KBCCollision, RegularizedCollision])
 def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
     """checks whether the collision models relax the shear moments according to the prescribed relaxation time"""
     f, lattice = f_all_lattices

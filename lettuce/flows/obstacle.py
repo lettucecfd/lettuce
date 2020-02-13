@@ -27,6 +27,18 @@ class Obstacle2D(object):
             [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1]*0],
             dtype=float)
 
+    def getMaxU(self, f, lattice):
+        u0 = (lattice.u(f)[0])
+        u1 = (lattice.u(f)[1])
+        return torch.max(torch.sqrt(u0*u0+u1*u1))
+
+    def getSheddingFrequency(self, sample):
+        sample = np.asarray(sample)
+        x = np.arange(sample.size)
+        fourier = np.fft.fft(sample)
+        return x[(fourier == np.min(fourier[2:int(sample.size/2)]))]/ sample.size
+
+
     @property
     def grid(self):
         x = np.linspace(0, 1, num=self.resolution_x, endpoint=False)

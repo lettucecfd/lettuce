@@ -17,6 +17,7 @@ class Simulation:
         self.collision = collision
         self.streaming = streaming
         self.i = 0
+        self.u_sample = []
 
         grid = flow.grid
         p, u = flow.initial_solution(grid)
@@ -55,6 +56,9 @@ class Simulation:
                 self.f = boundary(self.f)
             for reporter in self.reporters:
                 reporter(self.i, self.i, self.f)
+            u = self.lattice.u(self.f)[:,300,160]
+            u = u[0]
+            self.u_sample.append(u.cpu().numpy())
         end = timer()
         seconds = end-start
         num_grid_points = self.lattice.rho(self.f).numel()

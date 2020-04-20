@@ -14,6 +14,8 @@ lettuce
         :target: https://lettuce.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
+   :target: https://doi.org/10.5281/zenodo.3757641
 
 GPU-acclerated Lattice Boltzmann in Python
 

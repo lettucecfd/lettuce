@@ -85,26 +85,75 @@ class ErrorReporter:
                 print(err_u.item(), err_p.item(), file=self.out)
 
 
-class EnergyReporter:
-    """Reports the kinetic energy with respect to analytic solution."""
-    def __init__(self, lattice, flow, interval=1, out=sys.stdout):
+class GenericStepReporter:
+    """Generic reporter mother class - If used it reports the current iteration"""
+    parameter = None
+    def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
         self.lattice = lattice
         self.flow = flow
+        self.starting_iteration = starting_iteration
         self.interval = interval
         self.out = [] if out is None else out
-        if not isinstance(self.out, list):
-            print("time      kinetic energy", file=self.out)
+        print('steps    ',self.parameter)
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
-            dx = self.flow.units.convert_length_to_pu(1.0)
+            if t > self.starting_iteration:
+                entry = [t, self.parameter_function(i,t,f)]
+                if isinstance(self.out, list):
+                    self.out.append(entry)
+                else:
+                    print(*entry, file=self.out)
 
-            kinE=torch.sum(self.lattice.energy(f))
-            kinE*=dx**self.lattice.D
-            if isinstance(self.out, list):
-                self.out.append([t, kinE.item()])
-            else:
-                print(t, kinE.item(), file=self.out)
+    def parameter_function(self,i,t,f):
+        pass
 
+class MaxUReporter(GenericStepReporter):
+    """Reports the maximum velocity magnitude in the domain"""
+    parameter = 'Maximum velocity'
 
+    def parameter_function(self,i,t,f):
+        u0 = self.lattice.u(f)[0]
+        u = u0 * u0
+        if (self.lattice.D > 1):
+            u1 = self.lattice.u(f)[1]
+            u += u1 * u1
+            if (self.lattice.D > 2):
+                u2 = self.lattice.u(f)[2]
+                u += u2 * u2
+        return torch.max(torch.sqrt(u)).cpu().numpy().item()
 
+class EnergyReporter(GenericStepReporter):
+    """Reports the kinetic energy """
+    parameter = 'Kinetic energy'
+
+    def parameter_function(self,i,t,f):
+        dx = self.flow.units.convert_length_to_pu(1.0)
+
+        kinE = torch.sum(self.lattice.energy(f))
+        kinE *= dx ** self.lattice.D
+        return kinE.item()
+
+class EnstrophyReporter(GenericStepReporter):
+    """Reports the integral of the vorticity"""
+    parameter = 'Enstrophy'
+
+    def parameter_function(self,i,t,f):
+        u0 = self.lattice.u(f)[0].cpu().numpy()
+        u1 = self.lattice.u(f)[1].cpu().numpy()
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        grad_u0 = np.gradient(u0,dx)
+        grad_u1 = np.gradient(u1,dx)
+        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
+        if (self.lattice.D == 3):
+            u2 = self.lattice.u(f)[2].cpu().numpy()
+            grad_u2 = np.gradient(u2, dx)
+            vorticity+=np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
+        return vorticity.item()
+
+class MassReporter(GenericStepReporter):
+    """Reports the total mass"""
+    parameter = 'Mass'
+
+    def parameter_function(self, i, t, f):
+        return torch.sum(self.lattice.rho(f)).item()

@@ -1,5 +1,6 @@
 """
 Doubly shear layer in 2D.
+Special Inputs & standard value: shear_layer_width = 80, initial_perturbation_magnitude = 0.05
 """
 
 import numpy as np
@@ -29,7 +30,7 @@ class DoublyPeriodicShear2D:
         ux[ma.masked_greater(x[1], 0.5).mask] = np.tanh(shear_layer_width * (0.75 - x[1][ma.masked_greater(x[1], 0.5).mask]))
         uy = np.array(initial_perturbation_magnitude * np.sin(2*np.pi*(x[0] + 0.25)))
 
-        # switching to ij/matrix-indexing -> 1st entry: i = -y (i is going down instead of up like y), 2nd entry: x = j
+        # switching to ij/matrix-indexing -> 1st entry: i = -y (i/line index is going down instead of up like y), 2nd entry: x  = j (column index)
         u = np.array([-uy, ux])
         p = np.array([np.zeros(x[0].shape)])
         return p, u

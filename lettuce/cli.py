@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for lettuce."""
+"""Console script for lettuce.
+To get help for terminal commands, open a console and type:
+
+>>>  lettuce --help
+
+"""
 
 import sys
 import cProfile

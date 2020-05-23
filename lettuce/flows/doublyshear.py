@@ -26,6 +26,7 @@ class DoublyPeriodicShear2D:
     def initial_solution(self, x):
         initial_perturbation_magnitude = self.initial_perturbation_magnitude
         shear_layer_width = self.shear_layer_width
+
         ux = np.tanh(shear_layer_width * (x[1] - 0.25))
         ux[ma.masked_greater(x[1], 0.5).mask] = np.tanh(shear_layer_width * (0.75 - x[1][ma.masked_greater(x[1], 0.5).mask]))
         uy = np.array(initial_perturbation_magnitude * np.sin(2*np.pi*(x[0] + 0.25)))
@@ -37,8 +38,8 @@ class DoublyPeriodicShear2D:
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
-        y = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
+        x = np.linspace(0, 1, num=self.resolution, endpoint=False)
+        y = np.linspace(0, 1, num=self.resolution, endpoint=False)
         return np.meshgrid(x, y)
 
 

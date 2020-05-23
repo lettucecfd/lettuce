@@ -21,8 +21,9 @@ class CouetteFlow2D(object):
 
     def analytic_solution(self, x, t=0):
         raise NotImplementedError
-        u = None
-        p = None
+        nu = self.units.viscosity_pu
+        u = None #np.array([np.sin(x[0]) * np.cos(x[1]) * np.exp(-2*nu*t), -np.cos(x[0]) * np.sin(x[1]) * np.exp(-2*nu*t)])
+        p = None #0.25 * (np.cos(2*x[0]) + np.cos(2*x[1]))* np.exp(-4 * nu * t)
         return p, u
 
     def initial_solution(self, x):

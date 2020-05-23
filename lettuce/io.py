@@ -86,7 +86,7 @@ class ErrorReporter:
 
 
 class GenericStepReporter:
-    """Generic reporter mother class - If used it reports the current iteration"""
+    """Abstract base class for reporters that print something every few iterations."""
     parameter = None
     def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
         self.lattice = lattice
@@ -106,7 +106,7 @@ class GenericStepReporter:
                     print(*entry, file=self.out)
 
     def parameter_function(self,i,t,f):
-        pass
+        return NotImplemented
 
 class MaxUReporter(GenericStepReporter):
     """Reports the maximum velocity magnitude in the domain"""

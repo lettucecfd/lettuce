@@ -17,7 +17,7 @@ lettuce
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
    :target: https://doi.org/10.5281/zenodo.3757641
 
-GPU-acclerated Lattice Boltzmann in Python
+GPU-accelerated Lattice Boltzmann in Python
 
 
 * Free software: MIT license

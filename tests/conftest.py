@@ -24,13 +24,12 @@ def device(request):
     return request.param
 
 
-@pytest.fixture(params=[torch.float16, torch.float32, torch.float64])
+@pytest.fixture(params=[torch.float32, torch.float64])
+# not testing torch.float16 (half precision is not precise enough)
 def dtype_device(request, device):
     """Run a test case for all available devices and data types available on the device."""
     if device == "cpu" and request.param == torch.float16:
         pytest.skip("Half precision is only available on GPU.")
-    if request.param == torch.float16:
-        pytest.skip("Half precision is not precise enough ;-)")
     return request.param, device
 
 

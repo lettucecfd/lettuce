@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for lettuce."""
+"""Console script for lettuce.
+To get help for terminal commands, open a console and type:
+
+>>>  lettuce --help
+
+"""
 
 import sys
 import cProfile
@@ -23,7 +28,7 @@ from lettuce.force import Guo
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
 @click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="double",
-              help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
+              help="Numerical Precision; 16, 32, or 64 bit per float (default=double).")
 @click.pass_context  # pass parameters to sub-commands
 def main(ctx, cuda, gpu_id, precision):
     """Pytorch-accelerated Lattice Boltzmann Solver
@@ -130,4 +135,3 @@ def convergence(ctx):
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
-

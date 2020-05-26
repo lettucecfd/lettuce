@@ -23,39 +23,6 @@ class BGKCollision:
         return f - 1.0 / self.tau * (f-feq) + Si
 
 
-class BGKSmagorinskiCollision:
-    def __init__(self, lattice, tau, force=None):
-        self.force = force
-        self.lattice = lattice
-        self.tau = tau
-        self.iterations = 2
-        self.tau_eff = tau
-
-    def __call__(self, f):
-        rho = self.lattice.rho(f)
-        u_eq = 0 if self.force is None else self.force.u_eq(f)
-        u = self.lattice.u(f) + u_eq
-        feq = self.lattice.equilibrium(rho, u)
-        S_shear = self.lattice.shear_tensor(f-feq)
-        S_shear /= ( 2.0*rho*self.lattice.cs*self.lattice.cs)
-        self.tau_eff = self.tau
-        nu = (self.tau - 0.5) / 3.0
-        C = 0.2
-        CC = C*C
-        for i in range(self.iterations):
-            S = S_shear / self.tau_eff
-            S = self.lattice.einsum('ab,ab->',[S,S])
-
-            nu_t = CC * S
-            nu_eff = nu + nu_t
-            self.tau_eff = nu_eff*3.0+0.5
-
-
-
-        Si = 0 if self.force is None else self.force.source_term(u)
-        return f - 1.0 / self.tau_eff * (f-feq) + Si
-
-
 class MRTCollision:
     """Multiple relaxation time collision operator
 
@@ -134,7 +101,6 @@ class KBCCollision:
             LettuceException("KBC only realized for D3Q27")
         self.tau = tau
         self.beta = 1. / (2 * tau)
-        self.gamma_stab= None
 
         # Build a matrix that contains the indices
         self.M = torch.zeros([3, 3, 3, 27], device=lattice.device, dtype=lattice.dtype)
@@ -209,8 +175,8 @@ class KBCCollision:
         sum_s = self.lattice.rho(delta_s * delta_h / feq)
         sum_h = self.lattice.rho(delta_h * delta_h / feq)
 
-        self.gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
-        f = f - self.beta * (2 * delta_s + self.gamma_stab * delta_h)
+        gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
+        f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
 
         return f
 

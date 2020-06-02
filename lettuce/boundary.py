@@ -14,7 +14,7 @@ class BounceBackBoundary:
         self.lattice = lattice
 
     def __call__(self, f):
-        f = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
+        f = torch.where(self.mask.byte(), f[self.lattice.stencil.opposite], f)
         return f
 
 
@@ -37,3 +37,5 @@ class EquilibriumBoundaryPU:
         feq = self.lattice.einsum("q,q->q", [feq, torch.ones_like(f)])
         f = torch.where(self.mask, feq, f)
         return f
+
+

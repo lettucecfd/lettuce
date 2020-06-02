@@ -48,9 +48,14 @@ class VTKReporter:
             t = self.flow.units.convert_time_to_pu(t)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
-            self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
-            for d in range(self.lattice.D):
-                self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
+            if self.lattice.D == 2:
+                self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
+                for d in range(self.lattice.D):
+                    self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
+            else:
+                self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ...])
+                for d in range(self.lattice.D):
+                    self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ...])
             write_vtk(self.point_dict, i, self.filename_base)
 
 
@@ -130,7 +135,8 @@ class EnergyReporter(GenericStepReporter):
     def parameter_function(self,i,t,f):
         dx = self.flow.units.convert_length_to_pu(1.0)
 
-        kinE = torch.sum(self.lattice.energy(f))
+        kinE = torch.sum(self.lattice.energy(f)) * 0.5
+        kinE = self.flow.units.convert_velocity_to_pu(self.flow.units.convert_velocity_to_pu(kinE))
         kinE *= dx ** self.lattice.D
         return kinE.item()
 

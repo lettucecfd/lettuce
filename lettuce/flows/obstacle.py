@@ -45,9 +45,10 @@ class Obstacle2D(object):
         grad_u0 = np.gradient(u0)
         grad_u1 = np.gradient(u1)
         dx = self.units.convert_length_to_pu(1.0)
-        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        vorticity *= dx ** lattice.D
-        return  vorticity
+        enstrophy = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
+        enstrophy *= dx ** lattice.D
+        return enstrophy
+    #umrechnen in PU? warum nicht der Enstrophy reporter?
 
 
     @property
@@ -65,6 +66,8 @@ class Obstacle2D(object):
                 #ZeroGradientOutletBottom(np.abs(x-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 #ZeroGradientOutletTop(np.abs(x) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 BounceBackBoundary(self.mask, self.units.lattice)]
+
+#----------------------------------------------3D-----------------------------------------------------------------------
 
 class Obstacle3D(object):
 
@@ -171,8 +174,9 @@ class MaxUReporter:
             if t > 1000:
                 u0 = (self.lattice.u(f)[0])
                 u1 = (self.lattice.u(f)[1])
-                max= torch.max(torch.sqrt(u0*u0+u1*u1)).cpu().numpy()
-                self.out.append([max])
+                u2 = (self.lattice.u(f)[2])
+                maxU = torch.max(torch.sqrt(u0*u0+u1*u1+u2*u2)).cpu().numpy()
+                self.out.append([maxU])
 
 class uSampleReporter:
     def __init__(self, lattice, flow, interval=50):

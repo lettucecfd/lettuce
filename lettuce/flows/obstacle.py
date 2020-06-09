@@ -48,7 +48,6 @@ class Obstacle2D(object):
         enstrophy = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
         enstrophy *= dx ** lattice.D
         return enstrophy
-    #umrechnen in PU? warum nicht der Enstrophy reporter?
 
 
     @property
@@ -62,12 +61,13 @@ class Obstacle2D(object):
         x, y = self.grid
         return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units, np.array(
             [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.0])),
-                ZeroGradientOutletRight(np.abs(y-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
+                #ZeroGradientOutletRight(np.abs(y-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 #ZeroGradientOutletBottom(np.abs(x-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 #ZeroGradientOutletTop(np.abs(x) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 BounceBackBoundary(self.mask, self.units.lattice)]
 
 #----------------------------------------------3D-----------------------------------------------------------------------
+
 
 class Obstacle3D(object):
 
@@ -88,7 +88,7 @@ class Obstacle3D(object):
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0.05, x[2]*0.05],
+            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2]*0],
             dtype=float)
 
     def getMaxU(self, f, lattice):
@@ -118,6 +118,7 @@ class Obstacle3D(object):
     @property
     def boundaries(self):
         x, y, z = self.grid
+        # nur ausreichende Accuracy wenn tau = dt
         return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units, np.array(
             [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.0, self.units.characteristic_velocity_pu * 0.0])),
                 #ZeroGradientOutletRight(np.abs(y - 1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),

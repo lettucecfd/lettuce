@@ -106,7 +106,7 @@ class GenericStepReporter:
                 else:
                     print(*entry, file=self.out)
 
-    def get_out(self):
+    def get_data(self):
         assert isinstance(self.out, list), \
             LettuceException(f"Trying to read output of reporter that writes to /{self.out.name}.")
         return self.out

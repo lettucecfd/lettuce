@@ -56,6 +56,7 @@ class Obstacle2D(object):
         y = np.linspace(0, 1, num=self.resolution_y, endpoint=False)
         return np.meshgrid(x, y, indexing='ij')
 
+
     @property
     def boundaries(self):
         x, y = self.grid

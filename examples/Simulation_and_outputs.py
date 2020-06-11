@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 print("start")
 
 # ---------- Set up simulation -------------
-device = torch.device("cuda:0")  # replace with CPU, if no GPU is available
+device = torch.device("cuda:0")  # replace with device("cpu"), if no GPU is available
 lattice = lt.Lattice(lt.D3Q27, device=device, dtype=torch.float64)
-resolution = 100  # resolution of the lattice, low resolution leads to unstable speeds somewhen after 10 (PU)
+resolution = 64  # resolution of the lattice, low resolution leads to unstable speeds somewhen after 10 (PU)
 flow = lt.TaylorGreenVortex3D(resolution, 1600, 0.1, lattice)
 collision = lt.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
 streaming = lt.StandardStreaming(lattice)
@@ -22,9 +22,10 @@ simulation.reporters.append(kinE_reporter)
 VTKreport = lt.VTKReporter(lattice, flow, interval=5)
 simulation.reporters.append(VTKreport)
 
-# ---------- Simulate until time = 20 (PU) -------------
+# ---------- Simulate until time = 10 (PU) -------------
 print("Simulating", int(simulation.flow.units.convert_time_to_lu(10)), "steps! Maybe drink some water in the meantime.")
-simulation.step(int(simulation.flow.units.convert_time_to_lu(10)))
+# runs simulation as described, but also returns overall performance in MLUPS (million lattice units per second)
+print("MLUPS: ", simulation.step(int(simulation.flow.units.convert_time_to_lu(10))))
 
 # ---------- Plot kinetic energy over time (PU) -------------
 # grab output of kinetic energy reporter
@@ -36,6 +37,8 @@ np.save("TGV3DoutRes" + str(resolution) + "E", E)
 fig = plt.figure()
 ax1 = plt.subplot(1, 2, 1)
 ax1.plot(simulation.flow.units.convert_time_to_pu(range(0, E.shape[0])), E[:, 1])
+plt.ylabel("kinetic energy in physical units")
+plt.xlabel("time in physical units")
 
 # ---------- Plot magnitude of speed in slice of 3D volume -------------
 # grab u in PU
@@ -48,4 +51,5 @@ uMagnitude = uMagnitude[:, :, round(0.1 * resolution)]
 uMagnitude = uMagnitude.cpu().numpy()
 ax2 = plt.subplot(1, 2, 2)
 ax2.matshow(uMagnitude)
+plt.tight_layout()
 plt.show()

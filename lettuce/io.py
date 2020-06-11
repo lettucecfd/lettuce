@@ -11,6 +11,7 @@ import numpy as np
 import torch
 import os
 import pyevtk.hl as vtk
+from lettuce import LettuceException
 
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
@@ -104,6 +105,12 @@ class GenericStepReporter:
                     self.out.append(entry)
                 else:
                     print(*entry, file=self.out)
+
+    def get_out(self):
+        assert isinstance(self.out, list), \
+            LettuceException(f"Trying to read output of reporter that writes to /{self.out.name}.")
+        return self.out
+
 
     def parameter_function(self,i,t,f):
         return NotImplemented

@@ -1,7 +1,7 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, VTKReporter, ErrorReporter, GenericStepReporter
 import pickle
 from copy import deepcopy
 import warnings
@@ -91,3 +91,9 @@ class Simulation:
         with open(filename, "rb") as fp:
             self.f = pickle.load(fp)
 
+    def add_reporter(self, reporter):
+        """Add a reporter (see io.py) to output data in between simulation steps"""
+        assert isinstance(reporter, (GenericStepReporter, ErrorReporter, VTKReporter)), \
+            LettuceException("Trying to append object of different class as reporter. "
+                             f"Expected a lettuce reporter, but got {type(reporter)}.")
+        self.reporters.append(reporter)

@@ -134,8 +134,9 @@ class EnergyReporter(GenericStepReporter):
 
     def parameter_function(self,i,t,f):
         dx = self.flow.units.convert_length_to_pu(1.0)
-
-        kinE = torch.sum(self.lattice.energy(f))
+        energy = 0.5 * self.lattice.einsum("d,d->",[self.flow.units.convert_velocity_to_pu(self.lattice.u(f)),
+                                                    self.flow.units.convert_velocity_to_pu(self.lattice.u(f))])
+        kinE = torch.sum(energy)
         kinE *= dx ** self.lattice.D
         return kinE.item()
 

@@ -64,7 +64,7 @@ class Lattice:
 
     def energy(self, f):
         """kinetic energy"""
-        return self.einsum("d,d->", [self.u(f),self.u(f)])
+        return 0.5*self.einsum("d,d->", [self.u(f),self.u(f)])
 
     def entropy(self, f):
         """entropy according to the H-theorem"""

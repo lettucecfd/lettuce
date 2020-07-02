@@ -32,7 +32,7 @@ def test_initialization(dtype_device):
     # set initial pressure to 0 everywhere
     p, u = flow.initial_solution(flow.grid)
     u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...]))
+    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
     num_iterations = simulation.initialize(500, 0.001)
     piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))

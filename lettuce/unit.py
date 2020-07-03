@@ -126,11 +126,3 @@ class UnitConversion:
     def convert_incompressible_energy_to_lu(self, energy_pu):
         """Energy in incompressible systems is defined in units of [velocity**2]"""
         return energy_pu * (self.characteristic_velocity_lu**2) / (self.characteristic_velocity_pu ** 2)
-
-    def convert_mass_to_pu(self, energy_lu):
-        """Energy in incompressible systems is defined in units of [velocity**2]"""
-        return energy_lu * (self.characteristic_velocity_pu**2) / (self.characteristic_velocity_lu ** 2)
-
-    def convert_mass_to_lu(self, energy_pu):
-        """Energy in incompressible systems is defined in units of [velocity**2]"""
-        return energy_pu * (self.characteristic_velocity_lu**2) / (self.characteristic_velocity_pu ** 2)

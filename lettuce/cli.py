@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-"""Console script for lettuce."""
+"""Console script for lettuce.
+To get help for terminal commands, open a console and type:
+
+>>>  lettuce --help
+
+"""
 
 import sys
 import cProfile
@@ -12,7 +17,10 @@ import numpy as np
 
 import lettuce
 from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
+from lettuce.flows import flow_by_name
+from lettuce.force import Guo
 
 
 @click.group()
@@ -20,7 +28,7 @@ from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
 @click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="double",
-              help="Numerical Precision; 16, 32, or 64 bit per float (default=single).")
+              help="Numerical Precision; 16, 32, or 64 bit per float (default=double).")
 @click.pass_context  # pass parameters to sub-commands
 def main(ctx, cuda, gpu_id, precision):
     """Pytorch-accelerated Lattice Boltzmann Solver
@@ -44,10 +52,11 @@ def main(ctx, cuda, gpu_id, precision):
 @click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
 @click.option("-o", "--profile-out", type=str, default="",
               help="File to write profiling information to (default=""; no profiling information gets written).")
+@click.option("-f", "--flow", type=click.Choice(flow_by_name.keys()), default="taylor2D")
 @click.option("-v", "--vtk-out", type=str, default="",
               help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
 @click.pass_context  # pass parameters to sub-commands
-def benchmark(ctx, steps, resolution, profile_out, vtk_out):
+def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
@@ -57,8 +66,14 @@ def benchmark(ctx, steps, resolution, profile_out, vtk_out):
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    flow_class = flow_by_name[flow]
+    flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
+    force = Guo(
+        lattice,
+        tau=flow.units.relaxation_parameter_lu,
+        acceleration=flow.units.convert_acceleration_to_lu(flow.force)
+    ) if hasattr(flow, "acceleration") else None
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
     if vtk_out:
@@ -118,7 +133,5 @@ def convergence(ctx):
     else:
         return 0
 
-
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover
-

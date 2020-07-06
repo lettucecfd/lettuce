@@ -10,12 +10,14 @@ lettuce
 .. .. image:: https://img.shields.io/travis/Olllom/lettuce.svg
         :target: https://travis-ci.org/Olllom/lettuce
 
-.. .. image:: https://readthedocs.org/projects/lettuce/badge/?version=latest
-        :target: https://lettuce.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
+.. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
+    :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
+   :target: https://doi.org/10.5281/zenodo.3757641
 
-GPU-acclerated Lattice Boltzmann in Python
+GPU-accelerated Lattice Boltzmann in Python
 
 
 * Free software: MIT license

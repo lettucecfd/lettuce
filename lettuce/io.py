@@ -159,4 +159,4 @@ class EnstrophyReporter(GenericStepReporter):
             u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2].cpu().numpy())
             grad_u2 = np.gradient(u2, dx)
             vorticity += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
-        return vorticity.item()
+        return vorticity.item() * dx**self.lattice.D

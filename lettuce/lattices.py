@@ -108,25 +108,42 @@ class Lattice:
         return torch.einsum(equation, fields, **kwargs)
 
     def torch_gradient(self, f, dx=1):
-        dim = 3
-        dims = (0,1,2)
+        dim = f.ndim
+        if dim==2:
+            dims = (0, 1)
+            shift = [[[-2, 0], [-1, 0], [1, 0], [2, 0]],
+                     [[0, -2], [0, -1], [0, 1], [0, 2]]]
+        if dim==3:
+            dims = (0,1,2)
+            ## Stencil for 2nd order
+            # shift = [[[-1, 0, 0], [1, 0, 0]],
+            #          [[0, -1, 0], [0, 1, 0]],
+            #          [[0, 0, -1], [0, 0, 1]]]
+            ## Stencil for 4th order
+            # shift = [[[-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0]],
+            #          [[0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0]],
+            #          [[0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, -2]]]
+            ## Stencil for 6th order
+            shift = [[[-3, 0, 0], [-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0]],
+                     [[0, -3, 0], [0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0]],
+                     [[0, 0, -3], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 0, 3]]]
         with torch.no_grad():
             out = torch.cat(dim*[f[None,...]])
             # for i in range(dim):
-            #     out[i,...] = f.roll(shifts=(-2, 0, 0), dims=dims)
-
-            out[0, ...] = (f.roll(shifts=(-2, 0, 0), dims=dims) - \
-                          8*f.roll(shifts=(-1, 0, 0), dims=dims) + \
-                          8*f.roll(shifts=(1, 0, 0), dims=dims) - \
-                          f.roll(shifts=(2, 0, 0), dims=dims))/(12*dx)
-
-            out[1, ...] = (f.roll(shifts=(0, -2, 0), dims=dims) - \
-                          8 * f.roll(shifts=(0, -1, 0), dims=dims) + \
-                          8 * f.roll(shifts=(0, 1, 0), dims=dims) - \
-                          f.roll(shifts=(0, 2, 0), dims=dims))/(12*dx)
-
-            out[2, ...] = (f.roll(shifts=(0, 0, -2), dims=dims) - \
-                          8*f.roll(shifts=(0, 0, -1), dims=dims) + \
-                          8*f.roll(shifts=(0, 0, 1), dims=dims) - \
-                          f.roll(shifts=(0, 0, -2), dims=dims))/(12*dx)
+            #     out[i, ...] = (1/12 * f.roll(shifts=shift[i][0], dims=dims) +
+            #                    -2/3 * f.roll(shifts=shift[i][1], dims=dims) +
+            #                    2/3 * f.roll(shifts=shift[i][2], dims=dims) +
+            #                    -1/12 * f.roll(shifts=shift[i][3], dims=dims)) / (dx)
+            # for i in range(dim):
+            #     out[i, ...] = (-1/2 * f.roll(shifts=shift[i][0], dims=dims) +
+            #                    1/2 * f.roll(shifts=shift[i][1], dims=dims)) / (dx)
+            for i in range(dim):
+                out[i, ...] = (-1/60 * f.roll(shifts=shift[i][0], dims=dims) +
+                               3/20 * f.roll(shifts=shift[i][1], dims=dims) +
+                               -3/4 * f.roll(shifts=shift[i][2], dims=dims) +
+                               3/4 * f.roll(shifts=shift[i][3], dims=dims) +
+                               -3/20 * f.roll(shifts=shift[i][4], dims=dims) +
+                               1/60 * f.roll(shifts=shift[i][5], dims=dims)) / (dx)
         return out
+
+

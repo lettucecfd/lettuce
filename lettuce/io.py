@@ -169,8 +169,6 @@ class EnstrophyReporter_new(GenericStepReporter):
     def parameter_function(self,i,t,f):
         u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
-
-
         dx = self.flow.units.convert_length_to_pu(1.0)
         grad_u0 = self.lattice.torch_gradient(u0,dx=dx,order=4).cpu().numpy()
         grad_u1 = self.lattice.torch_gradient(u1,dx=dx,order=4).cpu().numpy()

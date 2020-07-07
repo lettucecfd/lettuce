@@ -157,6 +157,20 @@ class EnstrophyReporter(GenericStepReporter):
             vorticity+=np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
         return vorticity.item()
 
+class EnstrophyReporter_new(GenericStepReporter):
+    """Reports the integral of the vorticity"""
+    parameter = 'Enstrophy'
+
+    def parameter_function(self,i,t,f):
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        grad_u0 = self.lattice.torch_gradient(self.lattice.u(f)[0],dx).cpu().numpy()
+        grad_u1 = self.lattice.torch_gradient(self.lattice.u(f)[1],dx).cpu().numpy()
+        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
+        if (self.lattice.D == 3):
+            grad_u2 = self.lattice.torch_gradient(self.lattice.u(f)[2],dx).cpu().numpy()
+            vorticity+=np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
+        return vorticity.item()
+
 class MassReporter(GenericStepReporter):
     """Reports the total mass"""
     parameter = 'Mass'

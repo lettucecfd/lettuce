@@ -107,43 +107,48 @@ class Lattice:
         equation = ",".join(inputs) + "->" + output
         return torch.einsum(equation, fields, **kwargs)
 
-    def torch_gradient(self, f, dx=1):
+    def torch_gradient(self, f, dx=1, order=2):
         dim = f.ndim
-        if dim==2:
+        weights = {
+            2: [-1/2, 1/2, 0, 0, 0, 0],
+            4: [1/12, -2/3, 2/3, -1/12, 0, 0],
+            6: [-1/60, 3/20, -3/4, 3/4, -3/20, 1/60],
+        }
+        weight=weights.get(order)
+        if dim == 2:
             dims = (0, 1)
-            shift = [[[-2, 0], [-1, 0], [1, 0], [2, 0]],
-                     [[0, -2], [0, -1], [0, 1], [0, 2]]]
-        if dim==3:
-            dims = (0,1,2)
-            ## Stencil for 2nd order
-            # shift = [[[-1, 0, 0], [1, 0, 0]],
-            #          [[0, -1, 0], [0, 1, 0]],
-            #          [[0, 0, -1], [0, 0, 1]]]
-            ## Stencil for 4th order
-            # shift = [[[-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0]],
-            #          [[0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0]],
-            #          [[0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, -2]]]
-            ## Stencil for 6th order
-            shift = [[[-3, 0, 0], [-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0]],
-                     [[0, -3, 0], [0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0]],
-                     [[0, 0, -3], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 0, 3]]]
+            stencil = {
+                2: [[[-1, 0], [1, 0], [0, 0], [0, 0], [0, 0], [0, 0]],
+                    [[0, -1], [0, 1], [0, 0], [0, 0], [0, 0], [0, 0]]],
+                4: [[[-2, 0], [-1, 0], [1, 0], [2, 0], [0, 0], [0, 0]],
+                    [[0, -2], [0, -1], [0, 1], [0, 2], [0, 0], [0, 0]]],
+                6: [[[-3, 0], [-2, 0], [-1, 0], [1, 0], [2, 0], [3, 0]],
+                    [[0, -3], [0, -2], [0, -1], [0, 1], [0, 2], [0, 3]]],
+            }
+            shift = stencil.get(order)
+        if dim == 3:
+            dims = (0, 1, 2)
+            stencil = {
+                2: [[[-1, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                    [[0, -1, 0], [0, 1, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                    [[0, 0, -1], [0, 0, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]],
+                4: [[[-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0], [0, 0, 0], [0, 0, 0]],
+                    [[0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0], [0, 0, 0], [0, 0, 0]],
+                    [[0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 0, 0], [0, 0, 0]]],
+                6: [[[-3, 0, 0], [-2, 0, 0], [-1, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0]],
+                    [[0, -3, 0], [0, -2, 0], [0, -1, 0], [0, 1, 0], [0, 2, 0], [0, 3, 0]],
+                    [[0, 0, -3], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 0, 3]]]
+            }
+            shift = stencil.get(order)
         with torch.no_grad():
             out = torch.cat(dim*[f[None,...]])
-            # for i in range(dim):
-            #     out[i, ...] = (1/12 * f.roll(shifts=shift[i][0], dims=dims) +
-            #                    -2/3 * f.roll(shifts=shift[i][1], dims=dims) +
-            #                    2/3 * f.roll(shifts=shift[i][2], dims=dims) +
-            #                    -1/12 * f.roll(shifts=shift[i][3], dims=dims)) / (dx)
-            # for i in range(dim):
-            #     out[i, ...] = (-1/2 * f.roll(shifts=shift[i][0], dims=dims) +
-            #                    1/2 * f.roll(shifts=shift[i][1], dims=dims)) / (dx)
             for i in range(dim):
-                out[i, ...] = (-1/60 * f.roll(shifts=shift[i][0], dims=dims) +
-                               3/20 * f.roll(shifts=shift[i][1], dims=dims) +
-                               -3/4 * f.roll(shifts=shift[i][2], dims=dims) +
-                               3/4 * f.roll(shifts=shift[i][3], dims=dims) +
-                               -3/20 * f.roll(shifts=shift[i][4], dims=dims) +
-                               1/60 * f.roll(shifts=shift[i][5], dims=dims)) / (dx)
+                out[i, ...] = (weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
+                               weight[1] * f.roll(shifts=shift[i][1], dims=dims) +
+                               weight[2] * f.roll(shifts=shift[i][2], dims=dims) +
+                               weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
+                               weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
+                               weight[5] * f.roll(shifts=shift[i][5], dims=dims)) / (dx)
         return out
 
 

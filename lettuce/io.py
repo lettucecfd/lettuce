@@ -169,13 +169,14 @@ class EnstrophyReporter_new(GenericStepReporter):
     def parameter_function(self,i,t,f):
         u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
-        u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
+
 
         dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = self.lattice.torch_gradient(u0,dx).cpu().numpy()
-        grad_u1 = self.lattice.torch_gradient(u1,dx).cpu().numpy()
-        grad_u2 = self.lattice.torch_gradient(u2,dx).cpu().numpy()
+        grad_u0 = self.lattice.torch_gradient(u0,dx=dx,order=4).cpu().numpy()
+        grad_u1 = self.lattice.torch_gradient(u1,dx=dx,order=4).cpu().numpy()
         vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
         if (self.lattice.D == 3):
+            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
+            grad_u2 = self.lattice.torch_gradient(u2,dx=dx,order=4).cpu().numpy()
             vorticity += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
         return vorticity.item() * dx**self.lattice.D

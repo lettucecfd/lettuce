@@ -12,6 +12,7 @@ import torch
 import os
 import pyevtk.hl as vtk
 
+
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
     fig, ax = plt.subplots()
@@ -30,6 +31,7 @@ def write_vtk(point_dict, id=0, filename_base="./data/output"):
                   np.arange(0, point_dict["p"].shape[1]),
                   np.arange(0, point_dict["p"].shape[2]),
                   pointData=point_dict)
+
 
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
@@ -113,6 +115,7 @@ class GenericStepReporter:
     def parameter_function(self,i,t,f):
         return NotImplemented
 
+
 class MaxUReporter(GenericStepReporter):
     """Reports the maximum velocity magnitude in the domain"""
     parameter = 'Maximum velocity'
@@ -126,7 +129,8 @@ class MaxUReporter(GenericStepReporter):
             if (self.lattice.D > 2):
                 u2 = self.lattice.u(f)[2]
                 u += u2 * u2
-        return torch.max(torch.sqrt(u)).cpu().numpy().item()
+        return self.flow.units.convert_velocity_to_pu(torch.max(torch.sqrt(u)).cpu().numpy().item())
+
 
 class EnergyReporter(GenericStepReporter):
     """Reports the kinetic energy """
@@ -135,9 +139,10 @@ class EnergyReporter(GenericStepReporter):
     def parameter_function(self,i,t,f):
         dx = self.flow.units.convert_length_to_pu(1.0)
 
-        kinE = torch.sum(self.lattice.energy(f))
+        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
         kinE *= dx ** self.lattice.D
         return kinE.item()
+
 
 class EnstrophyReporter(GenericStepReporter):
     """Reports the integral of the vorticity"""
@@ -152,28 +157,7 @@ class EnstrophyReporter(GenericStepReporter):
         grad_u1 = self.lattice.torch_gradient(u1,dx).cpu().numpy()
         vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
         if (self.lattice.D == 3):
-            u2 = self.lattice.u(f)[2]
-            grad_u2 = self.lattice.torch_gradient(u2,dx).cpu().numpy()
-            vorticity+=np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
-        return vorticity.item()
-
-class EnstrophyReporter_new(GenericStepReporter):
-    """Reports the integral of the vorticity"""
-    parameter = 'Enstrophy'
-
-    def parameter_function(self,i,t,f):
-        dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = self.lattice.torch_gradient(self.lattice.u(f)[0],dx).cpu().numpy()
-        grad_u1 = self.lattice.torch_gradient(self.lattice.u(f)[1],dx).cpu().numpy()
-        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        if (self.lattice.D == 3):
-            grad_u2 = self.lattice.torch_gradient(self.lattice.u(f)[2],dx).cpu().numpy()
-            vorticity+=np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
-        return vorticity.item()
-
-class MassReporter(GenericStepReporter):
-    """Reports the total mass"""
-    parameter = 'Mass'
-
-    def parameter_function(self, i, t, f):
-        return torch.sum(self.lattice.rho(f)).item()
+            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2].cpu().numpy())
+            grad_u2 = np.gradient(u2, dx)
+            vorticity += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
+        return vorticity.item() * dx**self.lattice.D

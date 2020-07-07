@@ -22,6 +22,6 @@ def test_force_guo(ForceType, device):
     # compare with reference solution
     u_sim = flow.units.convert_velocity_to_pu(lattice.convert_to_numpy(lattice.u(simulation.f)))
     _, u_ref = flow.analytic_solution(flow.grid)
-    fluidnodes = np.where(np.logical_not(flow.boundaries[0].mask))
+    fluidnodes = np.where(np.logical_not(flow.boundaries[0].mask.cpu()))
     assert u_ref[0].max() == pytest.approx(u_sim[0].max(), rel=0.005)
     assert u_ref[0][fluidnodes] == pytest.approx(u_sim[0][fluidnodes], rel=None, abs=0.005*u_ref[0].max())

@@ -110,22 +110,23 @@ class Lattice:
     def torch_gradient(self, f, dx=1):
         dim = 3
         dims = (0,1,2)
-        out = torch.cat(dim*[f[None,...]])
-        # for i in range(dim):
-        #     out[i,...] = f.roll(shifts=(-2, 0, 0), dims=dims)
+        with torch.no_grad():
+            out = torch.cat(dim*[f[None,...]])
+            # for i in range(dim):
+            #     out[i,...] = f.roll(shifts=(-2, 0, 0), dims=dims)
 
-        out[0, ...] = (f.roll(shifts=(-2, 0, 0), dims=dims) - \
-                      8*f.roll(shifts=(-1, 0, 0), dims=dims) + \
-                      8*f.roll(shifts=(1, 0, 0), dims=dims) - \
-                      f.roll(shifts=(2, 0, 0), dims=dims))/(12*dx)
+            out[0, ...] = (f.roll(shifts=(-2, 0, 0), dims=dims) - \
+                          8*f.roll(shifts=(-1, 0, 0), dims=dims) + \
+                          8*f.roll(shifts=(1, 0, 0), dims=dims) - \
+                          f.roll(shifts=(2, 0, 0), dims=dims))/(12*dx)
 
-        out[1, ...] = (f.roll(shifts=(0, -2, 0), dims=dims) - \
-                      8 * f.roll(shifts=(0, -1, 0), dims=dims) + \
-                      8 * f.roll(shifts=(0, 1, 0), dims=dims) - \
-                      f.roll(shifts=(0, 2, 0), dims=dims))/(12*dx)
+            out[1, ...] = (f.roll(shifts=(0, -2, 0), dims=dims) - \
+                          8 * f.roll(shifts=(0, -1, 0), dims=dims) + \
+                          8 * f.roll(shifts=(0, 1, 0), dims=dims) - \
+                          f.roll(shifts=(0, 2, 0), dims=dims))/(12*dx)
 
-        out[2, ...] = (f.roll(shifts=(0, 0, -2), dims=dims) - \
-                      8*f.roll(shifts=(0, 0, -1), dims=dims) + \
-                      8*f.roll(shifts=(0, 0, 1), dims=dims) - \
-                      f.roll(shifts=(0, 0, -2), dims=dims))/(12*dx)
+            out[2, ...] = (f.roll(shifts=(0, 0, -2), dims=dims) - \
+                          8*f.roll(shifts=(0, 0, -1), dims=dims) + \
+                          8*f.roll(shifts=(0, 0, 1), dims=dims) - \
+                          f.roll(shifts=(0, 0, -2), dims=dims))/(12*dx)
         return out

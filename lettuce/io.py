@@ -143,20 +143,24 @@ class EnergyReporter(GenericStepReporter):
         kinE *= dx ** self.lattice.D
         return kinE.item()
 
-
 class EnstrophyReporter(GenericStepReporter):
-    """Reports the integral of the vorticity"""
+    """Reports the integral of the vorticity
+
+    Notes
+    -----
+    .. The function only works for periodic domains
+    """
     parameter = 'Enstrophy'
 
     def parameter_function(self,i,t,f):
-        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0].cpu().numpy())
-        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1].cpu().numpy())
+        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
+        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
         dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = np.gradient(u0,dx)
-        grad_u1 = np.gradient(u1,dx)
+        grad_u0 = self.lattice.torch_gradient(u0,dx=dx,order=6).cpu().numpy()
+        grad_u1 = self.lattice.torch_gradient(u1,dx=dx,order=6).cpu().numpy()
         vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
         if (self.lattice.D == 3):
-            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2].cpu().numpy())
-            grad_u2 = np.gradient(u2, dx)
+            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
+            grad_u2 = self.lattice.torch_gradient(u2,dx=dx,order=6).cpu().numpy()
             vorticity += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
         return vorticity.item() * dx**self.lattice.D

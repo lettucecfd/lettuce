@@ -144,7 +144,12 @@ class EnergyReporter(GenericStepReporter):
         return kinE.item()
 
 class EnstrophyReporter(GenericStepReporter):
-    """Reports the integral of the vorticity"""
+    """Reports the integral of the vorticity
+
+    Notes
+    -----
+    .. The function only works for periodic domains
+    """
     parameter = 'Enstrophy'
 
     def parameter_function(self,i,t,f):

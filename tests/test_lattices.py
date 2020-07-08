@@ -27,13 +27,10 @@ def test_torch_gradient_3d(order):
     grid = flow.grid
     p, u = flow.initial_solution(grid)
     dx = grid[0][0][1] - grid[0][0][0]
-    u0_grad = lattice.torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=6).numpy()
+    u0_grad = lattice.torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=order).numpy()
     u0_grad_analytic = np.array([
         np.cos(grid[0]) * np.cos(grid[1]) * np.cos(grid[2]),
         np.sin(grid[0]) * np.sin(grid[1]) * (-np.cos(grid[2])),
         np.sin(grid[0]) * (-np.cos(grid[1])) * np.sin(grid[2])
     ])
     assert (u0_grad_analytic[0,0,:,0] == pytest.approx(u0_grad[0,0,:,0], rel=2))
-
-
-

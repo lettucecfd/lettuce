@@ -2,15 +2,14 @@
 Input/output routines.
 
 TODO: Logging
-TODO: VTK field/o
 """
 
 import sys
-import logging
 import numpy as np
 import torch
 import os
 import pyevtk.hl as vtk
+from lettuce.util import torch_gradient
 
 
 def write_image(filename, array2d):
@@ -94,14 +93,15 @@ class ErrorReporter:
 
 class GenericStepReporter:
     """Abstract base class for reporters that print something every few iterations."""
-    parameter = None
+    _parameter_name = None
+
     def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
         self.lattice = lattice
         self.flow = flow
         self.starting_iteration = starting_iteration
         self.interval = interval
         self.out = [] if out is None else out
-        print('steps    ',self.parameter)
+        print('steps    ', self._parameter_name)
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
@@ -118,15 +118,15 @@ class GenericStepReporter:
 
 class MaxUReporter(GenericStepReporter):
     """Reports the maximum velocity magnitude in the domain"""
-    parameter = 'Maximum velocity'
+    _parameter_name = 'Maximum velocity'
 
     def parameter_function(self,i,t,f):
         u0 = self.lattice.u(f)[0]
         u = u0 * u0
-        if (self.lattice.D > 1):
+        if self.lattice.D > 1:
             u1 = self.lattice.u(f)[1]
             u += u1 * u1
-            if (self.lattice.D > 2):
+            if self.lattice.D > 2:
                 u2 = self.lattice.u(f)[2]
                 u += u2 * u2
         return self.flow.units.convert_velocity_to_pu(torch.max(torch.sqrt(u)).cpu().numpy().item())
@@ -134,7 +134,7 @@ class MaxUReporter(GenericStepReporter):
 
 class EnergyReporter(GenericStepReporter):
     """Reports the kinetic energy """
-    parameter = 'Kinetic energy'
+    _parameter_name = 'Kinetic energy'
 
     def parameter_function(self,i,t,f):
         dx = self.flow.units.convert_length_to_pu(1.0)
@@ -143,24 +143,28 @@ class EnergyReporter(GenericStepReporter):
         kinE *= dx ** self.lattice.D
         return kinE.item()
 
+
 class EnstrophyReporter(GenericStepReporter):
     """Reports the integral of the vorticity
 
     Notes
     -----
-    .. The function only works for periodic domains
+    The function only works for periodic domains
     """
-    parameter = 'Enstrophy'
+    _parameter_name = 'Enstrophy'
 
     def parameter_function(self,i,t,f):
         u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
         dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = self.lattice.torch_gradient(u0,dx=dx,order=6).cpu().numpy()
-        grad_u1 = self.lattice.torch_gradient(u1,dx=dx,order=6).cpu().numpy()
+        grad_u0 = torch_gradient(u0, dx=dx, order=6).cpu().numpy()
+        grad_u1 = torch_gradient(u1, dx=dx, order=6).cpu().numpy()
         vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        if (self.lattice.D == 3):
+        if self.lattice.D == 3:
             u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
-            grad_u2 = self.lattice.torch_gradient(u2,dx=dx,order=6).cpu().numpy()
-            vorticity += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
+            grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
+            vorticity += np.sum(
+                (grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])
+                + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
+            )
         return vorticity.item() * dx**self.lattice.D

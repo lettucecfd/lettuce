@@ -7,9 +7,6 @@ lettuce
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
 
-.. .. image:: https://img.shields.io/travis/Olllom/lettuce.svg
-        :target: https://travis-ci.org/Olllom/lettuce
-
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
     :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
@@ -19,9 +16,8 @@ lettuce
 
 GPU-accelerated Lattice Boltzmann in Python
 
-
 * Free software: MIT license
-.. .. * Documentation: https://lettuce.readthedocs.io.
+* Documentation: https://lettuceboltzmann.readthedocs.io
 
 Features
 --------

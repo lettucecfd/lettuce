@@ -62,9 +62,9 @@ class Lattice:
         """velocity"""
         return self.j(f) / self.rho(f)
 
-    def energy(self, f):
-        """kinetic energy"""
-        return self.einsum("d,d->", [self.u(f),self.u(f)])
+    def incompressible_energy(self, f):
+        """incompressible kinetic energy"""
+        return 0.5*self.einsum("d,d->", [self.u(f), self.u(f)])
 
     def entropy(self, f):
         """entropy according to the H-theorem"""
@@ -106,3 +106,4 @@ class Lattice:
                 raise LettuceException("Bad dimension.")
         equation = ",".join(inputs) + "->" + output
         return torch.einsum(equation, fields, **kwargs)
+

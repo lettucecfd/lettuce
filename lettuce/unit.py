@@ -99,5 +99,30 @@ class UnitConversion:
     def convert_pressure_to_lu(self, pressure_pu):
         return pressure_pu / self.characteristic_pressure_pu * self.characteristic_pressure_lu
 
-    def convert_length_to_pu(self, length):
-        return length * self.characteristic_length_pu / self.characteristic_length_lu
+    def convert_length_to_pu(self, length_lu):
+        return length_lu * self.characteristic_length_pu / self.characteristic_length_lu
+
+    def convert_length_to_lu(self, length_pu):
+        return length_pu * self.characteristic_length_lu / self.characteristic_length_pu
+
+    def convert_energy_to_pu(self, energy_lu):
+        """Energy is defined here in units of [density * velocity**2]"""
+        return (
+            energy_lu * (self.characteristic_density_pu * self.characteristic_velocity_pu**2)
+            / (self.characteristic_density_lu * self.characteristic_velocity_lu ** 2)
+        )
+
+    def convert_energy_to_lu(self, energy_pu):
+        """Energy is defined here in units of [density * velocity**2]"""
+        return (
+            energy_pu * (self.characteristic_density_lu * self.characteristic_velocity_lu**2)
+            / (self.characteristic_density_pu * self.characteristic_velocity_pu ** 2)
+        )
+
+    def convert_incompressible_energy_to_pu(self, energy_lu):
+        """Energy in incompressible systems is defined in units of [velocity**2]"""
+        return energy_lu * (self.characteristic_velocity_pu**2) / (self.characteristic_velocity_lu ** 2)
+
+    def convert_incompressible_energy_to_lu(self, energy_pu):
+        """Energy in incompressible systems is defined in units of [velocity**2]"""
+        return energy_pu * (self.characteristic_velocity_lu**2) / (self.characteristic_velocity_pu ** 2)

@@ -60,7 +60,6 @@ def test_grid_fine_to_couse_2d():
 
 def test_grid_fine_to_couse_3d():
     lattice = Lattice(D3Q27,'cpu',dtype=torch.double)
-    # streaming = StandardStreaming(lattice)
 
     flow_f = TaylorGreenVortex3D(120,1600,0.15,lattice)
     collision_f = BGKCollision(lattice,tau=flow_f.units.relaxation_parameter_lu)
@@ -72,10 +71,10 @@ def test_grid_fine_to_couse_3d():
 
     f_c = grid_fine_to_course(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
 
-    p_init, u_init = flow_c.initial_solution(flow_c.grid)
-    rho_init = lattice.convert_to_tensor(flow_c.units.convert_pressure_pu_to_density_lu(p_init))
-    u_init = lattice.convert_to_tensor(flow_c.units.convert_velocity_to_lu(u_init))
+    p_c_init, u_c_init = flow_c.initial_solution(flow_c.grid)
+    rho_c_init = flow_c.units.convert_pressure_pu_to_density_lu(p_c_init)
+    u_c_init = flow_c.units.convert_velocity_to_lu(u_c_init)
 
-    assert lattice.u(f_c).numpy() == pytest.approx(u_init.numpy())
-    assert lattice.rho(f_c).numpy() == pytest.approx(rho_init.numpy())
+    assert lattice.u(f_c).numpy() == pytest.approx(u_c_init)
+    assert lattice.rho(f_c).numpy() == pytest.approx(rho_c_init)
     assert f_c.numpy() == pytest.approx(sim_c.f.numpy())

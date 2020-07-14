@@ -2,7 +2,7 @@
 import pytest
 import os
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation
-from lettuce.io import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter
+from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter
 import numpy as np
 
 

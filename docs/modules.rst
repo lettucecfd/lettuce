@@ -47,9 +47,9 @@ Collision
     :show-inheritance:
 
 
-IO
---
-.. automodule:: lettuce.io
+Reporters
+---------
+.. automodule:: lettuce.reporters
     :noindex:
     :members:
     :undoc-members:

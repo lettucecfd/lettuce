@@ -1,7 +1,7 @@
 
 import numpy as np
 import torch
-from lettuce import Lattice, D2Q9, D3Q27, TaylorGreenVortex2D, TaylorGreenVortex3D, torch_gradient,grid_fine_to_course
+from lettuce import Lattice, D2Q9, D3Q27, TaylorGreenVortex2D, TaylorGreenVortex3D, torch_gradient,grid_fine_to_coarse
 from lettuce import BGKCollision, Simulation
 import pytest
 
@@ -48,15 +48,19 @@ def test_grid_fine_to_couse_2d():
     collision_c = BGKCollision(lattice,tau=flow_c.units.relaxation_parameter_lu)
     sim_c = Simulation(flow_c,lattice,collision_c,streaming=None)
 
-    f_c = grid_fine_to_course(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
+    f_c = grid_fine_to_coarse(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
 
     p_init, u_init = flow_c.initial_solution(flow_c.grid)
     rho_init = lattice.convert_to_tensor(flow_c.units.convert_pressure_pu_to_density_lu(p_init))
     u_init = lattice.convert_to_tensor(flow_c.units.convert_velocity_to_lu(u_init))
+    shear_c_init = lattice.shear_tensor(sim_c.f)
+    shear_c = lattice.shear_tensor(f_c)
+
 
     assert (lattice.u(f_c).numpy() == pytest.approx(u_init.numpy()))
     assert (lattice.rho(f_c).numpy() == pytest.approx(rho_init.numpy()))
     assert (f_c.numpy() == pytest.approx(sim_c.f.numpy()))
+    assert (shear_c_init.numpy() == pytest.approx(shear_c.numpy()))
 
 def test_grid_fine_to_couse_3d():
     lattice = Lattice(D3Q27,'cpu',dtype=torch.double)
@@ -69,12 +73,15 @@ def test_grid_fine_to_couse_3d():
     collision_c = BGKCollision(lattice,tau=flow_c.units.relaxation_parameter_lu)
     sim_c = Simulation(flow_c,lattice,collision_c,streaming=None)
 
-    f_c = grid_fine_to_course(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
+    f_c = grid_fine_to_coarse(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
 
     p_c_init, u_c_init = flow_c.initial_solution(flow_c.grid)
     rho_c_init = flow_c.units.convert_pressure_pu_to_density_lu(p_c_init)
     u_c_init = flow_c.units.convert_velocity_to_lu(u_c_init)
+    shear_c_init = lattice.shear_tensor(sim_c.f)
+    shear_c = lattice.shear_tensor(f_c)
 
     assert lattice.u(f_c).numpy() == pytest.approx(u_c_init)
     assert lattice.rho(f_c).numpy() == pytest.approx(rho_c_init)
     assert f_c.numpy() == pytest.approx(sim_c.f.numpy())
+    assert (shear_c_init.numpy() == pytest.approx(shear_c.numpy()))

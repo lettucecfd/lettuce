@@ -90,7 +90,7 @@ def torch_gradient(f, dx=1, order=2):
             ) * torch.tensor(1.0/dx, dtype=f.dtype, device=f.device)
     return out
 
-def grid_fine_to_course(lattice,f_fine,tau_fine,tau_course):
+def grid_fine_to_coarse(lattice,f_fine,tau_fine,tau_course):
     if f_fine.shape.__len__() == 3:
         f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2]))
         f_neq = f_fine[:, ::2, ::2] - f_eq

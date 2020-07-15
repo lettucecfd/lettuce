@@ -2,7 +2,7 @@
 import pytest
 import os
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation
-from lettuce.io import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter,MassReporter
+from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter
 import numpy as np
 
 
@@ -16,13 +16,13 @@ def test_write_image(tmpdir):
     assert os.path.isfile(tmpdir/"p.png")
 
 
-@pytest.mark.parametrize("Reporter", [EnstrophyReporter, EnergyReporter, MaxUReporter, MassReporter])
+@pytest.mark.parametrize("Reporter", [EnstrophyReporter, EnergyReporter, MaxUReporter])
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
 def test_generic_reporters(Reporter, Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, dtype=dtype, device=device)
-    flow = Case(16, 10000, 0.05, lattice=lattice)
-    if(Case==TaylorGreenVortex3D):
+    flow = Case(64, 10000, 0.05, lattice=lattice)
+    if Case == TaylorGreenVortex3D:
         lattice = Lattice(D3Q27, dtype=dtype, device=device)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
@@ -30,7 +30,7 @@ def test_generic_reporters(Reporter, Case, dtype_device):
     kinE_reporter = Reporter(lattice, flow, interval=1, out=None)
     simulation.reporters.append(kinE_reporter)
     simulation.step(2)
-    assert(np.asarray(kinE_reporter.out)[1,1] == pytest.approx(np.asarray(kinE_reporter.out)[0,1],abs=1.0))
+    assert(np.asarray(kinE_reporter.out)[1,1] == pytest.approx(np.asarray(kinE_reporter.out)[0,1], rel=0.05))
 
 
 def test_write_vtk(tmpdir):

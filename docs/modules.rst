@@ -3,7 +3,7 @@ API
 ===
 
 Simulation
--------
+----------
 .. automodule:: lettuce.simulation
     :noindex:
     :members:
@@ -12,7 +12,7 @@ Simulation
 
 
 Lattices
--------
+--------
 .. automodule:: lettuce.lattices
     :noindex:
     :members:
@@ -21,7 +21,7 @@ Lattices
 
 
 Stencils
--------
+--------
 .. automodule:: lettuce.stencils
     :noindex:
     :members:
@@ -30,7 +30,7 @@ Stencils
 
 
 Streaming
--------
+---------
 .. automodule:: lettuce.streaming
     :noindex:
     :members:
@@ -39,7 +39,7 @@ Streaming
 
 
 Collision
--------
+---------
 .. automodule:: lettuce.collision
     :noindex:
     :members:
@@ -47,9 +47,9 @@ Collision
     :show-inheritance:
 
 
-IO
--------
-.. automodule:: lettuce.io
+Reporters
+---------
+.. automodule:: lettuce.reporters
     :noindex:
     :members:
     :undoc-members:
@@ -57,7 +57,7 @@ IO
 
 
 Force
--------
+-----
 .. automodule:: lettuce.force
     :noindex:
     :members:
@@ -66,7 +66,7 @@ Force
 
 
 Equilibrium
--------
+-----------
 .. automodule:: lettuce.equilibrium
     :noindex:
     :members:
@@ -75,7 +75,7 @@ Equilibrium
 
 
 Boundary
--------
+--------
 .. automodule:: lettuce.boundary
     :noindex:
     :members:
@@ -84,7 +84,7 @@ Boundary
 
 
 Flows
--------
+-----
 
 Couette
 ^^^^^^^
@@ -95,7 +95,7 @@ Couette
     :show-inheritance:
 
 Poiseuille
-^^^^^^^
+^^^^^^^^^^
 .. automodule:: lettuce.flows.poiseuille
     :noindex:
     :members:
@@ -103,7 +103,7 @@ Poiseuille
     :show-inheritance:
 
 Taylor-Green
-^^^^^^^
+^^^^^^^^^^^^
 .. automodule:: lettuce.flows.taylorgreen
     :noindex:
     :members:
@@ -111,8 +111,17 @@ Taylor-Green
     :show-inheritance:
 
 
-Command-Line Interface
+Utility
 -------
+.. automodule:: lettuce.util
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Command-Line Interface
+----------------------
 .. automodule:: lettuce.cli
     :noindex:
     :members:

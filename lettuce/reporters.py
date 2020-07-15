@@ -139,12 +139,7 @@ class EnergyReporter(GenericStepReporter):
     def parameter_function(self,i,t,f):
         dx = self.flow.units.convert_length_to_pu(1.0)
 
-<<<<<<< HEAD:lettuce/io.py
-        kinE = torch.sum(self.lattice.energy(f)) * 0.5
-        kinE = self.flow.units.convert_velocity_to_pu(self.flow.units.convert_velocity_to_pu(kinE))
-=======
         kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
->>>>>>> master:lettuce/reporters.py
         kinE *= dx ** self.lattice.D
         return kinE.item()
 
@@ -158,29 +153,6 @@ class EnstrophyReporter(GenericStepReporter):
     """
     _parameter_name = 'Enstrophy'
 
-<<<<<<< HEAD:lettuce/io.py
-    def parameter_function(self, i, t, f):
-        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))[0].cpu().numpy()
-        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))[1].cpu().numpy()
-        dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = np.gradient(u0, dx)
-        grad_u1 = np.gradient(u1, dx)
-        # enstrophy = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        enstrophy = np.sum((grad_u0[1] - grad_u1[0]) ** 2)
-        if self.lattice.D == 3:
-            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))[2].cpu().numpy()
-            grad_u2 = np.gradient(u2, dx)
-            # enstrophy += np.sum((grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])+((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0])))
-            enstrophy += np.sum((grad_u2[1] - grad_u1[2]) ** 2 + (grad_u0[2] - grad_u2[0]) ** 2)
-        return enstrophy.item()
-
-class MassReporter(GenericStepReporter):
-    """Reports the total mass"""
-    parameter = 'Mass'
-
-    def parameter_function(self, i, t, f):
-        return torch.sum(self.lattice.rho(f)).item()
-=======
     def parameter_function(self,i,t,f):
         u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
@@ -196,4 +168,3 @@ class MassReporter(GenericStepReporter):
                 + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
             )
         return vorticity.item() * dx**self.lattice.D
->>>>>>> master:lettuce/reporters.py

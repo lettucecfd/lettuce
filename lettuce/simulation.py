@@ -1,13 +1,12 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
 import pickle
 from copy import deepcopy
 import warnings
 import torch
 import numpy as np
-
 
 class Simulation:
     """High-level API for simulations."""
@@ -80,6 +79,22 @@ class Simulation:
                 break
             p_old = deepcopy(p)
         return i
+
+    def fNeqInitialize(self):
+        u0=self.lattice.u(self)[0]
+        u1 = self.lattice.u(self)[1]
+        u2 = self.lattice.u(self)[2]
+        grad_u0 = torch_gradient(u0, dx=1, order=6)[None, ...]
+        grad_u1 = torch_gradient(u1, dx=1, order=6)[None, ...]
+        #grad_u2 = torch_gradient(u2, dx=1, order=6)[None, ...]
+        S = torch.cat([grad_u0, grad_u1])
+        S = 0.5 * (S + S.transpose(0,1))
+        rho = self.lattice.rho(self.f)
+        Pi_1 = -2*self.lattice.stencil.cs**2*rho*S
+        #Q =
+
+
+
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

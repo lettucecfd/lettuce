@@ -80,20 +80,25 @@ class Simulation:
             p_old = deepcopy(p)
         return i
 
-    def fNeqInitialize(self):
-        u0=self.lattice.u(self)[0]
-        u1 = self.lattice.u(self)[1]
-        u2 = self.lattice.u(self)[2]
-        grad_u0 = torch_gradient(u0, dx=1, order=6)[None, ...]
-        grad_u1 = torch_gradient(u1, dx=1, order=6)[None, ...]
-        #grad_u2 = torch_gradient(u2, dx=1, order=6)[None, ...]
-        S = torch.cat([grad_u0, grad_u1])
-        S = 0.5 * (S + S.transpose(0,1))
+    def fNeqInitialize(self,tau):
         rho = self.lattice.rho(self.f)
-        Pi_1 = -2*self.lattice.stencil.cs**2*rho*S
-        #Q =
+        u = self.lattice.u(self.f)
 
+        grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
+        grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
+        S = torch.cat([grad_u0, grad_u1])
 
+        if(self.lattice.D==3):
+            grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
+            S = torch.cat([S, grad_u2])
+
+        Pi_1 = -tau*rho/self.lattice.cs**2*S
+        Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
+        C = torch.einsum('ab...,iab->i...', Pi_1, Q)
+        fneq = torch.einsum('i,i...->i...',self.lattice.w,C)
+
+        feq = self.lattice.equilibrium(rho,u)
+        self.f = feq + fneq
 
 
     def save_checkpoint(self, filename):

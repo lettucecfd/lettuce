@@ -92,7 +92,7 @@ class Simulation:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
-        Pi_1 = -tau*rho/self.lattice.cs**2*S
+        Pi_1 = -tau * rho / self.lattice.cs**2 * S
         Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
         C = torch.einsum('ab...,iab->i...', Pi_1, Q)
         fneq = torch.einsum('i,i...->i...',self.lattice.w,C)

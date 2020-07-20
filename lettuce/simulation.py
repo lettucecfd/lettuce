@@ -81,8 +81,8 @@ class Simulation:
         return i
 
     def initialize_f_neq(self, tau):
-        """Initialize the distribution function values. The f^(1) contributions are approximated by Finite Differences.
-        According to Krüger et al. (2017).
+        """Initialize the distribution function values. The f^(1) contributions are approximated by finite differences.
+        See Krüger et al. (2017).
         """
         rho = self.lattice.rho(self.f)
         u = self.lattice.u(self.f)
@@ -90,9 +90,6 @@ class Simulation:
         grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
         grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
         S = torch.cat([grad_u1, grad_u0])
-        #S = np.gradient(u.cpu().numpy())
-        #S = np.concatenate([S[1][None,...],S[0][None,...]])
-        #S = torch.from_numpy(S).cuda()
 
         if(self.lattice.D==3):
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]

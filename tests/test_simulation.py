@@ -2,7 +2,7 @@
 
 import pytest
 import numpy as np
-from lettuce import Simulation, TaylorGreenVortex2D, Lattice, D2Q9, BGKCollision, StandardStreaming, ErrorReporter
+from lettuce import Simulation, TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D2Q9, D3Q27, BGKCollision, StandardStreaming, ErrorReporter
 import torch
 
 
@@ -41,36 +41,42 @@ def test_initialization(dtype_device):
     assert piter == pytest.approx(p, abs=5e-2)
     assert num_iterations < 500
 
-def test_initialize_fneq(dtype_device):
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
+def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=1000, mach_number=0.05, lattice=lattice)
+    if Case == TaylorGreenVortex3D:
+        lattice = Lattice(D3Q27, dtype=dtype, device=device)
+    flow = Case(resolution=16, reynolds_number=1000, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation_neq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
+
 
     pre_rho = lattice.rho(simulation_neq.f)
     pre_u = lattice.u(simulation_neq.f)
 
-    simulation_neq.reporters.append(error_reporter_neq)
+
     simulation_neq.initialize_f_neq(tau=collision.tau)
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)
     assert(torch.allclose(pre_rho,post_rho,1e-6))
-    assert(torch.allclose(pre_u,post_u,1e-6))
+    assert(torch.allclose(pre_u,post_u))
 
-    error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
-    simulation_eq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    simulation_eq.reporters.append(error_reporter_eq)
+    if(lattice.D==2):
+        error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
+        error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
+        simulation_eq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        simulation_neq.reporters.append(error_reporter_neq)
+        simulation_eq.reporters.append(error_reporter_eq)
 
-    simulation_neq.step(10)
-    simulation_eq.step(10)
-    error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
-    error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
+        simulation_neq.step(10)
+        simulation_eq.step(10)
+        error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
+        error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
 
-    assert(error_u < error_u_eq)
+        assert(error_u < error_u_eq)
 
 
 

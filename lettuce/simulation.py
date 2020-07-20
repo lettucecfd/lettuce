@@ -65,7 +65,7 @@ class Simulation:
         Using the initialization does not better TGV convergence. Maybe use a better scheme?
         """
         warnings.warn("Iterative initialization does not work well and solutions may diverge. Use with care. "
-                      "At some point, we may need to implement a better scheme.",
+                      "Use initialize_f_neq instead.",
                       ExperimentalWarning)
         transform = get_default_moment_transform(self.lattice)
         collision = BGKInitialization(self.lattice, self.flow, transform)

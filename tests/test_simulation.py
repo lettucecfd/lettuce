@@ -57,7 +57,7 @@ def test_initialize_fneq(Case, dtype_device):
     pre_u = lattice.u(simulation_neq.f)
 
 
-    simulation_neq.initialize_f_neq(tau=collision.tau)
+    simulation_neq.initialize_f_neq()
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)

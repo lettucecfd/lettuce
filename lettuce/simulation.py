@@ -80,7 +80,7 @@ class Simulation:
             p_old = deepcopy(p)
         return i
 
-    def initialize_f_neq(self, tau):
+    def initialize_f_neq(self):
         """Initialize the distribution function values. The f^(1) contributions are approximated by finite differences.
         See Krüger et al. (2017).
         """
@@ -95,7 +95,7 @@ class Simulation:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
-        Pi_1 = -1.0*tau * rho  * S / self.lattice.cs**2
+        Pi_1 = -1.0*self.collision.tau * rho  * S / self.lattice.cs**2
         Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
         Pi_1_Q = torch.einsum('ab...,iab->i...', Pi_1, Q)
         fneq = torch.einsum('i,i...->i...',self.lattice.w,Pi_1_Q)

@@ -89,7 +89,7 @@ class Simulation:
 
         grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
         grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
-        S = torch.cat([grad_u1, grad_u0])
+        S = torch.cat([grad_u0, grad_u1])
 
         if(self.lattice.D==3):
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]

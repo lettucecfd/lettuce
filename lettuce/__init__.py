@@ -15,12 +15,12 @@ from lettuce.lattices import *
 from lettuce.equilibrium import *
 from lettuce.stencils import *
 from lettuce.moments import *
-from lettuce.io import *
+from lettuce.reporters import *
 
 from lettuce.collision import *
 from lettuce.streaming import *
 from lettuce.boundary import *
-from lettuce.io import *
+from lettuce.reporters import *
 from lettuce.simulation import *
 from lettuce.force import *
 

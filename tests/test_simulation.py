@@ -52,10 +52,8 @@ def test_initialize_fneq(Case, dtype_device):
     streaming = StandardStreaming(lattice)
     simulation_neq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
 
-
     pre_rho = lattice.rho(simulation_neq.f)
     pre_u = lattice.u(simulation_neq.f)
-
 
     simulation_neq.initialize_f_neq()
 
@@ -64,7 +62,7 @@ def test_initialize_fneq(Case, dtype_device):
     assert(torch.allclose(pre_rho,post_rho,1e-6))
     assert(torch.allclose(pre_u,post_u))
 
-    if(lattice.D==2):
+    if Case == TaylorGreenVortex2D:
         error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
         error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation_eq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
@@ -77,7 +75,3 @@ def test_initialize_fneq(Case, dtype_device):
         error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
 
         assert(error_u < error_u_eq)
-
-
-
-

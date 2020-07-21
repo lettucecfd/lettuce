@@ -115,7 +115,7 @@ def convergence(ctx,init_f_neq):
         streaming = StandardStreaming(lattice)
         simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
         if(init_f_neq):
-            simulation.initialize_f_neq(tau=collision.tau)
+            simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
         for i in range(10*resolution):

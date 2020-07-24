@@ -24,7 +24,7 @@ class Obstacle2D(object):
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1]*0],
+            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0],#.05],
             dtype=float)
 
     def getMaxU(self, f, lattice):
@@ -56,6 +56,11 @@ class Obstacle2D(object):
         y = np.linspace(0, 1, num=self.resolution_y, endpoint=False)
         return np.meshgrid(x, y, indexing='ij')
 
+    #@property
+    #def grid(self):
+    #    x = np.linspace(0, self.resolution_x/self.units.characteristic_length_lu, num=self.resolution_x, endpoint=False)
+    #    y = np.linspace(0, self.resolution_y/self.units.characteristic_length_lu, num=self.resolution_y, endpoint=False)
+    #    return np.meshgrid(x, y, indexing='ij')
 
     @property
     def boundaries(self):
@@ -89,7 +94,7 @@ class Obstacle3D(object):
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2]*0],
+            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2] * 0],#.05],
             dtype=float)
 
     def getMaxU(self, f, lattice):

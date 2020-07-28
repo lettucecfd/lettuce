@@ -168,3 +168,21 @@ class EnstrophyReporter(GenericStepReporter):
                 + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
             )
         return vorticity.item() * dx**self.lattice.D
+
+class Vorticity(GenericStepReporter):
+    """Reports the integral of the vorticity
+
+    Notes
+    -----
+    The function only works for periodic domains
+    """
+    _parameter_name = 'Vorticity'
+
+    def parameter_function(self,i,t,f):
+        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
+        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        grad_u0 = torch_gradient(u0, dx=dx, order=6).cpu().numpy()
+        grad_u1 = torch_gradient(u1, dx=dx, order=6).cpu().numpy()
+        vorticity = (grad_u1[0] - grad_u0[1])
+        return np.max(vorticity)

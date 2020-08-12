@@ -58,7 +58,7 @@ class Obstacle2D(object):
                 #ZeroGradientOutletRight(np.abs(y-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 #ZeroGradientOutletBottom(np.abs(x-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 #ZeroGradientOutletTop(np.abs(x) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
-                AntiBounceBackOutletBack2D(np.abs(x) < 1e-6, self.units.lattice, 5), #inputs don't matter yet
+                AntiBounceBackOutletBack2D(self.grid, self.units.lattice, 5), #inputs don't matter yet
                 BounceBackBoundary(self.mask, self.units.lattice)]
 
 #----------------------------------------------3D-----------------------------------------------------------------------
@@ -108,7 +108,7 @@ class Obstacle3D(object):
                 #ZeroGradientOutletRight(np.abs(y - 1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 # ZeroGradientOutletBottom(np.abs(x-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 # ZeroGradientOutletTop(np.abs(x) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
-                AntiBounceBackOutletBack3D(np.abs(x) < 1e-6, self.units.lattice, 5),  # inputs don't matter yet
+                AntiBounceBackOutletBack3D(self.grid, self.units.lattice, 5),  # inputs don't matter yet
                 BounceBackBoundary(self.mask, self.units.lattice)]
 
 class ZeroGradientOutletTop:
@@ -125,22 +125,19 @@ class ZeroGradientOutletTop:
 
 class AntiBounceBackOutletBack2D:
     # Seite 195 im Buch
-    #WIP: rechenzeit optimieren
 
-    def __init__(self, mask, lattice, direction):
-        self.mask = lattice.convert_to_tensor(mask)
+    def __init__(self, grid, lattice, direction):
+        self.mask = torch.zeros(lattice.convert_to_tensor(grid).shape[1:], device=lattice.device, dtype=torch.bool)
+        self.mask[-1, :] = True
         self.lattice = lattice
-        self.direction = direction
+        self.direction = [1, 5, 8]
 
     def __call__(self, f):
-        directions = [1, 5, 8]
-        self.mask = torch.zeros(f[0].shape, device=f.device, dtype=torch.bool)
-        self.mask[-1, :] = True
 
         u = self.lattice.u(f)
         u_w = u[:, -1, :] + 0.5 * (u[:, -1, :] - u[:, -2, :])
         f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
-        for i in directions:
+        for i in self.direction:
             # formula according to book
             #f[i, -1, :] = - f_bounced[i, -1, :] + 2 * self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask] * \
             #            (1 + torch.matmul(torch.tensor((self.lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w)**2 / (2 * self.lattice.stencil.cs**4) - torch.norm(u_w, dim=0)**2 / (2 * self.lattice.stencil.cs**2))
@@ -151,22 +148,19 @@ class AntiBounceBackOutletBack2D:
 
 class AntiBounceBackOutletBack3D:
     # Seite 195 im Buch
-    # WIP: rechenzeit optimieren
 
-    def __init__(self, mask, lattice, direction):
-        self.mask = lattice.convert_to_tensor(mask)
+    def __init__(self, grid, lattice, direction):
+        self.mask = torch.zeros(lattice.convert_to_tensor(grid).shape[1:], device=lattice.device, dtype=torch.bool)
+        self.mask[-1, :, :] = True
         self.lattice = lattice
-        self.direction = direction
+        self.direction = [1, 11, 13, 15, 17, 19, 21, 23, 25]
 
     def __call__(self, f):
-        directions = [1, 11, 13, 15, 17, 19, 21, 23, 25]
-        self.mask = torch.zeros(f[0].shape, device=f.device, dtype=torch.bool)
-        self.mask[-1, :, :] = True
 
         u = self.lattice.u(f)
         u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
         f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
-        for i in directions:
+        for i in self.direction:
             #f[i, -1, :, :] = - f_bounced[i, -1, :, :] + 2 * self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask].reshape(f[0].shape[1], f[0].shape[2]) * \
             #              (1 + (torch.einsum('c, cyz -> yz', torch.tensor(self.lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / (2 * self.lattice.stencil.cs ** 4) - torch.norm(u_w, dim=0) ** 2 / (2 * self.lattice.stencil.cs ** 2)))
             f[i, -1, :, :] = - f_bounced[i, -1, :, :] + self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask].reshape(f[0].shape[1], f[0].shape[2]) * \

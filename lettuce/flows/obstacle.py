@@ -136,13 +136,13 @@ class AntiBounceBackOutletBack2D:
 
         u = self.lattice.u(f)
         u_w = u[:, -1, :] + 0.5 * (u[:, -1, :] - u[:, -2, :])
-        f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
+        #f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
         for i in self.direction:
             # formula according to book
             #f[i, -1, :] = - f_bounced[i, -1, :] + 2 * self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask] * \
             #            (1 + torch.matmul(torch.tensor((self.lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w)**2 / (2 * self.lattice.stencil.cs**4) - torch.norm(u_w, dim=0)**2 / (2 * self.lattice.stencil.cs**2))
             # changed brackets ect. so it runs faster:
-            f[i, -1, :] = - f_bounced[i, -1, :] + self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask] * \
+            f[self.lattice.stencil.opposite[i], -1, :] = - f[i, -1, :] + self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask] * \
                         (2 + torch.matmul(torch.tensor((self.lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w) ** 2 / self.lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / self.lattice.stencil.cs)**2)
         return f
 
@@ -159,11 +159,11 @@ class AntiBounceBackOutletBack3D:
 
         u = self.lattice.u(f)
         u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
-        f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
+        #f_bounced = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
         for i in self.direction:
             #f[i, -1, :, :] = - f_bounced[i, -1, :, :] + 2 * self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask].reshape(f[0].shape[1], f[0].shape[2]) * \
             #              (1 + (torch.einsum('c, cyz -> yz', torch.tensor(self.lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / (2 * self.lattice.stencil.cs ** 4) - torch.norm(u_w, dim=0) ** 2 / (2 * self.lattice.stencil.cs ** 2)))
-            f[i, -1, :, :] = - f_bounced[i, -1, :, :] + self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask].reshape(f[0].shape[1], f[0].shape[2]) * \
+            f[self.lattice.stencil.opposite[i], -1, :, :] = - f[i, -1, :, :] + self.lattice.stencil.w[i] * self.lattice.rho(f)[0, self.mask].reshape(f[0].shape[1], f[0].shape[2]) * \
                           (2 + torch.einsum('c, cyz -> yz', torch.tensor(self.lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / self.lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / self.lattice.stencil.cs) ** 2)
 
         return f

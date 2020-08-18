@@ -83,7 +83,7 @@ class Obstacle3D(object):
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2] * 0],#.05],
+            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2] * 0.05],
             dtype=float)
 
     def getMaxU(self, f, lattice):
@@ -108,7 +108,7 @@ class Obstacle3D(object):
                 #ZeroGradientOutletRight(np.abs(y - 1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 # ZeroGradientOutletBottom(np.abs(x-1) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
                 # ZeroGradientOutletTop(np.abs(x) < 1e-3, self.units.lattice, direction=[1.0, 0.0]),
-                AntiBounceBackOutletBack3D(self.grid, self.units.lattice, 5),  # inputs don't matter yet
+                AntiBounceBackOutletBack3D(self.grid, self.units.lattice, 5),
                 BounceBackBoundary(self.mask, self.units.lattice)]
 
 class ZeroGradientOutletTop:

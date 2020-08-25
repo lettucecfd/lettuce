@@ -90,8 +90,7 @@ def torch_gradient(f, dx=1, order=2):
             ) * torch.tensor(1.0/dx, dtype=f.dtype, device=f.device)
     return out
 
-def torch_jacobi(f, p, dx, dim, tol_abs=1e-5):
-    device = "cuda"
+def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-5):
     # f = torch.tensor(f, device=device, dtype=torch.double)
     p = torch.tensor(p, device=device, dtype=torch.double)
     #dx = self.units.convert_length_to_pu(1)

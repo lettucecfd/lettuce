@@ -20,20 +20,18 @@ class DecayingTurbulence2D:
             characteristic_velocity_pu=1
         )
 
-
-
     def analytic_solution(self, x, t=0):
         return
 
     def pressure_poisson(self, p, u ):
         dx = self.units.characteristic_length_pu / self.resolution
-        u = torch.tensor(u, device="cuda", dtype=torch.double)
+        u = torch.tensor(u, device=self.units.lattice.device, dtype=self.units.lattice.dtype)
 
         u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1], dx)[0]  # uii+uij
         u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1], dx)[1]  # uji+ujj
         u_mod = -(u0 + u1)
 
-        p_mod = torch_jacobi(u_mod, p[0], dx, dim=2, tol_abs=1e-6)[None, ...]
+        p_mod = torch_jacobi(u_mod, p[0], dx, self.units.lattice.device, dim=2, tol_abs=1e-6)[None, ...]
         return p_mod
 
     def initial_solution(self, x):
@@ -42,40 +40,40 @@ class DecayingTurbulence2D:
         ### Generate wavenumber vector
         kx = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
         ky = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
-        KX, KY = np.meshgrid(kx, ky)
-        KK = np.sqrt(KX ** 2 + KY ** 2)
-        KK[0][0] = 1e-16
+        kx, ky = np.meshgrid(kx, ky)
+        kk = np.sqrt(kx ** 2 + ky ** 2)
+        kk[0][0] = 1e-16
 
         ### Generate spectrum
-        ek = (KK) ** 4 * np.exp(-2 * (KK / self.k0) ** 2)
+        ek = (kk) ** 4 * np.exp(-2 * (kk / self.k0) ** 2)
         ek[0][0] = 0
         ek /= np.sum(ek)
         ek *= self.ic_energy
 
         # Forward transform random fields
-        u = np.random.randn(self.resolution,self.resolution) + 0j
-        v = np.random.randn(self.resolution,self.resolution) + 0j
+        u0 = np.random.randn(self.resolution,self.resolution) + 0j
+        u1 = np.random.randn(self.resolution,self.resolution) + 0j
 
-        uc = np.fft.fftn(u, axes=(0, 1))
-        vc = np.fft.fftn(v, axes=(0, 1))
+        u0 = np.fft.fftn(u0, axes=(0, 1))
+        u1 = np.fft.fftn(u1, axes=(0, 1))
         # real parts
-        ucr = uc.real
-        vcr = vc.real
+        u0_real = u0.real
+        u1_real = u1.real
         # imaginary parts
-        uci = uc.imag
-        vci = vc.imag
+        u0_imag = u0.imag
+        u1_imag = u1.imag
 
         # no mean value
-        ucr[0][0] = 0
-        uci[0][0] = 0
-        vcr[0][0] = 0
-        vci[0][0] = 0
+        u0_real[0][0] = 0
+        u0_imag[0][0] = 0
+        u1_real[0][0] = 0
+        u1_imag[0][0] = 0
 
-        # scale with target energy at KK and divide by local energy at KK to force the spectrum
-        u0_real_h = np.sqrt(2 / self.units.lattice.D * ek / (uci ** 2 + ucr ** 2 + 1.e-15)) * ucr
-        u0_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (uci ** 2 + ucr ** 2 + 1.e-15)) * uci
-        u1_real_h = np.sqrt(2 / self.units.lattice.D * ek / (vci ** 2 + vcr ** 2 + 1.e-15)) * vcr
-        u1_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (vci ** 2 + vcr ** 2 + 1.e-15)) * vci
+        # scale with target energy at kk and divide by local energy at kk to force the spectrum
+        u0_real_h = np.sqrt(2 / self.units.lattice.D * ek / (u0_imag ** 2 + u0_real ** 2 + 1.e-15)) * u0_real
+        u0_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (u0_imag ** 2 + u0_real ** 2 + 1.e-15)) * u0_imag
+        u1_real_h = np.sqrt(2 / self.units.lattice.D * ek / (u1_imag ** 2 + u1_real ** 2 + 1.e-15)) * u1_real
+        u1_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (u1_imag ** 2 + u1_real ** 2 + 1.e-15)) * u1_imag
         u0_real_h[0][0] = 0
         u1_real_h[0][0] = 0
         u0_imag_h[0][0] = 0
@@ -83,42 +81,43 @@ class DecayingTurbulence2D:
 
         ### Remove divergence
         # modified wave number sin(k*dx) is used, as the gradient below uses second order cental differences
-        # Modify if other schemes are used or use KX, KY if you don't know the modified wavenumber !!!
-        KXm = np.sin(KX * dx) / dx
-        KYm = np.sin(KY * dx) / dx
-        KKm = np.sqrt(KXm ** 2 + KYm ** 2 + 1e-16)
+        # Modify if other schemes are used or use kx, ky if you don't know the modified wavenumber !!!
+        kx_modified = np.sin(kx * dx) / dx
+        ky_modified = np.sin(ky * dx) / dx
+        kk_modified = np.sqrt(kx_modified ** 2 + ky_modified ** 2 + 1e-16)
 
-        divr = (KXm * u0_real_h + KYm * u1_real_h)
-        divi = (KXm * u0_imag_h + KYm * u1_imag_h)
+        divergence_real = (kx_modified * u0_real_h + ky_modified * u1_real_h)
+        divergence_imag = (kx_modified * u0_imag_h + ky_modified * u1_imag_h)
 
-        ucr = u0_real_h - divr * KXm / KKm ** 2
-        uci = u0_imag_h - divi * KXm / KKm ** 2
-        vcr = u1_real_h - divr * KYm / KKm ** 2
-        vci = u1_imag_h - divi * KYm / KKm ** 2
+        u0_real = u0_real_h - divergence_real * kx_modified / kk_modified ** 2
+        u0_imag = u0_imag_h - divergence_imag * kx_modified / kk_modified ** 2
+        u1_real = u1_real_h - divergence_real * ky_modified / kk_modified ** 2
+        u1_imag = u1_imag_h - divergence_imag * ky_modified / kk_modified ** 2
 
-        ucr[0][0] = 0
-        uci[0][0] = 0
-        vcr[0][0] = 0
-        vci[0][0] = 0
+        u0_real[0][0] = 0
+        u0_imag[0][0] = 0
+        u1_real[0][0] = 0
+        u1_imag[0][0] = 0
 
-        e_kin = np.sum((ucr ** 2 + uci ** 2 + vcr ** 2 + vci ** 2)) * .5
+        ### Scale velocity field to achieve the desired inicial energy
+        e_kin = np.sum((u0_real ** 2 + u0_imag ** 2 + u1_real ** 2 + u1_imag ** 2)) * .5
         factor = np.sqrt(self.ic_energy / e_kin)
-        ucr *= factor
-        uci *= factor
-        vcr *= factor
-        vci *= factor
+        u0_real *= factor
+        u0_imag *= factor
+        u1_real *= factor
+        u1_imag *= factor
 
+        ### Backtransformation to physical space
         norm = self.resolution / dx
+        # backtransformation of u0
+        u0 = u0_real + u0_imag * 1.0j
+        u0f = np.fft.ifftn(u0, axes=(0, 1)) * norm
+        u = u0f.real[None,...]
 
-        # backtransformation of u
-        uc = ucr + uci * 1.0j
-        ucf = np.fft.ifftn(uc, axes=(0, 1)) * norm
-        u = ucf.real[None,...]
-
-        # backtransformation of v
-        vc = vcr + vci * 1.0j
-        vcf = np.fft.ifftn(vc, axes=(0, 1)) * norm
-        u = np.append(u, vcf.real[None, ...], axis=0)
+        # backtransformation of u1
+        u1 = u1_real + u1_imag * 1.0j
+        u1f = np.fft.ifftn(u1, axes=(0, 1)) * norm
+        u = np.append(u, u1f.real[None, ...], axis=0)
 
         p = (u[0]*0)[None,...]
         p = self.pressure_poisson(p,u)
@@ -148,14 +147,14 @@ class DecayingTurbulence3D:
 
     def pressure_poisson(self, p, u ):
         dx = self.units.characteristic_length_pu / self.resolution
-        u = torch.tensor(u, device="cuda", dtype=torch.double)
+        u = torch.tensor(u, device=self.units.lattice.device, dtype=self.units.lattice.dtype)
 
         div_u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1] + torch_gradient(u[0] * u[2], dx)[2], dx)[0]  # uii+uij
         div_u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1] + torch_gradient(u[1] * u[2], dx)[2], dx)[1]  # uji+ujj
         div_u2 = torch_gradient(torch_gradient(u[2] * u[0], dx)[0] + torch_gradient(u[2] * u[1], dx)[1] + torch_gradient(u[2] * u[2], dx)[2], dx)[2]  # uji+ujj
         u_mod = -(div_u0 + div_u1 + div_u2)
 
-        p_mod = torch_jacobi(u_mod, p[0], dx, dim=3, tol_abs=1e-6)[None, ...]
+        p_mod = torch_jacobi(u_mod, p[0], dx, self.units.lattice.device,dim=3, tol_abs=1e-6)[None, ...]
         return p_mod
 
     def analytic_solution(self, x, t=0):
@@ -168,49 +167,49 @@ class DecayingTurbulence3D:
         kx = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
         ky = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
         kz = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
-        KX, KY, KZ = np.meshgrid(kx, ky, kz)
-        KK = np.sqrt(KX ** 2 + KY ** 2 + KZ ** 2)
-        KK[0][0][0] = 1e-16
+        kx, ky, kz = np.meshgrid(kx, ky, kz)
+        kk = np.sqrt(kx ** 2 + ky ** 2 + kz ** 2)
+        kk[0][0][0] = 1e-16
 
         ### Generate spectrum
-        ek = (KK) ** 4 * np.exp(-2 * (KK / self.k0) ** 2)
+        ek = (kk) ** 4 * np.exp(-2 * (kk / self.k0) ** 2)
         ek[0][0][0] = 0
         ek /= np.sum(ek)
         ek *= self.ic_energy
 
         # Forward transform random fields
-        u = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
-        v = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
-        w = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
+        u0 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
+        u1 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
+        u2 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
 
-        uc = np.fft.fftn(u, axes=(0, 1, 2))
-        vc = np.fft.fftn(v, axes=(0, 1, 2))
-        wc = np.fft.fftn(w, axes=(0, 1, 2))
+        u0 = np.fft.fftn(u0, axes=(0, 1, 2))
+        u1 = np.fft.fftn(u1, axes=(0, 1, 2))
+        u2 = np.fft.fftn(u2, axes=(0, 1, 2))
 
         # real parts
-        ucr = uc.real
-        vcr = vc.real
-        wcr = wc.real
+        u0_real = u0.real
+        u1_real = u1.real
+        u2_real = u2.real
         # imaginary parts
-        uci = uc.imag
-        vci = vc.imag
-        wci = wc.imag
+        u0_imag = u0.imag
+        u1_imag = u1.imag
+        u2_imag = u2.imag
 
         # no mean value
-        ucr[0][0][0] = 0
-        uci[0][0][0] = 0
-        vcr[0][0][0] = 0
-        vci[0][0][0] = 0
-        wcr[0][0][0] = 0
-        wci[0][0][0] = 0
+        u0_real[0][0][0] = 0
+        u0_imag[0][0][0] = 0
+        u1_real[0][0][0] = 0
+        u1_imag[0][0][0] = 0
+        u2_real[0][0][0] = 0
+        u2_imag[0][0][0] = 0
 
-        # scale with target energy at KK and divide by local energy at KK to force the spectrum
-        u0_real_h = np.sqrt(2 / self.units.lattice.D * ek / (uci ** 2 + ucr ** 2 + 1.e-15)) * ucr
-        u0_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (uci ** 2 + ucr ** 2 + 1.e-15)) * uci
-        u1_real_h = np.sqrt(2 / self.units.lattice.D * ek / (vci ** 2 + vcr ** 2 + 1.e-15)) * vcr
-        u1_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (vci ** 2 + vcr ** 2 + 1.e-15)) * vci
-        u2_real_h = np.sqrt(2 / self.units.lattice.D * ek / (wci ** 2 + wcr ** 2 + 1.e-15)) * wcr
-        u2_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (wci ** 2 + wcr ** 2 + 1.e-15)) * wci
+        # scale with target energy at kk and divide by local energy at kk to force the spectrum
+        u0_real_h = np.sqrt(2 / self.units.lattice.D * ek / (u0_imag ** 2 + u0_real ** 2 + 1.e-15)) * u0_real
+        u0_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (u0_imag ** 2 + u0_real ** 2 + 1.e-15)) * u0_imag
+        u1_real_h = np.sqrt(2 / self.units.lattice.D * ek / (u1_imag ** 2 + u1_real ** 2 + 1.e-15)) * u1_real
+        u1_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (u1_imag ** 2 + u1_real ** 2 + 1.e-15)) * u1_imag
+        u2_real_h = np.sqrt(2 / self.units.lattice.D * ek / (u2_imag ** 2 + u2_real ** 2 + 1.e-15)) * u2_real
+        u2_imag_h = np.sqrt(2 / self.units.lattice.D * ek / (u2_imag ** 2 + u2_real ** 2 + 1.e-15)) * u2_imag
         u0_real_h[0][0][0] = 0
         u1_real_h[0][0][0] = 0
         u2_real_h[0][0][0] = 0
@@ -220,56 +219,57 @@ class DecayingTurbulence3D:
 
         ### Remove divergence
         # modified wave number sin(k*dx) is used, as the gradient below uses second order cental differences
-        # Modify if other schemes are used or use KX, KY if you don't know the modified wavenumber !!!
-        KXm = np.sin(KX * dx) / dx
-        KYm = np.sin(KY * dx) / dx
-        KZm = np.sin(KZ * dx) / dx
-        KKm = np.sqrt(KXm ** 2 + KYm ** 2 + KZm ** 2 + 1e-16)
+        # Modify if other schemes are used or use kx, ky if you don't know the modified wavenumber !!!
+        kx_modified = np.sin(kx * dx) / dx
+        ky_modified = np.sin(ky * dx) / dx
+        kz_modified = np.sin(kz * dx) / dx
+        kk_modified = np.sqrt(kx_modified ** 2 + ky_modified ** 2 + kz_modified ** 2 + 1e-16)
 
-        divr = (KXm * u0_real_h + KYm * u1_real_h + KZm * u2_real_h)
-        divi = (KXm * u0_imag_h + KYm * u1_imag_h + KZm * u2_imag_h)
+        divergence_real = (kx_modified * u0_real_h + ky_modified * u1_real_h + kz_modified * u2_real_h)
+        divergence_imag = (kx_modified * u0_imag_h + ky_modified * u1_imag_h + kz_modified * u2_imag_h)
 
-        ucr = u0_real_h - divr * KXm / KKm ** 2
-        uci = u0_imag_h - divi * KXm / KKm ** 2
-        vcr = u1_real_h - divr * KYm / KKm ** 2
-        vci = u1_imag_h - divi * KYm / KKm ** 2
-        wcr = u2_real_h - divr * KZm / KKm ** 2
-        wci = u2_imag_h - divi * KZm / KKm ** 2
+        u0_real = u0_real_h - divergence_real * kx_modified / kk_modified ** 2
+        u0_imag = u0_imag_h - divergence_imag * kx_modified / kk_modified ** 2
+        u1_real = u1_real_h - divergence_real * ky_modified / kk_modified ** 2
+        u1_imag = u1_imag_h - divergence_imag * ky_modified / kk_modified ** 2
+        u2_real = u2_real_h - divergence_real * kz_modified / kk_modified ** 2
+        u2_imag = u2_imag_h - divergence_imag * kz_modified / kk_modified ** 2
 
-        ucr[0][0][0] = 0
-        uci[0][0][0] = 0
-        vcr[0][0][0] = 0
-        vci[0][0][0] = 0
-        wcr[0][0][0] = 0
-        wci[0][0][0] = 0
+        u0_real[0][0][0] = 0
+        u0_imag[0][0][0] = 0
+        u1_real[0][0][0] = 0
+        u1_imag[0][0][0] = 0
+        u2_real[0][0][0] = 0
+        u2_imag[0][0][0] = 0
 
-        e_kin = np.sum((ucr ** 2 + uci ** 2 + vcr ** 2 + vci ** 2 + wcr ** 2 + wci ** 2)) * .5
+        ### Scale velocity field to achieve the desired inicial energy
+        e_kin = np.sum((u0_real ** 2 + u0_imag ** 2 + u1_real ** 2 + u1_imag ** 2 + u2_real ** 2 + u2_imag ** 2)) * .5
         factor = np.sqrt(self.ic_energy / e_kin)
-        ucr *= factor
-        uci *= factor
-        vcr *= factor
-        vci *= factor
-        wcr *= factor
-        wci *= factor
+        u0_real *= factor
+        u0_imag *= factor
+        u1_real *= factor
+        u1_imag *= factor
+        u2_real *= factor
+        u2_imag *= factor
 
+        ### Backtransformation to physical space
         norm = self.resolution * dx ** (-2) * np.sqrt(self.units.characteristic_length_pu)
 
-        # backtransformation of u
-        uc = ucr + uci * 1.0j
-        ucf = np.fft.ifftn(uc, axes=(0, 1, 2)) * norm
-        u = ucf.real[None,...]
+        # backtransformation of u0
+        u0 = u0_real + u0_imag * 1.0j
+        u0f = np.fft.ifftn(u0, axes=(0, 1, 2)) * norm
+        u = u0f.real[None,...]
 
-        # backtransformation of v
-        vc = vcr + vci * 1.0j
-        vcf = np.fft.ifftn(vc, axes=(0, 1, 2)) * norm
-        u = np.append(u, vcf.real[None, ...], axis=0)
+        # backtransformation of u1
+        u1 = u1_real + u1_imag * 1.0j
+        u1f = np.fft.ifftn(u1, axes=(0, 1, 2)) * norm
+        u = np.append(u, u1f.real[None, ...], axis=0)
 
-        # backtransformation of w
-        wc = wcr + wci * 1.0j
-        wcf = np.fft.ifftn(wc, axes=(0, 1, 2)) * norm
-        u = np.append(u, wcf.real[None, ...], axis=0)
+        # backtransformation of u2
+        u2 = u2_real + u2_imag * 1.0j
+        u2f = np.fft.ifftn(u2, axes=(0, 1, 2)) * norm
+        u = np.append(u, u2f.real[None, ...], axis=0)
 
-        #print(np.sum(u[0]**2+u[1]**2+u[2]**2)*.5*dx**3)
         p = (u[0]*0)[None,...]
         return p, u
 

@@ -4,6 +4,8 @@ DecayingTurbulence vortex in 2D.
 
 import numpy as np
 from lettuce.unit import UnitConversion
+from lettuce.util import torch_gradient, torch_jacobi
+import torch
 
 
 class DecayingTurbulence2D:
@@ -22,6 +24,17 @@ class DecayingTurbulence2D:
 
     def analytic_solution(self, x, t=0):
         return
+
+    def pressure_poisson(self, p, u ):
+        dx = self.units.characteristic_length_pu / self.resolution
+        u = torch.tensor(u, device="cuda", dtype=torch.double)
+
+        u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1], dx)[0]  # uii+uij
+        u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1], dx)[1]  # uji+ujj
+        u_mod = -(u0 + u1)
+
+        p_mod = torch_jacobi(u_mod, p[0], dx, dim=2, tol_abs=1e-6)[None, ...]
+        return p_mod
 
     def initial_solution(self, x):
         dx = self.units.characteristic_length_pu / self.resolution
@@ -108,6 +121,7 @@ class DecayingTurbulence2D:
         u = np.append(u, vcf.real[None, ...], axis=0)
 
         p = (u[0]*0)[None,...]
+        p = self.pressure_poisson(p,u)
         return p, u
 
     @property
@@ -132,7 +146,17 @@ class DecayingTurbulence3D:
             characteristic_velocity_pu=1
         )
 
+    def pressure_poisson(self, p, u ):
+        dx = self.units.characteristic_length_pu / self.resolution
+        u = torch.tensor(u, device="cuda", dtype=torch.double)
 
+        div_u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1] + torch_gradient(u[0] * u[2], dx)[2], dx)[0]  # uii+uij
+        div_u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1] + torch_gradient(u[1] * u[2], dx)[2], dx)[1]  # uji+ujj
+        div_u2 = torch_gradient(torch_gradient(u[2] * u[0], dx)[0] + torch_gradient(u[2] * u[1], dx)[1] + torch_gradient(u[2] * u[2], dx)[2], dx)[2]  # uji+ujj
+        u_mod = -(div_u0 + div_u1 + div_u2)
+
+        p_mod = torch_jacobi(u_mod, p[0], dx, dim=3, tol_abs=1e-6)[None, ...]
+        return p_mod
 
     def analytic_solution(self, x, t=0):
         return

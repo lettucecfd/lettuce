@@ -2,7 +2,8 @@
 
 import pytest
 import numpy as np
-from lettuce import Simulation, TaylorGreenVortex2D, Lattice, D2Q9, BGKCollision, StandardStreaming
+from lettuce import Simulation, TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D2Q9, D3Q27, BGKCollision, StandardStreaming, ErrorReporter
+import torch
 
 
 # Note: Simulation is also implicitly tested in test_flows
@@ -32,10 +33,45 @@ def test_initialization(dtype_device):
     # set initial pressure to 0 everywhere
     p, u = flow.initial_solution(flow.grid)
     u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...]))
+    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
     num_iterations = simulation.initialize(500, 0.001)
     piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))
     # assert that pressure is converged up to 0.05 (max p
     assert piter == pytest.approx(p, abs=5e-2)
     assert num_iterations < 500
+
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
+def test_initialize_fneq(Case, dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(D2Q9, device, dtype)
+    if Case == TaylorGreenVortex3D:
+        lattice = Lattice(D3Q27, dtype=dtype, device=device)
+    flow = Case(resolution=16, reynolds_number=1000, mach_number=0.01, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation_neq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+
+    pre_rho = lattice.rho(simulation_neq.f)
+    pre_u = lattice.u(simulation_neq.f)
+
+    simulation_neq.initialize_f_neq()
+
+    post_rho = lattice.rho(simulation_neq.f)
+    post_u = lattice.u(simulation_neq.f)
+    assert(torch.allclose(pre_rho,post_rho,1e-6))
+    assert(torch.allclose(pre_u,post_u))
+
+    if Case == TaylorGreenVortex2D:
+        error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
+        error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
+        simulation_eq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        simulation_neq.reporters.append(error_reporter_neq)
+        simulation_eq.reporters.append(error_reporter_eq)
+
+        simulation_neq.step(10)
+        simulation_eq.step(10)
+        error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
+        error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
+
+        assert(error_u < error_u_eq)

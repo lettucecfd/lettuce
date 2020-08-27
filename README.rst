@@ -7,9 +7,6 @@ lettuce
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
 
-.. .. image:: https://img.shields.io/travis/Olllom/lettuce.svg
-        :target: https://travis-ci.org/Olllom/lettuce
-
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
     :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
@@ -19,9 +16,8 @@ lettuce
 
 GPU-accelerated Lattice Boltzmann in Python
 
-
 * Free software: MIT license
-.. .. * Documentation: https://lettuce.readthedocs.io.
+* Documentation: https://lettuceboltzmann.readthedocs.io
 
 Features
 --------
@@ -91,14 +87,12 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
 
 Next steps
 ----------
-* Jonas Latt's approach of storing f_i-w_i instead of f_i, for better numerical accuracy at 16-bit precision;
+* Jonas Latt's approach of storing f_i-w_i instead of f_i, for better numerical accuracy in single/(half) precision;
   this can be added as a different Lattice class.
-* Benchmark storage formats for f (either Qx... or ...xQ) -- also add as a different Lattice class?
 * Standard Streaming and BGK collision as C++ functions, as an example and for testing performance gains
   https://pytorch.org/tutorials/advanced/cpp_extension.html
-* Boundary Conditions.
 * Multi-block lattices.
-* Semi-Lagrangian streaming step (specific benefit from half-precision, utilization of tensor cores on Volta cards).
+* Semi-Lagrangian streaming step.
 
 
 Future Ideas
@@ -117,6 +111,7 @@ We use the following third-party packages:
 * click
 * matplotlib
 * versioneer
+* pyevtk
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.

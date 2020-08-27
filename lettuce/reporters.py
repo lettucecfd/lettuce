@@ -43,6 +43,18 @@ class VTKReporter:
         if not os.path.isdir(directory):
             os.mkdir(directory)
         self.point_dict = dict()
+        if hasattr(self.flow, "mask"):
+            if self.flow.mask is not None:
+                if self.lattice.D == 2:
+                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask[..., None])
+                else:
+                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask)
+            vtk.gridToVTK(self.filename_base + "mask",
+                          np.arange(0, self.point_dict["mask"].shape[0]),
+                          np.arange(0, self.point_dict["mask"].shape[1]),
+                          np.arange(0, self.point_dict["mask"].shape[2]),
+                          pointData=self.point_dict)
+            self.point_dict = dict()
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:

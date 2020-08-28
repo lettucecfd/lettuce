@@ -82,8 +82,8 @@ class ErrorReporter:
 
             resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())),1/self.lattice.D)
 
-            err_u = torch.norm(u-uref)/resolution
-            err_p = torch.norm(p-pref)/resolution
+            err_u = torch.norm(u-uref)/resolution**(self.lattice.D/2)
+            err_p = torch.norm(p-pref)/resolution**(self.lattice.D/2)
 
             if isinstance(self.out, list):
                 self.out.append([err_u.item(), err_p.item()])

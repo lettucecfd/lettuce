@@ -90,39 +90,40 @@ def torch_gradient(f, dx=1, order=2):
             ) * torch.tensor(1.0/dx, dtype=f.dtype, device=f.device)
     return out
 
-def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-5):
-    # f = torch.tensor(f, device=device, dtype=torch.double)
+def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10):
+    ## Transform to torch.tensor
     p = torch.tensor(p, device=device, dtype=torch.double)
-    #dx = self.units.convert_length_to_pu(1)
     dx = torch.tensor(dx, device=device, dtype=torch.double)
     error, it = 1, 0
     while error > tol_abs and it < 100000:
         it += 1
         if dim== 2:
-            p = (f * (dx ** 2) - (-p.roll(shifts=1, dims=0)
-                                  - p.roll(shifts=1, dims=1)
-                                  - p.roll(shifts=-1, dims=0)
-                                  - p.roll(shifts=-1, dims=1))) * 0.25
-            residuum = f - 1 / (dx ** 2) * (-p.roll(shifts=1, dims=0)
-                                            - p.roll(shifts=1, dims=1)
-                                            - p.roll(shifts=-1, dims=0)
-                                            - p.roll(shifts=-1, dims=1)
-                                            + 4 * p)
-            error = torch.mean(residuum)
+            # Difference quotient for second derivative O(h²) for index i=0,1
+            p = (f * (dx ** 2) - (p.roll(shifts=1, dims=0)
+                                  + p.roll(shifts=1, dims=1)
+                                  + p.roll(shifts=-1, dims=0)
+                                  + p.roll(shifts=-1, dims=1))) * -1 / 4
+            residuum = f - (p.roll(shifts=1, dims=0)
+                            + p.roll(shifts=1, dims=1)
+                            + p.roll(shifts=-1, dims=0)
+                            + p.roll(shifts=-1, dims=1)
+                            - 4 * p) / (dx ** 2)
         if dim == 3:
-            p = (f * (dx ** 2) - (-p.roll(shifts=1, dims=0)
-                                  - p.roll(shifts=1, dims=1)
-                                  - p.roll(shifts=1, dims=2)
-                                  - p.roll(shifts=-1, dims=0)
-                                  - p.roll(shifts=-1, dims=1)
-                                  - p.roll(shifts=-1, dims=2))) * 1 / 6
-            residuum = f - 1 / (dx ** 2) * (-p.roll(shifts=1, dims=0)
-                                            - p.roll(shifts=1, dims=1)
-                                            - p.roll(shifts=1, dims=2)
-                                            - p.roll(shifts=-1, dims=0)
-                                            - p.roll(shifts=-1, dims=1)
-                                            - p.roll(shifts=-1, dims=2)
-                                            + 6 * p)
+            # Difference quotient for second derivative O(h²) for index i=0,1,2
+            p = (f * (dx ** 2) - (p.roll(shifts=1, dims=0)
+                                  + p.roll(shifts=1, dims=1)
+                                  + p.roll(shifts=1, dims=2)
+                                  + p.roll(shifts=-1, dims=0)
+                                  + p.roll(shifts=-1, dims=1)
+                                  + p.roll(shifts=-1, dims=2))) * -1 / 6
+            residuum = f - (p.roll(shifts=1, dims=0)
+                            + p.roll(shifts=1, dims=1)
+                            + p.roll(shifts=1, dims=2)
+                            + p.roll(shifts=-1, dims=0)
+                            + p.roll(shifts=-1, dims=1)
+                            + p.roll(shifts=-1, dims=2)
+                            - 6 * p) / (dx ** 2)
+        # Error is defined as the mean value of the residuum
         error = torch.mean(residuum)
 
     print(f'Error: {error}')

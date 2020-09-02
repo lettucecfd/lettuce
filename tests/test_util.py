@@ -1,8 +1,11 @@
 
 import numpy as np
 import torch
-from lettuce import Lattice, D2Q9, D3Q27, TaylorGreenVortex2D, TaylorGreenVortex3D, torch_gradient,grid_fine_to_coarse
-from lettuce import BGKCollision, Simulation
+from lettuce import (
+    Lattice, D2Q9, D3Q27, TaylorGreenVortex2D,
+    TaylorGreenVortex3D, torch_gradient, grid_fine_to_coarse,
+    BGKCollision, Simulation
+)
 import pytest
 
 
@@ -41,11 +44,11 @@ def test_grid_fine_to_coarse_2d():
     lattice = Lattice(D2Q9,'cpu',dtype=torch.double)
     # streaming = StandardStreaming(lattice)
 
-    flow_f = TaylorGreenVortex2D(120, 1600, 0.15, lattice)
+    flow_f = TaylorGreenVortex2D(40, 1600, 0.15, lattice)
     collision_f = BGKCollision(lattice,tau=flow_f.units.relaxation_parameter_lu)
     sim_f = Simulation(flow_f, lattice, collision_f, streaming=None)
 
-    flow_c = TaylorGreenVortex2D(60, 1600, 0.15,lattice)
+    flow_c = TaylorGreenVortex2D(20, 1600, 0.15,lattice)
     collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
     sim_c = Simulation(flow_c, lattice, collision_c, streaming=None)
 
@@ -66,15 +69,20 @@ def test_grid_fine_to_coarse_2d():
 def test_grid_fine_to_coarse_3d():
     lattice = Lattice(D3Q27,'cpu',dtype=torch.double)
 
-    flow_f = TaylorGreenVortex3D(120,1600,0.15,lattice)
-    collision_f = BGKCollision(lattice,tau=flow_f.units.relaxation_parameter_lu)
-    sim_f = Simulation(flow_f,lattice,collision_f,streaming=None)
+    flow_f = TaylorGreenVortex3D(40, 1600, 0.15, lattice)
+    collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
+    sim_f = Simulation(flow_f, lattice, collision_f, streaming=None)
 
-    flow_c = TaylorGreenVortex3D(60,1600,0.15,lattice)
-    collision_c = BGKCollision(lattice,tau=flow_c.units.relaxation_parameter_lu)
-    sim_c = Simulation(flow_c,lattice,collision_c,streaming=None)
+    flow_c = TaylorGreenVortex3D(20, 1600, 0.15, lattice)
+    collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
+    sim_c = Simulation(flow_c, lattice, collision_c, streaming=None)
 
-    f_c = grid_fine_to_coarse(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
+    f_c = grid_fine_to_coarse(
+        lattice,
+        sim_f.f,
+        flow_f.units.relaxation_parameter_lu,
+        flow_c.units.relaxation_parameter_lu
+    )
 
     p_c_init, u_c_init = flow_c.initial_solution(flow_c.grid)
     rho_c_init = flow_c.units.convert_pressure_pu_to_density_lu(p_c_init)
@@ -82,7 +90,7 @@ def test_grid_fine_to_coarse_3d():
     shear_c_init = lattice.shear_tensor(sim_c.f)
     shear_c = lattice.shear_tensor(f_c)
 
-    assert lattice.u(f_c).numpy() == pytest.approx(u_c_init)
-    assert lattice.rho(f_c).numpy() == pytest.approx(rho_c_init)
-    assert f_c.numpy() == pytest.approx(sim_c.f.numpy())
-    assert (shear_c_init.numpy() == pytest.approx(shear_c.numpy()))
+    assert np.isclose(lattice.u(f_c).cpu().numpy(), u_c_init).all()
+    assert np.isclose(lattice.rho(f_c).cpu().numpy(), rho_c_init).all()
+    assert torch.isclose(f_c, sim_c.f).all()
+    assert torch.isclose(shear_c_init, shear_c).all()

@@ -90,7 +90,8 @@ def torch_gradient(f, dx=1, order=2):
             ) * torch.tensor(1.0/dx, dtype=f.dtype, device=f.device)
     return out
 
-def grid_fine_to_coarse(lattice,f_fine,tau_fine,tau_coarse):
+
+def grid_fine_to_coarse(lattice, f_fine, tau_fine, tau_coarse):
     if f_fine.shape.__len__() == 3:
         f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2]))
         f_neq = f_fine[:, ::2, ::2] - f_eq
@@ -100,6 +101,7 @@ def grid_fine_to_coarse(lattice,f_fine,tau_fine,tau_coarse):
     f_coarse = f_eq + 2 * tau_coarse/tau_fine * f_neq
     return f_coarse
 
+
 def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10):
     ## Transform to torch.tensor
     p = torch.tensor(p, device=device, dtype=torch.double)
@@ -107,7 +109,7 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10):
     error, it = 1, 0
     while error > tol_abs and it < 100000:
         it += 1
-        if dim== 2:
+        if dim == 2:
             # Difference quotient for second derivative O(h²) for index i=0,1
             p = (f * (dx ** 2) - (p.roll(shifts=1, dims=0)
                                   + p.roll(shifts=1, dims=1)

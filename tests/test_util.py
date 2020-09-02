@@ -36,17 +36,18 @@ def test_torch_gradient_3d(order):
     ])
     assert (u0_grad_analytic[0,0,:,0] == pytest.approx(u0_grad[0,0,:,0], rel=2))
 
+
 def test_grid_fine_to_coarse_2d():
     lattice = Lattice(D2Q9,'cpu',dtype=torch.double)
     # streaming = StandardStreaming(lattice)
 
-    flow_f = TaylorGreenVortex2D(120,1600,0.15,lattice)
+    flow_f = TaylorGreenVortex2D(120, 1600, 0.15, lattice)
     collision_f = BGKCollision(lattice,tau=flow_f.units.relaxation_parameter_lu)
-    sim_f = Simulation(flow_f,lattice,collision_f,streaming=None)
+    sim_f = Simulation(flow_f, lattice, collision_f, streaming=None)
 
-    flow_c = TaylorGreenVortex2D(60,1600,0.15,lattice)
-    collision_c = BGKCollision(lattice,tau=flow_c.units.relaxation_parameter_lu)
-    sim_c = Simulation(flow_c,lattice,collision_c,streaming=None)
+    flow_c = TaylorGreenVortex2D(60, 1600, 0.15,lattice)
+    collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
+    sim_c = Simulation(flow_c, lattice, collision_c, streaming=None)
 
     f_c = grid_fine_to_coarse(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
 
@@ -56,11 +57,11 @@ def test_grid_fine_to_coarse_2d():
     shear_c_init = lattice.shear_tensor(sim_c.f)
     shear_c = lattice.shear_tensor(f_c)
 
-
     assert (lattice.u(f_c).numpy() == pytest.approx(u_init.numpy()))
     assert (lattice.rho(f_c).numpy() == pytest.approx(rho_init.numpy()))
     assert (f_c.numpy() == pytest.approx(sim_c.f.numpy()))
     assert (shear_c_init.numpy() == pytest.approx(shear_c.numpy()))
+
 
 def test_grid_fine_to_coarse_3d():
     lattice = Lattice(D3Q27,'cpu',dtype=torch.double)

@@ -41,7 +41,8 @@ def test_initialization(dtype_device):
     assert piter == pytest.approx(p, abs=5e-2)
     assert num_iterations < 500
 
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
+
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])
 def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
@@ -59,8 +60,9 @@ def test_initialize_fneq(Case, dtype_device):
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)
-    assert(torch.allclose(pre_rho,post_rho,1e-6))
-    assert(torch.allclose(pre_u,post_u))
+    tol = 1e-6 if dtype is torch.float32 else 1e-10
+    assert(torch.allclose(pre_rho, post_rho, rtol=0.0, atol=tol))
+    assert(torch.allclose(pre_u, post_u, rtol=0.0, atol=tol))
 
     if Case == TaylorGreenVortex2D:
         error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)

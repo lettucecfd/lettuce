@@ -1,6 +1,5 @@
 """
 Input/output routines.
-
 TODO: Logging
 """
 
@@ -146,7 +145,6 @@ class EnergyReporter(GenericStepReporter):
 
 class EnstrophyReporter(GenericStepReporter):
     """Reports the integral of the vorticity
-
     Notes
     -----
     The function only works for periodic domains

@@ -100,3 +100,41 @@ def grid_fine_to_coarse(lattice,f_fine,tau_fine,tau_coarse):
     f_coarse = f_eq + 2 * tau_coarse/tau_fine * f_neq
     return f_coarse
 
+def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10):
+    ## Transform to torch.tensor
+    p = torch.tensor(p, device=device, dtype=torch.double)
+    dx = torch.tensor(dx, device=device, dtype=torch.double)
+    error, it = 1, 0
+    while error > tol_abs and it < 100000:
+        it += 1
+        if dim== 2:
+            # Difference quotient for second derivative O(h²) for index i=0,1
+            p = (f * (dx ** 2) - (p.roll(shifts=1, dims=0)
+                                  + p.roll(shifts=1, dims=1)
+                                  + p.roll(shifts=-1, dims=0)
+                                  + p.roll(shifts=-1, dims=1))) * -1 / 4
+            residuum = f - (p.roll(shifts=1, dims=0)
+                            + p.roll(shifts=1, dims=1)
+                            + p.roll(shifts=-1, dims=0)
+                            + p.roll(shifts=-1, dims=1)
+                            - 4 * p) / (dx ** 2)
+        if dim == 3:
+            # Difference quotient for second derivative O(h²) for index i=0,1,2
+            p = (f * (dx ** 2) - (p.roll(shifts=1, dims=0)
+                                  + p.roll(shifts=1, dims=1)
+                                  + p.roll(shifts=1, dims=2)
+                                  + p.roll(shifts=-1, dims=0)
+                                  + p.roll(shifts=-1, dims=1)
+                                  + p.roll(shifts=-1, dims=2))) * -1 / 6
+            residuum = f - (p.roll(shifts=1, dims=0)
+                            + p.roll(shifts=1, dims=1)
+                            + p.roll(shifts=1, dims=2)
+                            + p.roll(shifts=-1, dims=0)
+                            + p.roll(shifts=-1, dims=1)
+                            + p.roll(shifts=-1, dims=2)
+                            - 6 * p) / (dx ** 2)
+        # Error is defined as the mean value of the residuum
+        error = torch.mean(residuum)
+
+    print(f'Error: {error}')
+    return p.detach().cpu().numpy()

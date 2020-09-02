@@ -6,7 +6,7 @@ from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q
 from lettuce import DecayingTurbulence2D, DecayingTurbulence3D, torch_gradient
 from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
-#from lettuce import incompressible_energy
+
 
 # Flows to test
 INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence2D]
@@ -34,13 +34,14 @@ def test_flow_3d(IncompressibleFlow, dtype_device):
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1)
 
-@pytest.mark.parametrize("flows", [D2Q9,D3Q27])
-def test_divergence(flows, dtype_device):
+
+@pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
+def test_divergence(stencil, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(flows, dtype=dtype, device=device)
-    if flows == D2Q9:
+    lattice = Lattice(stencil, dtype=dtype, device=device)
+    if stencil is D2Q9:
         flow = DecayingTurbulence2D(50, 1, 0.05, lattice=lattice, ic_energy=0.5)
-    if flows == D3Q27:
+    if stencil is D3Q27:
         flow = DecayingTurbulence3D(50, 1, 0.05, lattice=lattice, ic_energy=0.5)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)

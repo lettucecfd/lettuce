@@ -107,17 +107,14 @@ class Simulation:
 
         grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
         grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
-        S = torch.cat([grad_u1, grad_u0])
+        S = torch.cat([grad_u0, grad_u1])
 
         if self.lattice.D == 3:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
-        Pi_1 = -1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs**2
-        Q = (
-            torch.einsum('ia,ib->iab', self.lattice.e,self.lattice.e)
-            - torch.eye(self.lattice.D, device=self.lattice.device)*self.lattice.cs**2
-        )
+        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho  * S / self.lattice.cs**2
+        Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
         Pi_1_Q = torch.einsum('ab...,iab->i...', Pi_1, Q)
         fneq = torch.einsum('i,i...->i...',self.lattice.w,Pi_1_Q)
 

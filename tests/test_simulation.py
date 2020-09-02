@@ -64,7 +64,7 @@ def test_initialize_fneq(Case, dtype_device):
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)
-    tol = 1e-6 if dtype is torch.float32 else 1e-10
+    tol = 1e-6
     assert(torch.allclose(pre_rho, post_rho, rtol=0.0, atol=tol))
     assert(torch.allclose(pre_u, post_u, rtol=0.0, atol=tol))
 

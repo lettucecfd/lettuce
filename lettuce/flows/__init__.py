@@ -12,5 +12,6 @@ flow_by_name = {
     "taylor2D": TaylorGreenVortex2D,
     "poiseuille2D": PoiseuilleFlow2D,
     "shear2D": DoublyPeriodicShear2D,
-    "couette2D": CouetteFlow2D
+    "couette2D": CouetteFlow2D,
+    "decaying2D": DecayingTurbulence2D
 }

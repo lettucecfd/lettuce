@@ -139,7 +139,6 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
                             - 6 * p) / (dx ** 2)
         # Error is defined as the mean value of the residuum
         error = torch.mean(residuum**2)
-        #if it % 100 == 0: print(error, it, p.max())
     return p
 
 
@@ -170,9 +169,17 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
     p = units.convert_density_lu_to_pressure_pu(rho0)
 
     # compute laplacian
-    u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1], dx)[0]  # uii+uij
-    u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1], dx)[1]  # uji+ujj
-    u_mod = (u0 + u1)
+    with torch.no_grad():
+        u_mod = torch.zeros_like(u[0])
+        dim = u.shape[0]
+        for i in range(dim):
+            for j in range(dim):
+                derivative = torch_gradient(torch_gradient(u[i]*u[j], dx)[i], dx)[j]
+                u_mod += derivative
+    # TODO(@MCBs): still not working in 3D
+    #u0 = torch_gradient(torch_gradient(u[0] * u[0], dx)[0] + torch_gradient(u[0] * u[1], dx)[1], dx)[0]  # uii+uij
+    #u1 = torch_gradient(torch_gradient(u[1] * u[0], dx)[0] + torch_gradient(u[1] * u[1], dx)[1], dx)[1]  # uji+ujj
+    #u_mod = (u0 + u1)
     # TODO(@MCBs): I removed the minus sign before this (u0+u1) expression to make it work. No idea.
     # There is a sign error somewhere, but I don't know if it's here
 

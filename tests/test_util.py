@@ -36,7 +36,7 @@ def test_torch_gradient_3d(order):
     ])
     assert (u0_grad_analytic[0,0,:,0] == pytest.approx(u0_grad[0,0,:,0], rel=2))
 
-def test_grid_fine_to_couse_2d():
+def test_grid_fine_to_coarse_2d():
     lattice = Lattice(D2Q9,'cpu',dtype=torch.double)
     # streaming = StandardStreaming(lattice)
 
@@ -62,7 +62,7 @@ def test_grid_fine_to_couse_2d():
     assert (f_c.numpy() == pytest.approx(sim_c.f.numpy()))
     assert (shear_c_init.numpy() == pytest.approx(shear_c.numpy()))
 
-def test_grid_fine_to_couse_3d():
+def test_grid_fine_to_coarse_3d():
     lattice = Lattice(D3Q27,'cpu',dtype=torch.double)
 
     flow_f = TaylorGreenVortex3D(120,1600,0.15,lattice)

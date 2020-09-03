@@ -22,11 +22,12 @@ def test_save_and_load(dtype_device, tmpdir):
     simulation2.load_checkpoint(tmpdir/"checkpoint.pic")
     assert lattice.convert_to_numpy(simulation2.f) == pytest.approx(lattice.convert_to_numpy(simulation.f))
 
+
 @pytest.mark.parametrize("use_jacobi", [True, False])
 def test_initialization(dtype_device, use_jacobi):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=32, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    flow = TaylorGreenVortex2D(resolution=24, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
@@ -39,11 +40,11 @@ def test_initialization(dtype_device, use_jacobi):
         simulation.initialize_pressure(1000, 1e-10)
         num_iterations = 0
     else:
-        num_iterations = simulation.initialize(500, 1e-4)
+        num_iterations = simulation.initialize(500, 1e-3)
     piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))
-    # assert that pressure is converged up to 0.05 (max p)
-    assert piter == pytest.approx(p, abs=0.05)  # (solution is not going to be closer due to low resolution)
-    assert num_iterations <= 500
+    # assert that pressure is converged up to 0.05 (max p
+    assert piter == pytest.approx(p, rel=0.0, abs=5e-2)
+    assert num_iterations < 500
 
 
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])

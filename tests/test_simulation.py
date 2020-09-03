@@ -23,10 +23,11 @@ def test_save_and_load(dtype_device, tmpdir):
     assert lattice.convert_to_numpy(simulation2.f) == pytest.approx(lattice.convert_to_numpy(simulation.f))
 
 
-def test_initialization(dtype_device):
+@pytest.mark.parametrize("use_jacobi", [True, False])
+def test_initialization(dtype_device, use_jacobi):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    flow = TaylorGreenVortex2D(resolution=24, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
@@ -35,13 +36,18 @@ def test_initialization(dtype_device):
     u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
     rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
-    num_iterations = simulation.initialize(500, 1e-4)
+    if use_jacobi:
+        simulation.initialize_pressure(1000, 1e-10)
+        num_iterations = 0
+    else:
+        num_iterations = simulation.initialize(500, 1e-3)
     piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))
     # assert that pressure is converged up to 0.05 (max p
-    assert piter == pytest.approx(p, rel=0.0, abs=3e-2)
+    assert piter == pytest.approx(p, rel=0.0, abs=5e-2)
     assert num_iterations < 500
 
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
+
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])
 def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
@@ -59,11 +65,11 @@ def test_initialize_fneq(Case, dtype_device):
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)
-    assert(torch.allclose(pre_rho,post_rho,1e-6))
-    if(dtype==torch.float64):
-        assert(torch.allclose(pre_u,post_u,1e-6))
+    tol = 1e-6
+    assert(torch.allclose(pre_rho, post_rho, rtol=0.0, atol=tol))
+    assert(torch.allclose(pre_u, post_u, rtol=0.0, atol=tol))
 
-    if Case == TaylorGreenVortex2D:
+    if Case is TaylorGreenVortex2D:
         error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
         error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation_eq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)

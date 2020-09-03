@@ -1,12 +1,16 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
+from lettuce import (
+    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
+)
+from lettuce.util import pressure_poisson
 import pickle
 from copy import deepcopy
 import warnings
 import torch
 import numpy as np
+
 
 class Simulation:
     """High-level API for simulations."""
@@ -80,6 +84,20 @@ class Simulation:
             p_old = deepcopy(p)
         return i
 
+    def initialize_pressure(self, max_num_steps=100000, tol_pressure=1e-6):
+        """Reinitialize equilibrium distributions with pressure obtained by a Jacobi solver.
+        Note that this method has to be called before initialize_f_neq.
+        """
+        u = self.lattice.u(self.f)
+        rho = pressure_poisson(
+            self.flow.units,
+            self.lattice.u(self.f),
+            self.lattice.rho(self.f),
+            tol_abs=tol_pressure,
+            max_num_steps=max_num_steps
+        )
+        self.f = self.lattice.equilibrium(rho, u)
+
     def initialize_f_neq(self):
         """Initialize the distribution function values. The f^(1) contributions are approximated by finite differences.
         See Krüger et al. (2017).
@@ -91,7 +109,7 @@ class Simulation:
         grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
         S = torch.cat([grad_u0, grad_u1])
 
-        if(self.lattice.D==3):
+        if self.lattice.D == 3:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
@@ -102,7 +120,6 @@ class Simulation:
 
         feq = self.lattice.equilibrium(rho,u)
         self.f = feq + fneq
-
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

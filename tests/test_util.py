@@ -16,15 +16,15 @@ def test_torch_gradient_2d(order):
     flow = TaylorGreenVortex2D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)
     grid = flow.grid
     p, u = flow.initial_solution(grid)
-    dx = grid[0][0][1]-grid[0][0][0]
+    dx = flow.units.convert_length_to_pu(1.0)
     u0_grad = torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=order).numpy()
-    u0_grad_np = np.gradient(u[0],dx)
+    u0_grad_np = np.array(np.gradient(u[0], dx))
     u0_grad_analytic = np.array([
         -np.sin(grid[0])*np.sin(grid[1]),
         np.cos(grid[0])*np.cos(grid[1]),
     ])
-    assert (u0_grad_analytic[1,1,:] == pytest.approx(u0_grad[0,1,:], rel=2))
-    assert (u0_grad_np[0][1,:] == pytest.approx(u0_grad[0, 1, :], rel=2))
+    assert (u0_grad_analytic == pytest.approx(u0_grad, rel=0.0, abs=1e-3))
+    assert (u0_grad_np[:,2:-2,2:-2] == pytest.approx(u0_grad[:,2:-2,2:-2], rel=0.0, abs=1e-3))
 
 
 @pytest.mark.parametrize("order", [2,4,6])
@@ -33,20 +33,20 @@ def test_torch_gradient_3d(order):
     flow = TaylorGreenVortex3D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)
     grid = flow.grid
     p, u = flow.initial_solution(grid)
-    dx = grid[0][0][1][0] - grid[0][0][0][0]
+    dx = flow.units.convert_length_to_pu(1.0)
     u0_grad = torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=order).numpy()
-    u0_grad_np = np.gradient(u[0],dx)
+    u0_grad_np = np.array(np.gradient(u[0], dx))
     u0_grad_analytic = np.array([
         np.cos(grid[0]) * np.cos(grid[1]) * np.cos(grid[2]),
         np.sin(grid[0]) * np.sin(grid[1]) * (-np.cos(grid[2])),
         np.sin(grid[0]) * (-np.cos(grid[1])) * np.sin(grid[2])
     ])
-    assert (u0_grad_analytic[1,2,:,2] == pytest.approx(u0_grad[0,2,:,2], rel=2))
-    assert (u0_grad_np[0][20,:,0] == pytest.approx(u0_grad[0, 20, :, 0], rel=2))
+    assert np.allclose(u0_grad_analytic, u0_grad, rtol=0.0, atol=1e-3)
+    assert np.allclose(u0_grad_np[:,2:-2,2:-2,2:-2], u0_grad[:,2:-2,2:-2,2:-2], rtol=0.0, atol=1e-3)
 
 
 def test_grid_fine_to_coarse_2d():
-    lattice = Lattice(D2Q9,'cpu',dtype=torch.double)
+    lattice = Lattice(D2Q9, 'cpu', dtype=torch.double)
     # streaming = StandardStreaming(lattice)
 
     flow_f = TaylorGreenVortex2D(40, 1600, 0.15, lattice)

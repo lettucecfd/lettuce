@@ -1,7 +1,10 @@
 """Lattice Boltzmann Solver"""
 
 from timeit import default_timer as timer
-from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning
+from lettuce import (
+    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
+)
+from lettuce.util import pressure_poisson
 import pickle
 from copy import deepcopy
 import warnings
@@ -67,7 +70,7 @@ class Simulation:
         Using the initialization does not better TGV convergence. Maybe use a better scheme?
         """
         warnings.warn("Iterative initialization does not work well and solutions may diverge. Use with care. "
-                      "At some point, we may need to implement a better scheme.",
+                      "Use initialize_f_neq instead.",
                       ExperimentalWarning)
         transform = get_default_moment_transform(self.lattice)
         collision = BGKInitialization(self.lattice, self.flow, transform)
@@ -81,6 +84,43 @@ class Simulation:
                 break
             p_old = deepcopy(p)
         return i
+
+    def initialize_pressure(self, max_num_steps=100000, tol_pressure=1e-6):
+        """Reinitialize equilibrium distributions with pressure obtained by a Jacobi solver.
+        Note that this method has to be called before initialize_f_neq.
+        """
+        u = self.lattice.u(self.f)
+        rho = pressure_poisson(
+            self.flow.units,
+            self.lattice.u(self.f),
+            self.lattice.rho(self.f),
+            tol_abs=tol_pressure,
+            max_num_steps=max_num_steps
+        )
+        self.f = self.lattice.equilibrium(rho, u)
+
+    def initialize_f_neq(self):
+        """Initialize the distribution function values. The f^(1) contributions are approximated by finite differences.
+        See Krüger et al. (2017).
+        """
+        rho = self.lattice.rho(self.f)
+        u = self.lattice.u(self.f)
+
+        grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
+        grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
+        S = torch.cat([grad_u0, grad_u1])
+
+        if self.lattice.D == 3:
+            grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
+            S = torch.cat([S, grad_u2])
+
+        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho  * S / self.lattice.cs**2
+        Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
+        Pi_1_Q = torch.einsum('ab...,iab->i...', Pi_1, Q)
+        fneq = torch.einsum('i,i...->i...',self.lattice.w,Pi_1_Q)
+
+        feq = self.lattice.equilibrium(rho,u)
+        self.f = feq + fneq
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

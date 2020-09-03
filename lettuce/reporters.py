@@ -1,6 +1,5 @@
 """
 Input/output routines.
-
 TODO: Logging
 """
 
@@ -43,18 +42,6 @@ class VTKReporter:
         if not os.path.isdir(directory):
             os.mkdir(directory)
         self.point_dict = dict()
-        if hasattr(self.flow, "mask"):
-            if self.flow.mask is not None:
-                if self.lattice.D == 2:
-                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask[..., None])
-                else:
-                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask)
-            vtk.gridToVTK(self.filename_base + "mask",
-                          np.arange(0, self.point_dict["mask"].shape[0]),
-                          np.arange(0, self.point_dict["mask"].shape[1]),
-                          np.arange(0, self.point_dict["mask"].shape[2]),
-                          pointData=self.point_dict)
-            self.point_dict = dict()
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
@@ -94,8 +81,8 @@ class ErrorReporter:
 
             resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())),1/self.lattice.D)
 
-            err_u = torch.norm(u-uref)/resolution
-            err_p = torch.norm(p-pref)/resolution
+            err_u = torch.norm(u-uref)/resolution**(self.lattice.D/2)
+            err_p = torch.norm(p-pref)/resolution**(self.lattice.D/2)
 
             if isinstance(self.out, list):
                 self.out.append([err_u.item(), err_p.item()])
@@ -155,16 +142,9 @@ class EnergyReporter(GenericStepReporter):
         kinE *= dx ** self.lattice.D
         return kinE.item()
 
-class ProgressReporter(GenericStepReporter):
-    """Reports the Progress of the Simulation in LU / time steps"""
-    _parameter_name = 'Progress'
-
-    def parameter_function(self,i,t,f):
-        return "Steps completed"
 
 class EnstrophyReporter(GenericStepReporter):
     """Reports the integral of the vorticity
-
     Notes
     -----
     The function only works for periodic domains
@@ -177,9 +157,12 @@ class EnstrophyReporter(GenericStepReporter):
         dx = self.flow.units.convert_length_to_pu(1.0)
         grad_u0 = torch_gradient(u0, dx=dx, order=6).cpu().numpy()
         grad_u1 = torch_gradient(u1, dx=dx, order=6).cpu().numpy()
-        vorticity = np.sum((grad_u0[1] - grad_u1[0]) ** 2)
+        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
         if self.lattice.D == 3:
             u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
             grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
-            vorticity += np.sum((grad_u2[1] - grad_u1[2]) ** 2 + ((grad_u0[2] - grad_u2[0]) ** 2))
+            vorticity += np.sum(
+                (grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])
+                + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
+            )
         return vorticity.item() * dx**self.lattice.D

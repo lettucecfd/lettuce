@@ -37,7 +37,7 @@ def test_initialization(dtype_device, use_jacobi):
     rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
     if use_jacobi:
-        simulation.initialize_pressure(1000, 1e-10)
+        simulation.initialize_pressure(1000, 1e-6)
         num_iterations = 0
     else:
         num_iterations = simulation.initialize(500, 1e-3)

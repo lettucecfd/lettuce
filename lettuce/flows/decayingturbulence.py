@@ -7,6 +7,7 @@ from lettuce.unit import UnitConversion
 
 
 class DecayingTurbulence2D:
+    """Decaying isotropic turbulence in 2D"""
     def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):
         self.k0 = k0
         self.ic_energy = ic_energy
@@ -126,6 +127,7 @@ class DecayingTurbulence2D:
 
 
 class DecayingTurbulence3D:
+    """Decaying isotropic turbulence in 3D"""
     def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):
         self.k0 = k0
         self.ic_energy = ic_energy
@@ -134,7 +136,7 @@ class DecayingTurbulence3D:
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
             characteristic_length_lu=resolution, characteristic_length_pu=2*np.pi,
-            characteristic_velocity_pu=1
+            characteristic_velocity_pu=None
         )
 
     def analytic_solution(self, x, t=0):

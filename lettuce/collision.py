@@ -143,21 +143,21 @@ class KBCCollision2D:
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        k = torch.zeros_like(f)
+        #k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
         delta_s = self.compute_s_seq_from_m(f, m)
 
 
-        k[0] = m[0, 0]
-        k[1] = m[0, 0] / 2. * m[1, 0]
-        k[2] = m[0, 0] / 2. * m[0, 1]
-        k[3] = -m[0, 0] / 2. * m[1, 0]
-        k[4] = -m[0, 0] / 2. * m[0, 1]
-        k[5] = 0
-        k[6] = 0
-        k[7] = 0
-        k[8] = 0
+        #k[0] = m[0, 0]
+        #k[1] = m[0, 0] / 2. * m[1, 0]
+        #k[2] = m[0, 0] / 2. * m[0, 1]
+        #k[3] = -m[0, 0] / 2. * m[1, 0]
+        #k[4] = -m[0, 0] / 2. * m[0, 1]
+        #k[5] = 0
+        #k[6] = 0
+        #k[7] = 0
+        #k[8] = 0
 
         m = self.kbc_moment_transform(feq)
 
@@ -234,18 +234,18 @@ class KBCCollision3D:
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        k = torch.zeros_like(f)
+        #k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
         delta_s = self.compute_s_seq_from_m(f, m)
 
-        k[1] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
-        k[0] = m[0, 0, 0]
-        k[2] = -k[1]
-        k[3] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
-        k[4] = -k[3]
-        k[5] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
-        k[6] = -k[5]
+        #k[1] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
+        #k[0] = m[0, 0, 0]
+        #k[2] = -k[1]
+        #k[3] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
+        #k[4] = -k[3]
+        #k[5] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
+        #k[6] = -k[5]
 
         m = self.kbc_moment_transform(feq)
 

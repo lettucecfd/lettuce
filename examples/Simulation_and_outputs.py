@@ -15,6 +15,7 @@ flow = lt.TaylorGreenVortex3D(resolution, 1600, 0.1, lattice)
 collision = lt.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
 streaming = lt.StandardStreaming(lattice)
 simulation = lt.Simulation(flow, lattice, collision, streaming)
+simulation.initialize_f_neq()  # initialize non-conserved moments
 
 # reporters will grab the results in between simulation steps (see io.py and simulation.py)
 # Output: Column 1: time in LU, Column 2: kinetic energy in PU

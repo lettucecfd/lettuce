@@ -13,7 +13,14 @@ import numpy as np
 
 
 class Simulation:
-    """High-level API for simulations."""
+    """High-level API for simulations.
+
+    Attributes
+    ----------
+    reporters : list
+        A list of reporters. Their call functions are invoked after every simulation step.
+
+    """
     def __init__(self, flow, lattice, collision, streaming):
         self.flow = flow
         self.lattice = lattice

@@ -155,6 +155,12 @@ class EnergyReporter(GenericStepReporter):
         kinE *= dx ** self.lattice.D
         return kinE.item()
 
+class ProgressReporter(GenericStepReporter):
+    """Reports the Progress of the Simulation in LU / time steps"""
+    _parameter_name = 'Progress'
+
+    def parameter_function(self,i,t,f):
+        return "Steps completed"
 
 class EnstrophyReporter(GenericStepReporter):
     """Reports the integral of the vorticity

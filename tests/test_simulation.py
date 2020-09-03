@@ -35,10 +35,10 @@ def test_initialization(dtype_device):
     u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
     rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
-    num_iterations = simulation.initialize(500, 0.001)
+    num_iterations = simulation.initialize(500, 1e-4)
     piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))
     # assert that pressure is converged up to 0.05 (max p
-    assert piter == pytest.approx(p, abs=5e-2)
+    assert piter == pytest.approx(p, rel=0.0, abs=3e-2)
     assert num_iterations < 500
 
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])

@@ -20,7 +20,7 @@ class TaylorGreenVortex2D:
     def analytic_solution(self, x, t=0):
         nu = self.units.viscosity_pu
         u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2*nu*t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2*nu*t)])
-        p = np.array([0.25 * (np.cos(2*x[0]) + np.cos(2*x[1])) * np.exp(-4 * nu * t)])
+        p = -np.array([0.25 * (np.cos(2*x[0]) + np.cos(2*x[1])) * np.exp(-4 * nu * t)])
         return p, u
 
     def initial_solution(self, x):
@@ -28,10 +28,9 @@ class TaylorGreenVortex2D:
 
     @property
     def grid(self):
-
         x = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
         y = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
-        return np.meshgrid(x, y)
+        return np.meshgrid(x, y, indexing='ij')
 
     @property
     def boundaries(self):
@@ -54,7 +53,7 @@ class TaylorGreenVortex3D:
             -np.cos(x[0]) * np.sin(x[1]) * np.cos(x[2]),
             np.zeros_like(np.sin(x[0]))
         ])
-        p = np.array([1 / 16. * (np.cos(2 * x[0]) + np.cos(2 * x[1])) * (np.cos(2 * x[2] + 2))])
+        p = np.array([1 / 16. * (np.cos(2 * x[0]) + np.cos(2 * x[1])) * (np.cos(2 * x[2]) + 2)])
         return p, u
 
     @property
@@ -62,7 +61,7 @@ class TaylorGreenVortex3D:
         x = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
         y = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
         z = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
-        return np.meshgrid(x, y, z)
+        return np.meshgrid(x, y, z, indexing='ij')
 
     @property
     def boundaries(self):

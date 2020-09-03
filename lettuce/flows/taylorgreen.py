@@ -20,7 +20,7 @@ class TaylorGreenVortex2D:
     def analytic_solution(self, x, t=0):
         nu = self.units.viscosity_pu
         u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2*nu*t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2*nu*t)])
-        p = np.array([0.25 * (np.cos(2*x[0]) + np.cos(2*x[1])) * np.exp(-4 * nu * t)])
+        p = -np.array([0.25 * (np.cos(2*x[0]) + np.cos(2*x[1])) * np.exp(-4 * nu * t)])
         return p, u
 
     def initial_solution(self, x):

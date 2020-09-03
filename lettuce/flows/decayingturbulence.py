@@ -5,6 +5,7 @@ DecayingTurbulence vortex in 2D.
 import numpy as np
 from lettuce.unit import UnitConversion
 
+
 class DecayingTurbulence2D:
     def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):
         self.k0 = k0
@@ -14,14 +15,15 @@ class DecayingTurbulence2D:
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
             characteristic_length_lu=resolution, characteristic_length_pu=2*np.pi,
-            characteristic_velocity_pu=1
+            characteristic_velocity_pu=None
         )
 
     def analytic_solution(self, x, t=0):
         return
 
     def initial_solution(self, x):
-        dx = self.units.characteristic_length_pu / self.resolution
+        """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""
+        dx = self.units.convert_length_to_pu(1.0)
 
         ### Generate wavenumber vector
         kx = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
@@ -106,6 +108,10 @@ class DecayingTurbulence2D:
         u = np.append(u, u1f.real[None, ...], axis=0)
 
         p = (u[0]*0)[None,...]
+
+        umax = np.linalg.norm(u, axis=0).max()
+        self.units.characteristic_velocity_pu = umax
+
         return p, u
 
     @property
@@ -135,7 +141,8 @@ class DecayingTurbulence3D:
         return
 
     def initial_solution(self, x):
-        dx = self.units.characteristic_length_pu / self.resolution
+        """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""
+        dx = self.units.convert_length_to_pu(1.0)
 
         ### Generate wavenumber vector
         kx = np.fft.fftfreq(self.resolution, d=1 / self.resolution)
@@ -245,6 +252,10 @@ class DecayingTurbulence3D:
         u = np.append(u, u2f.real[None, ...], axis=0)
 
         p = (u[0]*0)[None,...]
+
+        umax = np.linalg.norm(u, axis=0).max()
+        self.units.characteristic_velocity_pu = umax
+
         return p, u
 
     @property

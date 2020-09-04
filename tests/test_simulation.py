@@ -2,7 +2,11 @@
 
 import pytest
 import numpy as np
-from lettuce import Simulation, TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D2Q9, D3Q27, BGKCollision, StandardStreaming, ErrorReporter
+from lettuce import (
+    Simulation, TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice,
+    D2Q9, D3Q27, BGKCollision, StandardStreaming, ErrorReporter,
+    DecayingTurbulence2D, DecayingTurbulence3D
+)
 import torch
 
 
@@ -37,7 +41,7 @@ def test_initialization(dtype_device, use_jacobi):
     rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
     if use_jacobi:
-        simulation.initialize_pressure(1000, 1e-10)
+        simulation.initialize_pressure(1000, 1e-6)
         num_iterations = 0
     else:
         num_iterations = simulation.initialize(500, 1e-3)
@@ -47,27 +51,30 @@ def test_initialization(dtype_device, use_jacobi):
     assert num_iterations < 500
 
 
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D, DecayingTurbulence2D, DecayingTurbulence3D])
 def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    if Case == TaylorGreenVortex3D:
+    if "3D" in Case.__name__:
         lattice = Lattice(D3Q27, dtype=dtype, device=device)
-    flow = Case(resolution=16, reynolds_number=1000, mach_number=0.01, lattice=lattice)
+    flow = Case(resolution=40, reynolds_number=1000, mach_number=0.1, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation_neq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
 
     pre_rho = lattice.rho(simulation_neq.f)
     pre_u = lattice.u(simulation_neq.f)
+    pre_ke = lattice.incompressible_energy(simulation_neq.f)
 
     simulation_neq.initialize_f_neq()
 
     post_rho = lattice.rho(simulation_neq.f)
     post_u = lattice.u(simulation_neq.f)
+    post_ke = lattice.incompressible_energy(simulation_neq.f)
     tol = 1e-6
-    assert(torch.allclose(pre_rho, post_rho, rtol=0.0, atol=tol))
-    assert(torch.allclose(pre_u, post_u, rtol=0.0, atol=tol))
+    assert torch.allclose(pre_rho, post_rho, rtol=0.0, atol=tol)
+    assert torch.allclose(pre_u, post_u, rtol=0.0, atol=tol)
+    assert torch.allclose(pre_ke, post_ke, rtol=0.0, atol=tol)
 
     if Case is TaylorGreenVortex2D:
         error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)

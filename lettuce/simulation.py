@@ -18,7 +18,7 @@ class Simulation:
     Attributes
     ----------
     reporters : list
-        A list of reporters. Their call functions are invoked after every simulation step.
+        A list of reporters. Their call functions are invoked before every simulation step.
 
     """
     def __init__(self, flow, lattice, collision, streaming):
@@ -56,14 +56,14 @@ class Simulation:
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
         start = timer()
         for _ in range(num_steps):
+            for reporter in self.reporters:
+                reporter(self.i, self.i, self.f)
             self.i += 1
             self.f = self.streaming(self.f)
             #Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
             for boundary in self.flow.boundaries:
                 self.f = boundary(self.f)
-            for reporter in self.reporters:
-                reporter(self.i, self.i, self.f)
         end = timer()
         seconds = end-start
         num_grid_points = self.lattice.rho(self.f).numel()

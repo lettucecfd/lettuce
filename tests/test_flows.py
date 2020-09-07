@@ -5,12 +5,13 @@ import torch
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q9, D3Q27, DoublyPeriodicShear2D
 from lettuce import DecayingTurbulence2D, DecayingTurbulence3D, torch_gradient
 from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
+from lettuce import Obstacle2D, Obstacle3D
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 
 # Flows to test
-INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence2D]
-INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence3D]
+INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence2D, Obstacle2D]
+INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence3D, Obstacle3D]
 
 
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)

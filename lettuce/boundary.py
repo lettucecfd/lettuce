@@ -69,6 +69,8 @@ class AntiBounceBackOutlet:
             self.dims = 'c, xyz -> '.replace('xyz'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xyz'.replace('xyz'[(np.where(abs(direction)==1))[0][0]], '')
         if len(direction) == 2:
             self.dims = 'c, xy -> '.replace('xy'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xy'.replace('xy'[(np.where(abs(direction)==1))[0][0]], '')
+        if len(direction) == 1:
+            self.dims = 'c, x -> x'
 
     def __call__(self, f):
         u = self.lattice.u(f)

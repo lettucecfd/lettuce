@@ -10,8 +10,8 @@ from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 
 # Flows to test
-INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence2D, Obstacle2D]
-INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence3D, Obstacle3D]
+INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence2D]
+INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence3D]
 
 
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
@@ -63,3 +63,16 @@ def test_divergence(stencil, dtype_device):
     print(divergence)
     assert (flow.ic_energy == pytest.approx(lattice.convert_to_numpy(ekin),rel=1))
     assert (0 == pytest.approx(divergence, abs=1e-4))
+
+@pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
+def test_obstacle(stencil, dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(stencil, dtype=dtype, device=device)
+    if stencil is D2Q9:
+        flow = Obstacle2D(20, 10, 100, 0.1, lattice=lattice, char_length_lu=3)
+    if stencil is D3Q27:
+        flow = Obstacle3D(20, 10, 5, 100, 0.1, lattice=lattice, char_length_lu=3)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation.step(2)

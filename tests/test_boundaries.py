@@ -51,11 +51,24 @@ def test_anti_bounce_back_outlet(f_lattice):
     f, lattice = f_lattice
     f_ref = f
     u = lattice.u(f)
-    u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
-    for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
-        f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * self.lattice.rho(f)[0, -1, :, :] * \
-            (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
-
-    abb_outlet = AntiBounceBackOutlet(lattice, [1, 0, 0])
+    if lattice.D == 3:
+        direction = [1, 0, 0]
+        u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
+        for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
+            f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :] * \
+                (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+    if lattice.D == 2:
+        direction = [1, 0]
+        u_w = u[:, -1, :] + 0.5 * (u[:, -1, :] - u[:, -2, :])
+        for i in [1, 5, 8]:
+            f_ref[lattice.stencil.opposite[i], -1,:] = - f_ref[i, -1, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :] * \
+                    (2 + torch.einsum('c, cy -> y', torch.tensor((lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs)**2)
+    if lattice.D == 1:
+        direction = [1]
+        u_w = u[:, -1] + 0.5 * (u[:, -1] - u[:, -2])
+        for i in [1]:
+            f_ref[lattice.stencil.opposite[i], -1] = - f_ref[i, -1] + lattice.stencil.w[i] * lattice.rho(f)[0, -1] * \
+                    (2 + torch.einsum('c, x -> x', (torch.tensor((lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w)) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs)**2)
+    abb_outlet = AntiBounceBackOutlet(lattice, direction)
     f = abb_outlet(f)
     assert f.cpu().numpy() == pytest.approx(f_ref.cpu().numpy())

@@ -165,3 +165,58 @@ class EnstrophyReporter(GenericStepReporter):
                 + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
             )
         return vorticity.item() * dx**self.lattice.D
+
+
+class SpectrumReporter(GenericStepReporter):
+    """Reports the energy spectrum of the velocity
+    _____
+    NOTES
+    spectrum = simulation.reporters[0].out
+    for i in range(len(spectrum)):
+        k = spectrum[i][1][0]
+        ek = spectrum[i][1][1]
+        plt.loglog(k, ek)
+    plt.show()
+    """
+    _parameter_name = 'Energy spectrum'
+
+    def parameter_function(self,i,t,f):
+        global ek
+        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)).cpu().numpy()
+        dx = self.flow.units.convert_length_to_pu(1.0)
+
+        if self.lattice.D == 2:
+            kx = np.fft.fftfreq(self.flow.resolution, d=1 / self.flow.resolution)
+            ky = np.fft.fftfreq(self.flow.resolution, d=1 / self.flow.resolution)
+            kx, ky = np.meshgrid(kx, ky)
+            kk = np.sqrt(kx ** 2 + ky ** 2)
+            norm = dx / self.flow.resolution
+            u0h = np.fft.fftn(u[0] * norm, axes=(0,1))
+            u1h = np.fft.fftn(u[1] * norm, axes=(0,1))
+            ekin = (u0h.real ** 2 + u0h.imag ** 2 + u1h.real ** 2 + u1h.imag ** 2) * .5
+            ek = np.zeros(int(np.max(kk)))
+            k = np.zeros(int(np.max(kk)))
+            for wv in range(int(np.max(kk))):
+                ii, jj = np.where((kk > (wv - 0.5)) & (kk < (wv + 0.5)))
+                ek[wv] = np.sum(ekin[ii, jj])
+                k[wv] = wv
+
+        if self.lattice.D == 3:
+            kx = np.fft.fftfreq(self.flow.resolution, d=1 / self.flow.resolution)
+            ky = np.fft.fftfreq(self.flow.resolution, d=1 / self.flow.resolution)
+            kz = np.fft.fftfreq(self.flow.resolution, d=1 / self.flow.resolution)
+            kx, ky, kz = np.meshgrid(kx, ky, kz)
+            kk = np.sqrt(kx ** 2 + ky ** 2 + kz ** 2)
+            norm = self.flow.resolution * dx ** (-2) * np.sqrt(2 * np.pi)
+            u0h = np.fft.fftn(u[0], axes=(0, 1, 2)) / norm
+            u1h = np.fft.fftn(u[1], axes=(0, 1, 2)) / norm
+            u2h = np.fft.fftn(u[2], axes=(0, 1, 2)) / norm
+            ekin = (u0h.real ** 2 + u1h.real ** 2 + u2h.real ** 2 + u0h.imag ** 2 + u1h.imag ** 2 + u2h.imag ** 2) * .5
+            ek = np.zeros(int(np.max(kk)))
+            k = np.zeros(int(np.max(kk)))
+            for wv in range(int(np.max(kk))):
+                ii, jj, ll = np.where((kk > (wv - 0.5)) & (kk < (wv + 0.5)))
+                ek[wv] = np.sum(ekin[ii, jj, ll])
+                k[wv] = wv
+
+        return k, ek

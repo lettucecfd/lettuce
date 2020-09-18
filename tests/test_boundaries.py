@@ -48,31 +48,33 @@ def test_equilibrium_boundary_pu(f_lattice):
     #assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy())
 
 def test_anti_bounce_back_outlet(f_lattice):
-    """Compares the result of the application of the boundary to f to the result using the formula taken from the source
-    if both are similar it is assumed to be working fine."""
+    """Compares the result of the application of the boundary to f to the result using the formula taken from page 195
+    of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are similar it is assumed to be working fine."""
     f, lattice = f_lattice
     #generates reference value of f using non-dynamic formula
     f_ref = f
     u = lattice.u(f)
-    if lattice.stencil.type() == D3Q27:
+    D = len(lattice.stencil.e[0])
+    Q = len(lattice.stencil.e)
+    if D == 3:
         direction = [1, 0, 0]
-        u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
-        for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
-            f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :] * \
-                (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
-    if lattice.stencil.type() == D3Q19:
-        direction = [1, 0, 0]
-        u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
-        for i in [1, 11, 13, 15, 17]:
-            f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :] * \
-                (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
-    if lattice.stencil.type() == D2Q9:
+        if Q == 27:
+            u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
+            for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :] * \
+                    (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+        if Q == 19:
+            u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
+            for i in [1, 11, 13, 15, 17]:
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :] * \
+                    (2 + torch.einsum('c, cyz -> yz', torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+    if D == 2 and Q == 9:
         direction = [1, 0]
         u_w = u[:, -1, :] + 0.5 * (u[:, -1, :] - u[:, -2, :])
         for i in [1, 5, 8]:
             f_ref[lattice.stencil.opposite[i], -1,:] = - f_ref[i, -1, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1, :] * \
                     (2 + torch.einsum('c, cy -> y', torch.tensor((lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs)**2)
-    if lattice.stencil.type() == D1Q3:
+    if D == 1 and Q == 3:
         direction = [1]
         u_w = u[:, -1] + 0.5 * (u[:, -1] - u[:, -2])
         for i in [1]:

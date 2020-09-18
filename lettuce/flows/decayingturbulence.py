@@ -24,6 +24,15 @@ class DecayingTurbulence2D:
 
     def initial_solution(self, x):
         """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""
+        _, u = self.energy_spectrum
+        p = (u[0]*0)[None,...]
+        umax = np.linalg.norm(u, axis=0).max()
+        self.units.characteristic_velocity_pu = umax
+
+        return p, u
+
+    @property
+    def energy_spectrum(self):
         dx = self.units.convert_length_to_pu(1.0)
 
         ### Generate wavenumber vector
@@ -40,8 +49,8 @@ class DecayingTurbulence2D:
         ek *= self.ic_energy
 
         # Forward transform random fields
-        u0 = np.random.randn(self.resolution,self.resolution) + 0j
-        u1 = np.random.randn(self.resolution,self.resolution) + 0j
+        u0 = np.random.randn(self.resolution, self.resolution) + 0j
+        u1 = np.random.randn(self.resolution, self.resolution) + 0j
 
         u0 = np.fft.fftn(u0, axes=(0, 1))
         u1 = np.fft.fftn(u1, axes=(0, 1))
@@ -101,19 +110,19 @@ class DecayingTurbulence2D:
         # backtransformation of u0
         u0 = u0_real + u0_imag * 1.0j
         u0f = np.fft.ifftn(u0, axes=(0, 1)) * norm
-        u = u0f.real[None,...]
+        u = u0f.real[None, ...]
 
         # backtransformation of u1
         u1 = u1_real + u1_imag * 1.0j
         u1f = np.fft.ifftn(u1, axes=(0, 1)) * norm
         u = np.append(u, u1f.real[None, ...], axis=0)
 
-        p = (u[0]*0)[None,...]
+        spectrum = np.zeros(int(np.max(kk)))
+        for wv in range(int(np.max(kk))):
+            ii, jj = np.where((kk > (wv - 0.5)) & (kk < (wv + 0.5)))
+            spectrum[wv] = np.sum(ek[ii, jj])
 
-        umax = np.linalg.norm(u, axis=0).max()
-        self.units.characteristic_velocity_pu = umax
-
-        return p, u
+        return spectrum, u
 
     @property
     def grid(self):
@@ -144,6 +153,14 @@ class DecayingTurbulence3D:
 
     def initial_solution(self, x):
         """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""
+        _, u = self.energy_spectrum
+        p = (u[0]*0)[None,...]
+        umax = np.linalg.norm(u, axis=0).max()
+        self.units.characteristic_velocity_pu = umax
+        return p, u
+
+    @property
+    def energy_spectrum(self):
         dx = self.units.convert_length_to_pu(1.0)
 
         ### Generate wavenumber vector
@@ -161,9 +178,9 @@ class DecayingTurbulence3D:
         ek *= self.ic_energy
 
         # Forward transform random fields
-        u0 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
-        u1 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
-        u2 = np.random.randn(self.resolution,self.resolution,self.resolution) + 0j
+        u0 = np.random.randn(self.resolution, self.resolution, self.resolution) + 0j
+        u1 = np.random.randn(self.resolution, self.resolution, self.resolution) + 0j
+        u2 = np.random.randn(self.resolution, self.resolution, self.resolution) + 0j
 
         u0 = np.fft.fftn(u0, axes=(0, 1, 2))
         u1 = np.fft.fftn(u1, axes=(0, 1, 2))
@@ -241,7 +258,7 @@ class DecayingTurbulence3D:
         # backtransformation of u0
         u0 = u0_real + u0_imag * 1.0j
         u0f = np.fft.ifftn(u0, axes=(0, 1, 2)) * norm
-        u = u0f.real[None,...]
+        u = u0f.real[None, ...]
 
         # backtransformation of u1
         u1 = u1_real + u1_imag * 1.0j
@@ -253,12 +270,12 @@ class DecayingTurbulence3D:
         u2f = np.fft.ifftn(u2, axes=(0, 1, 2)) * norm
         u = np.append(u, u2f.real[None, ...], axis=0)
 
-        p = (u[0]*0)[None,...]
+        spectrum = np.zeros(int(np.max(kk)))
+        for wv in range(int(np.max(kk))):
+            ii, jj, nn = np.where((kk > (wv - 0.5)) & (kk < (wv + 0.5)))
+            spectrum[wv] = np.sum(ek[ii, jj, nn])
 
-        umax = np.linalg.norm(u, axis=0).max()
-        self.units.characteristic_velocity_pu = umax
-
-        return p, u
+        return spectrum, u
 
     @property
     def grid(self):

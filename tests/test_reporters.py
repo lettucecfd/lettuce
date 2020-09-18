@@ -1,9 +1,10 @@
 
 import pytest
 import os
-from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence2D
+from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence2D, DecayingTurbulence3D
 from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter,SpectrumReporter
 import numpy as np
+import torch
 
 
 def test_write_image(tmpdir):
@@ -57,10 +58,10 @@ def test_vtk_reporter(tmpdir):
     assert os.path.isfile(tmpdir/"output_00000001.vtr")
 
 
-@pytest.mark.parametrize("Flow", [TaylorGreenVortex2D,TaylorGreenVortex3D,DecayingTurbulence2D])
+@pytest.mark.parametrize("Flow", [TaylorGreenVortex2D,TaylorGreenVortex3D,DecayingTurbulence2D,DecayingTurbulence3D])
 def test_EnergySpectrumReporter(tmpdir, Flow):
     lattice = Lattice(D2Q9, device='cpu')
-    if Flow == TaylorGreenVortex3D:
+    if Flow == TaylorGreenVortex3D or Flow == DecayingTurbulence3D:
         lattice = Lattice(D3Q27, device='cpu')
     flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
@@ -72,24 +73,13 @@ def test_EnergySpectrumReporter(tmpdir, Flow):
     spectrum = simulation.reporters[0].out
     energy = simulation.reporters[1].out
 
-    if Flow == DecayingTurbulence2D:
-        dx = flow.units.convert_length_to_pu(1.0)
-        kx = np.fft.fftfreq(flow.resolution, d=1 / flow.resolution)
-        ky = np.fft.fftfreq(flow.resolution, d=1 / flow.resolution)
-        kx, ky = np.meshgrid(kx, ky)
-        kk = np.sqrt(kx ** 2 + ky ** 2)
-        kk[0][0] = 1e-16
-        ek = (kk) ** 4 * np.exp(-2 * (kk / flow.k0) ** 2)
-        ek[0][0] = 0
-        ek /= np.sum(ek)
-        ek *= flow.ic_energy
-        ek_ref = np.zeros(int(np.max(kk)))
-        k = np.zeros(int(np.max(kk)))
-        for wv in range(int(np.max(kk))):
-            ii, jj = np.where((kk > (wv - 0.5)) & (kk < (wv + 0.5)))
-            ek_ref[wv] = np.sum(ek[ii, jj])
-        assert (spectrum[0][1][1] == pytest.approx(ek_ref, rel= 0.0, abs=0.1))
-    assert (energy[0][1] == pytest.approx(np.sum(spectrum[0][1][1]), rel= 0.1, abs=0.0))
+    if Flow == DecayingTurbulence2D or Flow == DecayingTurbulence3D:
+        ek_ref, _ = flow.energy_spectrum
+        assert (spectrum[0][1] == pytest.approx(ek_ref, rel= 0.0, abs=0.1))
+    if Flow == TaylorGreenVortex2D or Flow == TaylorGreenVortex3D:
+        ek_max = sorted(spectrum[0][1], reverse=True)
+        assert ek_max[0]*1e-5>ek_max[1]
+    assert (energy[0][1] == pytest.approx(torch.sum(spectrum[0][1]).numpy(), rel= 0.1, abs=0.0))
 
 
 

@@ -7,7 +7,7 @@ from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBoun
 
 class Obstacle2D(object):
 
-    def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu=64):
+    def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.units = UnitConversion(

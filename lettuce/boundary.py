@@ -7,15 +7,16 @@ condition operates.
 
 import torch
 import numpy as np
+from lettuce import (LettuceException)
 
 
 class BounceBackBoundary:
     def __init__(self, mask, lattice):
-        self.mask = lattice.convert_to_tensor(mask)
+        self.mask = lattice.convert_to_tensor(mask).byte()
         self.lattice = lattice
 
     def __call__(self, f):
-        f = torch.where(self.mask.byte(), f[self.lattice.stencil.opposite], f)
+        f = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
         return f
 
 
@@ -47,14 +48,18 @@ class AntiBounceBackOutlet:
         """
 
     def __init__(self, lattice, direction):
+        assert (isinstance(direction, list) and len(direction) in [1,2,3] and ((np.abs(sum(direction)) == 1) and (np.max(np.abs(direction)) == 1) and (1 in direction) ^ (-1 in direction))), \
+            LettuceException("Wrong direction. Expected list of length 1, 2 or 3 with all entrys 0 except one 1 or -1, "
+                                f"but got {type(direction)} of size {len(direction)} and entrys {direction}.")
         direction = np.array(direction)
         self.lattice = lattice
+
         #select velocities to be bounced (the ones pointing in "direction")
         self.velocities = np.concatenate(np.argwhere(np.matmul(self.lattice.stencil.e, direction) == 1), axis=0)
-        #build indices of u/f that determine the side of the domain
+
+        # build indices of u and f that determine the side of the domain
         self.index = []
         self.neighbour = []
-        #self.index = np.where(direction == 0, [slice(None)], [slice((direction + 1)*-0.5)])
         for i in direction:
             if i == 0:
                 self.index.append(slice(None))
@@ -65,19 +70,24 @@ class AntiBounceBackOutlet:
             if i == -1:
                 self.index.append(0)
                 self.neighbour.append(1)
+        # construct indices for einsum
         if len(direction) == 3:
-            self.dims = 'c, xyz -> '.replace('xyz'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xyz'.replace('xyz'[(np.where(abs(direction)==1))[0][0]], '')
+            #self.dims = 'c, xyz -> '.replace('xyz'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xyz'.replace('xyz'[(np.where(abs(direction)==1))[0][0]], '')
+            self.dims = 'dc, cxy -> dxy'
+            self.w = self.lattice.w[self.velocities].view(1, -1).t().unsqueeze(1)
         if len(direction) == 2:
-            self.dims = 'c, xy -> '.replace('xy'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xy'.replace('xy'[(np.where(abs(direction)==1))[0][0]], '')
+            #self.dims = 'c, xy -> '.replace('xy'[(np.where(abs(direction)==1))[0][0]], 'c') + 'xy'.replace('xy'[(np.where(abs(direction)==1))[0][0]], '')
+            self.dims = 'dc, cx -> dx'
+            self.w = self.lattice.w[self.velocities].view(1, -1).t()
         if len(direction) == 1:
             self.dims = 'c, x -> x'
+            self.w = self.lattice.w[self.velocities]
 
     def __call__(self, f):
         u = self.lattice.u(f)
         u_w = u[[slice(None)] + self.index] + 0.5 * (u[[slice(None)] + self.index] - u[[slice(None)] + self.neighbour])
-        for i in self.velocities:
-            f[[self.lattice.stencil.opposite[i]] + self.index] = - f[[i] + self.index] + self.lattice.stencil.w[i] * self.lattice.rho(f)[[0] + self.index] * \
-                     (2 + torch.einsum(self.dims, torch.tensor(self.lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2 / self.lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / self.lattice.stencil.cs)**2)
+        f[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = - f[[self.velocities] + self.index] + self.w * \
+             self.lattice.rho(f)[[0] + self.index] * (2 + torch.einsum(self.dims,self.lattice.e[self.velocities],u_w) ** 2 / self.lattice.cs ** 4 - (torch.norm(u_w,dim=0) / self.lattice.cs) ** 2)
         return f
 
 #    def __call__(self, f):

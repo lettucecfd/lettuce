@@ -76,7 +76,7 @@ def test_anti_bounce_back_outlet(f_lattice):
                     (2 + torch.einsum('c, cy -> y', torch.tensor((lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs)**2)
     if D == 1 and Q == 3:
         direction = [1]
-        u_w = u[-1] + 0.5 * (u[-1] - u[-2])
+        u_w = u[:, -1] + 0.5 * (u[:, -1] - u[:, -2])
         for i in [1]:
             f_ref[lattice.stencil.opposite[i], -1] = - f_ref[i, -1] + lattice.stencil.w[i] * lattice.rho(f)[0, -1] * \
                     (2 + torch.einsum('c, x -> x', (torch.tensor((lattice.stencil.e[i]), device=f.device, dtype=f.dtype), u_w)) ** 2 / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs)**2)

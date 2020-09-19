@@ -11,6 +11,7 @@ from lettuce import (LettuceException)
 
 
 class BounceBackBoundary:
+    """Fullway Bounce-Back Boundary"""
     def __init__(self, mask, lattice):
         self.mask = lattice.convert_to_tensor(mask).byte()
         self.lattice = lattice

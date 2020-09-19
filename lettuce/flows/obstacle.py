@@ -1,6 +1,4 @@
 import numpy as np
-import torch
-
 from lettuce.unit import UnitConversion
 from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
 

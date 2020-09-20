@@ -50,8 +50,7 @@ class Simulation:
         self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask)
         for boundary in self.flow.boundaries:
             if boundary.__class__.__name__ == "BounceBackBoundary":
-                self.no_collision_mask = boundary.mask.bool() | self.no_collision_mask.bool()
-                self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask).byte()
+                self.no_collision_mask = boundary.mask | self.no_collision_mask
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""

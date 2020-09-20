@@ -4,7 +4,11 @@ from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBoun
 
 
 class Obstacle2D(object):
+    """Flow class to simulate the flow around an object (mask) in 2D. It consists off one inflow (equilibrium boundary)
+    and one outflow (anti-bounce-back-boundary), leading to a flow in positive x direction.
 
+    add object mask directly or via "initialize_object" as bool tensor / bool array with true entries forming the object
+    char_length_lu: length of the object in flow direction (positive x)"""
     def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
@@ -16,13 +20,12 @@ class Obstacle2D(object):
         )
         self.mask = None
 
-    def initialise_object(self, mask, lattice):
+    def initialize_object(self, mask, lattice):
         self.boundaries.append(BounceBackBoundary(mask, lattice))
 
     def initial_solution(self, x):
-        return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(self.units.characteristic_velocity_pu), 0 * x[1]],
-            dtype=float)
+        return np.array([np.zeros_like(x[0])], dtype=float), np.array(
+            [np.where(self.mask == 1, 0, self.units.characteristic_velocity_pu), np.zeros_like(x[1])], dtype=float)
 
     @property
     def grid(self):
@@ -33,13 +36,18 @@ class Obstacle2D(object):
     @property
     def boundaries(self):
         x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units, np.array(
-            [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.0])),
+        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units,
+                                      np.array([self.units.characteristic_velocity_pu, 0])),
                 AntiBounceBackOutlet(self.units.lattice, [1, 0]),
                 BounceBackBoundary(self.mask, self.units.lattice)]
 
 
 class Obstacle3D(object):
+    """Flow class to simulate the flow around an object (mask) in 3D. It consists off one inflow (equilibrium boundary)
+    and one outflow (anti-bounce-back-boundary), leading to a flow in positive x direction.
+
+    add object mask directly or via "initialize_object" as bool tensor / bool array with true entries forming the object
+    char_length_lu: length of the object in flow direction (positive x)"""
 
     def __init__(self, resolution_x, resolution_y, resolution_z, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
@@ -57,9 +65,9 @@ class Obstacle3D(object):
         self.boundaries.append(BounceBackBoundary(mask, lattice))
 
     def initial_solution(self, x):
-        return np.array([0 * x[0]], dtype=float), np.array(
-            [0 * x[0] + self.units.convert_velocity_to_lu(1.0), x[1] * 0, x[2] * 0.1],
-            dtype=float)
+        return np.array([np.zeros_like(x[0])], dtype=float), np.array(
+            [np.where(self.mask == 1, 0, self.units.characteristic_velocity_pu), np.zeros_like(x[1]),
+             np.where(self.mask == 1, 0, x[2] * 0.1)], dtype=float)
 
     @property
     def grid(self):
@@ -71,7 +79,7 @@ class Obstacle3D(object):
     @property
     def boundaries(self):
         x, y, z = self.grid
-        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units, np.array(
-            [self.units.characteristic_velocity_pu, self.units.characteristic_velocity_pu * 0.0, self.units.characteristic_velocity_pu * 0.0])),
+        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units,
+                                      np.array([self.units.characteristic_velocity_pu, 0, 0])),
                 AntiBounceBackOutlet(self.units.lattice, [1, 0, 0]),
                 BounceBackBoundary(self.mask, self.units.lattice)]

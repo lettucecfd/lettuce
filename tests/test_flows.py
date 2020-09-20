@@ -78,7 +78,7 @@ def test_obstacle(stencil, dtype_device):
         mask[3:6, 3:6, :] = np.ones([3, 3, 5]) > 0
         flow = Obstacle3D(20, 10, 5, 100, 0.1, lattice=lattice, char_length_lu=3)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    mask = torch.tensor(mask, dtype=torch.uint8)
+    mask = torch.tensor(mask, dtype=torch.bool)
     flow.mask = mask
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)

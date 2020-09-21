@@ -1,12 +1,18 @@
 """
-DecayingTurbulence vortex in 2D.
+DecayingTurbulence vortex in 2D and 3D. Dimension is set by the stencil.
+Special Inputs & standard value: wavenumber_energy-peak = 20, initial_energy = 0.5
+
+Additional attributes / properties
+__________
+energy_spectrum: returns a pair [spectrum, wavenumbers]
 """
 
 import numpy as np
 from lettuce.unit import UnitConversion
 
+
 class DecayingTurbulence:
-    """Decaying isotropic turbulence in 3D"""
+
     def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):
         self.k0 = k0
         self.ic_energy = ic_energy
@@ -14,10 +20,10 @@ class DecayingTurbulence:
         self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=2*np.pi,
+            characteristic_length_lu=resolution, characteristic_length_pu=2 * np.pi,
             characteristic_velocity_pu=None
         )
-        self.wavenumber = []
+        self.wavenumbers = []
         self.spectrum = []
 
     def analytic_solution(self, x, t=0):
@@ -31,18 +37,19 @@ class DecayingTurbulence:
         self.wavenumbers = np.arange(int(np.max(wavenorms)))
         wavemask = (wavenorms[..., None] > self.wavenumbers - 0.5) & (wavenorms[..., None] <= self.wavenumbers + 0.5)
         return wavenorms, wavenumber, wavemask
+
     def _generate_spectrum(self):
         wavenorms, wavenumber, wavemask = self._generate_wavenumbers()
         ek = (wavenorms) ** 4 * np.exp(-2 * (wavenorms / self.k0) ** 2)
         ek /= np.sum(ek)
         ek *= self.ic_energy
         self.spectrum = ek[..., None] * wavemask
-        self.spectrum = np.sum(self.spectrum,axis=tuple((np.arange(self.units.lattice.D))))
+        self.spectrum = np.sum(self.spectrum, axis=tuple((np.arange(self.units.lattice.D))))
         return ek, wavenumber
 
     def _generate_initial_velocity(self, ek, wavenumber):
         dx = self.units.convert_length_to_pu(1.0)
-        u = np.random.random(np.array(wavenumber).shape)*2*np.pi + 0j
+        u = np.random.random(np.array(wavenumber).shape) * 2 * np.pi + 0j
         u = [np.fft.fftn(u[dim], axes=tuple((np.arange(self.units.lattice.D)))) for dim in range(self.units.lattice.D)]
 
         u_real = [u[dim].real for dim in range(self.units.lattice.D)]
@@ -80,25 +87,25 @@ class DecayingTurbulence:
             u_imag[dim].ravel()[0] = 0
 
         ### Scale velocity field to achieve the desired inicial energy
-        e_kin = [np.sum(u_real[dim]**2 + u_imag[dim]**2) for dim in range(self.units.lattice.D)]
-        e_kin = np.sum(e_kin)*.5
+        e_kin = [np.sum(u_real[dim] ** 2 + u_imag[dim] ** 2) for dim in range(self.units.lattice.D)]
+        e_kin = np.sum(e_kin) * .5
 
         factor = np.sqrt(self.ic_energy / e_kin)
-        u_real = [u_real[dim]*factor for dim in range(self.units.lattice.D)]
-        u_imag = [u_imag[dim]*factor for dim in range(self.units.lattice.D)]
+        u_real = [u_real[dim] * factor for dim in range(self.units.lattice.D)]
+        u_imag = [u_imag[dim] * factor for dim in range(self.units.lattice.D)]
 
         ### Backtransformation to physical space
-        norm = ((self.resolution * dx ** (1-self.units.lattice.D) * np.sqrt(self.units.characteristic_length_pu))
-            if self.units.lattice.D == 3 else (self.resolution / dx))
+        norm = ((self.resolution * dx ** (1 - self.units.lattice.D) * np.sqrt(self.units.characteristic_length_pu))
+                if self.units.lattice.D == 3 else (self.resolution / dx))
 
         u = np.asarray([
             (np.fft.ifftn(u_real[dim] + u_imag[dim] * 1.0j, axes=tuple((np.arange(self.units.lattice.D)))) * norm).real
-             for dim in range(self.units.lattice.D)])
+            for dim in range(self.units.lattice.D)])
 
         return u
 
     def _compute_initial_pressure(self):
-        return np.zeros(self.dimensions)[None,...]
+        return np.zeros(self.dimensions)[None, ...]
 
     def initial_solution(self, x):
         """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""

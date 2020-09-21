@@ -110,6 +110,14 @@ Taylor-Green
     :undoc-members:
     :show-inheritance:
 
+Decaying-Turbulence
+^^^^^^^^^^^^
+.. automodule:: lettuce.flows.decayingturbulence
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Utility
 -------

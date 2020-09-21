@@ -75,8 +75,8 @@ class DecayingTurbulence:
         divergence_real = np.zeros(self.dimensions)
         divergence_imag = np.zeros(self.dimensions)
         for dim in range(self.units.lattice.D):
-            divergence_real += wavenumber_modified[dim] + u_real_h[dim]
-            divergence_imag += wavenumber_modified[dim] + u_imag_h[dim]
+            divergence_real += wavenumber_modified[dim] * u_real_h[dim]
+            divergence_imag += wavenumber_modified[dim] * u_imag_h[dim]
 
         u_real = [u_real_h[dim] - divergence_real * wavenumber_modified[dim]
                   / wavenorm_modified ** 2 for dim in range(self.units.lattice.D)]

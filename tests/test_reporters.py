@@ -59,7 +59,7 @@ def test_vtk_reporter(tmpdir):
 
 
 @pytest.mark.parametrize("Flow", [TaylorGreenVortex2D, TaylorGreenVortex3D, 'DecayingTurbulence2D', 'DecayingTurbulence3D'])
-def test_EnergySpectrumReporter(tmpdir, Flow):
+def test_energy_spectrum_reporter(tmpdir, Flow):
     lattice = Lattice(D2Q9, device='cpu')
     if Flow == TaylorGreenVortex3D or Flow == 'DecayingTurbulence3D':
         lattice = Lattice(D3Q27, device='cpu')

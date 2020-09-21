@@ -1,9 +1,10 @@
 
 import pytest
 import os
-from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation
-from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter
+from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence
+from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter,SpectrumReporter
 import numpy as np
+import torch
 
 
 def test_write_image(tmpdir):
@@ -55,3 +56,34 @@ def test_vtk_reporter(tmpdir):
     simulation.step(2)
     assert os.path.isfile(tmpdir/"output_00000000.vtr")
     assert os.path.isfile(tmpdir/"output_00000001.vtr")
+
+
+@pytest.mark.parametrize("Flow", [TaylorGreenVortex2D, TaylorGreenVortex3D, 'DecayingTurbulence2D', 'DecayingTurbulence3D'])
+def test_energy_spectrum_reporter(tmpdir, Flow):
+    lattice = Lattice(D2Q9, device='cpu')
+    if Flow == TaylorGreenVortex3D or Flow == 'DecayingTurbulence3D':
+        lattice = Lattice(D3Q27, device='cpu')
+    if Flow == 'DecayingTurbulence2D' or Flow == 'DecayingTurbulence3D':
+        Flow = DecayingTurbulence
+    flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation.reporters.append(SpectrumReporter(lattice, flow, out=None))
+    simulation.reporters.append(EnergyReporter(lattice, flow, out=None))
+    simulation.step(1)
+    spectrum = simulation.reporters[0].out
+    energy = simulation.reporters[1].out
+
+    if Flow == DecayingTurbulence:
+        # check that the reported spectrum agrees with the spectrum used for initialization
+        ek_ref, _ = flow.energy_spectrum
+        assert (spectrum[0][1] == pytest.approx(ek_ref, rel= 0.0, abs=0.1))
+    if Flow == TaylorGreenVortex2D or Flow == TaylorGreenVortex3D:
+        # check that flow has only one mode
+        ek_max = sorted(spectrum[0][1], reverse=True)
+        assert ek_max[0]*1e-5>ek_max[1]
+    assert (energy[0][1] == pytest.approx(torch.sum(spectrum[0][1]).numpy(), rel= 0.1, abs=0.0))
+
+
+

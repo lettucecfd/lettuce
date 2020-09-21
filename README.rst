@@ -28,7 +28,7 @@ Getting Started
 ---------------
 
 * Install the anaconda package manager from www.anaconda.org
-* Create a new conda repository and install all dependencies::
+* Create a new conda environment and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
          "pytorch>=1.1" matplotlib pytest click cudatoolkit "pyevtk>=1.1"

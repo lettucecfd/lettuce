@@ -1,7 +1,7 @@
 
 import pytest
 import os
-from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence2D, DecayingTurbulence3D
+from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence
 from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter,SpectrumReporter
 import numpy as np
 import torch
@@ -58,11 +58,13 @@ def test_vtk_reporter(tmpdir):
     assert os.path.isfile(tmpdir/"output_00000001.vtr")
 
 
-@pytest.mark.parametrize("Flow", [TaylorGreenVortex2D,TaylorGreenVortex3D,DecayingTurbulence2D,DecayingTurbulence3D])
+@pytest.mark.parametrize("Flow", [TaylorGreenVortex2D, TaylorGreenVortex3D, 'DecayingTurbulence2D', 'DecayingTurbulence3D'])
 def test_EnergySpectrumReporter(tmpdir, Flow):
     lattice = Lattice(D2Q9, device='cpu')
-    if Flow == TaylorGreenVortex3D or Flow == DecayingTurbulence3D:
+    if Flow == TaylorGreenVortex3D or Flow is 'DecayingTurbulence3D':
         lattice = Lattice(D3Q27, device='cpu')
+    if Flow is 'DecayingTurbulence2D' or Flow is 'DecayingTurbulence3D':
+        Flow = DecayingTurbulence
     flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
@@ -73,7 +75,7 @@ def test_EnergySpectrumReporter(tmpdir, Flow):
     spectrum = simulation.reporters[0].out
     energy = simulation.reporters[1].out
 
-    if Flow == DecayingTurbulence2D or Flow == DecayingTurbulence3D:
+    if Flow == DecayingTurbulence:
         ek_ref, _ = flow.energy_spectrum
         assert (spectrum[0][1] == pytest.approx(ek_ref, rel= 0.0, abs=0.1))
     if Flow == TaylorGreenVortex2D or Flow == TaylorGreenVortex3D:

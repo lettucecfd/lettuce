@@ -174,7 +174,6 @@ class SpectrumReporter(GenericStepReporter):
     def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
         super().__init__(lattice, flow, interval, starting_iteration, out)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
-        print('test')
         self.dimensions = self.flow.grid[0].shape
         frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
         wavenumbers = torch.stack(torch.meshgrid(*frequencies))
@@ -185,7 +184,9 @@ class SpectrumReporter(GenericStepReporter):
 
     def parameter_function(self,i,t,f):
         u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
-        uh = torch.stack([torch.fft(torch.cat((u[i][..., None], torch.zeros(self.dimensions)[..., None]), self.lattice.D), signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm
+        uh = (torch.stack([
+            torch.fft(torch.cat((u[i][..., None], torch.zeros(self.dimensions)[..., None]), self.lattice.D),
+                      signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
         ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
         ek = ekin[..., None] * self.wavemask
         ek = ek.sum(torch.arange(self.lattice.D).tolist())

@@ -41,6 +41,7 @@ class EquilibriumBoundaryPU:
         f = torch.where(self.mask, feq, f)
         return f
 
+
 class AntiBounceBackOutlet:
     """Allows distributions to leave domain unobstructed through this boundary.
         Based on equations from page 195 of "The lattice Boltzmann method" (2016 by Krüger et al.)

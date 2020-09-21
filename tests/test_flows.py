@@ -64,6 +64,7 @@ def test_divergence(stencil, dtype_device):
     assert (flow.ic_energy == pytest.approx(lattice.convert_to_numpy(ekin),rel=1))
     assert (0 == pytest.approx(divergence, abs=1e-4))
 
+
 @pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
 def test_obstacle(stencil, dtype_device):
     dtype, device = dtype_device
@@ -71,11 +72,11 @@ def test_obstacle(stencil, dtype_device):
 
     if stencil is D2Q9:
         mask = np.zeros([20, 10])
-        mask[3:6, 3:6] = np.ones([3, 3]) > 0
+        mask[3:6, 3:6] = 1
         flow = Obstacle2D(20, 10, 100, 0.1, lattice=lattice, char_length_lu=3)
     if stencil is D3Q27:
         mask = np.zeros([20, 10, 5])
-        mask[3:6, 3:6, :] = np.ones([3, 3, 5]) > 0
+        mask[3:6, 3:6, :] = 1
         flow = Obstacle3D(20, 10, 5, 100, 0.1, lattice=lattice, char_length_lu=3)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0

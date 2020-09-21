@@ -15,7 +15,7 @@ class Obstacle2D(object):
         Grid resolution in streamwise direction.
     resolution_y : int
         Grid resolution in spanwise direction.
-    char_length_u : float
+    char_length_lu : float
         The characteristic length in lattice units; usually the number of grid points for the obstacle in flow direction
 
     Attributes

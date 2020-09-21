@@ -5,7 +5,7 @@ import numpy as np
 from lettuce import (
     Simulation, TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice,
     D2Q9, D3Q27, BGKCollision, StandardStreaming, ErrorReporter,
-    DecayingTurbulence2D, DecayingTurbulence3D
+    DecayingTurbulence
 )
 import torch
 
@@ -51,7 +51,7 @@ def test_initialization(dtype_device, use_jacobi):
     assert num_iterations < 500
 
 
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D, DecayingTurbulence2D, DecayingTurbulence3D])
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D, DecayingTurbulence])
 def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)

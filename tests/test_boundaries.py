@@ -54,8 +54,8 @@ def test_anti_bounce_back_outlet(f_lattice):
     #generates reference value of f using non-dynamic formula
     f_ref = f
     u = lattice.u(f)
-    D = len(lattice.stencil.e[0])
-    Q = len(lattice.stencil.e)
+    D = lattice.stencil.D
+    Q = lattice.stencil.Q
     if D == 3:
         direction = [1, 0, 0]
         if Q == 27:

@@ -76,9 +76,11 @@ def test_energy_spectrum_reporter(tmpdir, Flow):
     energy = simulation.reporters[1].out
 
     if Flow == DecayingTurbulence:
+        # check that the reported spectrum agrees with the spectrum used for initialization
         ek_ref, _ = flow.energy_spectrum
         assert (spectrum[0][1] == pytest.approx(ek_ref, rel= 0.0, abs=0.1))
     if Flow == TaylorGreenVortex2D or Flow == TaylorGreenVortex3D:
+        # check that flow has only one mode
         ek_max = sorted(spectrum[0][1], reverse=True)
         assert ek_max[0]*1e-5>ek_max[1]
     assert (energy[0][1] == pytest.approx(torch.sum(spectrum[0][1]).numpy(), rel= 0.1, abs=0.0))

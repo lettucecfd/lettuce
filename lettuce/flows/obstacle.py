@@ -66,7 +66,7 @@ class Obstacle2D(object):
     def initial_solution(self, x):
         p = np.zeros_like(x[0], dtype=float)[None, ...]
         u_char = np.array([self.units.characteristic_velocity_pu, 0.0])[..., None, None]
-        u = self.mask.astype(np.float) * u_char
+        u = (1 - self.mask.astype(np.float)) * u_char
         return p, u
 
     @property
@@ -112,7 +112,7 @@ class Obstacle3D(object):
     def initial_solution(self, x):
         p = np.zeros_like(x[0], dtype=float)[None, ...]
         u_char = np.array([self.units.characteristic_velocity_pu, 0.0, 0.0])[..., None, None, None]
-        u = self.mask.astype(np.float) * u_char
+        u = (1 - self.mask.astype(np.float)) * u_char
         return p, u
 
     @property

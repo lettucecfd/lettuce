@@ -57,4 +57,4 @@ def test_divergence(stencil, dtype_device):
         grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
         divergence += np.sum(grad_u2[2])
     assert (flow.ic_energy == pytest.approx(lattice.convert_to_numpy(ekin),rel=1))
-    assert (0 == pytest.approx(divergence, abs=1e-3))
+    assert (0 == pytest.approx(divergence, abs=2e-3))

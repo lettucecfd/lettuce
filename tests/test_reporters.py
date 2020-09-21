@@ -61,9 +61,9 @@ def test_vtk_reporter(tmpdir):
 @pytest.mark.parametrize("Flow", [TaylorGreenVortex2D, TaylorGreenVortex3D, 'DecayingTurbulence2D', 'DecayingTurbulence3D'])
 def test_EnergySpectrumReporter(tmpdir, Flow):
     lattice = Lattice(D2Q9, device='cpu')
-    if Flow == TaylorGreenVortex3D or Flow is 'DecayingTurbulence3D':
+    if Flow == TaylorGreenVortex3D or Flow == 'DecayingTurbulence3D':
         lattice = Lattice(D3Q27, device='cpu')
-    if Flow is 'DecayingTurbulence2D' or Flow is 'DecayingTurbulence3D':
+    if Flow == 'DecayingTurbulence2D' or Flow == 'DecayingTurbulence3D':
         Flow = DecayingTurbulence
     flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)

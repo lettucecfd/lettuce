@@ -26,12 +26,22 @@ class Obstacle2D(object):
 
     Examples
     --------
-    Initialization of flow around a square:
+    Initialization of flow around a cylinder:
+
     >>> from lettuce import Lattice, D2Q9
-    >>> lattice = Lattice(D2Q9)
-    >>> flow = Obstacle2D(100, 50, reynolds_number=100, mach_number=0.1, lattice=lattice, char_length_lu=5)
+    >>> flow = Obstacle2D(
+    >>>     resolution_x=101,
+    >>>     resolution_y=51,
+    >>>     reynolds_number=100,
+    >>>     mach_number=0.1,
+    >>>     lattice=lattice,
+    >>>     char_length_lu=10
+    >>> )
     >>> x, y = flow.grid
-    >>> np.where(x**2+y**2) <= 1.0
+    >>> x = flow.units.convert_length_to_lu(x)
+    >>> y = flow.units.convert_length_to_lu(y)
+    >>> condition = np.sqrt((x-25)**2+(y-25)**2) < 5.0001
+    >>> flow.mask[np.where(condition)] = 1
    """
     def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
@@ -76,15 +86,8 @@ class Obstacle2D(object):
 
 class Obstacle3D(object):
     """Flow class to simulate the flow around an object (mask) in 3D.
-    It consists off one inflow (equilibrium boundary)
-    and one outflow (anti-bounce-back-boundary),
-    leading to a flow in positive x direction.
-
-    Attributes
-    ----------
-    add object mask directly or via "initialize_object" as bool tensor / bool array with true entries forming the object
-    char_length_lu: length of the object in flow direction (positive x)"""
-
+    See documentation for :class:`~Obstacle2D` for details.
+    """
     def __init__(self, resolution_x, resolution_y, resolution_z, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y

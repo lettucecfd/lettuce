@@ -111,7 +111,7 @@ Taylor-Green
     :show-inheritance:
 
 Decaying-Turbulence
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
 .. automodule:: lettuce.flows.decayingturbulence
     :noindex:
     :members:

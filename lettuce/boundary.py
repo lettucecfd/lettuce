@@ -1,8 +1,18 @@
 """
 Boundary Conditions.
 
-Boundary conditions take a mask (a boolean numpy array) and specifies the grid points on which the boundary
+The `__call__` function of a boundary defines its application to the distribution functions.
+
+Boundary conditions can define a mask (a boolean numpy array)
+that specifies the grid points on which the boundary
 condition operates.
+
+Boundary classes can define two functions `make_no_stream_mask` and `make_no_collision_mask`
+that prevent streaming and collisions on the boundary nodes.
+
+The no-stream mask has the same dimensions as the distribution functions (Q, x, y, (z)) .
+The no-collision mask has the same dimensions as the grid (x, y, (z)).
+
 """
 
 import torch
@@ -19,6 +29,10 @@ class BounceBackBoundary:
     def __call__(self, f):
         f = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
         return f
+
+    def make_no_collision_mask(self, f_shape):
+        assert self.mask.shape == f_shape[1:]
+        return self.mask
 
 
 class EquilibriumBoundaryPU:
@@ -58,7 +72,7 @@ class AntiBounceBackOutlet:
         self.lattice = lattice
 
         #select velocities to be bounced (the ones pointing in "direction")
-        self.velocities = np.concatenate(np.argwhere(np.matmul(self.lattice.stencil.e, direction) == 1), axis=0)
+        self.velocities = np.concatenate(np.argwhere(np.matmul(self.lattice.stencil.e, direction) > 1 - 1e-6), axis=0)
 
         # build indices of u and f that determine the side of the domain
         self.index = []
@@ -93,3 +107,14 @@ class AntiBounceBackOutlet:
              - (torch.norm(u_w,dim=0) / self.lattice.cs) ** 2)
         )
         return f
+
+    def make_no_stream_mask(self, f_shape):
+        no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool, device=self.lattice.device)
+        no_stream_mask[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = 1
+        return no_stream_mask
+
+    # not 100% sure about this. it probably makes sense to apply collisions here so that f[0] can adapt to the flow
+    #def make_no_collision_mask(self, f_shape):
+    #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
+    #    no_collision_mask[self.index] = 1
+    #    return no_collision_mask

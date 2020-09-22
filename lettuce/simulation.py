@@ -44,15 +44,20 @@ class Simulation:
 
         self.reporters = []
 
-        # Define a mask, where the collision shall not be applied
+        # Define masks, where the collision or streaming are not applied
         x = flow.grid
-        self.no_collision_mask = np.zeros_like(x[0],dtype=bool)
-        self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask)
+        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0],dtype=bool))
+        no_stream_mask = lattice.convert_to_tensor(np.zeros_like(self.f, dtype=bool))
 
+        # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
         for boundary in self._boundaries:
-            if boundary.__class__.__name__ == "BounceBackBoundary":
-                self.no_collision_mask = boundary.mask | self.no_collision_mask
+            if hasattr(boundary, "make_no_collision_mask"):
+                self.no_collision_mask = self.no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
+            if hasattr(boundary, "make_no_stream_mask"):
+                no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
+        if no_stream_mask.any():
+            self.streaming.no_stream_mask = no_stream_mask
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""

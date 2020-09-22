@@ -44,8 +44,7 @@ class Simulation:
 
         self.reporters = []
 
-        # Define a mask, where the collision or streaming shall not be applied
-        # Define a mask where streaming is not applied
+        # Define masks, where the collision or streaming are not applied
         x = flow.grid
         self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0],dtype=bool))
         no_stream_mask = lattice.convert_to_tensor(np.zeros_like(self.f, dtype=bool))

@@ -99,7 +99,6 @@ class AntiBounceBackOutlet:
             self.w = self.lattice.w[self.velocities]
 
     def __call__(self, f):
-        # overwrite streamed fs with stored fs
         u = self.lattice.u(f)
         u_w = u[[slice(None)] + self.index] + 0.5 * (u[[slice(None)] + self.index] - u[[slice(None)] + self.neighbor])
         f[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = (
@@ -114,7 +113,7 @@ class AntiBounceBackOutlet:
         no_stream_mask[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = 1
         return no_stream_mask
 
-    # not sure about this. it probably makes sense to apply collisions here so that f[0] can adapt to the flow
+    # not 100% sure about this. it probably makes sense to apply collisions here so that f[0] can adapt to the flow
     #def make_no_collision_mask(self, f_shape):
     #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
     #    no_collision_mask[self.index] = 1

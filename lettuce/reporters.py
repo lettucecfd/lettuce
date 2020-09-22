@@ -72,7 +72,6 @@ class ErrorReporter:
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
-            t = self.flow.units.convert_time_to_pu(t)
             pref, uref = self.flow.analytic_solution(self.flow.grid, t=t)
             pref = self.lattice.convert_to_tensor(pref)
             uref = self.lattice.convert_to_tensor(uref)

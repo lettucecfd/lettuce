@@ -1,8 +1,18 @@
 """
 Boundary Conditions.
 
-Boundary conditions take a mask (a boolean numpy array) and specifies the grid points on which the boundary
+The `__call__` function of a boundary defines its application to the distribution functions.
+
+Boundary conditions can define a mask (a boolean numpy array)
+that specifies the grid points on which the boundary
 condition operates.
+
+Boundary classes can define two functions `make_no_stream_mask` and `make_no_collision_mask`
+that prevent streaming and collisions on the boundary nodes.
+
+The no-stream mask has the same dimensions as the distribution functions (Q, x, y, (z)) .
+The no-collision mask has the same dimensions as the grid (x, y, (z)).
+
 """
 
 import torch

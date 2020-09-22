@@ -2,7 +2,12 @@
 Test boundary conditions.
 """
 
-from lettuce import BounceBackBoundary, EquilibriumBoundaryPU, UnitConversion, AntiBounceBackOutlet, D3Q27, D3Q19, D2Q9, D1Q3
+from lettuce import (
+    BounceBackBoundary, EquilibriumBoundaryPU,
+    UnitConversion, AntiBounceBackOutlet, D3Q27, D3Q19, D2Q9, D1Q3, Obstacle2D, Lattice,
+    StandardStreaming, Simulation
+)
+
 
 import pytest
 
@@ -84,3 +89,16 @@ def test_anti_bounce_back_outlet(f_lattice):
     abb_outlet = AntiBounceBackOutlet(lattice, direction)
     f = abb_outlet(f)
     assert f.cpu().numpy() == pytest.approx(f_ref.cpu().numpy())
+
+
+def test_masks(dtype_device):
+    """test if masks are applied from boundary conditions"""
+    dtype, device = dtype_device
+    lattice = Lattice(D2Q9, dtype=dtype, device=device)
+    flow = Obstacle2D(10, 5, 100, 0.1, lattice, 2)
+    flow.mask[1,1] = 1
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow, lattice, None, streaming)
+    assert simulation.streaming.no_stream_mask.any()
+    assert simulation.no_collision_mask.any()
+

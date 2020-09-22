@@ -104,12 +104,11 @@ class GenericStepReporter:
 
     def __call__(self, i, t, f):
         if t % self.interval == 0:
-            if t > self.starting_iteration:
-                entry = [t, self.parameter_function(i,t,f)]
-                if isinstance(self.out, list):
-                    self.out.append(entry)
-                else:
-                    print(*entry, file=self.out)
+            entry = [t, self.parameter_function(i,t,f)]
+            if isinstance(self.out, list):
+                self.out.append(entry)
+            else:
+                print(*entry, file=self.out)
 
     def parameter_function(self,i,t,f):
         return NotImplemented
@@ -166,3 +165,29 @@ class EnstrophyReporter(GenericStepReporter):
                 + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
             )
         return vorticity.item() * dx**self.lattice.D
+
+class SpectrumReporter(GenericStepReporter):
+    """Reports the energy spectrum of the velocity
+    """
+    _parameter_name = 'Energy spectrum'
+
+    def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
+        super().__init__(lattice, flow, interval, starting_iteration, out)
+        self.dx = self.flow.units.convert_length_to_pu(1.0)
+        self.dimensions = self.flow.grid[0].shape
+        frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
+        wavenumbers = torch.stack(torch.meshgrid(*frequencies))
+        wavenorms = torch.norm(wavenumbers, dim=0)
+        self.norm = self.dimensions[0] * np.sqrt(2 * np.pi) / self.dx ** 2 if self.lattice.D == 3 else self.dimensions[0] / self.dx
+        self.wavenumbers = torch.arange(int(torch.max(wavenorms)))
+        self.wavemask = (wavenorms[..., None] > self.wavenumbers - 0.5) & (wavenorms[..., None] <= self.wavenumbers + 0.5)
+
+    def parameter_function(self,i,t,f):
+        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+        uh = (torch.stack([
+            torch.fft(torch.cat((u[i][..., None], torch.zeros(self.dimensions)[..., None]), self.lattice.D),
+                      signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
+        ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
+        ek = ekin[..., None] * self.wavemask
+        ek = ek.sum(torch.arange(self.lattice.D).tolist())
+        return ek

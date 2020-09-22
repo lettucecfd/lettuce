@@ -48,7 +48,9 @@ class Simulation:
         x = flow.grid
         self.no_collision_mask = np.zeros_like(x[0],dtype=bool)
         self.no_collision_mask = lattice.convert_to_tensor(self.no_collision_mask)
-        for boundary in self.flow.boundaries:
+
+        self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
+        for boundary in self._boundaries:
             if boundary.__class__.__name__ == "BounceBackBoundary":
                 self.no_collision_mask = boundary.mask | self.no_collision_mask
 
@@ -62,7 +64,7 @@ class Simulation:
             self.f = self.streaming(self.f)
             #Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
-            for boundary in self.flow.boundaries:
+            for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self._report()
         end = timer()
@@ -73,7 +75,7 @@ class Simulation:
 
     def _report(self):
         for reporter in self.reporters:
-            reporter(self.i, self.i, self.f)
+            reporter(self.i, self.flow.units.convert_time_to_pu(self.i), self.f)
 
     def initialize(self, max_num_steps=500, tol_pressure=0.001):
         """Iterative initialization to get moments consistent with the initial velocity.
@@ -125,10 +127,10 @@ class Simulation:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
-        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho  * S / self.lattice.cs**2
-        Q = torch.einsum('ia,ib->iab',self.lattice.e,self.lattice.e)-torch.eye(self.lattice.D,device=self.lattice.device)*self.lattice.cs**2
-        Pi_1_Q = torch.einsum('ab...,iab->i...', Pi_1, Q)
-        fneq = torch.einsum('i,i...->i...',self.lattice.w,Pi_1_Q)
+        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs**2
+        Q = torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e]) - torch.eye(self.lattice.D, device=self.lattice.device, dtype=self.lattice.dtype)*self.lattice.cs**2
+        Pi_1_Q = self.lattice.einsum('ab,iab->i', [Pi_1, Q])
+        fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 
         feq = self.lattice.equilibrium(rho,u)
         self.f = feq + fneq

@@ -44,7 +44,7 @@ class VTKReporter:
         self.point_dict = dict()
 
     def __call__(self, i, t, f):
-        if t % self.interval == 0:
+        if i % self.interval == 0:
             t = self.flow.units.convert_time_to_pu(t)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
@@ -71,7 +71,7 @@ class ErrorReporter:
             print("#error_u         error_p", file=self.out)
 
     def __call__(self, i, t, f):
-        if t % self.interval == 0:
+        if i % self.interval == 0:
             t = self.flow.units.convert_time_to_pu(t)
             pref, uref = self.flow.analytic_solution(self.flow.grid, t=t)
             pref = self.lattice.convert_to_tensor(pref)
@@ -90,104 +90,25 @@ class ErrorReporter:
                 print(err_u.item(), err_p.item(), file=self.out)
 
 
-class GenericStepReporter:
-    """Abstract base class for reporters that print something every few iterations."""
-    _parameter_name = None
-
-    def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-        self.lattice = lattice
-        self.flow = flow
-        self.starting_iteration = starting_iteration
+class ObservableReporter:
+    """A reporter that prints an observable every few iterations."""
+    def __init__(self, observable, interval=1, out=sys.stdout):
+        self.observable = observable
         self.interval = interval
         self.out = [] if out is None else out
-        print('steps    ', self._parameter_name)
+        self._parameter_name = observable.__class__.__name__
+        print('steps    ', 'time    ', self._parameter_name)
 
     def __call__(self, i, t, f):
-        if t % self.interval == 0:
-            entry = [t, self.parameter_function(i,t,f)]
+        if i % self.interval == 0:
+            observed = self.observable.lattice.convert_to_numpy(self.observable(f))
+            assert len(observed.shape) < 2
+            if len(observed.shape) == 0:
+                observed = [observed.item()]
+            else:
+                observed = observed.tolist()
+            entry = [i, t] + observed
             if isinstance(self.out, list):
                 self.out.append(entry)
             else:
                 print(*entry, file=self.out)
-
-    def parameter_function(self,i,t,f):
-        return NotImplemented
-
-
-class MaxUReporter(GenericStepReporter):
-    """Reports the maximum velocity magnitude in the domain"""
-    _parameter_name = 'Maximum velocity'
-
-    def parameter_function(self,i,t,f):
-        u0 = self.lattice.u(f)[0]
-        u = u0 * u0
-        if self.lattice.D > 1:
-            u1 = self.lattice.u(f)[1]
-            u += u1 * u1
-            if self.lattice.D > 2:
-                u2 = self.lattice.u(f)[2]
-                u += u2 * u2
-        return self.flow.units.convert_velocity_to_pu(torch.max(torch.sqrt(u)).cpu().numpy().item())
-
-
-class EnergyReporter(GenericStepReporter):
-    """Reports the kinetic energy """
-    _parameter_name = 'Kinetic energy'
-
-    def parameter_function(self,i,t,f):
-        dx = self.flow.units.convert_length_to_pu(1.0)
-
-        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
-        kinE *= dx ** self.lattice.D
-        return kinE.item()
-
-
-class EnstrophyReporter(GenericStepReporter):
-    """Reports the integral of the vorticity
-    Notes
-    -----
-    The function only works for periodic domains
-    """
-    _parameter_name = 'Enstrophy'
-
-    def parameter_function(self,i,t,f):
-        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
-        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
-        dx = self.flow.units.convert_length_to_pu(1.0)
-        grad_u0 = torch_gradient(u0, dx=dx, order=6).cpu().numpy()
-        grad_u1 = torch_gradient(u1, dx=dx, order=6).cpu().numpy()
-        vorticity = np.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        if self.lattice.D == 3:
-            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
-            grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
-            vorticity += np.sum(
-                (grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])
-                + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
-            )
-        return vorticity.item() * dx**self.lattice.D
-
-class SpectrumReporter(GenericStepReporter):
-    """Reports the energy spectrum of the velocity
-    """
-    _parameter_name = 'Energy spectrum'
-
-    def __init__(self, lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-        super().__init__(lattice, flow, interval, starting_iteration, out)
-        self.dx = self.flow.units.convert_length_to_pu(1.0)
-        self.dimensions = self.flow.grid[0].shape
-        frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
-        wavenumbers = torch.stack(torch.meshgrid(*frequencies))
-        wavenorms = torch.norm(wavenumbers, dim=0)
-        self.norm = self.dimensions[0] * np.sqrt(2 * np.pi) / self.dx ** 2 if self.lattice.D == 3 else self.dimensions[0] / self.dx
-        self.wavenumbers = torch.arange(int(torch.max(wavenorms)))
-        self.wavemask = (wavenorms[..., None] > self.wavenumbers - 0.5) & (wavenorms[..., None] <= self.wavenumbers + 0.5)
-
-    def parameter_function(self,i,t,f):
-        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
-        uh = (torch.stack([
-            torch.fft(torch.cat((u[i][..., None], torch.zeros(self.dimensions)[..., None]), self.lattice.D),
-                      signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
-        ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
-        ek = ekin[..., None] * self.wavemask
-        ek = ek.sum(torch.arange(self.lattice.D).tolist())
-        return ek

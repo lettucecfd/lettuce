@@ -118,6 +118,13 @@ Decaying-Turbulence
     :undoc-members:
     :show-inheritance:
 
+Obstacle
+^^^^^^^^
+.. automodule:: lettuce.flows.obstacle
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Utility
 -------

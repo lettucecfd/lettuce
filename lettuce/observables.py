@@ -10,6 +10,9 @@ import numpy as np
 from lettuce.util import torch_gradient
 
 
+__all__ = ["MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
+
+
 class MaximumVelocity:
     """Maximum velocitiy"""
     def __init__(self, lattice, flow):

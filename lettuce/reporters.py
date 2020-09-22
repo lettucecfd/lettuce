@@ -91,7 +91,20 @@ class ErrorReporter:
 
 
 class ObservableReporter:
-    """A reporter that prints an observable every few iterations."""
+    """A reporter that prints an observable every few iterations.
+
+    Examples
+    --------
+    Create an Enstrophy reporter.
+
+    >>> from lettuce import TaylorGreenVortex3D, Enstrophy, D3Q27, Lattice
+    >>> lattice = Lattice(D3Q27, device="cpu")
+    >>> flow = TaylorGreenVortex(50, 300, 0.1, lattice)
+    >>> enstrophy = Enstrophy(lattice, flow)
+    >>> reporter = ObservableReporter(enstrophy, interval=10)
+    >>> # simulation = ...
+    >>> # simulation.reporters.append(reporter)
+    """
     def __init__(self, observable, interval=1, out=sys.stdout):
         self.observable = observable
         self.interval = interval
@@ -112,3 +125,26 @@ class ObservableReporter:
                 self.out.append(entry)
             else:
                 print(*entry, file=self.out)
+
+
+# Deprecated classes
+
+class GenericStepReporter:
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError(f"{self.__class__.__name__} is deprecated. Use ObservableReporter instead.")
+
+
+class MaxUReporter(GenericStepReporter):
+    pass
+
+
+class EnergyReporter(GenericStepReporter):
+    pass
+
+
+class EnstrophyReporter(GenericStepReporter):
+    pass
+
+
+class SpectrumReporter(GenericStepReporter):
+    pass

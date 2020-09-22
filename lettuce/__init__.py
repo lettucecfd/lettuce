@@ -23,6 +23,7 @@ from lettuce.boundary import *
 from lettuce.reporters import *
 from lettuce.simulation import *
 from lettuce.force import *
+from lettuce.observables import *
 
 from lettuce.flows import *
 

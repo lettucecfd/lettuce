@@ -47,6 +47,15 @@ Collision
     :show-inheritance:
 
 
+Observables
+-----------
+.. automodule:: lettuce.observables
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Reporters
 ---------
 .. automodule:: lettuce.reporters

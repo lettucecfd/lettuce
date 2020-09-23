@@ -42,18 +42,6 @@ class VTKReporter:
         if not os.path.isdir(directory):
             os.mkdir(directory)
         self.point_dict = dict()
-        if hasattr(self.flow, "mask"):
-            if self.flow.mask is not None:
-                if self.lattice.D == 2:
-                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask[..., None])
-                else:
-                    self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask)
-            vtk.gridToVTK(self.filename_base + "_mask",
-                          np.arange(0, self.point_dict["mask"].shape[0]),
-                          np.arange(0, self.point_dict["mask"].shape[1]),
-                          np.arange(0, self.point_dict["mask"].shape[2]),
-                          pointData=self.point_dict)
-            self.point_dict = dict()
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
@@ -69,6 +57,20 @@ class VTKReporter:
                 for d in range(self.lattice.D):
                     self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ...])
             write_vtk(self.point_dict, i, self.filename_base)
+
+    def output_mask(self, no_collision_mask):
+        """Outputs the no_collision_mask of the simulation object as VTK-file with range [0,1]
+        Usage: vtk_reporter.output_mask(simulation.no_collision_mask)"""
+        point_dict = dict()
+        if self.lattice.D == 2:
+            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask)[..., None].astype(int)
+        else:
+            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask).astype(int)
+        vtk.gridToVTK(self.filename_base + "_mask",
+                        np.arange(0, point_dict["mask"].shape[0]),
+                        np.arange(0, point_dict["mask"].shape[1]),
+                        np.arange(0, point_dict["mask"].shape[2]),
+                        pointData=point_dict)
 
 
 class ErrorReporter:

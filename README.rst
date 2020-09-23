@@ -14,14 +14,13 @@ lettuce
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
    :target: https://doi.org/10.5281/zenodo.3757641
 
+.. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
+
 GPU-accelerated Lattice Boltzmann in Python
 
 * Free software: MIT license
 * Documentation: https://lettuceboltzmann.readthedocs.io
-
-Features
---------
-* Single-GPU performance (2D): 650 MLUPS on V100
 
 
 Getting Started

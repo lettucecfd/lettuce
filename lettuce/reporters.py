@@ -11,6 +11,12 @@ import torch
 import pyevtk.hl as vtk
 
 
+__all__ = [
+    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter",
+    "MaxUReporter", "EnergyReporter", "EnstrophyReporter", "SpectrumReporter"
+]
+
+
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
     fig, ax = plt.subplots()
@@ -45,7 +51,6 @@ class VTKReporter:
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
-            t = self.flow.units.convert_time_to_pu(t)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
             if self.lattice.D == 2:

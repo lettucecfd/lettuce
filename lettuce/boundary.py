@@ -20,6 +20,9 @@ import numpy as np
 from lettuce import (LettuceException)
 
 
+__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU"]
+
+
 class BounceBackBoundary:
     """Fullway Bounce-Back Boundary"""
     def __init__(self, mask, lattice):

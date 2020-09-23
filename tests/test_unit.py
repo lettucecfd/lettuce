@@ -22,7 +22,7 @@ def test_conversion_reversible(lattice):
                            characteristic_length_pu=2*np.pi, characteristic_velocity_pu=2, characteristic_density_pu=0.7)
     assert units.convert_velocity_to_lu(units.convert_velocity_to_pu(2.0)) == pytest.approx(2.0)
     assert units.convert_time_to_lu(units.convert_time_to_pu(2.0)) == pytest.approx(2.0)
-    assert units.convert_coordinates_to_lu(units.convert_coordinates_to_pu(2.0)) == pytest.approx(2.0)
+    assert units.convert_length_to_lu(units.convert_length_to_pu(2.0)) == pytest.approx(2.0)
     assert units.convert_density_to_lu(units.convert_density_to_pu(2.0)) == pytest.approx(2.0)
     assert units.convert_pressure_to_lu(units.convert_pressure_to_pu(2.0)) == pytest.approx(2.0)
     assert units.convert_density_lu_to_pressure_pu(units.convert_pressure_pu_to_density_lu(2.0)) == pytest.approx(2.0)

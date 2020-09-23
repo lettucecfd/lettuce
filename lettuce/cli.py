@@ -15,8 +15,8 @@ import click
 import torch
 import numpy as np
 
-import lettuce
 from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+from lettuce import __version__ as lettuce_version
 
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import flow_by_name
@@ -24,7 +24,7 @@ from lettuce.force import Guo
 
 
 @click.group()
-@click.version_option(version=lettuce.__version__)
+@click.version_option(version=lettuce_version)
 @click.option("--cuda/--no-cuda", default=True, help="Use cuda (default=True).")
 @click.option("-i", "--gpu-id", type=int, default=0, help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision", type=click.Choice(["half", "single", "double"]), default="double",
@@ -119,7 +119,7 @@ def convergence(ctx,init_f_neq):
             simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
-        for i in range(10*resolution):
+        for _ in range(10*resolution):
             simulation.step(1)
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
@@ -136,6 +136,7 @@ def convergence(ctx,init_f_neq):
         sys.exit(1)
     else:
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())  # pragma: no cover

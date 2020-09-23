@@ -116,12 +116,7 @@ class AntiBounceBackOutlet:
         no_stream_mask[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = 1
         return no_stream_mask
 
-    def make_no_stream_ma33sk(self, f_shape):
-        no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool, device=self.lattice.device)
-        print([[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index])
-        no_stream_mask[[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index] = 1
-        return no_stream_mask
-
+    # not 100% sure about this. But collisions seem to stabilize the boundary.
     #def make_no_collision_mask(self, f_shape):
     #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
     #    no_collision_mask[self.index] = 1

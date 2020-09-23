@@ -60,8 +60,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
-    profile = cProfile.Profile()
-    profile.enable()
+    if profile_out:
+        profile = cProfile.Profile()
+        profile.enable()
 
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
@@ -82,8 +83,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
-    profile.disable()
     if profile_out:
+        profile.disable()
         stats = pstats.Stats(profile)
         stats.sort_stats('cumulative')
         stats.print_stats()

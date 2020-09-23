@@ -8,7 +8,7 @@ from lettuce.flows.obstacle import Obstacle2D, Obstacle3D
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
 from lettuce.flows.doublyshear import DoublyPeriodicShear2D
 from lettuce.flows.decayingturbulence import DecayingTurbulence
-from lettuce import D2Q9, D3Q27
+from lettuce.stencils import D2Q9, D3Q27
 
 flow_by_name = {
     "taylor2D": [TaylorGreenVortex2D, D2Q9],

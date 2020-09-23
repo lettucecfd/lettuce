@@ -14,8 +14,8 @@ lettuce
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
    :target: https://doi.org/10.5281/zenodo.3757641
 
-.. image:: https://img.shields.io/lgtm/alerts/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/Olllom/lettuce/alerts
+.. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
+    :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
 
 GPU-accelerated Lattice Boltzmann in Python
 

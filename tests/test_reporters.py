@@ -3,7 +3,7 @@ import pytest
 import os
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, PoiseuilleFlow2D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation, DecayingTurbulence
 from lettuce.reporters import write_vtk, VTKReporter, ObservableReporter #,EnstrophyReporter,EnergyReporter,MaxUReporter,SpectrumReporter
-from lettuce.observables import Enstrophy, EnergySpectrum, MaximumVelocity, IncompressibleKineticEnergy
+from lettuce.observables import Enstrophy, EnergySpectrum, MaximumVelocity, IncompressibleKineticEnergy, Mass
 import numpy as np
 import torch
 
@@ -18,7 +18,7 @@ def test_write_image(tmpdir):
     assert os.path.isfile(tmpdir/"p.png")
 
 
-@pytest.mark.parametrize("Observable", [Enstrophy, EnergySpectrum, MaximumVelocity, IncompressibleKineticEnergy])
+@pytest.mark.parametrize("Observable", [Enstrophy, EnergySpectrum, MaximumVelocity, IncompressibleKineticEnergy, Mass])
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D,TaylorGreenVortex3D])
 def test_generic_reporters(Observable, Case, dtype_device):
     dtype, device = dtype_device

@@ -47,6 +47,15 @@ Collision
     :show-inheritance:
 
 
+Observables
+-----------
+.. automodule:: lettuce.observables
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Reporters
 ---------
 .. automodule:: lettuce.reporters
@@ -110,6 +119,21 @@ Taylor-Green
     :undoc-members:
     :show-inheritance:
 
+Decaying-Turbulence
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: lettuce.flows.decayingturbulence
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Obstacle
+^^^^^^^^
+.. automodule:: lettuce.flows.obstacle
+    :noindex:
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 Utility
 -------

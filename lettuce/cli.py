@@ -60,13 +60,14 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
-    profile = cProfile.Profile()
-    profile.enable()
+    if profile_out:
+        profile = cProfile.Profile()
+        profile.enable()
 
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
-    flow_class = flow_by_name[flow]
+    flow_class, stencil = flow_by_name[flow]
+    lattice = Lattice(stencil, device, dtype)
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     force = Guo(
         lattice,
@@ -81,8 +82,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
-    profile.disable()
     if profile_out:
+        profile.disable()
         stats = pstats.Stats(profile)
         stats.sort_stats('cumulative')
         stats.print_stats()
@@ -95,8 +96,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
 
 
 @main.command()
+@click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
 @click.pass_context
-def convergence(ctx):
+def convergence(ctx,init_f_neq):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
     lattice = Lattice(D2Q9, device, dtype)
@@ -113,6 +115,8 @@ def convergence(ctx):
         collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
         streaming = StandardStreaming(lattice)
         simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        if(init_f_neq):
+            simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
         for i in range(10*resolution):

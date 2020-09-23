@@ -20,7 +20,7 @@ import numpy as np
 from lettuce import (LettuceException)
 
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU"]
+__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
 
 
 class BounceBackBoundary:
@@ -116,8 +116,41 @@ class AntiBounceBackOutlet:
         no_stream_mask[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = 1
         return no_stream_mask
 
-    # not 100% sure about this. it probably makes sense to apply collisions here so that f[0] can adapt to the flow
+    def make_no_stream_ma33sk(self, f_shape):
+        no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool, device=self.lattice.device)
+        print([[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index])
+        no_stream_mask[[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index] = 1
+        return no_stream_mask
+
     #def make_no_collision_mask(self, f_shape):
     #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
     #    no_collision_mask[self.index] = 1
     #    return no_collision_mask
+
+
+class EquilibriumOutletP(AntiBounceBackOutlet):
+    """Equilibrium outlet with constant pressure.
+    """
+    def __init__(self, lattice, direction, rho0=1.0):
+        super(EquilibriumOutletP, self).__init__(lattice, direction)
+        self.rho0 = rho0
+
+    def __call__(self, f):
+        here = [slice(None)] + self.index
+        other = [slice(None)] + self.neighbor
+        rho = self.lattice.rho(f)
+        u = self.lattice.u(f)
+        rho_w = self.rho0 * torch.ones_like(rho[here])
+        u_w = u[other]
+        f[here] = self.lattice.equilibrium(rho_w[...,None], u_w[...,None])[...,0]
+        return f
+
+    def make_no_stream_mask(self, f_shape):
+        no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool, device=self.lattice.device)
+        no_stream_mask[[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index] = 1
+        return no_stream_mask
+
+    def make_no_collision_mask(self, f_shape):
+        no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
+        no_collision_mask[self.index] = 1
+        return no_collision_mask

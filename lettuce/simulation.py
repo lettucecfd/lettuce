@@ -47,7 +47,7 @@ class Simulation:
         # Define masks, where the collision or streaming are not applied
         x = flow.grid
         self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0],dtype=bool))
-        no_stream_mask = torch.zeros_like(self.f, dtype=bool)
+        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
 
         # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
@@ -80,7 +80,7 @@ class Simulation:
 
     def _report(self):
         for reporter in self.reporters:
-            reporter(self.i, self.i, self.f)
+            reporter(self.i, self.flow.units.convert_time_to_pu(self.i), self.f)
 
     def initialize(self, max_num_steps=500, tol_pressure=0.001):
         """Iterative initialization to get moments consistent with the initial velocity.

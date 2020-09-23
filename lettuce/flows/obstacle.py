@@ -78,10 +78,14 @@ class Obstacle2D(object):
     @property
     def boundaries(self):
         x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(x) < 1e-6, self.units.lattice, self.units,
-                                      np.array([self.units.characteristic_velocity_pu, 0])),
-                AntiBounceBackOutlet(self.units.lattice, [1, 0]),
-                BounceBackBoundary(self.mask, self.units.lattice)]
+        return [
+            EquilibriumBoundaryPU(
+                np.abs(x) < 1e-6, self.units.lattice, self.units,
+                np.array([self.units.characteristic_velocity_pu, 0])
+            ),
+            AntiBounceBackOutlet(self.units.lattice, [1, 0]),
+            BounceBackBoundary(self.mask, self.units.lattice)
+        ]
 
 
 class Obstacle3D(object):

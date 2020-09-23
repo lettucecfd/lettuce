@@ -10,7 +10,7 @@ from lettuce.util import LettuceException
 
 __all__ = [
     "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision", "RegularizedCollision",
-    "SmagorinskyCollision", "TRTCollision"
+    "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
 ]
 
 
@@ -68,6 +68,7 @@ class TRTCollision:
                 2.0 * self.tau_minus)
         f = f - f_diff_neq
         return f
+
 
 class RegularizedCollision:
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""

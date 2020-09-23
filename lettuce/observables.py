@@ -90,3 +90,21 @@ class EnergySpectrum(Observable):
         return ek
 
 
+class Mass(Observable):
+    """Total mass in lattice units.
+
+    Parameters
+    ----------
+    no_mass_mask : torch.Tensor
+        Boolean mask that defines grid points
+        which do not count into the total mass (e.g. bounce-back boundaries).
+    """
+    def __init__(self, lattice, flow, no_mass_mask=None):
+        super(Mass, self).__init__(lattice, flow)
+        self.mask = no_mass_mask
+
+    def __call__(self, f):
+        mass = f[...,1:-1,1:-1].sum()
+        if self.mask is not None:
+            mass -= (f*self.mask.to(dtype=torch.float)).sum()
+        return mass

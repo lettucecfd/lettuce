@@ -16,7 +16,7 @@ import torch
 import numpy as np
 
 import lettuce
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, D3Q27
 
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import flow_by_name
@@ -65,8 +65,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
 
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
-    flow_class = flow_by_name[flow]
+    lattice = Lattice(flow_by_name[flow][1], device, dtype)
+    flow_class = flow_by_name[flow][0]
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     force = Guo(
         lattice,

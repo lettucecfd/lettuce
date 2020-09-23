@@ -119,7 +119,7 @@ def convergence(ctx,init_f_neq):
             simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
-        for i in range(10*resolution):
+        for _ in range(10*resolution):
             simulation.step(1)
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u

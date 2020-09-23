@@ -9,6 +9,9 @@ import numpy as np
 import torch
 
 
+__all__ = ["UnitConversion"]
+
+
 class UnitConversion:
     """
     Provides unit conversions between physical units (pu) and lattice units (lu).

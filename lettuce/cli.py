@@ -60,13 +60,14 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
-    profile = cProfile.Profile()
-    profile.enable()
+    if profile_out:
+        profile = cProfile.Profile()
+        profile.enable()
 
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
-    flow_class = flow_by_name[flow]
+    flow_class, stencil = flow_by_name[flow]
+    lattice = Lattice(stencil, device, dtype)
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
     force = Guo(
         lattice,
@@ -81,8 +82,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
     mlups = simulation.step(num_steps=steps)
 
     # write profiling output
-    profile.disable()
     if profile_out:
+        profile.disable()
         stats = pstats.Stats(profile)
         stats.sort_stats('cumulative')
         stats.print_stats()

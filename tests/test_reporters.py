@@ -1,7 +1,7 @@
 
 import pytest
 import os
-from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation
+from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, PoiseuilleFlow2D, Lattice, D3Q27, D2Q9, write_image, BGKCollision, StandardStreaming, Simulation
 from lettuce.reporters import write_vtk, VTKReporter,EnstrophyReporter,EnergyReporter,MaxUReporter
 import numpy as np
 
@@ -43,7 +43,7 @@ def test_write_vtk(tmpdir):
     assert os.path.isfile(tmpdir/"output_00000001.vtr")
 
 
-def test_vtk_reporter(tmpdir):
+def test_vtk_reporter_no_mask(tmpdir):
     lattice = Lattice(D2Q9, "cpu")
     flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
@@ -54,3 +54,16 @@ def test_vtk_reporter(tmpdir):
     simulation.step(2)
     assert os.path.isfile(tmpdir/"output_00000001.vtr")
     assert os.path.isfile(tmpdir/"output_00000002.vtr")
+
+def test_vtk_reporter_mask(tmpdir):
+    lattice = Lattice(D2Q9, "cpu")
+    flow = PoiseuilleFlow2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    vtk_reporter = VTKReporter(lattice, flow, interval=1, filename_base=tmpdir/"output2")
+    simulation.reporters.append(vtk_reporter)
+    simulation.step(2)
+    assert os.path.isfile(tmpdir / "output2_mask.vtr")
+    assert os.path.isfile(tmpdir/"output2_00000001.vtr")
+    assert os.path.isfile(tmpdir/"output2_00000002.vtr")

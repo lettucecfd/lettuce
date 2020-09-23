@@ -49,7 +49,7 @@ class VTKReporter:
                     self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask[..., None])
                 else:
                     self.point_dict["mask"] = self.lattice.convert_to_numpy(flow.mask)
-            vtk.gridToVTK(self.filename_base + "mask",
+            vtk.gridToVTK(self.filename_base + "_mask",
                           np.arange(0, self.point_dict["mask"].shape[0]),
                           np.arange(0, self.point_dict["mask"].shape[1]),
                           np.arange(0, self.point_dict["mask"].shape[2]),

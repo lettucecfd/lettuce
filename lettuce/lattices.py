@@ -16,6 +16,9 @@ from lettuce.util import LettuceException
 from lettuce.equilibrium import QuadraticEquilibrium
 
 
+__all__ = ["Lattice"]
+
+
 class Lattice:
 
     def __init__(self, stencil, device, dtype=torch.float):

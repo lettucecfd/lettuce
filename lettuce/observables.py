@@ -10,26 +10,27 @@ import numpy as np
 from lettuce.util import torch_gradient
 
 
-__all__ = ["MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
+__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
 
 
-class MaximumVelocity:
-    """Maximum velocitiy"""
+class Observable:
     def __init__(self, lattice, flow):
         self.lattice = lattice
         self.flow = flow
 
     def __call__(self, f):
+        raise NotImplementedError
+
+
+class MaximumVelocity(Observable):
+    """Maximum velocitiy"""
+    def __call__(self, f):
         u = self.lattice.u(f)
         return self.flow.units.convert_velocity_to_pu(torch.norm(u, dim=0).max())
 
 
-class IncompressibleKineticEnergy:
+class IncompressibleKineticEnergy(Observable):
     """Total kinetic energy of an incompressible flow."""
-    def __init__(self, lattice, flow):
-        self.lattice = lattice
-        self.flow = flow
-
     def __call__(self, f):
         dx = self.flow.units.convert_length_to_pu(1.0)
         kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
@@ -37,17 +38,13 @@ class IncompressibleKineticEnergy:
         return kinE
 
 
-class Enstrophy:
+class Enstrophy(Observable):
     """The integral of the vorticity
 
     Notes
     -----
     The function only works for periodic domains
     """
-    def __init__(self, lattice, flow):
-        self.lattice = lattice
-        self.flow = flow
-
     def __call__(self, f):
         u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
@@ -65,11 +62,10 @@ class Enstrophy:
         return vorticity * dx**self.lattice.D
 
 
-class EnergySpectrum:
+class EnergySpectrum(Observable):
     """The kinetic energy spectrum"""
     def __init__(self, lattice, flow):
-        self.lattice =lattice
-        self.flow = flow
+        super(EnergySpectrum, self).__init__(lattice, flow)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
         self.dimensions = self.flow.grid[0].shape
         frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
@@ -94,3 +90,21 @@ class EnergySpectrum:
         return ek
 
 
+class Mass(Observable):
+    """Total mass in lattice units.
+
+    Parameters
+    ----------
+    no_mass_mask : torch.Tensor
+        Boolean mask that defines grid points
+        which do not count into the total mass (e.g. bounce-back boundaries).
+    """
+    def __init__(self, lattice, flow, no_mass_mask=None):
+        super(Mass, self).__init__(lattice, flow)
+        self.mask = no_mass_mask
+
+    def __call__(self, f):
+        mass = f[...,1:-1,1:-1].sum()
+        if self.mask is not None:
+            mass -= (f*self.mask.to(dtype=torch.float)).sum()
+        return mass

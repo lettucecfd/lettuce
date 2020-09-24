@@ -1,4 +1,5 @@
 
+import numpy as np
 import pytest
 from lettuce.moments import *
 from lettuce.stencils import *

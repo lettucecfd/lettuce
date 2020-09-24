@@ -1,10 +1,10 @@
 """
 Test functions for collision models and related functions.
 """
+
 from copy import copy
-
 import pytest
-
+import numpy as np
 from lettuce import *
 
 

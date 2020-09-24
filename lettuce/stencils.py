@@ -1,6 +1,9 @@
 import numpy as np
 
 
+__all__ = ["Stencil", "D1Q3", "D2Q9", "D3Q27", "D3Q19"]
+
+
 class Stencil:
 
     @classmethod

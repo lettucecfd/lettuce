@@ -3,18 +3,28 @@
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce
 
+.. .. image:: https://img.shields.io/pypi/v/lettuce.svg
+        :target: https://pypi.python.org/pypi/lettuce
+
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
-    :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+        :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
-   :target: https://doi.org/10.5281/zenodo.3757641
+        :target: https://doi.org/10.5281/zenodo.3757641
+
+.. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
+        :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
+
+
 
 Lettuce is a lattice Boltzmann code in Python that provides high level features:
 
 * GPU-accelerated computation based on PyTorch
 * Rapid Prototyping in 2D and 3D
 * Usage of neuronal networks based on Pytorch with lattice Boltzmann
+
+GPU-accelerated Lattice Boltzmann in Python
 
 
 

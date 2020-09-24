@@ -3,15 +3,15 @@ Fixtures for unit tests.
 """
 import pytest
 
-from lettuce import *
 import numpy as np
 import torch
 
-from lettuce.stencils import Stencil
+from lettuce import (
+    stencils, Stencil, get_subclasses, Transform, Lattice
+)
 
-
-STENCILS = list(get_subclasses(Stencil, lettuce))
-TRANSFORMS = list(get_subclasses(Transform, lettuce))
+STENCILS = list(get_subclasses(Stencil, stencils))
+TRANSFORMS = list(get_subclasses(Transform, stencils))
 
 
 @pytest.fixture(
@@ -51,16 +51,6 @@ def f_lattice(lattice):
     """Run a test for all lattices; return a grid with 3^D sample distribution functions alongside the lattice."""
     np.random.seed(1) # arbitrary, but deterministic
     return lattice.convert_to_tensor(np.random.random([lattice.Q] + [3]*lattice.D)), lattice
-
-
-@pytest.fixture()
-def f_lattice_of_vector(lattice_of_vector):
-    """Run a test for all lattices-of-vector;
-    return a grid with 3^D sample distribution functions alongside the lattice.
-    """
-    np.random.seed(1) # arbitrary, but deterministic
-    return (lattice_of_vector.convert_to_tensor(np.random.random([lattice_of_vector.Q]+[3]*lattice_of_vector.D)), \
-            lattice_of_vector)
 
 
 @pytest.fixture(params=[Lattice])

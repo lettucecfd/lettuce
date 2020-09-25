@@ -17,25 +17,54 @@
         :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
 
 
+GPU-accelerated Lattice Boltzmann Simulations in Python
+-------------------------------------------------------
 
-Lettuce is a lattice Boltzmann code in Python that provides high level features:
+Lettuce is a Computational Fluid Dynamics framework based on the lattice Boltzmann method (LBM).
+
+It provides
 
 * GPU-accelerated computation based on PyTorch
 * Rapid Prototyping in 2D and 3D
-* Usage of neuronal networks based on Pytorch with lattice Boltzmann
-
-GPU-accelerated Lattice Boltzmann in Python
+* Usage of neural networks and automatic differentiation within LBM
 
 
+Getting Started
+---------------
 
-Attritubtes
------------
-* Documentation_
-* Examples_
+The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
+
+.. code:: python
+
+    import torch
+    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
+
+    device = "cuda:0"   # for running on cpu: device = "cpu"
+    dtype = torch.float32
+
+    lattice = Lattice(D2Q9, device, dtype)
+    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    mlups = simulation.step(num_steps=1000)
+
+    print("Performance in MLUPS:", mlups)
 
 
-.. _Documentation: https://lettuceboltzmann.readthedocs.io
-.. _Examples: https://github.com/Olllom/lettuce/tree/master/examples
+More advanced examples_ are available as jupyter notebooks:
+
+* `A First Example`_
+* `Decaying Turbulence`_
+
+.. _examples: examples
+.. _A First Example: examples/A_first_example.ipynb
+.. _Decaying Turbulence: examples/DecayingTurbulence.ipynb
+
+A complete documentation is available here_.
+
+.. _here: https://lettuceboltzmann.readthedocs.io
+
 
 Installation
 ------------
@@ -73,27 +102,6 @@ Installation
 
     lettuce benchmark
 
-A first example
----------------
-
-The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
-
-.. code:: python
-
-    import torch
-    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
-
-    device = "cuda:0"   # for running on cpu: device = "cpu"
-    dtype = torch.float32
-
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    mlups = simulation.step(num_steps=1000)
-
-    print("Performance in MLUPS:", mlups)
 
 Credits
 -------

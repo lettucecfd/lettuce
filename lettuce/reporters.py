@@ -11,6 +11,12 @@ import torch
 import pyevtk.hl as vtk
 
 
+__all__ = [
+    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter",
+    "MaxUReporter", "EnergyReporter", "EnstrophyReporter", "SpectrumReporter"
+]
+
+
 def write_image(filename, array2d):
     from matplotlib import pyplot as plt
     fig, ax = plt.subplots()
@@ -45,7 +51,6 @@ class VTKReporter:
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
-            t = self.flow.units.convert_time_to_pu(t)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
             if self.lattice.D == 2:
@@ -57,6 +62,20 @@ class VTKReporter:
                 for d in range(self.lattice.D):
                     self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ...])
             write_vtk(self.point_dict, i, self.filename_base)
+
+    def output_mask(self, no_collision_mask):
+        """Outputs the no_collision_mask of the simulation object as VTK-file with range [0,1]
+        Usage: vtk_reporter.output_mask(simulation.no_collision_mask)"""
+        point_dict = dict()
+        if self.lattice.D == 2:
+            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask)[..., None].astype(int)
+        else:
+            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask).astype(int)
+        vtk.gridToVTK(self.filename_base + "_mask",
+                        np.arange(0, point_dict["mask"].shape[0]),
+                        np.arange(0, point_dict["mask"].shape[1]),
+                        np.arange(0, point_dict["mask"].shape[2]),
+                        pointData=point_dict)
 
 
 class ErrorReporter:

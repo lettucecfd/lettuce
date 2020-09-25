@@ -6,6 +6,9 @@ import torch
 import numpy as np
 
 
+__all__ = ["StandardStreaming"]
+
+
 class StandardStreaming:
     """Standard Streaming step on a regular grid.
 

@@ -6,9 +6,14 @@ import warnings
 import torch
 import lettuce
 from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses, ExperimentalWarning
-from lettuce.stencils import *
-from lettuce.equilibrium import Equilibrium
+from lettuce.stencils import Stencil, D1Q3, D2Q9
+import numpy as np
 
+
+__all__ = [
+    "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
+    "D2Q9Lallemand", "D2Q9Dellar"
+]
 
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
 

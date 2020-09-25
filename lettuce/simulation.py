@@ -12,6 +12,8 @@ import torch
 import numpy as np
 
 
+__all__ = ["Simulation"]
+
 class Simulation:
     """High-level API for simulations.
 

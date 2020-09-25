@@ -4,8 +4,9 @@ Test boundary conditions.
 
 from lettuce import (
     BounceBackBoundary, EquilibriumBoundaryPU,
-    UnitConversion, AntiBounceBackOutlet, D3Q27, D3Q19, D2Q9, D1Q3, Obstacle2D, Lattice,
-    StandardStreaming, Simulation
+    UnitConversion, AntiBounceBackOutlet, D2Q9, Obstacle2D, Lattice,
+    StandardStreaming, Simulation,  EquilibriumOutletP,
+    RegularizedCollision
 )
 
 
@@ -51,6 +52,7 @@ def test_equilibrium_boundary_pu(f_lattice):
 
     assert f.cpu().numpy() == pytest.approx(feq_field.cpu().numpy())
     #assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy())
+
 
 def test_anti_bounce_back_outlet(f_lattice):
     """Compares the result of the application of the boundary to f to the result using the formula taken from page 195
@@ -102,3 +104,38 @@ def test_masks(dtype_device):
     assert simulation.streaming.no_stream_mask.any()
     assert simulation.no_collision_mask.any()
 
+
+def test_equilibrium_pressure_outlet(dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(D2Q9, dtype=dtype, device=device)
+
+    class MyObstacle(Obstacle2D):
+        @property
+        def boundaries(self, *args):
+            x, y = self.grid
+            return [
+                EquilibriumBoundaryPU(
+                    np.abs(x) < 1e-6, self.units.lattice, self.units,
+                    np.array([self.units.characteristic_velocity_pu, 0])
+                ),
+                EquilibriumOutletP(self.units.lattice, [0, -1]),
+                EquilibriumOutletP(self.units.lattice, [0, 1]),
+                EquilibriumOutletP(self.units.lattice, [1, 0]),
+                BounceBackBoundary(self.mask, self.units.lattice)
+            ]
+
+    flow = MyObstacle(30, 30, reynolds_number=10, mach_number=0.1, lattice=lattice, char_length_lu=10)
+    mask = np.zeros_like(flow.grid[0], dtype=np.bool)
+    mask[10:20, 10:20] = 1
+    flow.mask = mask
+    simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu), StandardStreaming(lattice))
+    simulation.step(20)
+    rho = lattice.rho(simulation.f)
+    u = lattice.u(simulation.f)
+    feq = lattice.equilibrium(torch.ones_like(rho), u)
+    p = flow.units.convert_density_lu_to_pressure_pu(rho)
+    zeros = torch.zeros_like(p[0,-1,:])
+    assert torch.allclose(zeros, p[:, -1, :], rtol=0, atol=1e-4)
+    assert torch.allclose(zeros, p[:, :, 0], rtol=0, atol=1e-4)
+    assert torch.allclose(zeros, p[:, :, -1], rtol=0, atol=1e-4)
+    assert torch.allclose(feq[:,-1,1:-1], feq[:,-2,1:-1])

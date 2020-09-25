@@ -1,4 +1,4 @@
-.. image:: https://cdn.cp.adobe.io/content/2/dcx/315ea3d9-927f-477b-ae7f-039540ec026d/rendition/preview.jpg/version/1/format/jpg/dimension/width/size/1200
+.. image:: https://cdn.cp.adobe.io/content/2/dcx/315ea3d9-927f-477b-ae7f-039540ec026d/rendition/preview.jpg/version/1/format/jpg/dimension/width/size/600
 
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce

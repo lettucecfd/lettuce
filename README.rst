@@ -1,6 +1,5 @@
-=======
-lettuce
-=======
+.. image:: https://cdn.cp.adobe.io/content/2/dcx/315ea3d9-927f-477b-ae7f-039540ec026d/rendition/preview.jpg/version/1/format/jpg/dimension/width/size/600
+
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce
 
@@ -8,23 +7,67 @@ lettuce
         :target: https://pypi.python.org/pypi/lettuce
 
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
-    :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+        :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
 
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
-   :target: https://doi.org/10.5281/zenodo.3757641
+        :target: https://doi.org/10.5281/zenodo.3757641
 
 .. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
-    :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
+        :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
 
-GPU-accelerated Lattice Boltzmann in Python
 
-* Free software: MIT license
-* Documentation: https://lettuceboltzmann.readthedocs.io
+GPU-accelerated Lattice Boltzmann Simulations in Python
+-------------------------------------------------------
+
+Lettuce is a Computational Fluid Dynamics framework based on the lattice Boltzmann method (LBM).
+
+It provides
+
+* GPU-accelerated computation based on PyTorch
+* Rapid Prototyping in 2D and 3D
+* Usage of neural networks and automatic differentiation within LBM
 
 
 Getting Started
 ---------------
+
+The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
+
+.. code:: python
+
+    import torch
+    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
+
+    device = "cuda:0"   # for running on cpu: device = "cpu"
+    dtype = torch.float32
+
+    lattice = Lattice(D2Q9, device, dtype)
+    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    mlups = simulation.step(num_steps=1000)
+
+    print("Performance in MLUPS:", mlups)
+
+
+More advanced examples_ are available as jupyter notebooks:
+
+* `A First Example`_
+* `Decaying Turbulence`_
+
+.. _examples: https://github.com/Olllom/lettuce/tree/master/examples
+.. _A First Example: https://github.com/Olllom/lettuce/tree/master/examples/A_first_example.ipynb
+.. _Decaying Turbulence: https://github.com/Olllom/lettuce/tree/master/examples/DecayingTurbulence.ipynb
+
+A complete documentation is available here_.
+
+.. _here: https://lettuceboltzmann.readthedocs.io
+
+
+Installation
+------------
 
 * Install the anaconda package manager from www.anaconda.org
 * Create a new conda environment and install all dependencies::
@@ -51,69 +94,43 @@ Getting Started
 
     lettuce --no-cuda convergence
 
-
 * For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found,
   make sure that cuda drivers are installed and compatible with the installed cudatoolkit
   (see conda install command above).
 
-* Check out the performance, running on CPU::
+* Check out the performance, running on GPU::
 
     lettuce benchmark
-
-
-A first example
----------------
-
-The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
-
-.. code:: python
-
-    import torch
-    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
-
-    device = "cuda:0"   # for running on cpu: device = "cpu"
-    dtype = torch.float32
-
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    mlups = simulation.step(num_steps=1000)
-
-    print("Performance in MLUPS:", mlups)
-
-
-Next steps
-----------
-* Jonas Latt's approach of storing f_i-w_i instead of f_i, for better numerical accuracy in single/(half) precision;
-  this can be added as a different Lattice class.
-* Standard Streaming and BGK collision as C++ functions, as an example and for testing performance gains
-  https://pytorch.org/tutorials/advanced/cpp_extension.html
-* Multi-block lattices.
-* Semi-Lagrangian streaming step.
-
-
-Future Ideas
-------------
-* Utilize multiple CPUs. Starting point: https://github.com/pytorch/pytorch/issues/9873
-* Utilize MPI to scale across multiple nodes. Starting point: https://pytorch.org/tutorials/intermediate/dist_tuto.html
 
 
 Credits
 -------
 We use the following third-party packages:
 
-* pytorch
-* numpy
-* pytest
-* click
-* matplotlib
-* versioneer
-* pyevtk
+* pytorch_
+* numpy_
+* pytest_
+* click_
+* matplotlib_
+* versioneer_
+* pyevtk_
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+
+.. _pytorch: https://github.com/pytorch/pytorch
+.. _numpy: https://github.com/numpy/numpy
+.. _pytest: https://github.com/pytest-dev/pytest
+.. _click: https://github.com/pallets/click
+.. _matplotlib: https://github.com/matplotlib/matplotlib
+.. _versioneer: https://github.com/python-versioneer/python-versioneer
+.. _pyevtk: https://github.com/pyscience-projects/pyevtk
+
+License
+-----------
+* Free software: MIT license, as found in the LICENSE_ file.
+
+.. _LICENSE: https://github.com/Olllom/lettuce/blob/master/LICENSE

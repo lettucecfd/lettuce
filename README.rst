@@ -73,7 +73,6 @@ Installation
 
     lettuce benchmark
 
-
 A first example
 ---------------
 
@@ -95,7 +94,6 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
     mlups = simulation.step(num_steps=1000)
 
     print("Performance in MLUPS:", mlups)
-
 
 Credits
 -------

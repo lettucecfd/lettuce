@@ -57,9 +57,9 @@ More advanced examples_ are available as jupyter notebooks:
 * `A First Example`_
 * `Decaying Turbulence`_
 
-.. _examples: examples
-.. _A First Example: examples/A_first_example.ipynb
-.. _Decaying Turbulence: examples/DecayingTurbulence.ipynb
+.. _examples: https://github.com/Olllom/lettuce/tree/master/examples
+.. _A First Example: https://github.com/Olllom/lettuce/tree/master/examples/A_first_example.ipynb
+.. _Decaying Turbulence: https://github.com/Olllom/lettuce/tree/master/examples/DecayingTurbulence.ipynb
 
 A complete documentation is available here_.
 

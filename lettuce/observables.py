@@ -79,7 +79,11 @@ class EnergySpectrum(Observable):
         )
 
     def __call__(self, f):
-        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+        u = self.lattice.u(f)
+        return self.spectrum_from_u(u)
+
+    def spectrum_from_u(self, u):
+        u = self.flow.units.convert_velocity_to_pu(u)
         zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
         uh = (torch.stack([
             torch.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),

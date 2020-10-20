@@ -4,7 +4,6 @@ Special Inputs & standard value: shear_layer_width = 80, initial_perturbation_ma
 """
 
 import numpy as np
-import numpy.ma as ma
 from lettuce.unit import UnitConversion
 
 

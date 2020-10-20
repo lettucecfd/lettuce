@@ -24,22 +24,21 @@ class DoublyPeriodicShear2D:
         raise NotImplementedError
 
     def initial_solution(self, x):
-        initial_perturbation_magnitude = self.initial_perturbation_magnitude
-        shear_layer_width = self.shear_layer_width
-
-        ux = np.tanh(shear_layer_width * (x[1] - 0.25))
-        ux[ma.masked_greater(x[1], 0.5).mask] = np.tanh(shear_layer_width * (0.75 - x[1][ma.masked_greater(x[1], 0.5).mask]))
-        uy = np.array(initial_perturbation_magnitude * np.sin(2*np.pi*(x[0] + 0.25)))
-
-        # switching to ij/matrix-indexing -> 1st entry: i = -y (i/line index is going down instead of up like y), 2nd entry: x  = j (column index)
-        u = np.array([-uy, ux])
-        p = np.array([np.zeros(x[0].shape)])
+        pert = self.initial_perturbation_magnitude
+        w = self.shear_layer_width
+        u1 = np.choose(
+            x[1] > 0.5,
+            [np.tanh(w * (x[1] - 0.25)), np.tanh(w * (0.75 - x[1]))]
+        )
+        u2 = pert * np.sin(2 * np.pi * (x[0] + 0.25))
+        u = np.stack([u1, u2], axis=0)
+        p = np.zeros_like(u1[None, ...])
         return p, u
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution, endpoint=False)
-        y = np.linspace(0, 1, num=self.resolution, endpoint=False)
+        x = np.linspace(0., 1., num=self.resolution, endpoint=False)
+        y = np.linspace(0., 1., num=self.resolution, endpoint=False)
         return np.meshgrid(x, y, indexing='ij')
 
 

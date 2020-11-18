@@ -27,7 +27,7 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     but runs about 2% slower on GPU and 11% on CPU
 
     Use this by setting
-    lattice.equilibrium = QuadraticEquilibrium_MemorySaver(lattice)
+    lattice.equilibrium = QuadraticEquilibrium_LessMemory(lattice)
     before starting your simulation
     """
     def __call__(self, rho, u, *args):

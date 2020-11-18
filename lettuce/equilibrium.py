@@ -28,7 +28,7 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
 
     Use this by setting
     lattice.equilibrium = QuadraticEquilibrium_MemorySaver(lattice)
-    before the start fo your simulation
+    before the starting your simulation
     """
     def __call__(self, rho, u, *args):
         return self.lattice.einsum(

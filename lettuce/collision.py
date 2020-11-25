@@ -148,9 +148,8 @@ class KBCCollision2D:
         return s
 
     def __call__(self, f):
-        rho = self.lattice.rho(f)
-        u = self.lattice.u(f)
-        feq = self.lattice.equilibrium(rho, u)
+        # the deletes are not part of the algorithm, they just keep the memory usage lower
+        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
         #k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
@@ -170,14 +169,15 @@ class KBCCollision2D:
         m = self.kbc_moment_transform(feq)
 
         delta_s -= self.compute_s_seq_from_m(f, m)
+        del m
         delta_h = f - feq - delta_s
 
         sum_s = self.lattice.rho(delta_s * delta_h / feq)
         sum_h = self.lattice.rho(delta_h * delta_h / feq)
-
+        del feq
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
-        gamma_stab[gamma_stab<1E-15] = 2.0
-        gamma_stab[torch.isnan(gamma_stab)]=2.0
+        gamma_stab[gamma_stab < 1E-15] = 2.0
+        gamma_stab[torch.isnan(gamma_stab)] = 2.0
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
         return f
 
@@ -240,9 +240,8 @@ class KBCCollision3D:
         return s
 
     def __call__(self, f):
-        rho = self.lattice.rho(f)
-        u = self.lattice.u(f)
-        feq = self.lattice.equilibrium(rho, u)
+        # the deletes are not part of the algorithm, they just keep the memory usage lower
+        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
         #k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
@@ -259,11 +258,12 @@ class KBCCollision3D:
         m = self.kbc_moment_transform(feq)
 
         delta_s -= self.compute_s_seq_from_m(f, m)
+        del m
         delta_h = f - feq - delta_s
 
         sum_s = self.lattice.rho(delta_s * delta_h / feq)
         sum_h = self.lattice.rho(delta_h * delta_h / feq)
-
+        del feq
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
         gamma_stab[gamma_stab<1E-15] = 2.0
         # Detect NaN

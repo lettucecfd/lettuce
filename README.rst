@@ -132,6 +132,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 License
 -----------
+
 * Free software: MIT license, as found in the LICENSE_ file.
 
 .. _LICENSE: https://github.com/Olllom/lettuce/blob/master/LICENSE

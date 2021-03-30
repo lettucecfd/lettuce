@@ -86,7 +86,7 @@ class EnergySpectrum(Observable):
         u = self.flow.units.convert_velocity_to_pu(u)
         zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
         uh = (torch.stack([
-            torch.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),
+            torch.fft.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),
                       signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
         ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
         ek = ekin[..., None] * self.wavemask.to(dtype=self.lattice.dtype)

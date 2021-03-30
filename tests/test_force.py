@@ -7,6 +7,7 @@ from lettuce.flows.poiseuille import PoiseuilleFlow2D
 from lettuce.force import Guo, ShanChen
 
 
+
 @pytest.mark.parametrize("ForceType", [Guo, ShanChen])
 def test_force_guo(ForceType, device):
     dtype = torch.double

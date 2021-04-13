@@ -16,7 +16,7 @@ env:
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
-  - pip install -U tox-travis torch=$TORCH
+  - pip install -U tox-travis torch==$TORCH
   - python setup.py install
 
 # Command to run tests, e.g. python setup.py test

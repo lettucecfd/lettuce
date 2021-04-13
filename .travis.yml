@@ -34,7 +34,7 @@ install:
 # Command to run tests, e.g. python setup.py test
 script:
   # run unit tests
-  - python setup.py test
+  - py.test 
   # run integration tests
   - lettuce --no-cuda convergence
   - lettuce --no-cuda benchmark

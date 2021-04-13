@@ -132,12 +132,3 @@ class Mass(Observable):
         if self.mask is not None:
             mass -= (f*self.mask.to(dtype=torch.float)).sum()
         return mass
-
-
-
-
-
-    uh = (torch.stack([
-            torch.fft.fftn(u[i], dim=tuple(torch.arange(self.lattice.D))) for i in range(self.lattice.D)
-        ])/self.norm)
-    ekin = torch.sum(0.5 * (uh.imag ** 2 + uh.real ** 2), dim=0)

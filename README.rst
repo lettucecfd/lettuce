@@ -1,7 +1,7 @@
-.. image:: https://cdn.cp.adobe.io/content/2/dcx/315ea3d9-927f-477b-ae7f-039540ec026d/rendition/preview.jpg/version/1/format/jpg/dimension/width/size/600
+.. image:: https://github.com/lettucecfd/lettuce/blob/master/.source/img/logo_lettuce_typo.png
 
-.. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
-        :target: https://travis-ci.com/Olllom/lettuce
+.. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
+        :target: https://travis-ci.com/lettucecfd/lettuce
 
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
@@ -13,8 +13,8 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
         :target: https://doi.org/10.5281/zenodo.3757641
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
-        :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
+.. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
+        :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python
@@ -57,9 +57,9 @@ More advanced examples_ are available as jupyter notebooks:
 * `A First Example`_
 * `Decaying Turbulence`_
 
-.. _examples: https://github.com/Olllom/lettuce/tree/master/examples
-.. _A First Example: https://github.com/Olllom/lettuce/tree/master/examples/A_first_example.ipynb
-.. _Decaying Turbulence: https://github.com/Olllom/lettuce/tree/master/examples/DecayingTurbulence.ipynb
+.. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
+.. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
+.. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
 
 A complete documentation is available here_.
 
@@ -73,7 +73,7 @@ Installation
 * Create a new conda environment and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.1" matplotlib pytest click cudatoolkit "pyevtk>=1.1"
+         pytorch matplotlib pytest click cudatoolkit "pyevtk>=1.2"
 
 
 * Activate the conda environment::
@@ -133,4 +133,5 @@ License
 -----------
 * Free software: MIT license, as found in the LICENSE_ file.
 
-.. _LICENSE: https://github.com/Olllom/lettuce/blob/master/LICENSE
+.. _LICENSE: https://github.com/lettucecfd/lettuce/blob/master/LICENSE
+

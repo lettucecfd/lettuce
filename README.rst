@@ -1,7 +1,7 @@
 .. image:: https://github.com/lettucecfd/lettuce/blob/master/.source/img/logo_lettuce_typo.png
 
-.. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
-        :target: https://travis-ci.com/Olllom/lettuce
+.. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
+        :target: https://travis-ci.com/lettucecfd/lettuce
 
 .. .. image:: https://img.shields.io/pypi/v/lettuce.svg
         :target: https://pypi.python.org/pypi/lettuce
@@ -13,8 +13,8 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
         :target: https://doi.org/10.5281/zenodo.3757641
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/Olllom/lettuce.svg?logo=lgtm&logoWidth=18
-        :target: https://lgtm.com/projects/g/Olllom/lettuce/context:python
+.. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
+        :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python

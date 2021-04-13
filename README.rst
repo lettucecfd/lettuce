@@ -1,4 +1,4 @@
-.. image:: https://cdn.cp.adobe.io/content/2/dcx/315ea3d9-927f-477b-ae7f-039540ec026d/rendition/preview.jpg/version/1/format/jpg/dimension/width/size/600
+.. image:: ./.source/img/lettuce_logo.png
 
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce
@@ -57,9 +57,9 @@ More advanced examples_ are available as jupyter notebooks:
 * `A First Example`_
 * `Decaying Turbulence`_
 
-.. _examples: https://github.com/Olllom/lettuce/tree/master/examples
-.. _A First Example: https://github.com/Olllom/lettuce/tree/master/examples/A_first_example.ipynb
-.. _Decaying Turbulence: https://github.com/Olllom/lettuce/tree/master/examples/DecayingTurbulence.ipynb
+.. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
+.. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
+.. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
 
 A complete documentation is available here_.
 
@@ -133,4 +133,5 @@ License
 -----------
 * Free software: MIT license, as found in the LICENSE_ file.
 
-.. _LICENSE: https://github.com/Olllom/lettuce/blob/master/LICENSE
+.. _LICENSE: https://github.com/lettucecfd/lettuce/blob/master/LICENSE
+

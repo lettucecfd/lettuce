@@ -1,4 +1,4 @@
-.. image:: ./.source/img/lettuce_logo.png
+.. image:: ./.source/img/logo_lettuce_typo.png
 
 .. image:: https://travis-ci.com/Olllom/lettuce.svg?branch=master
         :target: https://travis-ci.com/Olllom/lettuce

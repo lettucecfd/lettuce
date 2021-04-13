@@ -94,7 +94,7 @@ class EnergySpectrum(Observable):
         """distinguish between different torch versions"""
         torch_ge_18 = (version.parse(torch.__version__) >= version.parse("1.8.0"))
         if torch_ge_18:
-            return self._ekin_spectrum_ge_18(u)
+            return self._ekin_spectrum_torch_ge_18(u)
         else:
             return self._ekin_spectrum_torch_lt_18(u)
 
@@ -106,7 +106,7 @@ class EnergySpectrum(Observable):
         ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
         return ekin
 
-    def _ekin_spectrum_ge_18(self, u):
+    def _ekin_spectrum_torch_ge_18(self, u):
         uh = (torch.stack([
             torch.fft.fftn(u[i], dim=tuple(torch.arange(self.lattice.D))) for i in range(self.lattice.D)
         ]) / self.norm)

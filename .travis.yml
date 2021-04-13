@@ -12,7 +12,7 @@ env:
   - torch>=1.6,<1.7
   - torch>=1.7,<1.8
   - torch>=1.8,<1.9
-  - torch
+  - torch>=1.8
 
 jobs:
   exclude:
@@ -23,11 +23,13 @@ jobs:
   include:
   - python: 3.9
     env: torch>=1.8,<1.9
+  - python: 3.9
+    env: torch>=1.8
 
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
-  - pip install -U tox-travis "$TORCH"
+  - pip install -U "$TORCH"
   - python setup.py install
 
 # Command to run tests, e.g. python setup.py test

@@ -43,7 +43,7 @@ setup(
     packages=find_packages(include=['lettuce','lettuce.flows']),
     setup_requires=setup_requirements,
     test_suite='tests',
-    url='https://github.com/Olllom/lettuce',
+    url='https://github.com/lettucecfd/lettuce',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     zip_safe=False,

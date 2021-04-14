@@ -1,4 +1,4 @@
-.. image:: https://github.com/lettucecfd/lettuce/blob/master/.source/img/logo_lettuce_typo.png
+.. image:: https://raw.githubusercontent.com/lettucecfd/lettuce/master/.source/img/logo_lettuce_typo.png
 
 .. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
         :target: https://travis-ci.com/lettucecfd/lettuce

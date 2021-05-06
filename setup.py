@@ -12,11 +12,10 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', "torch>=1.1", "numpy", "matplotlib", "pyevtk"]
+requirements = ['Click>=6.0', "torch>=1.2", "numpy", "matplotlib", "pyevtk"]
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = ['pytest-runner', 'pytest']
 
-test_requirements = ['pytest', ]
 
 setup(
     author="Andreas Kraemer",
@@ -44,8 +43,7 @@ setup(
     packages=find_packages(include=['lettuce','lettuce.flows']),
     setup_requires=setup_requirements,
     test_suite='tests',
-    tests_require=test_requirements,
-    url='https://github.com/Olllom/lettuce',
+    url='https://github.com/lettucecfd/lettuce',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     zip_safe=False,

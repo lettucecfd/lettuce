@@ -8,6 +8,7 @@ The `__call__` function takes f as an argument and returns a torch tensor.
 import torch
 import numpy as np
 from lettuce.util import torch_gradient
+from packaging import version
 
 
 __all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
@@ -84,18 +85,33 @@ class EnergySpectrum(Observable):
 
     def spectrum_from_u(self, u):
         u = self.flow.units.convert_velocity_to_pu(u)
-        zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
-        # uh = (torch.stack([
-        #     torch.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),
-        #               signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
-        uh = (torch.stack([
-            torch.fft.fftn(u[i], dim=tuple(torch.arange(self.lattice.D))) for i in range(self.lattice.D)
-        ])/self.norm)
-        # ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
-        ekin = torch.sum(0.5 * (uh.imag**2+uh.real**2),dim=0)
+        ekin = self._ekin_spectrum(u)
         ek = ekin[..., None] * self.wavemask.to(dtype=self.lattice.dtype)
         ek = ek.sum(torch.arange(self.lattice.D).tolist())
         return ek
+
+    def _ekin_spectrum(self, u):
+        """distinguish between different torch versions"""
+        torch_ge_18 = (version.parse(torch.__version__) >= version.parse("1.8.0"))
+        if torch_ge_18:
+            return self._ekin_spectrum_torch_ge_18(u)
+        else:
+            return self._ekin_spectrum_torch_lt_18(u)
+
+    def _ekin_spectrum_torch_lt_18(self, u):
+        zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
+        uh = (torch.stack([
+            torch.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),
+                      signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
+        ekin = torch.sum(0.5 * (uh[...,0]**2 + uh[...,1]**2), dim=0)
+        return ekin
+
+    def _ekin_spectrum_torch_ge_18(self, u):
+        uh = (torch.stack([
+            torch.fft.fftn(u[i], dim=tuple(torch.arange(self.lattice.D))) for i in range(self.lattice.D)
+        ]) / self.norm)
+        ekin = torch.sum(0.5 * (uh.imag ** 2 + uh.real ** 2), dim=0)
+        return ekin
 
 
 class Mass(Observable):

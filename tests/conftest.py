@@ -7,11 +7,11 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments
 )
 
 STENCILS = list(get_subclasses(Stencil, stencils))
-TRANSFORMS = list(get_subclasses(Transform, stencils))
+TRANSFORMS = list(get_subclasses(Transform, moments))
 
 
 @pytest.fixture(

@@ -42,7 +42,7 @@ def test_inverse_transform(f_transform):
     lattice = transform.lattice
     retransformed = lattice.convert_to_numpy(transform.inverse_transform(transform.transform(f)))
     original = lattice.convert_to_numpy(f)
-    assert retransformed == pytest.approx(original, abs=1e-6)
+    assert retransformed == pytest.approx(original, abs=1e-5)
 
 
 def test_getitem(dtype_device):

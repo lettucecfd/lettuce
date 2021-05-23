@@ -110,3 +110,6 @@ ENV/
 
 # data folder
 data/
+
+# pytorch cuda and c++ extensions
+cmake-build-*/

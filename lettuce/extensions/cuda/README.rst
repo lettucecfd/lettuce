@@ -1,1 +1,1 @@
-C++ extensions
+CUDA extensions

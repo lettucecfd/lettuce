@@ -1,6 +1,4 @@
 Makefile
-docs/Makefile
-docs/make.bat
 .idea/
 .github/
 .gitattributes

@@ -11,8 +11,8 @@ import warnings
 import torch
 import numpy as np
 
-
 __all__ = ["Simulation"]
+
 
 class Simulation:
     """High-level API for simulations.
@@ -23,6 +23,7 @@ class Simulation:
         A list of reporters. Their call functions are invoked after every simulation step (and before the first one).
 
     """
+
     def __init__(self, flow, lattice, collision, streaming):
         self.flow = flow
         self.lattice = lattice
@@ -48,7 +49,7 @@ class Simulation:
 
         # Define masks, where the collision or streaming are not applied
         x = flow.grid
-        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0],dtype=bool))
+        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
         no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
 
         # Apply boundaries
@@ -69,13 +70,13 @@ class Simulation:
         for _ in range(num_steps):
             self.i += 1
             self.f = self.streaming(self.f)
-            #Perform the collision routine everywhere, expect where the no_collision_mask is true
+            # Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self._report()
         end = timer()
-        seconds = end-start
+        seconds = end - start
         num_grid_points = self.lattice.rho(self.f).numel()
         mlups = num_steps * num_grid_points / 1e6 / seconds
         return mlups
@@ -100,7 +101,7 @@ class Simulation:
             self.f = streaming(self.f)
             self.f = collision(self.f)
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(self.f))
-            if (torch.max(torch.abs(p-p_old))) < tol_pressure:
+            if (torch.max(torch.abs(p - p_old))) < tol_pressure:
                 break
             p_old = deepcopy(p)
         return i
@@ -134,12 +135,14 @@ class Simulation:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
-        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs**2
-        Q = torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e]) - torch.eye(self.lattice.D, device=self.lattice.device, dtype=self.lattice.dtype)*self.lattice.cs**2
+        Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs ** 2
+        Q = torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e]) - torch.eye(self.lattice.D,
+                                                                                     device=self.lattice.device,
+                                                                                     dtype=self.lattice.dtype) * self.lattice.cs ** 2
         Pi_1_Q = self.lattice.einsum('ab,iab->i', [Pi_1, Q])
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 
-        feq = self.lattice.equilibrium(rho,u)
+        feq = self.lattice.equilibrium(rho, u)
         self.f = feq + fneq
 
     def save_checkpoint(self, filename):
@@ -151,4 +154,3 @@ class Simulation:
         """Load f as np.array using pickle module."""
         with open(filename, "rb") as fp:
             self.f = pickle.load(fp)
-

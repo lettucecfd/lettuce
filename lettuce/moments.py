@@ -9,7 +9,6 @@ from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasse
 from lettuce.stencils import Stencil, D1Q3, D2Q9, D3Q27
 import numpy as np
 
-
 __all__ = [
     "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
     "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
@@ -44,6 +43,7 @@ class Moments:
 class Transform:
     """Base class that defines the signature for all moment (and cumulant) transforms.
     """
+
     def __init__(self, lattice, names=None):
         self.lattice = lattice
         self.names = [f"m{i}" for i in range(lattice.Q)] if names is None else names
@@ -74,14 +74,14 @@ class Transform:
 
 class D1Q3Transform(Transform):
     matrix = np.array([
-        [1,1,1],
-        [0,1,-1],
-        [0,1,1]
+        [1, 1, 1],
+        [0, 1, -1],
+        [0, 1, 1]
     ])
     inverse = np.array([
         [1, 0, -1],
-        [0, 1/2, 1/2],
-        [0, -1/2, 1/2]
+        [0, 1 / 2, 1 / 2],
+        [0, -1 / 2, 1 / 2]
     ])
     names = ["rho", "j", "e"]
     supported_stencils = [D1Q3]
@@ -97,13 +97,12 @@ class D1Q3Transform(Transform):
     def inverse_transform(self, m):
         return self.lattice.mv(self.inverse, m)
 
-    #def equilibrium(self, m):
+    # def equilibrium(self, m):
     #    # TODO
     #    raise NotImplementedError
 
 
 class D2Q9Dellar(Transform):
-
     matrix = np.array(
         [[1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 1, 0, -1, 0, 1, -1, -1, 1],
@@ -148,9 +147,9 @@ class D2Q9Dellar(Transform):
         rho = m[0]
         jx = m[1]
         jy = m[2]
-        Pi_xx = jx*jx/rho*9/2
-        Pi_xy = jx*jy/rho*9
-        Pi_yy = jy*jy/rho*9/2
+        Pi_xx = jx * jx / rho * 9 / 2
+        Pi_xy = jx * jy / rho * 9
+        Pi_yy = jy * jy / rho * 9 / 2
         meq[0] = rho
         meq[1] = jx
         meq[2] = jy
@@ -161,7 +160,6 @@ class D2Q9Dellar(Transform):
 
 
 class D2Q9Lallemand(Transform):
-
     matrix = np.array(
         [[1, 1, 1, 1, 1, 1, 1, 1, 1],
          [0, 1, 0, -1, 0, 1, -1, -1, 1],
@@ -210,16 +208,16 @@ class D2Q9Lallemand(Transform):
         c1 = -2
         alpha2 = -8
         alpha3 = 4
-        gamma1 = 2/3
+        gamma1 = 2 / 3
         gamma2 = 18
-        gamma3 = 2/3
+        gamma3 = 2 / 3
         gamma4 = -18
-        e = 1/4*alpha2*rho+1/6*gamma2*(jx**2 + jy**2)
-        eps = 1/4*alpha3*rho + 1/6*gamma4*(jx**2+jy**2)
-        qx = 1/2*c1*jx
-        qy = 1/2*c1*jy
-        pxx = 1/2*gamma1*(jx**2-jy**2)
-        pxy = 1/2*gamma3*(jx*jy)
+        e = 1 / 4 * alpha2 * rho + 1 / 6 * gamma2 * (jx ** 2 + jy ** 2)
+        eps = 1 / 4 * alpha3 * rho + 1 / 6 * gamma4 * (jx ** 2 + jy ** 2)
+        qx = 1 / 2 * c1 * jx
+        qy = 1 / 2 * c1 * jy
+        pxx = 1 / 2 * gamma1 * (jx ** 2 - jy ** 2)
+        pxy = 1 / 2 * gamma3 * (jx * jy)
         meq[0] = rho
         meq[1] = jx
         meq[2] = jy
@@ -236,6 +234,8 @@ class D2Q9Lallemand(Transform):
 D3Q19 is not implemented, yet. Also, the moments should be ordered so that 1...D+1 correspond to momentum,
 which is no the case for this matrix.
 """
+
+
 # class D3Q19DHumieres(NaturalMomentTransform):
 #     matrix = np.array(
 #         [[1 / 1, 1, 1, 1, 1, 1, 1, 1, 1 / 1, 1, 1, 1, 1, 1, 1, 1, 1 / 1, 1, 1],
@@ -290,7 +290,7 @@ which is no the case for this matrix.
 #
 
 
-#class D3Q27CumulantTransform(Transform):
+# class D3Q27CumulantTransform(Transform):
 #    def __init__(self, lattice):
 #        raise NotImplementedError
 
@@ -431,27 +431,27 @@ class D3Q27Hermite(Transform):
         meq[1] = jx
         meq[2] = jy
         meq[3] = jz
-        meq[4] = jx*jx/rho
-        meq[5] = jx*jy/rho
-        meq[6] = jx*jz/rho
-        meq[7] = jy*jy/rho
-        meq[8] = jy*jz/rho
-        meq[9] = jz*jz/rho
-        meq[10] = jx*jx*jy/rho**2
-        meq[11] = jx*jx*jz/rho**2
-        meq[12] = jx*jy*jy/rho**2
-        meq[13] = jx*jy*jz/rho**2
-        meq[14] = jx*jz*jz/rho**2
-        meq[15] = jy*jy*jz/rho**2
-        meq[16] = jy*jz*jz/rho**2
-        meq[17] = jx*jx*jy*jy/rho**3
-        meq[18] = jx*jx*jy*jz/rho**3
-        meq[19] = jx*jx*jz*jz/rho**3
-        meq[20] = jx*jy*jy*jz/rho**3
-        meq[21] = jx*jy*jz*jz/rho**3
-        meq[22] = jy*jy*jz*jz/rho**3
-        meq[23] = jx*jx*jy*jy*jz/rho**4
-        meq[24] = jx*jx*jy*jz*jz/rho**4
-        meq[25] = jx*jy*jy*jz*jz/rho**4
-        meq[26] = jx*jy*jx*jz*jy*jz/rho**5
+        meq[4] = jx * jx / rho
+        meq[5] = jx * jy / rho
+        meq[6] = jx * jz / rho
+        meq[7] = jy * jy / rho
+        meq[8] = jy * jz / rho
+        meq[9] = jz * jz / rho
+        meq[10] = jx * jx * jy / rho ** 2
+        meq[11] = jx * jx * jz / rho ** 2
+        meq[12] = jx * jy * jy / rho ** 2
+        meq[13] = jx * jy * jz / rho ** 2
+        meq[14] = jx * jz * jz / rho ** 2
+        meq[15] = jy * jy * jz / rho ** 2
+        meq[16] = jy * jz * jz / rho ** 2
+        meq[17] = jx * jx * jy * jy / rho ** 3
+        meq[18] = jx * jx * jy * jz / rho ** 3
+        meq[19] = jx * jx * jz * jz / rho ** 3
+        meq[20] = jx * jy * jy * jz / rho ** 3
+        meq[21] = jx * jy * jz * jz / rho ** 3
+        meq[22] = jy * jy * jz * jz / rho ** 3
+        meq[23] = jx * jx * jy * jy * jz / rho ** 4
+        meq[24] = jx * jx * jy * jz * jz / rho ** 4
+        meq[25] = jx * jy * jy * jz * jz / rho ** 4
+        meq[26] = jx * jy * jx * jz * jy * jz / rho ** 5
         return meq

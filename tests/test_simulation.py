@@ -21,9 +21,9 @@ def test_save_and_load(dtype_device, tmpdir):
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(10)
-    simulation.save_checkpoint(tmpdir/"checkpoint.pic")
+    simulation.save_checkpoint(tmpdir / "checkpoint.pic")
     simulation2 = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    simulation2.load_checkpoint(tmpdir/"checkpoint.pic")
+    simulation2.load_checkpoint(tmpdir / "checkpoint.pic")
     assert lattice.convert_to_numpy(simulation2.f) == pytest.approx(lattice.convert_to_numpy(simulation.f))
 
 
@@ -38,7 +38,7 @@ def test_initialization(dtype_device, use_jacobi):
     # set initial pressure to 0 everywhere
     p, u = flow.initial_solution(flow.grid)
     u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0,...].cpu()))
+    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0, ...].cpu()))
     simulation.f = lattice.equilibrium(rho0, u0)
     if use_jacobi:
         simulation.initialize_pressure(1000, 1e-6)
@@ -88,4 +88,4 @@ def test_initialize_fneq(Case, dtype_device):
         error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
         error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
 
-        assert(error_u < error_u_eq)
+        assert (error_u < error_u_eq)

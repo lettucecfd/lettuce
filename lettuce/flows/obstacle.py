@@ -43,6 +43,7 @@ class Obstacle2D(object):
     >>> condition = np.sqrt((x-25)**2+(y-25)**2) < 5.0001
     >>> flow.mask[np.where(condition)] = 1
    """
+
     def __init__(self, resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
@@ -71,8 +72,10 @@ class Obstacle2D(object):
 
     @property
     def grid(self):
-        x = np.linspace(0, self.resolution_x / self.units.characteristic_length_lu, num=self.resolution_x, endpoint=False)
-        y = np.linspace(0, self.resolution_y / self.units.characteristic_length_lu, num=self.resolution_y, endpoint=False)
+        x = np.linspace(0, self.resolution_x / self.units.characteristic_length_lu, num=self.resolution_x,
+                        endpoint=False)
+        y = np.linspace(0, self.resolution_y / self.units.characteristic_length_lu, num=self.resolution_y,
+                        endpoint=False)
         return np.meshgrid(x, y, indexing='ij')
 
     @property
@@ -92,6 +95,7 @@ class Obstacle3D(object):
     """Flow class to simulate the flow around an object (mask) in 3D.
     See documentation for :class:`~Obstacle2D` for details.
     """
+
     def __init__(self, resolution_x, resolution_y, resolution_z, reynolds_number, mach_number, lattice, char_length_lu):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
@@ -121,9 +125,12 @@ class Obstacle3D(object):
 
     @property
     def grid(self):
-        x = np.linspace(0, self.resolution_x / self.units.characteristic_length_lu, num=self.resolution_x, endpoint=False)
-        y = np.linspace(0, self.resolution_y / self.units.characteristic_length_lu, num=self.resolution_y, endpoint=False)
-        z = np.linspace(0, self.resolution_z / self.units.characteristic_length_lu, num=self.resolution_z, endpoint=False)
+        x = np.linspace(0, self.resolution_x / self.units.characteristic_length_lu, num=self.resolution_x,
+                        endpoint=False)
+        y = np.linspace(0, self.resolution_y / self.units.characteristic_length_lu, num=self.resolution_y,
+                        endpoint=False)
+        z = np.linspace(0, self.resolution_z / self.units.characteristic_length_lu, num=self.resolution_z,
+                        endpoint=False)
         return np.meshgrid(x, y, z, indexing='ij')
 
     @property

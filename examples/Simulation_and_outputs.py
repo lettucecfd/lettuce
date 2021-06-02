@@ -7,7 +7,7 @@ print("start")
 
 # ---------- Set up simulation -------------
 device = torch.device("cuda:0")  # replace with device("cpu"), if no GPU is available
-lattice = lt.Lattice(lt.D3Q27, device=device, dtype=torch.float32) # single precision - float64 for double precision
+lattice = lt.Lattice(lt.D3Q27, device=device, dtype=torch.float32)  # single precision - float64 for double precision
 resolution = 80  # resolution of the lattice, low resolution leads to unstable speeds somewhen after 10 (PU)
 flow = lt.TaylorGreenVortex3D(resolution, 1600, 0.1, lattice)
 
@@ -34,7 +34,7 @@ print("MLUPS: ", simulation.step(int(simulation.flow.units.convert_time_to_lu(10
 # grab output of kinetic energy reporter
 E = np.asarray(kinE_reporter.out)
 # normalize to size of grid, not always necessary
-E[:, 1] = E[:, 1] / (2*np.pi)**3
+E[:, 1] = E[:, 1] / (2 * np.pi) ** 3
 # save kinetic energy values for later use
 np.save("TGV3DoutRes" + str(resolution) + "E", E)
 fig = plt.figure()

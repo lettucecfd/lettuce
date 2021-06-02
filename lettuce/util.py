@@ -5,7 +5,6 @@ Utility functions.
 import inspect
 import torch
 
-
 __all__ = [
     "LettuceException", "LettuceWarning", "InefficientCodeWarning", "ExperimentalWarning",
     "get_subclasses", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson"
@@ -53,9 +52,9 @@ def torch_gradient(f, dx=1, order=2):
     """
     dim = f.ndim
     weights = {
-        2: [-1/2, 1/2, 0, 0, 0, 0],
-        4: [1/12, -2/3, 2/3, -1/12, 0, 0],
-        6: [-1/60, 3/20, -3/4, 3/4, -3/20, 1/60],
+        2: [-1 / 2, 1 / 2, 0, 0, 0, 0],
+        4: [1 / 12, -2 / 3, 2 / 3, -1 / 12, 0, 0],
+        6: [-1 / 60, 3 / 20, -3 / 4, 3 / 4, -3 / 20, 1 / 60],
     }
     weight = weights.get(order)
     if dim == 2:
@@ -84,16 +83,16 @@ def torch_gradient(f, dx=1, order=2):
         }
         shift = stencil.get(order)
     with torch.no_grad():
-        out = torch.cat(dim*[f[None,...]])
+        out = torch.cat(dim * [f[None, ...]])
         for i in range(dim):
             out[i, ...] = (
-                weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
-                weight[1] * f.roll(shifts=shift[i][1], dims=dims) +
-                weight[2] * f.roll(shifts=shift[i][2], dims=dims) +
-                weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
-                weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
-                weight[5] * f.roll(shifts=shift[i][5], dims=dims)
-            ) * torch.tensor(1.0/dx, dtype=f.dtype, device=f.device)
+                                  weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
+                                  weight[1] * f.roll(shifts=shift[i][1], dims=dims) +
+                                  weight[2] * f.roll(shifts=shift[i][2], dims=dims) +
+                                  weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
+                                  weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
+                                  weight[5] * f.roll(shifts=shift[i][5], dims=dims)
+                          ) * torch.tensor(1.0 / dx, dtype=f.dtype, device=f.device)
     return out
 
 
@@ -104,7 +103,7 @@ def grid_fine_to_coarse(lattice, f_fine, tau_fine, tau_coarse):
     if f_fine.shape.__len__() == 4:
         f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2, ::2]))
         f_neq = f_fine[:, ::2, ::2, ::2] - f_eq
-    f_coarse = f_eq + 2 * tau_coarse/tau_fine * f_neq
+    f_coarse = f_eq + 2 * tau_coarse / tau_fine * f_neq
     return f_coarse
 
 
@@ -112,8 +111,8 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
     """Jacobi solver for the Poisson pressure equation"""
 
     ## transform to torch.tensor
-    #p = torch.tensor(p, device=device, dtype=torch.double)
-    #dx = torch.tensor(dx, device=device, dtype=torch.double)
+    # p = torch.tensor(p, device=device, dtype=torch.double)
+    # dx = torch.tensor(dx, device=device, dtype=torch.double)
     error, it = 1, 0
     while error > tol_abs and it < max_num_steps:
         it += 1
@@ -144,7 +143,7 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
                             + p.roll(shifts=-1, dims=2)
                             - 6 * p) / (dx ** 2)
         # Error is defined as the mean value of the residuum
-        error = torch.mean(residuum**2)
+        error = torch.mean(residuum ** 2)
     return p
 
 
@@ -180,7 +179,7 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
         dim = u.shape[0]
         for i in range(dim):
             for j in range(dim):
-                derivative = torch_gradient(torch_gradient(u[i]*u[j], dx)[i], dx)[j]
+                derivative = torch_gradient(torch_gradient(u[i] * u[j], dx)[i], dx)[j]
                 u_mod -= derivative
     # TODO(@MCBs): still not working in 3D
 
@@ -195,4 +194,3 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
     )[None, ...]
 
     return units.convert_pressure_pu_to_density_lu(p_mod)
-

@@ -8,7 +8,8 @@ from lettuce.unit import UnitConversion
 
 
 class DoublyPeriodicShear2D:
-    def __init__(self, resolution, reynolds_number, mach_number, lattice, shear_layer_width=80, initial_perturbation_magnitude=0.05):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice, shear_layer_width=80,
+                 initial_perturbation_magnitude=0.05):
         self.initial_perturbation_magnitude = initial_perturbation_magnitude
         self.shear_layer_width = shear_layer_width
         self.resolution = resolution
@@ -39,7 +40,6 @@ class DoublyPeriodicShear2D:
         x = np.linspace(0., 1., num=self.resolution, endpoint=False)
         y = np.linspace(0., 1., num=self.resolution, endpoint=False)
         return np.meshgrid(x, y, indexing='ij')
-
 
     @property
     def boundaries(self):

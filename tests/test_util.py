@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch
 from lettuce import (
@@ -10,9 +9,9 @@ from lettuce.util import pressure_poisson
 import pytest
 
 
-@pytest.mark.parametrize("order", [2,4,6])
+@pytest.mark.parametrize("order", [2, 4, 6])
 def test_torch_gradient_2d(order):
-    lattice = Lattice(D2Q9, device='cpu',)
+    lattice = Lattice(D2Q9, device='cpu', )
     flow = TaylorGreenVortex2D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)
     grid = flow.grid
     p, u = flow.initial_solution(grid)
@@ -20,14 +19,14 @@ def test_torch_gradient_2d(order):
     u0_grad = torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=order).numpy()
     u0_grad_np = np.array(np.gradient(u[0], dx))
     u0_grad_analytic = np.array([
-        -np.sin(grid[0])*np.sin(grid[1]),
-        np.cos(grid[0])*np.cos(grid[1]),
+        -np.sin(grid[0]) * np.sin(grid[1]),
+        np.cos(grid[0]) * np.cos(grid[1]),
     ])
     assert (u0_grad_analytic == pytest.approx(u0_grad, rel=0.0, abs=1e-3))
-    assert (u0_grad_np[:,2:-2,2:-2] == pytest.approx(u0_grad[:,2:-2,2:-2], rel=0.0, abs=1e-3))
+    assert (u0_grad_np[:, 2:-2, 2:-2] == pytest.approx(u0_grad[:, 2:-2, 2:-2], rel=0.0, abs=1e-3))
 
 
-@pytest.mark.parametrize("order", [2,4,6])
+@pytest.mark.parametrize("order", [2, 4, 6])
 def test_torch_gradient_3d(order):
     lattice = Lattice(D3Q27, device='cpu', )
     flow = TaylorGreenVortex3D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)
@@ -42,7 +41,7 @@ def test_torch_gradient_3d(order):
         np.sin(grid[0]) * (-np.cos(grid[1])) * np.sin(grid[2])
     ])
     assert np.allclose(u0_grad_analytic, u0_grad, rtol=0.0, atol=1e-3)
-    assert np.allclose(u0_grad_np[:,2:-2,2:-2,2:-2], u0_grad[:,2:-2,2:-2,2:-2], rtol=0.0, atol=1e-3)
+    assert np.allclose(u0_grad_np[:, 2:-2, 2:-2, 2:-2], u0_grad[:, 2:-2, 2:-2, 2:-2], rtol=0.0, atol=1e-3)
 
 
 def test_grid_fine_to_coarse_2d():
@@ -50,14 +49,15 @@ def test_grid_fine_to_coarse_2d():
     # streaming = StandardStreaming(lattice)
 
     flow_f = TaylorGreenVortex2D(40, 1600, 0.15, lattice)
-    collision_f = BGKCollision(lattice,tau=flow_f.units.relaxation_parameter_lu)
+    collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
     sim_f = Simulation(flow_f, lattice, collision_f, streaming=None)
 
-    flow_c = TaylorGreenVortex2D(20, 1600, 0.15,lattice)
+    flow_c = TaylorGreenVortex2D(20, 1600, 0.15, lattice)
     collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
     sim_c = Simulation(flow_c, lattice, collision_c, streaming=None)
 
-    f_c = grid_fine_to_coarse(lattice,sim_f.f,flow_f.units.relaxation_parameter_lu,flow_c.units.relaxation_parameter_lu)
+    f_c = grid_fine_to_coarse(lattice, sim_f.f, flow_f.units.relaxation_parameter_lu,
+                              flow_c.units.relaxation_parameter_lu)
 
     p_init, u_init = flow_c.initial_solution(flow_c.grid)
     rho_init = lattice.convert_to_tensor(flow_c.units.convert_pressure_pu_to_density_lu(p_init))
@@ -113,5 +113,5 @@ def test_pressure_poisson(dtype_device, Stencil):
     rho = pressure_poisson(flow.units, u, torch.ones_like(rho0))
     pfinal = flow.units.convert_density_lu_to_pressure_pu(rho).cpu().numpy()
     print(p0.max(), p0.min(), p0.mean(), pfinal.max(), pfinal.min(), pfinal.mean())
-    print((p0-pfinal).max(), (p0-pfinal).min())
+    print((p0 - pfinal).max(), (p0 - pfinal).min())
     assert p0 == pytest.approx(pfinal, rel=0.0, abs=0.05)

@@ -13,14 +13,15 @@ class TaylorGreenVortex2D:
         self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=2*np.pi,
+            characteristic_length_lu=resolution, characteristic_length_pu=2 * np.pi,
             characteristic_velocity_pu=1
         )
 
     def analytic_solution(self, x, t=0):
         nu = self.units.viscosity_pu
-        u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2*nu*t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2*nu*t)])
-        p = -np.array([0.25 * (np.cos(2*x[0]) + np.cos(2*x[1])) * np.exp(-4 * nu * t)])
+        u = np.array(
+            [np.cos(x[0]) * np.sin(x[1]) * np.exp(-2 * nu * t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2 * nu * t)])
+        p = -np.array([0.25 * (np.cos(2 * x[0]) + np.cos(2 * x[1])) * np.exp(-4 * nu * t)])
         return p, u
 
     def initial_solution(self, x):
@@ -43,7 +44,7 @@ class TaylorGreenVortex3D:
         self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution/(2*np.pi), characteristic_length_pu=1,
+            characteristic_length_lu=resolution / (2 * np.pi), characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 

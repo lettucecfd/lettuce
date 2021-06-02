@@ -1,4 +1,3 @@
-
 import numpy as np
 import pytest
 from lettuce.moments import *
@@ -7,34 +6,34 @@ from lettuce.lattices import Lattice
 
 
 def test_moments_density_array(stencil):
-    rho_tensor = moment_tensor(stencil.e, np.array([0]*stencil.D()))
+    rho_tensor = moment_tensor(stencil.e, np.array([0] * stencil.D()))
     assert rho_tensor == pytest.approx(np.ones((stencil.Q())))
 
 
 def test_more_moments_density_array(stencil):
-    rho_tensor = moment_tensor(stencil.e, np.array([[0]*stencil.D()]))
-    assert rho_tensor == pytest.approx(np.ones((1,stencil.Q())))
+    rho_tensor = moment_tensor(stencil.e, np.array([[0] * stencil.D()]))
+    assert rho_tensor == pytest.approx(np.ones((1, stencil.Q())))
 
 
 def test_moments_density_tensor(lattice):
-    rho_tensor = moment_tensor(lattice.e, lattice.convert_to_tensor(([0]*lattice.D)))
+    rho_tensor = moment_tensor(lattice.e, lattice.convert_to_tensor(([0] * lattice.D)))
     assert rho_tensor.shape == (lattice.Q,)
     assert rho_tensor.cpu().numpy() == pytest.approx(np.ones((lattice.Q)))
 
 
 def test_more_moments_density_tensor(lattice):
-    rho_tensor = moment_tensor(lattice.e, lattice.convert_to_tensor(([[0]*lattice.D])))
-    assert rho_tensor.shape == (1,lattice.Q)
-    assert rho_tensor.cpu().numpy() == pytest.approx(np.ones((1,lattice.Q)))
+    rho_tensor = moment_tensor(lattice.e, lattice.convert_to_tensor(([[0] * lattice.D])))
+    assert rho_tensor.shape == (1, lattice.Q)
+    assert rho_tensor.cpu().numpy() == pytest.approx(np.ones((1, lattice.Q)))
 
 
 @pytest.mark.parametrize("MomentSet", (D2Q9Dellar, D2Q9Lallemand))
 def test_conserved_moments_d2q9(MomentSet):
     multiindices = np.array([
-        [0, 0], [1,0], [0,1]
+        [0, 0], [1, 0], [0, 1]
     ])
     m = moment_tensor(D2Q9.e, multiindices)
-    assert m == pytest.approx(MomentSet.matrix[:3,:])
+    assert m == pytest.approx(MomentSet.matrix[:3, :])
 
 
 def test_inverse_transform(f_transform):
@@ -48,7 +47,7 @@ def test_inverse_transform(f_transform):
 def test_getitem(dtype_device):
     dtype, device = dtype_device
     moments = D2Q9Lallemand(Lattice(D2Q9, device, dtype))
-    assert moments["jx", "jy"] == [1,2]
+    assert moments["jx", "jy"] == [1, 2]
     assert moments["rho"] == [0]
 
 
@@ -88,7 +87,7 @@ def test_moment_equilibrium_D3Q27Hermite(dtype_device):
 
 
 @pytest.mark.parametrize("MomentSet", (D2Q9Dellar, D2Q9Lallemand, D3Q27Hermite))
-def test_orthogonality(dtype_device,MomentSet):
+def test_orthogonality(dtype_device, MomentSet):
     dtype, device = dtype_device
     lattice = Lattice(MomentSet.supported_stencils[0], device, dtype)
     moments = MomentSet(lattice)
@@ -97,4 +96,4 @@ def test_orthogonality(dtype_device,MomentSet):
         Md = np.round(M @ M.T, 4)
     else:
         Md = np.round(M @ np.diag(lattice.stencil.w) @ M.T, 4)
-    assert np.where(np.diag(np.ones(lattice.stencil.Q())),Md!=0.0,Md==0.0).all()
+    assert np.where(np.diag(np.ones(lattice.stencil.Q())), Md != 0.0, Md == 0.0).all()

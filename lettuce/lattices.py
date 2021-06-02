@@ -15,7 +15,6 @@ import torch
 from lettuce.util import LettuceException
 from lettuce.equilibrium import QuadraticEquilibrium
 
-
 __all__ = ["Lattice"]
 
 
@@ -44,7 +43,8 @@ class Lattice:
     def convert_to_tensor(self, array):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if isinstance(array, np.ndarray) and array.dtype in [np.bool, np.uint8] or isinstance(array, torch.BoolTensor):
+            if isinstance(array, np.ndarray) and array.dtype in [np.bool, np.uint8] or isinstance(array,
+                                                                                                  torch.BoolTensor):
                 return torch.tensor(array, device=self.device, dtype=torch.bool)
             else:
                 return torch.tensor(array, device=self.device, dtype=self.dtype)
@@ -55,7 +55,7 @@ class Lattice:
 
     def rho(self, f):
         """density"""
-        return torch.sum(f, dim=0)[None,...]
+        return torch.sum(f, dim=0)[None, ...]
 
     def j(self, f):
         """momentum"""
@@ -67,22 +67,22 @@ class Lattice:
 
     def incompressible_energy(self, f):
         """incompressible kinetic energy"""
-        return 0.5*self.einsum("d,d->", [self.u(f), self.u(f)])
+        return 0.5 * self.einsum("d,d->", [self.u(f), self.u(f)])
 
     def entropy(self, f):
         """entropy according to the H-theorem"""
-        f_log = -torch.log(self.einsum("q,q->q",[f,1/self.w]))
-        return self.einsum("q,q->", [f,f_log])
+        f_log = -torch.log(self.einsum("q,q->q", [f, 1 / self.w]))
+        return self.einsum("q,q->", [f, f_log])
 
-    def pseudo_entropy_global(self,f):
+    def pseudo_entropy_global(self, f):
         """pseudo_entropy derived by a Taylor expansion around the weights"""
         f_w = self.einsum("q,q->q", [f, 1 / self.w])
-        return self.rho(f) - self.einsum("q,q->", [f,f_w])
+        return self.rho(f) - self.einsum("q,q->", [f, f_w])
 
-    def pseudo_entropy_local(self,f):
+    def pseudo_entropy_local(self, f):
         """pseudo_entropy derived by a Taylor expansion around the local equilibrium"""
-        f_feq = f/self.equilibrium(self.rho(f),self.u(f))
-        return self.rho(f) - self.einsum("q,q->", [f,f_feq])
+        f_feq = f / self.equilibrium(self.rho(f), self.u(f))
+        return self.rho(f) - self.einsum("q,q->", [f, f_feq])
 
     def shear_tensor(self, f):
         """computes the shear tensor of a given f in the sense Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
@@ -92,13 +92,13 @@ class Lattice:
 
     def mv(self, m, v):
         """matrix-vector multiplication"""
-        return self.einsum("ij,j->i", [m,v])
+        return self.einsum("ij,j->i", [m, v])
 
     def einsum(self, equation, fields, **kwargs):
         """Einstein summation on local fields."""
         input, output = equation.split("->")
         inputs = input.split(",")
-        for i,inp in enumerate(inputs):
+        for i, inp in enumerate(inputs):
             if len(inp) == len(fields[i].shape):
                 pass
             elif len(inp) == len(fields[i].shape) - self.D:
@@ -109,4 +109,3 @@ class Lattice:
                 raise LettuceException("Bad dimension.")
         equation = ",".join(inputs) + "->" + output
         return torch.einsum(equation, fields, **kwargs)
-

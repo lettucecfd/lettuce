@@ -6,6 +6,7 @@ __author__ = """Andreas Kraemer"""
 __email__ = 'kraemer.research@gmail.com'
 
 from ._version import get_versions
+
 __version__ = get_versions()['version']
 del get_versions
 
@@ -26,5 +27,3 @@ from lettuce.force import *
 from lettuce.observables import *
 
 from lettuce.flows import *
-
-

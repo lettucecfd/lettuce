@@ -62,51 +62,60 @@ def test_anti_bounce_back_outlet(f_lattice):
     u = lattice.u(f)
     D = lattice.stencil.D()
     Q = lattice.stencil.Q()
+
     if D == 3:
         direction = [1, 0, 0]
+
         if Q == 27:
             u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
-            for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
-                tmp = (2 + torch.einsum('c, cyz -> yz',
-                                        torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype), u_w) ** 2
-                       / lattice.stencil.cs ** 4 - (torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+            u_w_norm = torch.norm(u_w, dim=0)
 
-                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[
-                    i] * lattice.rho(f)[0, -1, :, :] * tmp
+            for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
+                stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + (
+                        lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :]
+                        * (2 + torch.einsum('c, cyz -> yz', stencil_e_tensor, u_w) ** 2
+                           / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
 
         if Q == 19:
             u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
+            u_w_norm = torch.norm(u_w, dim=0)
+
             for i in [1, 11, 13, 15, 17]:
-                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + lattice.stencil.w[
-                    i] * lattice.rho(f)[0, -1, :, :] * \
-                                                               (2 + torch.einsum('c, cyz -> yz',
-                                                                                 torch.tensor(lattice.stencil.e[i],
-                                                                                              device=f.device,
-                                                                                              dtype=f.dtype),
-                                                                                 u_w) ** 2 / lattice.stencil.cs ** 4 - (
-                                                                        torch.norm(u_w,
-                                                                                   dim=0) / lattice.stencil.cs) ** 2)
+                stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + (
+                        lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :]
+                        * (2 + torch.einsum('c, cyz -> yz', stencil_e_tensor, u_w) ** 2
+                           / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+
     if D == 2 and Q == 9:
         direction = [1, 0]
         u_w = u[:, -1, :] + 0.5 * (u[:, -1, :] - u[:, -2, :])
+        u_w_norm = torch.norm(u_w, dim=0)
+
         for i in [1, 5, 8]:
-            f_ref[lattice.stencil.opposite[i], -1, :] = - f_ref[i, -1, :] + lattice.stencil.w[i] * lattice.rho(f)[0, -1,
-                                                                                                   :] * \
-                                                        (2 + torch.einsum('c, cy -> y',
-                                                                          torch.tensor((lattice.stencil.e[i]),
-                                                                                       device=f.device, dtype=f.dtype),
-                                                                          u_w) ** 2 / lattice.stencil.cs ** 4 - (
-                                                                 torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+            stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+
+            f_ref[lattice.stencil.opposite[i], -1, :] = - f_ref[i, -1, :] + (
+                    lattice.stencil.w[i] * lattice.rho(f)[0, -1, :]
+                    * (2 + torch.einsum('c, cy -> y', stencil_e_tensor, u_w) ** 2
+                       / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+
     if D == 1 and Q == 3:
         direction = [1]
         u_w = u[:, -1] + 0.5 * (u[:, -1] - u[:, -2])
+        u_w_norm = torch.norm(u_w, dim=0)
+
         for i in [1]:
-            f_ref[lattice.stencil.opposite[i], -1] = - f_ref[i, -1] + lattice.stencil.w[i] * lattice.rho(f)[0, -1] * \
-                                                     (2 + torch.einsum('c, x -> x', (
-                                                         torch.tensor((lattice.stencil.e[i]), device=f.device,
-                                                                      dtype=f.dtype),
-                                                         u_w)) ** 2 / lattice.stencil.cs ** 4 - (
-                                                              torch.norm(u_w, dim=0) / lattice.stencil.cs) ** 2)
+            stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+
+            f_ref[lattice.stencil.opposite[i], -1] = - f_ref[i, -1] + (
+                    lattice.stencil.w[i] * lattice.rho(f)[0, -1]
+                    * (2 + torch.einsum('c, x -> x', stencil_e_tensor, u_w) ** 2
+                       / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+
     # generates value from actual boundary implementation
     abb_outlet = AntiBounceBackOutlet(lattice, direction)
     f = abb_outlet(f)

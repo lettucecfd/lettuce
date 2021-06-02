@@ -43,8 +43,8 @@ class Lattice:
     def convert_to_tensor(self, array):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if isinstance(array, np.ndarray) and array.dtype in [np.bool, np.uint8] or isinstance(array,
-                                                                                                  torch.BoolTensor):
+            if isinstance(array, np.ndarray)\
+                    and array.dtype in [np.bool, np.uint8] or isinstance(array, torch.BoolTensor):
                 return torch.tensor(array, device=self.device, dtype=torch.bool)
             else:
                 return torch.tensor(array, device=self.device, dtype=self.dtype)

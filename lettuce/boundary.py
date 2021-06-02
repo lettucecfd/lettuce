@@ -69,11 +69,20 @@ class AntiBounceBackOutlet:
         """
 
     def __init__(self, lattice, direction):
-        assert (isinstance(direction, list) and len(direction) in [1, 2, 3] and (
-                (np.abs(sum(direction)) == 1) and (np.max(np.abs(direction)) == 1) and (1 in direction) ^ (
-                -1 in direction))), \
-            LettuceException("Wrong direction. Expected list of length 1, 2 or 3 with all entrys 0 except one 1 or -1, "
-                             f"but got {type(direction)} of size {len(direction)} and entrys {direction}.")
+
+        assert isinstance(direction, list), \
+            LettuceException(
+                f"Invalid direction parameter. Expected direction of type list but got {type(direction)}.")
+
+        assert len(direction) in [1, 2, 3], \
+            LettuceException(
+                f"Invalid direction parameter. Expected direction of of length 1, 2 or 3 but got {len(direction)}.")
+
+        assert (direction.count(0) == (len(direction) - 1)) and ((1 in direction) ^ (-1 in direction)), \
+            LettuceException(
+                "Invalid direction parameter. "
+                f"Expected direction with all entries 0 except one 1 or -1 but got {direction}.")
+
         direction = np.array(direction)
         self.lattice = lattice
 

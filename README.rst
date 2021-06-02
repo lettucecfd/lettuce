@@ -3,8 +3,8 @@
 .. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
         :target: https://travis-ci.com/lettucecfd/lettuce
 
-.. .. image:: https://img.shields.io/pypi/v/lettuce.svg
-:target: https://pypi.python.org/pypi/lettuce
+.. image:: https://img.shields.io/pypi/v/lettuce.svg
+        :target: https://pypi.python.org/pypi/lettuce
 
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
         :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest

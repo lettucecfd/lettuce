@@ -74,8 +74,12 @@ class EnergySpectrum(Observable):
         frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
         wavenumbers = torch.stack(torch.meshgrid(*frequencies))
         wavenorms = torch.norm(wavenumbers, dim=0)
-        self.norm = self.dimensions[0] * np.sqrt(2 * np.pi) / self.dx ** 2 if self.lattice.D == 3 else self.dimensions[
-                                                                                                           0] / self.dx
+
+        if self.lattice.D == 3:
+            self.norm = self.dimensions[0] * np.sqrt(2 * np.pi) / self.dx ** 2
+        else:
+            self.norm = self.dimensions[0] / self.dx
+
         self.wavenumbers = torch.arange(int(torch.max(wavenorms)))
         self.wavemask = (
                 (wavenorms[..., None] > self.wavenumbers.to(dtype=lattice.dtype, device=lattice.device) - 0.5) &

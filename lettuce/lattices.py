@@ -41,10 +41,15 @@ class Lattice:
         return self.stencil.e.shape[0]
 
     def convert_to_tensor(self, array):
+
+        def is_bool_array(it):
+            return (isinstance(it, torch.BoolTensor) or
+                    (isinstance(it, np.ndarray) and it.dtype in [np.bool, np.uint8]))
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if isinstance(array, np.ndarray)\
-                    and array.dtype in [np.bool, np.uint8] or isinstance(array, torch.BoolTensor):
+
+            if is_bool_array(array):
                 return torch.tensor(array, device=self.device, dtype=torch.bool)
             else:
                 return torch.tensor(array, device=self.device, dtype=self.dtype)

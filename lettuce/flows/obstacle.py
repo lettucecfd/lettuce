@@ -73,7 +73,7 @@ class Obstacle2D(object):
     @property
     def grid(self):
         stop_x = self.resolution_x / self.units.characteristic_length_lu
-        stop_y = self.resolution_x / self.units.characteristic_length_lu
+        stop_y = self.resolution_y / self.units.characteristic_length_lu
 
         x = np.linspace(0, stop_x, num=self.resolution_x, endpoint=False)
         y = np.linspace(0, stop_y, num=self.resolution_y, endpoint=False)
@@ -102,12 +102,15 @@ class Obstacle3D(object):
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.resolution_z = resolution_z
-        self.units = UnitConversion(lattice,
-                                    reynolds_number=reynolds_number,
-                                    mach_number=mach_number,
-                                    characteristic_length_lu=char_length_lu,
-                                    characteristic_length_pu=1,
-                                    characteristic_velocity_pu=1)
+
+        self.units = UnitConversion(
+            lattice,
+            reynolds_number=reynolds_number,
+            mach_number=mach_number,
+            characteristic_length_lu=char_length_lu,
+            characteristic_length_pu=1,
+            characteristic_velocity_pu=1)
+
         self._mask = np.zeros(shape=(self.resolution_x, self.resolution_y, self.resolution_z), dtype=np.bool)
 
     @property
@@ -128,7 +131,7 @@ class Obstacle3D(object):
     @property
     def grid(self):
         stop_x = self.resolution_x / self.units.characteristic_length_lu
-        stop_y = self.resolution_x / self.units.characteristic_length_lu
+        stop_y = self.resolution_y / self.units.characteristic_length_lu
         stop_z = self.resolution_z / self.units.characteristic_length_lu
 
         x = np.linspace(0, stop_x, num=self.resolution_x, endpoint=False)

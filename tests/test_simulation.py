@@ -88,4 +88,4 @@ def test_initialize_fneq(Case, dtype_device):
         error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
         error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
 
-        assert (error_u < error_u_eq)
+        assert error_u < error_u_eq

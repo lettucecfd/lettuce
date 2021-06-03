@@ -105,8 +105,7 @@ class KBCCollision2D:
 
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 9, \
-            LettuceException("KBC2D only realized for D2Q9")
+        assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -184,8 +183,7 @@ class KBCCollision3D:
 
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 27, \
-            LettuceException("KBC only realized for D3Q27")
+        assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 

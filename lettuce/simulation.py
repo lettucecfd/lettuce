@@ -136,8 +136,8 @@ class Simulation:
             S = torch.cat([S, grad_u2])
 
         Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs ** 2
-        Q = torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e]) \
-            - torch.eye(self.lattice.D, device=self.lattice.device, dtype=self.lattice.dtype) * self.lattice.cs ** 2
+        Q = (torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e])
+             - torch.eye(self.lattice.D, device=self.lattice.device, dtype=self.lattice.dtype) * self.lattice.cs ** 2)
         Pi_1_Q = self.lattice.einsum('ab,iab->i', [Pi_1, Q])
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 

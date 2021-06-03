@@ -5,7 +5,6 @@ Streaming Step
 import torch
 import numpy as np
 
-
 __all__ = ["StandardStreaming"]
 
 
@@ -18,6 +17,7 @@ class StandardStreaming:
         Boolean mask with the same shape as the distribution function f.
         If None, stream all (also around all boundaries).
     """
+
     def __init__(self, lattice):
         self.lattice = lattice
         self._no_stream_mask = None
@@ -47,5 +47,6 @@ class SLStreaming:
     """
     TODO (is there a good python package for octrees or do we have to write this ourselves?)
     """
+
     def __init__(self, lattice, grid):
         raise NotImplementedError

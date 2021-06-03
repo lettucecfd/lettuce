@@ -7,7 +7,6 @@ import torch
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.util import LettuceException
 
-
 __all__ = [
     "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision", "RegularizedCollision",
     "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
@@ -26,7 +25,7 @@ class BGKCollision:
         u = self.lattice.u(f) + u_eq
         feq = self.lattice.equilibrium(rho, u)
         Si = 0 if self.force is None else self.force.source_term(u)
-        return f - 1.0 / self.tau * (f-feq) + Si
+        return f - 1.0 / self.tau * (f - feq) + Si
 
 
 class MRTCollision:
@@ -72,6 +71,7 @@ class TRTCollision:
 
 class RegularizedCollision:
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
+
     def __init__(self, lattice, tau):
         self.lattice = lattice
         self.tau = tau
@@ -81,18 +81,18 @@ class RegularizedCollision:
             for b in range(lattice.D):
                 for c in range(lattice.D):
                     self.Q_matrix[a, b, c] = lattice.e[a, b] * lattice.e[a, c]
-                    if b==c:
+                    if b == c:
                         self.Q_matrix[a, b, c] -= lattice.cs * lattice.cs
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
-        pi_neq = self.lattice.shear_tensor(f-feq)
-        cs4 = self.lattice.cs**4
+        pi_neq = self.lattice.shear_tensor(f - feq)
+        cs4 = self.lattice.cs ** 4
 
         pi_neq = self.lattice.einsum("qab,ab->q", [self.Q_matrix, pi_neq])
-        pi_neq = self.lattice.einsum("q,q->q", [self.lattice.w,pi_neq])
+        pi_neq = self.lattice.einsum("q,q->q", [self.lattice.w, pi_neq])
 
         fi1 = pi_neq / (2 * cs4)
         f = feq + (1. - 1. / self.tau) * fi1
@@ -105,8 +105,7 @@ class KBCCollision2D:
 
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 9, \
-            LettuceException("KBC2D only realized for D2Q9")
+        assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -114,12 +113,12 @@ class KBCCollision2D:
         self.M = torch.zeros([3, 3, 9], device=lattice.device, dtype=lattice.dtype)
         for i in range(3):
             for j in range(3):
-                    self.M[i, j] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j
+                self.M[i, j] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j
 
     def kbc_moment_transform(self, f):
         """Transforms the f into the KBC moment representation"""
         m = torch.einsum('abq,qmn', self.M, f)
-        rho = m[0,0]
+        rho = m[0, 0]
         m = m / rho
         m[0, 0] = rho
 
@@ -133,38 +132,35 @@ class KBCCollision2D:
 
         Pi_xy = m[1, 1]
 
-
         s[0] = m[0, 0] * -T
-        s[1] = 1. / 2. * m[0, 0] * (0.5 * (T+N))
+        s[1] = 1. / 2. * m[0, 0] * (0.5 * (T + N))
         s[2] = 1. / 2. * m[0, 0] * (0.5 * (T - N))
-        s[3] = 1. / 2. * m[0, 0] * (0.5 * (T+N))
-        s[4] = 1. / 2. * m[0, 0] * (0.5 * (T-N))
+        s[3] = 1. / 2. * m[0, 0] * (0.5 * (T + N))
+        s[4] = 1. / 2. * m[0, 0] * (0.5 * (T - N))
         s[5] = 1. / 4. * m[0, 0] * (Pi_xy)
         s[6] = -s[5]
         s[7] = 1. / 4 * m[0, 0] * Pi_xy
         s[8] = -s[7]
-
 
         return s
 
     def __call__(self, f):
         # the deletes are not part of the algorithm, they just keep the memory usage lower
         feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
-        #k = torch.zeros_like(f)
+        # k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
         delta_s = self.compute_s_seq_from_m(f, m)
 
-
-        #k[0] = m[0, 0]
-        #k[1] = m[0, 0] / 2. * m[1, 0]
-        #k[2] = m[0, 0] / 2. * m[0, 1]
-        #k[3] = -m[0, 0] / 2. * m[1, 0]
-        #k[4] = -m[0, 0] / 2. * m[0, 1]
-        #k[5] = 0
-        #k[6] = 0
-        #k[7] = 0
-        #k[8] = 0
+        # k[0] = m[0, 0]
+        # k[1] = m[0, 0] / 2. * m[1, 0]
+        # k[2] = m[0, 0] / 2. * m[0, 1]
+        # k[3] = -m[0, 0] / 2. * m[1, 0]
+        # k[4] = -m[0, 0] / 2. * m[0, 1]
+        # k[5] = 0
+        # k[6] = 0
+        # k[7] = 0
+        # k[8] = 0
 
         m = self.kbc_moment_transform(feq)
 
@@ -184,10 +180,10 @@ class KBCCollision2D:
 
 class KBCCollision3D:
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
+
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 27, \
-            LettuceException("KBC only realized for D3Q27")
+        assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -242,18 +238,18 @@ class KBCCollision3D:
     def __call__(self, f):
         # the deletes are not part of the algorithm, they just keep the memory usage lower
         feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
-        #k = torch.zeros_like(f)
+        # k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
         delta_s = self.compute_s_seq_from_m(f, m)
 
-        #k[1] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
-        #k[0] = m[0, 0, 0]
-        #k[2] = -k[1]
-        #k[3] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
-        #k[4] = -k[3]
-        #k[5] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
-        #k[6] = -k[5]
+        # k[1] = m[0, 0, 0] / 6. * (3. * m[1, 0, 0])
+        # k[0] = m[0, 0, 0]
+        # k[2] = -k[1]
+        # k[3] = m[0, 0, 0] / 6. * (3. * m[0, 1, 0])
+        # k[4] = -k[3]
+        # k[5] = m[0, 0, 0] / 6. * (3. * m[0, 0, 1])
+        # k[6] = -k[5]
 
         m = self.kbc_moment_transform(feq)
 
@@ -265,9 +261,9 @@ class KBCCollision3D:
         sum_h = self.lattice.rho(delta_h * delta_h / feq)
         del feq
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
-        gamma_stab[gamma_stab<1E-15] = 2.0
+        gamma_stab[gamma_stab < 1E-15] = 2.0
         # Detect NaN
-        gamma_stab[torch.isnan(gamma_stab)]=2.0
+        gamma_stab[torch.isnan(gamma_stab)] = 2.0
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
 
         return f
@@ -275,6 +271,7 @@ class KBCCollision3D:
 
 class SmagorinskyCollision:
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
+
     def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
         self.force = force
         self.lattice = lattice
@@ -288,19 +285,19 @@ class SmagorinskyCollision:
         u_eq = 0 if self.force is None else self.force.u_eq(f)
         u = self.lattice.u(f) + u_eq
         feq = self.lattice.equilibrium(rho, u)
-        S_shear = self.lattice.shear_tensor(f-feq)
-        S_shear /= ( 2.0*rho*self.lattice.cs**2)
+        S_shear = self.lattice.shear_tensor(f - feq)
+        S_shear /= (2.0 * rho * self.lattice.cs ** 2)
         self.tau_eff = self.tau
         nu = (self.tau - 0.5) / 3.0
 
         for i in range(self.iterations):
             S = S_shear / self.tau_eff
-            S = self.lattice.einsum('ab,ab->',[S,S])
-            nu_t = self.constant**2 * S
+            S = self.lattice.einsum('ab,ab->', [S, S])
+            nu_t = self.constant ** 2 * S
             nu_eff = nu + nu_t
-            self.tau_eff = nu_eff*3.0+0.5
+            self.tau_eff = nu_eff * 3.0 + 0.5
         Si = 0 if self.force is None else self.force.source_term(u)
-        return f - 1.0 / self.tau_eff * (f-feq) + Si
+        return f - 1.0 / self.tau_eff * (f - feq) + Si
 
 
 class BGKInitialization:

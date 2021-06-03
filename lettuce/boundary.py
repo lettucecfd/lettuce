@@ -19,12 +19,12 @@ import torch
 import numpy as np
 from lettuce import (LettuceException)
 
-
 __all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
 
 
 class BounceBackBoundary:
     """Fullway Bounce-Back Boundary"""
+
     def __init__(self, mask, lattice):
         self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
@@ -43,6 +43,7 @@ class EquilibriumBoundaryPU:
     Note that this behavior is generally not compatible with the Navier-Stokes equations.
     This boundary condition should only be used if no better options are available.
     """
+
     def __init__(self, mask, lattice, units, velocity, pressure=0):
         self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
@@ -68,13 +69,24 @@ class AntiBounceBackOutlet:
         """
 
     def __init__(self, lattice, direction):
-        assert (isinstance(direction, list) and len(direction) in [1,2,3] and ((np.abs(sum(direction)) == 1) and (np.max(np.abs(direction)) == 1) and (1 in direction) ^ (-1 in direction))), \
-            LettuceException("Wrong direction. Expected list of length 1, 2 or 3 with all entrys 0 except one 1 or -1, "
-                                f"but got {type(direction)} of size {len(direction)} and entrys {direction}.")
+
+        assert isinstance(direction, list), \
+            LettuceException(
+                f"Invalid direction parameter. Expected direction of type list but got {type(direction)}.")
+
+        assert len(direction) in [1, 2, 3], \
+            LettuceException(
+                f"Invalid direction parameter. Expected direction of of length 1, 2 or 3 but got {len(direction)}.")
+
+        assert (direction.count(0) == (len(direction) - 1)) and ((1 in direction) ^ (-1 in direction)), \
+            LettuceException(
+                "Invalid direction parameter. "
+                f"Expected direction with all entries 0 except one 1 or -1 but got {direction}.")
+
         direction = np.array(direction)
         self.lattice = lattice
 
-        #select velocities to be bounced (the ones pointing in "direction")
+        # select velocities to be bounced (the ones pointing in "direction")
         self.velocities = np.concatenate(np.argwhere(np.matmul(self.lattice.stencil.e, direction) > 1 - 1e-6), axis=0)
 
         # build indices of u and f that determine the side of the domain
@@ -105,9 +117,9 @@ class AntiBounceBackOutlet:
         u = self.lattice.u(f)
         u_w = u[[slice(None)] + self.index] + 0.5 * (u[[slice(None)] + self.index] - u[[slice(None)] + self.neighbor])
         f[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = (
-            - f[[self.velocities] + self.index] + self.w * self.lattice.rho(f)[[slice(None)] + self.index] *
-            (2 + torch.einsum(self.dims, self.lattice.e[self.velocities], u_w) ** 2 / self.lattice.cs ** 4
-             - (torch.norm(u_w,dim=0) / self.lattice.cs) ** 2)
+                - f[[self.velocities] + self.index] + self.w * self.lattice.rho(f)[[slice(None)] + self.index] *
+                (2 + torch.einsum(self.dims, self.lattice.e[self.velocities], u_w) ** 2 / self.lattice.cs ** 4
+                 - (torch.norm(u_w, dim=0) / self.lattice.cs) ** 2)
         )
         return f
 
@@ -117,7 +129,7 @@ class AntiBounceBackOutlet:
         return no_stream_mask
 
     # not 100% sure about this. But collisions seem to stabilize the boundary.
-    #def make_no_collision_mask(self, f_shape):
+    # def make_no_collision_mask(self, f_shape):
     #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
     #    no_collision_mask[self.index] = 1
     #    return no_collision_mask
@@ -126,6 +138,7 @@ class AntiBounceBackOutlet:
 class EquilibriumOutletP(AntiBounceBackOutlet):
     """Equilibrium outlet with constant pressure.
     """
+
     def __init__(self, lattice, direction, rho0=1.0):
         super(EquilibriumOutletP, self).__init__(lattice, direction)
         self.rho0 = rho0
@@ -137,7 +150,7 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         u = self.lattice.u(f)
         rho_w = self.rho0 * torch.ones_like(rho[here])
         u_w = u[other]
-        f[here] = self.lattice.equilibrium(rho_w[...,None], u_w[...,None])[...,0]
+        f[here] = self.lattice.equilibrium(rho_w[..., None], u_w[..., None])[..., 0]
         return f
 
     def make_no_stream_mask(self, f_shape):

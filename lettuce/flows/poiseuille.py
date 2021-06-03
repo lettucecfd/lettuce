@@ -22,11 +22,11 @@ class PoiseuilleFlow2D(object):
 
     def analytic_solution(self, grid):
         half_lattice_spacing = 0.5 / self.resolution
-        x,y = grid
+        x, y = grid
         nu = self.units.viscosity_pu
         rho = 1
         u = np.array([
-            self.acceleration[0] / (2 * rho * nu) * ((y-half_lattice_spacing) * (1 - half_lattice_spacing - y)),
+            self.acceleration[0] / (2 * rho * nu) * ((y - half_lattice_spacing) * (1 - half_lattice_spacing - y)),
             np.zeros(x.shape)
         ])
         p = np.array([y * 0 + self.units.convert_density_lu_to_pressure_pu(rho)])
@@ -42,8 +42,8 @@ class PoiseuilleFlow2D(object):
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
-        y = np.linspace(0, 1, num=self.resolution+1, endpoint=True)
+        x = np.linspace(0, 1, num=self.resolution + 1, endpoint=True)
+        y = np.linspace(0, 1, num=self.resolution + 1, endpoint=True)
         return np.meshgrid(x, y, indexing='ij')
 
     @property
@@ -56,4 +56,3 @@ class PoiseuilleFlow2D(object):
     @property
     def acceleration(self):
         return np.array([0.001, 0])
-

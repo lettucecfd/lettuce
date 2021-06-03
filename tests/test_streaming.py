@@ -16,7 +16,3 @@ def test_standard_streaming_x3(f_all_lattices):
     streaming = StandardStreaming(lattice)
     f = streaming(streaming(streaming(f)))
     assert f.cpu().numpy() == pytest.approx(f_old)
-
-
-
-

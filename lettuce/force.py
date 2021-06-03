@@ -1,5 +1,3 @@
-
-
 __all__ = ["Guo", "ShanChen"]
 
 
@@ -11,13 +9,13 @@ class Guo:
 
     def source_term(self, u):
         index = [Ellipsis] + [None] * self.lattice.D
-        emu= self.lattice.e[index] - u
+        emu = self.lattice.e[index] - u
         eu = self.lattice.einsum("ib,b->i", [self.lattice.e, u])
         eeu = self.lattice.einsum("ia,i->ia", [self.lattice.e, eu])
-        emu_eeu= emu/(self.lattice.cs ** 2) + eeu/(self.lattice.cs ** 4)
+        emu_eeu = emu / (self.lattice.cs ** 2) + eeu / (self.lattice.cs ** 4)
         emu_eeuF = self.lattice.einsum("ia,a->i", [emu_eeu, self.acceleration])
         weemu_eeuF = self.lattice.w[index] * emu_eeuF
-        return (1-1/(2*self.tau)) * weemu_eeuF
+        return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
     def u_eq(self, f):
         index = [Ellipsis] + [None] * self.lattice.D
@@ -43,4 +41,4 @@ class ShanChen:
 
     @property
     def ueq_scaling_factor(self):
-        return self.tau*1
+        return self.tau * 1

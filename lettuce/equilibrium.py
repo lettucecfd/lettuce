@@ -4,7 +4,7 @@ __all__ = ["Equilibrium", "QuadraticEquilibrium", "IncompressibleQuadraticEquili
            "QuadraticEquilibrium_LessMemory"]
 
 
-class Equilibrium():
+class Equilibrium:
     pass
 
 
@@ -22,6 +22,7 @@ class QuadraticEquilibrium(Equilibrium):
         )
         return feq
 
+
 class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     """does the same as the normal equilibrium, how ever it uses somewhere around 20% less RAM,
     but runs about 2% slower on GPU and 11% on CPU
@@ -30,12 +31,14 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     lattice.equilibrium = QuadraticEquilibrium_LessMemory(lattice)
     before starting your simulation
     """
+
     def __call__(self, rho, u, *args):
         return self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,
-             (rho * ((2 * torch.tensordot(self.lattice.e, u, dims=1) - self.lattice.einsum("d,d->", [u, u])) / (2 * self.lattice.cs ** 2) + 0.5 * (
-                         torch.tensordot(self.lattice.e, u, dims=1) / (self.lattice.cs ** 2)) ** 2 + 1))]
+             rho * ((2 * torch.tensordot(self.lattice.e, u, dims=1) - self.lattice.einsum("d,d->", [u, u]))
+                    / (2 * self.lattice.cs ** 2)
+                    + 0.5 * (torch.tensordot(self.lattice.e, u, dims=1) / (self.lattice.cs ** 2)) ** 2 + 1)]
         )
 
 
@@ -46,11 +49,11 @@ class IncompressibleQuadraticEquilibrium(Equilibrium):
 
     def __call__(self, rho, u, *args):
         exu = self.lattice.einsum("qd,d->q", [self.lattice.e, u])
-        uxu = self.lattice.einsum("d,d->", [u,u])
+        uxu = self.lattice.einsum("d,d->", [u, u])
         feq = self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,
-             rho + self.rho0*((2 * exu - uxu) / (2 * self.lattice.cs ** 2) + 0.5 * (exu / (self.lattice.cs ** 2)) ** 2)
-             ]
+             rho
+             + self.rho0 * ((2 * exu - uxu) / (2 * self.lattice.cs ** 2) + 0.5 * (exu / (self.lattice.cs ** 2)) ** 2)]
         )
         return feq

@@ -23,7 +23,7 @@ class CouetteFlow2D(object):
         raise NotImplementedError
 
     def initial_solution(self, x):
-        return np.array([0*x[0]], dtype=float), np.array([0*x[0],0*x[1]], dtype=float)
+        return np.array([0 * x[0]], dtype=float), np.array([0 * x[0], 0 * x[1]], dtype=float)
 
     @property
     def grid(self):
@@ -34,8 +34,5 @@ class CouetteFlow2D(object):
     @property
     def boundaries(self):
         x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(y-1) < 1e-6, self.units.lattice, self.units, np.array([1.0, 0.0])),
+        return [EquilibriumBoundaryPU(np.abs(y - 1) < 1e-6, self.units.lattice, self.units, np.array([1.0, 0.0])),
                 BounceBackBoundary(np.abs(y) < 1e-6, self.units.lattice)]
-
-
-

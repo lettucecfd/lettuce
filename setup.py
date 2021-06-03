@@ -16,7 +16,6 @@ requirements = ['Click>=6.0', "torch>=1.2", "numpy", "matplotlib", "pyevtk"]
 
 setup_requirements = ['pytest-runner', 'pytest']
 
-
 setup(
     author="Andreas Kraemer",
     author_email='kraemer.research@gmail.com',
@@ -40,7 +39,7 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce','lettuce.flows']),
+    packages=find_packages(include=['lettuce', 'lettuce.flows']),
     setup_requires=setup_requirements,
     test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',

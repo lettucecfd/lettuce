@@ -21,11 +21,19 @@ class BGKCollision:
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
-        u_eq = 0 if self.force is None else self.force.u_eq(f)
+        u_eq = 0 if self.force is None else self.force.u_eq(self.lattice.f(f))
         u = self.lattice.u(f) + u_eq
         feq = self.lattice.equilibrium(rho, u)
-        Si = 0 if self.force is None else self.force.source_term(u)
-        return f - 1.0 / self.tau * (f - feq) + Si
+        if self.force is None:
+            return (1.-1./self.tau)*f + 1.0 / self.tau * feq
+        else:
+            # TODO: it's possible to do this directly in the forcing source term
+            Si = 0 if self.force is None else self.force.source_term(u)
+            return self.lattice.f_recentered(
+                (1.-1./self.tau)*self.lattice.f(f)
+                + 1.0 / self.tau * self.lattice.f(feq)
+                + Si
+            )
 
 
 class MRTCollision:
@@ -41,11 +49,11 @@ class MRTCollision:
         self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
 
     def __call__(self, f):
-        m = self.transform.transform(f)
+        m = self.transform.transform(self.lattice.f(f))
         meq = self.transform.equilibrium(m)
         m = m - self.lattice.einsum("q,q->q", [1 / self.relaxation_parameters, m - meq])
         f = self.transform.inverse_transform(m)
-        return f
+        return self.lattice.f_recentered(f)
 
 
 class TRTCollision:
@@ -87,8 +95,11 @@ class RegularizedCollision:
     def __call__(self, f):
         rho = self.lattice.rho(f)
         u = self.lattice.u(f)
-        feq = self.lattice.equilibrium(rho, u)
-        pi_neq = self.lattice.shear_tensor(f - feq)
+        feq = self.lattice.f(self.lattice.equilibrium(rho, u))
+        f = self.lattice.f(f)
+
+        # TODO: this is super involved; there are certainly much better ways to implement this with recentering
+        pi_neq = self.lattice.shear_tensor(self.lattice.f_recentered(f - feq))
         cs4 = self.lattice.cs ** 4
 
         pi_neq = self.lattice.einsum("qab,ab->q", [self.Q_matrix, pi_neq])
@@ -97,7 +108,7 @@ class RegularizedCollision:
         fi1 = pi_neq / (2 * cs4)
         f = feq + (1. - 1. / self.tau) * fi1
 
-        return f
+        return self.lattice.f_recentered(f)
 
 
 class KBCCollision2D:
@@ -146,7 +157,8 @@ class KBCCollision2D:
 
     def __call__(self, f):
         # the deletes are not part of the algorithm, they just keep the memory usage lower
-        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
+        feq = self.lattice.f(self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f)))
+        f = self.lattice.f(f)
         # k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
@@ -175,7 +187,7 @@ class KBCCollision2D:
         gamma_stab[gamma_stab < 1E-15] = 2.0
         gamma_stab[torch.isnan(gamma_stab)] = 2.0
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
-        return f
+        return self.lattice.f_recentered(f)
 
 
 class KBCCollision3D:
@@ -237,7 +249,8 @@ class KBCCollision3D:
 
     def __call__(self, f):
         # the deletes are not part of the algorithm, they just keep the memory usage lower
-        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
+        feq = self.lattice.f(self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f)))
+        f = self.lattice.f(f)
         # k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)
@@ -266,7 +279,7 @@ class KBCCollision3D:
         gamma_stab[torch.isnan(gamma_stab)] = 2.0
         f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
 
-        return f
+        return self.lattice.f_recentered(f)
 
 
 class SmagorinskyCollision:

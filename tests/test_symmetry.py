@@ -126,6 +126,7 @@ def test_feq_equivariance(symmetry_group, dtype_device):
 
 
 def test_collision_equivariance(symmetry_group, dtype_device, Collision):
+    """Test whether all collision models obey the lattice symmetries."""
     dtype, device = dtype_device
     lattice = Lattice(symmetry_group.stencil, dtype=dtype, device=device)
     f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
@@ -140,5 +141,5 @@ def test_collision_equivariance(symmetry_group, dtype_device, Collision):
         assert torch.allclose(
             f_post_after_g,
             f_post[permutation],
-            atol=2e-5 if dtype == torch.float32 else 1e-6
+            atol=2e-5 if dtype == torch.float32 else 1e-7
         ), f"{g}; {(f_post_after_g - f_post[permutation]).norm()}"

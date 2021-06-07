@@ -2,7 +2,7 @@
 import pytest
 import numpy as np
 from lettuce.symmetry import *
-from lettuce import D1Q3, D2Q9, D3Q19, D3Q27
+from lettuce import D1Q3, D2Q9, D3Q19, D3Q27, Lattice
 
 
 def test_four_rotations(stencil):
@@ -110,3 +110,14 @@ def test_permutations(symmetry_group):
         assert np.allclose(perm1[perm2], np.arange(symmetry_group.stencil.Q()))
         assert np.allclose(perm2[perm1], np.arange(symmetry_group.stencil.Q()))
 
+
+def test_feq_equivariance(symmetry_group, dtype_device):
+    dtype, device = dtype_device
+    lattice = Lattice(symmetry_group.stencil, dtype=dtype, device=device)
+    feq = lambda f: lattice.equilibrium(lattice.rho(f), lattice.u(f))
+    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    for g in symmetry_group:
+        assert np.allclose(
+            feq(f[g.permutation(symmetry_group.stencil)]),
+            feq(f)[g.permutation(symmetry_group.stencil)],
+        )

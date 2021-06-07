@@ -33,7 +33,7 @@ def dtype_device(request, device):
     return request.param, device
 
 
-@pytest.fixture(params=STENCILS)
+@pytest.fixture(params=STENCILS, scope="session")
 def stencil(request):
     """Run a test for all stencils."""
     return request.param

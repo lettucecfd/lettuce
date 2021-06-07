@@ -6,7 +6,6 @@ import torch
 import numpy as np
 
 from lettuce.equilibrium import QuadraticEquilibrium
-from lettuce.util import LettuceException
 from lettuce.moments import DEFAULT_TRANSFORM
 from lettuce.util import LettuceCollisionNotDefined
 from lettuce.stencils import D2Q9, D3Q27

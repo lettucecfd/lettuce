@@ -7,7 +7,8 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments, collision, Collision
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments, collision, Collision,
+    SymmetryGroup
 )
 
 STENCILS = list(get_subclasses(Stencil, stencils))
@@ -80,3 +81,9 @@ def f_transform(request, f_all_lattices):
 def Collision(request):
     """Run a test for all stencils."""
     return request.param
+
+
+@pytest.fixture(scope="session")
+def symmetry_group(stencil):
+    group = SymmetryGroup(stencil)
+    return group

@@ -3,8 +3,10 @@ import pytest
 import torch
 import numpy as np
 from lettuce.symmetry import *
-from lettuce import D1Q3, D2Q9, D3Q19, D3Q27, Lattice
-from lettuce import LettuceCollisionNotDefined
+from lettuce.stencils import D1Q3, D2Q9, D3Q19, D3Q27
+from lettuce.lattices import Lattice
+from lettuce.collision import MRTCollision
+from lettuce.util import LettuceCollisionNotDefined
 
 
 def test_four_rotations(stencil):
@@ -75,12 +77,6 @@ def test_inverse(stencil):
         )
 
 
-@pytest.fixture(scope="session")
-def symmetry_group(stencil):
-    group = SymmetryGroup(stencil)
-    return group
-
-
 def test_symmetry_group(symmetry_group):
     group = symmetry_group
     n_symmetries = {D1Q3: 2, D2Q9: 8, D3Q19: 48, D3Q27: 48}[group.stencil]
@@ -135,11 +131,35 @@ def test_collision_equivariance(symmetry_group, dtype_device, Collision):
     except LettuceCollisionNotDefined:
         pytest.skip()
     f_post = collision(f.clone())
-    for g in symmetry_group:
-        permutation = g.permutation(symmetry_group.stencil)
+    for permutation in symmetry_group.permutations:
         f_post_after_g = collision(f.clone()[permutation])
         assert torch.allclose(
             f_post_after_g,
             f_post[permutation],
             atol=2e-5 if dtype == torch.float32 else 1e-7
-        ), f"{g}; {(f_post_after_g - f_post[permutation]).norm()}"
+        ), f"{(f_post_after_g - f_post[permutation]).norm()}"
+
+
+def test_non_equivariant_mrt(dtype_device):
+    dtype, device = dtype_device
+    stencil = D2Q9
+    lattice = Lattice(stencil, dtype=dtype, device=device)
+    symmetry_group = SymmetryGroup(D2Q9)
+    # non-equivariant choice of relaxation parameters
+    collision = MRTCollision(lattice, torch.arange(9.0))
+    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    f_post = collision(f.clone())
+    is_equivariant = True
+    for permutation in symmetry_group.permutations:
+        f_post_after_g = collision(f.clone()[permutation])
+        are_equal = torch.allclose(
+            f_post_after_g,
+            f_post[permutation],
+            atol=2e-5 if dtype == torch.float32 else 1e-7
+        )
+        if not are_equal:
+            is_equivariant = False
+    assert not is_equivariant
+
+
+

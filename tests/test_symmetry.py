@@ -1,4 +1,3 @@
-
 import pytest
 import torch
 import numpy as np
@@ -11,14 +10,14 @@ from lettuce.util import LettuceCollisionNotDefined
 
 def test_four_rotations(stencil):
     for i in range(stencil.D()):
-        for j in range(i+1, stencil.D()):
+        for j in range(i + 1, stencil.D()):
             assert are_symmetries_equal(
-                ChainedSymmetry(*([Rotation90(i, j)]*4)),
+                ChainedSymmetry(*([Rotation90(i, j)] * 4)),
                 Identity(),
                 stencil=stencil
             )
             assert not are_symmetries_equal(
-                ChainedSymmetry(*([Rotation90(i, j)]*3)),
+                ChainedSymmetry(*([Rotation90(i, j)] * 3)),
                 Identity(),
                 stencil=stencil
             )
@@ -27,26 +26,12 @@ def test_four_rotations(stencil):
 def test_two_reflections(stencil):
     for i in range(stencil.D()):
         assert are_symmetries_equal(
-            ChainedSymmetry(*([Reflection(i)]*2)),
+            ChainedSymmetry(*([Reflection(i)] * 2)),
             Identity(),
             stencil=stencil
         )
         assert not are_symmetries_equal(
-            ChainedSymmetry(*([Reflection(i)]*3)),
-            Identity(),
-            stencil=stencil
-        )
-
-
-def test_two_reflections(stencil):
-    for i in range(stencil.D()):
-        assert are_symmetries_equal(
-            ChainedSymmetry(*([Reflection(i)]*2)),
-            Identity(),
-            stencil=stencil
-        )
-        assert not are_symmetries_equal(
-            ChainedSymmetry(*([Reflection(i)]*3)),
+            ChainedSymmetry(*([Reflection(i)] * 3)),
             Identity(),
             stencil=stencil
         )
@@ -54,7 +39,7 @@ def test_two_reflections(stencil):
 
 def test_reflection_by_rotations(stencil):
     for i in range(stencil.D()):
-        for j in range(i+1, stencil.D()):
+        for j in range(i + 1, stencil.D()):
             assert are_symmetries_equal(
                 ChainedSymmetry(Rotation90(i, j), Rotation90(i, j)),
                 ChainedSymmetry(Reflection(i), Reflection(j)),
@@ -64,7 +49,7 @@ def test_reflection_by_rotations(stencil):
 
 def test_inverse(stencil):
     for i in range(stencil.D()):
-        for j in range(i+1, stencil.D()):
+        for j in range(i + 1, stencil.D()):
             assert are_symmetries_equal(
                 ChainedSymmetry(Rotation90(i, j), InverseSymmetry(Rotation90(i, j))),
                 Identity(),
@@ -160,6 +145,3 @@ def test_non_equivariant_mrt(dtype_device):
         if not are_equal:
             is_equivariant = False
     assert not is_equivariant
-
-
-

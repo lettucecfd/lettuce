@@ -91,4 +91,3 @@ def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     f = collision(collision(f))
     print(f.cpu().numpy(), f_old.cpu().numpy())
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
-

@@ -44,6 +44,7 @@ class MRTCollision(Collision):
     This is an MRT operator in the most general sense of the word.
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
+
     def __init__(self, lattice, relaxation_parameters, transform=None):
         self.lattice = lattice
         if transform is None:
@@ -61,8 +62,6 @@ class MRTCollision(Collision):
 
     def __call__(self, f):
         m = self.transform.transform(f)
-        #feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
-        #meq = self.transform.transform(feq)
         meq = self.transform.equilibrium(m)
         m = m - self.lattice.einsum("q,q->q", [1 / self.relaxation_parameters, m - meq])
         f = self.transform.inverse_transform(m)
@@ -83,9 +82,9 @@ class TRTCollision(Collision):
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
         f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
-                2.0 * self.tau_plus)
+            2.0 * self.tau_plus)
         f_diff_neq += ((f - f[self.lattice.stencil.opposite]) - (feq - feq[self.lattice.stencil.opposite])) / (
-                2.0 * self.tau_minus)
+            2.0 * self.tau_minus)
         f = f - f_diff_neq
         return f
 

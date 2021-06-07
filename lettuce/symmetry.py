@@ -2,7 +2,6 @@
 
 import numpy as np
 
-
 __all__ = [
     "is_symmetry", "are_symmetries_equal", "Symmetry",
     "SymmetryGroup", "InverseSymmetry", "ChainedSymmetry", "Identity",
@@ -24,6 +23,7 @@ def are_symmetries_equal(symmetry1, symmetry2, stencil):
 
 class Symmetry:
     """Abstract base class for symmetry operations."""
+
     def __init__(self):
         super().__init__()
 
@@ -41,6 +41,7 @@ class Symmetry:
 
 class ChainedSymmetry(Symmetry):
     """Stitch multiple symmetries together."""
+
     def __init__(self, *symmetries):
         super().__init__()
         self.symmetries = symmetries
@@ -72,6 +73,7 @@ class ChainedSymmetry(Symmetry):
 
 class InverseSymmetry(Symmetry):
     """Inverse of a symmetry operation"""
+
     def __init__(self, delegate):
         super().__init__()
         self.delegate = delegate
@@ -85,6 +87,7 @@ class InverseSymmetry(Symmetry):
 
 class Reflection(Symmetry):
     """Reflection along one dimension."""
+
     def __init__(self, dim):
         super().__init__()
         self.dim = dim
@@ -105,13 +108,14 @@ class Reflection(Symmetry):
 
 class Rotation90(Symmetry):
     """Counterclockwise rotation by 90 degrees."""
+
     def __init__(self, *dims):
         super().__init__()
         self.dims = dims
         self.mat = np.array(
             [
-                [np.cos(np.pi/2), -np.sin(np.pi/2)],
-                [np.sin(np.pi/2), np.cos(np.pi/2)]
+                [np.cos(np.pi / 2), -np.sin(np.pi / 2)],
+                [np.sin(np.pi / 2), np.cos(np.pi / 2)]
             ], dtype=int
         )
 
@@ -139,17 +143,22 @@ class Rotation90(Symmetry):
 
 class Identity(Symmetry):
     """The identity."""
-    def forward(self, x): return x
 
-    def inverse(self, x): return x
+    def forward(self, x):
+        return x
 
-    def __repr__(self): return "<Identity>"
+    def inverse(self, x):
+        return x
+
+    def __repr__(self):
+        return "<Identity>"
 
 
 class SymmetryGroup(list):
     """
     Lattice symmetry group.
     """
+
     def __init__(self, stencil):
         super().__init__()
         self.stencil = stencil
@@ -180,6 +189,9 @@ class SymmetryGroup(list):
                 return True
         return False
 
+    def __eq__(self, other):
+        assert super.__eq__(other) and self.stencil == other.stencil
+
     @staticmethod
     def _make_candidates(dim):
         candidates = []
@@ -187,14 +199,14 @@ class SymmetryGroup(list):
             for j in range(i + 1, dim):
                 candidates.append(Rotation90(i, j))
         for i in range(dim):
-           candidates.append(Reflection(i))
+            candidates.append(Reflection(i))
         # if for some reason we cannot reach all elements by 90-degree rotations
         for i in range(dim):
             for j in range(i + 1, dim):
                 # 180 degree rotations
                 candidates.append(ChainedSymmetry(Rotation90(i, j), Rotation90(i, j)))
                 # inverse rotations
-                candidates.append(InverseSymmetry(Rotation90(i,j)))
+                candidates.append(InverseSymmetry(Rotation90(i, j)))
         return candidates
 
     def _chain_symmetries(self, *symmetries):
@@ -208,4 +220,3 @@ class SymmetryGroup(list):
             return symmetries[0]
         else:
             return ChainedSymmetry(*symmetries)
-

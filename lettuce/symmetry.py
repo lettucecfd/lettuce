@@ -1,6 +1,5 @@
 """Lattice Symmetries"""
 
-import copy
 import numpy as np
 
 
@@ -74,6 +73,7 @@ class ChainedSymmetry(Symmetry):
 class InverseSymmetry(Symmetry):
     """Inverse of a symmetry operation"""
     def __init__(self, delegate):
+        super().__init__()
         self.delegate = delegate
 
     def forward(self, x):
@@ -146,7 +146,10 @@ class Identity(Symmetry):
     def __repr__(self): return "<Identity>"
 
 
-class SymmetryGroup(set):
+class SymmetryGroup(list):
+    """
+    Lattice symmetry group.
+    """
     def __init__(self, stencil):
         super().__init__()
         self.stencil = stencil
@@ -155,8 +158,12 @@ class SymmetryGroup(set):
         while len(new_symmetries) > 0:
             for n in new_symmetries:
                 if n not in self:
-                    self.add(n)
+                    self.append(n)
             new_symmetries = self._new_symmetries(candidates)
+
+    @property
+    def permutations(self):
+        return np.stack([symmetry.permutation(self.stencil) for symmetry in self])
 
     def _new_symmetries(self, candidates):
         result = []

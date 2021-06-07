@@ -83,6 +83,7 @@ def test_symmetry_group(symmetry_group):
     group = symmetry_group
     n_symmetries = {D1Q3: 2, D2Q9: 8, D3Q19: 48, D3Q27: 48}[group.stencil]
     assert len(group) == n_symmetries
+    assert group.permutations.shape == (n_symmetries, group.stencil.Q())
 
     # assert that it's a group:
     # contains the identity
@@ -108,5 +109,4 @@ def test_permutations(symmetry_group):
         perm2 = InverseSymmetry(g).permutation(symmetry_group.stencil)
         assert np.allclose(perm1[perm2], np.arange(symmetry_group.stencil.Q()))
         assert np.allclose(perm2[perm1], np.arange(symmetry_group.stencil.Q()))
-
 

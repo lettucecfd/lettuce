@@ -24,15 +24,6 @@ def moment_tensor(e, multiindex):
         return np.prod(np.power(e, multiindex[..., None, :]), axis=-1)
 
 
-def get_default_moment_transform(lattice):
-    if lattice.stencil == D1Q3:
-        return D1Q3Transform(lattice)
-    if lattice.stencil == D2Q9:
-        return D2Q9Lallemand(lattice)
-    else:
-        raise LettuceException(f"No default moment transform for lattice {lattice}.")
-
-
 class Moments:
     def __init__(self, lattice):
         self.rho = moment_tensor(lattice.e, lattice.convert_to_tensor(np.zeros(lattice.D)))
@@ -462,3 +453,11 @@ DEFAULT_TRANSFORM = {
     D2Q9: D2Q9Dellar,
     D3Q27: D3Q27Hermite
 }
+
+
+def get_default_moment_transform(lattice):
+    try:
+        transform_class = DEFAULT_TRANSFORM[lattice.stencil]
+    except KeyError:
+        raise LettuceException(f"No default moment transform for lattice {lattice}.")
+    return transform_class(lattice)

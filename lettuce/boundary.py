@@ -117,9 +117,9 @@ class AntiBounceBackOutlet:
         u = self.lattice.u(f)
         u_w = u[[slice(None)] + self.index] + 0.5 * (u[[slice(None)] + self.index] - u[[slice(None)] + self.neighbor])
         f[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = (
-                - f[[self.velocities] + self.index] + self.w * self.lattice.rho(f)[[slice(None)] + self.index] *
-                (2 + torch.einsum(self.dims, self.lattice.e[self.velocities], u_w) ** 2 / self.lattice.cs ** 4
-                 - (torch.norm(u_w, dim=0) / self.lattice.cs) ** 2)
+            - f[[self.velocities] + self.index] + self.w * self.lattice.rho(f)[[slice(None)] + self.index] *
+            (2 + torch.einsum(self.dims, self.lattice.e[self.velocities], u_w) ** 2 / self.lattice.cs ** 4
+             - (torch.norm(u_w, dim=0) / self.lattice.cs) ** 2)
         )
         return f
 

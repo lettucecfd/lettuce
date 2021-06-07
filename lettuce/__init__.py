@@ -10,6 +10,7 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
+
 from lettuce.util import *
 from lettuce.unit import *
 from lettuce.lattices import *

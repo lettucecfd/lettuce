@@ -91,12 +91,12 @@ def torch_gradient(f, dx=1, order=2):
         out = torch.cat(dim * [f[None, ...]])
         for i in range(dim):
             out[i, ...] = (
-                                  weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
-                                  weight[1] * f.roll(shifts=shift[i][1], dims=dims) +
-                                  weight[2] * f.roll(shifts=shift[i][2], dims=dims) +
-                                  weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
-                                  weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
-                                  weight[5] * f.roll(shifts=shift[i][5], dims=dims)
+                              weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
+                              weight[1] * f.roll(shifts=shift[i][1], dims=dims) +
+                              weight[2] * f.roll(shifts=shift[i][2], dims=dims) +
+                              weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
+                              weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
+                              weight[5] * f.roll(shifts=shift[i][5], dims=dims)
                           ) * torch.tensor(1.0 / dx, dtype=f.dtype, device=f.device)
     return out
 

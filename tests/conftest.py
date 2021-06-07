@@ -7,11 +7,12 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments, collision, Collision
 )
 
 STENCILS = list(get_subclasses(Stencil, stencils))
 TRANSFORMS = list(get_subclasses(Transform, moments))
+COLLISION_MODELS = list(get_subclasses(Collision, collision))
 
 
 @pytest.fixture(
@@ -73,3 +74,9 @@ def f_transform(request, f_all_lattices):
         return f, Transform(lattice)
     else:
         pytest.skip("Stencil not supported for this transform.")
+
+
+@pytest.fixture(params=COLLISION_MODELS, scope="session")
+def Collision(request):
+    """Run a test for all stencils."""
+    return request.param

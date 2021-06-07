@@ -11,7 +11,7 @@ import numpy as np
 
 __all__ = [
     "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
-    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
+    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite", "DEFAULT_TRANSFORM"
 ]
 
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
@@ -455,3 +455,10 @@ class D3Q27Hermite(Transform):
         meq[25] = jx * jy * jy * jz * jz / rho ** 4
         meq[26] = jx * jy * jx * jz * jy * jz / rho ** 5
         return meq
+
+
+DEFAULT_TRANSFORM = {
+    D1Q3: D1Q3Transform,
+    D2Q9: D2Q9Dellar,
+    D3Q27: D3Q27Hermite
+}

@@ -1,8 +1,10 @@
 
 import pytest
+import torch
 import numpy as np
 from lettuce.symmetry import *
 from lettuce import D1Q3, D2Q9, D3Q19, D3Q27, Lattice
+from lettuce import LettuceCollisionNotDefined
 
 
 def test_four_rotations(stencil):
@@ -73,7 +75,7 @@ def test_inverse(stencil):
         )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def symmetry_group(stencil):
     group = SymmetryGroup(stencil)
     return group
@@ -114,10 +116,29 @@ def test_permutations(symmetry_group):
 def test_feq_equivariance(symmetry_group, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(symmetry_group.stencil, dtype=dtype, device=device)
-    feq = lambda f: lattice.equilibrium(lattice.rho(f), lattice.u(f))
+    feq = lambda x: lattice.equilibrium(lattice.rho(x), lattice.u(x))
     f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
     for g in symmetry_group:
-        assert np.allclose(
+        assert torch.allclose(
             feq(f[g.permutation(symmetry_group.stencil)]),
             feq(f)[g.permutation(symmetry_group.stencil)],
         )
+
+
+def test_collision_equivariance(symmetry_group, dtype_device, Collision):
+    dtype, device = dtype_device
+    lattice = Lattice(symmetry_group.stencil, dtype=dtype, device=device)
+    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    try:
+        collision = Collision(lattice, 0.51)
+    except LettuceCollisionNotDefined:
+        pytest.skip()
+    f_post = collision(f.clone())
+    for g in symmetry_group:
+        permutation = g.permutation(symmetry_group.stencil)
+        f_post_after_g = collision(f.clone()[permutation])
+        assert torch.allclose(
+            f_post_after_g,
+            f_post[permutation],
+            atol=2e-5 if dtype == torch.float32 else 1e-6
+        ), f"{g}; {(f_post_after_g - f_post[permutation]).norm()}"

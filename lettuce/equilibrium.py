@@ -20,7 +20,7 @@ class QuadraticEquilibrium(Equilibrium):
             [self.lattice.w,
              rho * ((2 * exu - uxu) / (2 * self.lattice.cs ** 2) + 0.5 * (exu / (self.lattice.cs ** 2)) ** 2 + 1)]
         )
-        return feq
+        return self.lattice.f_recentered(feq)
 
 
 class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
@@ -33,13 +33,13 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     """
 
     def __call__(self, rho, u, *args):
-        return self.lattice.einsum(
+        return self.lattice.f_recentered( self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,
              rho * ((2 * torch.tensordot(self.lattice.e, u, dims=1) - self.lattice.einsum("d,d->", [u, u]))
                     / (2 * self.lattice.cs ** 2)
                     + 0.5 * (torch.tensordot(self.lattice.e, u, dims=1) / (self.lattice.cs ** 2)) ** 2 + 1)]
-        )
+        ))
 
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
@@ -56,4 +56,5 @@ class IncompressibleQuadraticEquilibrium(Equilibrium):
              rho
              + self.rho0 * ((2 * exu - uxu) / (2 * self.lattice.cs ** 2) + 0.5 * (exu / (self.lattice.cs ** 2)) ** 2)]
         )
-        return feq
+        return self.lattice.f_recentered(feq)
+

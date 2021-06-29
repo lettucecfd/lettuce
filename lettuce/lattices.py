@@ -15,7 +15,7 @@ import torch
 from lettuce.util import LettuceException
 from lettuce.equilibrium import QuadraticEquilibrium
 
-__all__ = ["Lattice"]
+__all__ = ["Lattice", "PrecisionLattice"]
 
 
 class Lattice:
@@ -58,6 +58,12 @@ class Lattice:
     def convert_to_numpy(cls, tensor):
         return tensor.detach().cpu().numpy()
 
+    def f(self, f):
+        return f
+
+    def f_recentered(self, f):
+        return f
+
     def rho(self, f):
         """density"""
         return torch.sum(f, dim=0)[None, ...]
@@ -76,23 +82,28 @@ class Lattice:
 
     def entropy(self, f):
         """entropy according to the H-theorem"""
-        f_log = -torch.log(self.einsum("q,q->q", [f, 1 / self.w]))
-        return self.einsum("q,q->", [f, f_log])
+        f_log = -torch.log(self.einsum("q,q->q", [self.f(f), 1 / self.w]))
+        return self.einsum("q,q->", [self.f(f), f_log])
 
     def pseudo_entropy_global(self, f):
         """pseudo_entropy derived by a Taylor expansion around the weights"""
+        rho = self.rho(f)
+        f = self.f(f)
         f_w = self.einsum("q,q->q", [f, 1 / self.w])
-        return self.rho(f) - self.einsum("q,q->", [f, f_w])
+        return rho - self.einsum("q,q->", [f, f_w])
 
     def pseudo_entropy_local(self, f):
         """pseudo_entropy derived by a Taylor expansion around the local equilibrium"""
-        f_feq = f / self.equilibrium(self.rho(f), self.u(f))
-        return self.rho(f) - self.einsum("q,q->", [f, f_feq])
+        rho = self.rho(f)
+        feq = self.equilibrium(self.rho(f), self.u(f))
+        f = self.f(f)
+        f_feq = f / feq
+        return rho - self.einsum("q,q->", [f, f_feq])
 
     def shear_tensor(self, f):
         """computes the shear tensor of a given f in the sense Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
         shear = self.einsum("qa,qb->qab", [self.e, self.e])
-        shear = self.einsum("q,qab->ab", [f, shear])
+        shear = self.einsum("q,qab->ab", [self.f(f), shear])
         return shear
 
     def mv(self, m, v):
@@ -114,3 +125,29 @@ class Lattice:
                 raise LettuceException("Bad dimension.")
         equation = ",".join(inputs) + "->" + output
         return torch.einsum(equation, fields, **kwargs)
+
+
+class PrecisionLattice(Lattice):
+    """Lattice class with f_i centered around 0 for better precision."""
+    def __init__(self, stencil, device, dtype=torch.float):
+        super().__init__(stencil, device, dtype)
+        self._w = self.w.view(-1, *([1]*stencil.D()))
+
+    def __str__(self):
+        return f"PrecisionLattice (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
+
+    def f(self, f):
+        return self._w * (f + 1.0)
+
+    def f_recentered(self, f):
+        return f / self._w - 1.0
+
+    def rho(self, f):
+        """density"""
+        return torch.sum(f * self._w, dim=0)[None, ...] + 1.0
+
+    def j(self, f):
+        """momentum"""
+        return self.einsum("qd,q->d", [self.e, f * self._w])
+
+    # TODO: entropy and stuff can probably be optimized, too

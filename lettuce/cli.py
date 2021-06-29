@@ -15,7 +15,7 @@ import click
 import torch
 import numpy as np
 
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, PrecisionLattice
 from lettuce import __version__ as lettuce_version
 
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
@@ -97,11 +97,15 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
 
 @main.command()
 @click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
+@click.option("--f-recentered/--no-f-recentered", default=False, help="Use PrecisionLattice to recenter f around 0")
 @click.pass_context
-def convergence(ctx, init_f_neq):
+def convergence(ctx, init_f_neq, f_recentered):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
+    if f_recentered:
+        lattice = PrecisionLattice(D2Q9, device, dtype)
+    else:
+        lattice = Lattice(D2Q9, device, dtype)
     error_u_old = None
     error_p_old = None
     print(("{:>15} " * 5).format("resolution", "error (u)", "order (u)", "error (p)", "order (p)"))
@@ -132,7 +136,7 @@ def convergence(ctx, init_f_neq):
     if factor_u / 2 < 1.9:
         print("Velocity convergence order < 2.")
     if factor_p / 2 < 0.9:
-        print("Velocity convergence order < 1.")
+        print("Pressure convergence order < 1.")
     if factor_u / 2 < 1.9 or factor_p / 2 < 0.9:
         sys.exit(1)
     else:

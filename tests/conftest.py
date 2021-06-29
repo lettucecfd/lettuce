@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments, PrecisionLattice
 )
 
 STENCILS = list(get_subclasses(Stencil, stencils))
@@ -53,7 +53,7 @@ def f_lattice(lattice):
     return lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D)), lattice
 
 
-@pytest.fixture(params=[Lattice])
+@pytest.fixture(params=[Lattice, PrecisionLattice])
 def f_all_lattices(request, lattice):
     """Run a test for all lattices and lattices-of-vector;
     return a grid with 3^D sample distribution functions alongside the lattice.

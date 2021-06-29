@@ -412,7 +412,6 @@ class D3Q27Hermite(Transform):
         return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
-        warnings.warn("A second proof is requiered for this equilibrium @A.K. or @D.W..", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]

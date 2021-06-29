@@ -103,6 +103,15 @@ Installation
     lettuce benchmark
 
 
+Research items
+-------
+* Lettuce: PyTorch-based Lattice Boltzmann Framework - `Manuscript`_ | `Presentation`_ | `Slides`_
+
+.. _Manuscript: https://arxiv.org/pdf/2106.12929.pdf
+.. _Presentation: https://www.youtube.com/watch?v=7nVCuuZDCYA
+.. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
+
+
 Credits
 -------
 We use the following third-party packages:

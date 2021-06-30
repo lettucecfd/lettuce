@@ -44,11 +44,13 @@ class ChainedSymmetry(Symmetry):
 
     def __init__(self, *symmetries):
         super().__init__()
-        self.symmetries = symmetries
+        self.symmetries = []
         # unfold chains
-        for i, symmetry in enumerate(self.symmetries):
+        for i, symmetry in enumerate(symmetries):
             if isinstance(symmetry, ChainedSymmetry):
-                self.symmetries = (*self.symmetries[:i], *symmetry, *self.symmetries[i + 1:])
+                self.symmetries.extend([*symmetry])
+            else:
+                self.symmetries.append(symmetry)
         self.symmetries = tuple(self.symmetries)
 
     def forward(self, x):
@@ -83,6 +85,9 @@ class InverseSymmetry(Symmetry):
 
     def inverse(self, x):
         return self.delegate.forward(x)
+
+    def __repr__(self):
+        return f"<Inverse: {repr(self.delegate)}>"
 
 
 class Reflection(Symmetry):
@@ -178,6 +183,12 @@ class SymmetryGroup(list):
     def inverse_permutations(self):
         return np.stack([InverseSymmetry(symmetry).permutation(self.stencil) for symmetry in self])
 
+    def moment_representations(self, moment_transform):
+        return (moment_transform.matrix[:, self.permutations] @ moment_transform.inverse).swapaxes(0, 1)
+
+    def inverse_moment_representations(self, moment_transform):
+        return (moment_transform.matrix[:, self.inverse_permutations] @ moment_transform.inverse).swapaxes(0, 1)
+
     def _new_symmetries(self, candidates):
         result = []
         for c in candidates:
@@ -192,6 +203,12 @@ class SymmetryGroup(list):
             if are_symmetries_equal(symmetry, elem, self.stencil):
                 return True
         return False
+
+    def index(self, symmetry):
+        for i, elem in enumerate(self):
+            if are_symmetries_equal(symmetry, elem, self.stencil):
+                return i
+        raise KeyError("symmetry not in symmetry group")
 
     def __eq__(self, other):
         assert super.__eq__(other) and self.stencil == other.stencil

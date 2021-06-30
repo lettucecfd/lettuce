@@ -6,6 +6,7 @@ from lettuce.stencils import D1Q3, D2Q9, D3Q19, D3Q27
 from lettuce.lattices import Lattice
 from lettuce.collision import MRTCollision
 from lettuce.util import LettuceCollisionNotDefined
+from lettuce.moments import DEFAULT_TRANSFORM
 
 
 def test_four_rotations(stencil):
@@ -93,9 +94,30 @@ def test_permutations(symmetry_group):
         assert np.allclose(perm1[perm2], np.arange(symmetry_group.stencil.Q()))
         assert np.allclose(perm2[perm1], np.arange(symmetry_group.stencil.Q()))
 
+
+def test_inverse_permutations(symmetry_group):
     for p, pinv in zip(symmetry_group.permutations, symmetry_group.inverse_permutations):
         assert (p[pinv] == np.arange(symmetry_group.stencil.Q())).all()
         assert (pinv[p] == np.arange(symmetry_group.stencil.Q())).all()
+
+
+def test_moment_representations(symmetry_group):
+    try:
+        transform = DEFAULT_TRANSFORM[symmetry_group.stencil]
+    except KeyError:
+        pytest.skip("No default transform for this stencil")
+    rep = symmetry_group.moment_representations(transform)
+    irep = symmetry_group.inverse_moment_representations(transform)
+    # test if this is a representation
+    # group op = matrix multiply
+    for i, symmetry in enumerate(symmetry_group):
+        for j, symmetry2 in enumerate(symmetry_group):
+            ji = symmetry_group.index(ChainedSymmetry(symmetry, symmetry2))
+            assert np.allclose(rep[j] @ rep[i], rep[ji])
+    # inverse group op = inverse matrix
+    for forward, inverse in zip(rep, irep):
+        assert np.allclose(forward @ inverse, np.eye(symmetry_group.stencil.Q()))
+        assert np.allclose(inverse @ forward, np.eye(symmetry_group.stencil.Q()))
 
 
 def test_feq_equivariance(symmetry_group, dtype_device):

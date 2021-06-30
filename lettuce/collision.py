@@ -350,8 +350,24 @@ class BGKInitialization:
 
 
 class EquivariantNeuralCollision(torch.nn.Module):
-    """
-    An MRT model that is equivariant under the lattice symmetries.
+    """An MRT model that is equivariant under the lattice symmetries by relaxing all moments of the same
+    order with the same rate.
+
+    Parameters
+    ----------
+    default_tau : float
+        The default relaxation parameter operating on all moment orders for which the tau_net
+        does not produce output. See documentation there.
+    tau_net : torch.nn.Module
+        A network that receives moments and returns unconstrained relaxation parameters for the highest-order moments.
+        The input shape to the network is (..., Q), where "..." is any number of batch and grid dimensions
+        and Q is the number of discrete distributions at each node.
+        The output shape is (..., N), where N is the number of moment ORDERS, whose relaxation is prescribed
+        by the network. Only the N highest moment orders will be relaxed.
+        Note that the output of the network should be unconstrained and will be rendered > 0.5 by this class.
+    moment_transform : Transform
+        The moment transformation.
+
     """
     def __init__(self, default_tau, tau_net, moment_transform):
         super().__init__()

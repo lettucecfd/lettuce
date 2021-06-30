@@ -355,9 +355,10 @@ class EquivariantNeuralCollision(torch.nn.Module):
 
     Parameters
     ----------
-    default_tau : float
-        The default relaxation parameter operating on all moment orders for which the tau_net
-        does not produce output. See documentation there.
+    lower_tau : float
+        The default relaxation parameter operating on lower-order moments.
+        Lower-order moments are defined in the sense that `tau_net`
+        does not produce output for those orders. See documentation there.
     tau_net : torch.nn.Module
         A network that receives moments and returns unconstrained relaxation parameters for the highest-order moments.
         The input shape to the network is (..., Q), where "..." is any number of batch and grid dimensions
@@ -369,11 +370,11 @@ class EquivariantNeuralCollision(torch.nn.Module):
         The moment transformation.
 
     """
-    def __init__(self, default_tau, tau_net, moment_transform):
+    def __init__(self, lower_tau, tau_net, moment_transform):
         super().__init__()
         self.trafo = moment_transform
         self.lattice = moment_transform.lattice
-        self.tau = default_tau
+        self.tau = lower_tau
         self.net = tau_net.to(dtype=self.lattice.dtype, device=self.lattice.device)
         # symmetries
         symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)

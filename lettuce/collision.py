@@ -380,6 +380,7 @@ class EquivariantNeuralCollision(torch.nn.Module):
         self.rep = symmetry_group.moment_representations(moment_transform)
         # infer moment order from moment name
         self.moment_order = np.array([sum(name.count(x) for x in "xyz") for name in moment_transform.names])
+        self.last_taus = None
 
     @staticmethod
     def gt_half(a):
@@ -416,6 +417,7 @@ class EquivariantNeuralCollision(torch.nn.Module):
     def forward(self, f):
         m = self.trafo.transform(f)
         taus = self._compute_relaxation_parameters(m)
+        self.last_taus = taus
         meq = self.trafo.equilibrium(m)
         m_postcollision = m - 1. / taus * (m - meq)
         return self.trafo.inverse_transform(m_postcollision)

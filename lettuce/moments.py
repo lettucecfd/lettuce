@@ -133,7 +133,6 @@ class D2Q9Dellar(Transform):
         return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
-        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]

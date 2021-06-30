@@ -6,7 +6,7 @@ import inspect
 import torch
 
 __all__ = [
-    "LettuceException", "LettuceCollisionNotDefined",
+    "LettuceException", "LettuceCollisionNotDefined", "LettuceInvalidNetworkOutput",
     "LettuceWarning", "InefficientCodeWarning", "ExperimentalWarning",
     "get_subclasses", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson"
 ]
@@ -17,6 +17,10 @@ class LettuceException(Exception):
 
 
 class LettuceCollisionNotDefined(Exception):
+    pass
+
+
+class LettuceInvalidNetworkOutput(Exception):
     pass
 
 

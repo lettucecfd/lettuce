@@ -74,7 +74,7 @@ class D1Q3Transform(Transform):
         [0, 1 / 2, 1 / 2],
         [0, -1 / 2, 1 / 2]
     ])
-    names = ["rho", "j", "e"]
+    names = ["rho", "j_x", "e_xx"]
     supported_stencils = [D1Q3]
 
     def __init__(self, lattice):
@@ -116,7 +116,7 @@ class D2Q9Dellar(Transform):
          [1 / 36, -1 / 12, -1 / 12, 1 / 54, 1 / 36, 1 / 54, 1 / 36, -1 / 24, -1 / 24],
          [1 / 36, 1 / 12, -1 / 12, 1 / 54, -1 / 36, 1 / 54, 1 / 36, 1 / 24, -1 / 24]]
     )
-    names = ['rho', 'jx', 'jy', 'Pi_xx', 'Pi_xy', 'PI_yy', 'N', 'Jx', 'Jy']
+    names = ['rho', 'jx', 'jy', 'Pi_xx', 'Pi_xy', 'PI_yy', 'N_xxyy', 'J_xxy', 'J_xyy']
     supported_stencils = [D2Q9]
 
     def __init__(self, lattice):

@@ -7,13 +7,15 @@ import numpy as np
 
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.moments import DEFAULT_TRANSFORM
-from lettuce.util import LettuceCollisionNotDefined
+from lettuce.util import LettuceCollisionNotDefined, LettuceInvalidNetworkOutput
 from lettuce.stencils import D2Q9, D3Q27
+from lettuce.symmetry import SymmetryGroup
 
 __all__ = [
     "Collision",
     "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision",
-    "RegularizedCollision", "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
+    "RegularizedCollision", "SmagorinskyCollision", "TRTCollision", "BGKInitialization",
+    "EquivariantNeuralCollision"
 ]
 
 
@@ -345,3 +347,61 @@ class BGKInitialization:
         mnew[self.momentum_indices] = rho * self.u
         f = self.moment_transformation.inverse_transform(mnew)
         return f
+
+
+class EquivariantNeuralCollision(torch.nn.Module):
+    """
+    An MRT model that is equivariant under the lattice symmetries.
+    """
+    def __init__(self, default_tau, tau_net, moment_transform):
+        super().__init__()
+        self.trafo = moment_transform
+        self.lattice = moment_transform.lattice
+        self.tau = default_tau
+        self.net = tau_net.to(dtype=self.lattice.dtype, device=self.lattice.device)
+        # symmetries
+        symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)
+        self.rep = symmetry_group.moment_representations(moment_transform)
+        # infer moment order from moment name
+        self.moment_order = np.array([sum(name.count(x) for x in "xyz") for name in moment_transform.names])
+
+    @staticmethod
+    def gt_half(a):
+        """transform into a value > 0.5"""
+        return 0.5 + torch.exp(a)
+
+    def _compute_relaxation_parameters(self, m):
+        # default taus
+        taus = self.tau * torch.ones_like(m)
+        # compute m under all symmetry group representations
+        y = torch.einsum(
+            f"npq, ...q{'xyz'[:self.lattice.D]} -> n...{'xyz'[:self.lattice.D]}p",
+            self.rep, m
+        )
+        # compute higher-order taus from neural network
+        y = self.net(y).sum(0)
+        # move Q-axis in front of grid axes
+        q_dim = len(y.shape) - 1 - self.lattice.D
+        tau = y.moveaxis(len(y.shape) - 1, q_dim)
+        # render tau > 0.5
+        tau = self.gt_half(tau)
+        # apply learned taus to highest order moments
+        moment_orders = np.sort(np.unique(self.moment_order))
+        if not len(moment_orders) >= tau.shape[q_dim]:
+            raise LettuceInvalidNetworkOutput(
+                f"Network produced {tau.shape[q_dim]} taus but only {len(moment_orders)} "
+                f"are available. Moments of each order are relaxed with the same tau."
+            )
+        learned_tau_moment_orders = moment_orders[-tau.shape[q_dim]:]
+        for i, order in enumerate(learned_tau_moment_orders):
+            taus[self.moment_order == order] = tau[i]
+        return taus
+
+    def forward(self, f):
+        m = self.trafo.transform(f)
+        taus = self._compute_relaxation_parameters(m)
+        meq = self.trafo.equilibrium(m)
+        m_postcollision = m - 1. / taus * (m - meq)
+        return self.trafo.inverse_transform(m_postcollision)
+
+

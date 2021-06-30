@@ -174,6 +174,10 @@ class SymmetryGroup(list):
     def permutations(self):
         return np.stack([symmetry.permutation(self.stencil) for symmetry in self])
 
+    @property
+    def inverse_permutations(self):
+        return np.stack([InverseSymmetry(symmetry).permutation(self.stencil) for symmetry in self])
+
     def _new_symmetries(self, candidates):
         result = []
         for c in candidates:

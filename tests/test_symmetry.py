@@ -93,6 +93,10 @@ def test_permutations(symmetry_group):
         assert np.allclose(perm1[perm2], np.arange(symmetry_group.stencil.Q()))
         assert np.allclose(perm2[perm1], np.arange(symmetry_group.stencil.Q()))
 
+    for p, pinv in zip(symmetry_group.permutations, symmetry_group.inverse_permutations):
+        assert (p[pinv] == np.arange(symmetry_group.stencil.Q())).all()
+        assert (pinv[p] == np.arange(symmetry_group.stencil.Q())).all()
+
 
 def test_feq_equivariance(symmetry_group, dtype_device):
     dtype, device = dtype_device

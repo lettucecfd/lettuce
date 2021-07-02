@@ -378,7 +378,7 @@ class EquivariantNeuralCollision(torch.nn.Module):
         self.net = tau_net.to(dtype=self.lattice.dtype, device=self.lattice.device)
         # symmetries
         symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)
-        self.rep = symmetry_group.moment_representations(moment_transform)
+        self.rep = symmetry_group.moment_action(moment_transform)
         # infer moment order from moment name
         self.moment_order = np.array([sum(name.count(x) for x in "xyz") for name in moment_transform.names])
         self.last_taus = None

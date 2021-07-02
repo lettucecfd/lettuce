@@ -9,6 +9,9 @@ from lettuce.util import LettuceCollisionNotDefined
 from lettuce.moments import DEFAULT_TRANSFORM
 
 
+pytestmark = pytest.mark.slow
+
+
 def test_four_rotations(stencil):
     for i in range(stencil.D()):
         for j in range(i + 1, stencil.D()):
@@ -106,8 +109,8 @@ def test_moment_representations(symmetry_group):
         transform = DEFAULT_TRANSFORM[symmetry_group.stencil]
     except KeyError:
         pytest.skip("No default transform for this stencil")
-    rep = symmetry_group.moment_representations(transform)
-    irep = symmetry_group.inverse_moment_representations(transform)
+    rep = symmetry_group.moment_action(transform)
+    irep = symmetry_group.inverse_moment_action(transform)
     # test if this is a representation
     # group op = matrix multiply
     for i, symmetry in enumerate(symmetry_group):
@@ -171,3 +174,20 @@ def test_non_equivariant_mrt(dtype_device):
         if not are_equal:
             is_equivariant = False
     assert not is_equivariant
+
+
+def test_multiplication_and_inverse_table(symmetry_group):
+    for i, symmetry1 in enumerate(symmetry_group):
+        assert are_symmetries_equal(
+            symmetry_group[symmetry_group.inverse_table[i]],
+            InverseSymmetry(symmetry1),
+            symmetry_group.stencil
+        )
+        for j, symmetry2 in enumerate(symmetry_group):
+            assert are_symmetries_equal(
+                symmetry_group[symmetry_group.multiplication_table[i, j]],
+                ChainedSymmetry(symmetry1, symmetry2),
+                symmetry_group.stencil
+            )
+
+

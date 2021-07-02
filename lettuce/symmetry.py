@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 __all__ = [
     "is_symmetry", "are_symmetries_equal", "Symmetry",
     "SymmetryGroup", "InverseSymmetry", "ChainedSymmetry", "Identity",
@@ -174,6 +175,8 @@ class SymmetryGroup(list):
                 if n not in self:
                     self.append(n)
             new_symmetries = self._new_symmetries(candidates)
+        self._multiplication_table = None
+        self._inverse_table = None
 
     @property
     def permutations(self):
@@ -183,10 +186,29 @@ class SymmetryGroup(list):
     def inverse_permutations(self):
         return np.stack([InverseSymmetry(symmetry).permutation(self.stencil) for symmetry in self])
 
-    def moment_representations(self, moment_transform):
+    @property
+    def multiplication_table(self):
+        if self._multiplication_table is None:
+            m = np.zeros([len(self), len(self)], dtype=int)
+            for i, symmetry1 in enumerate(self):
+                for j, symmetry2 in enumerate(self):
+                    m[i,j] = self.index(ChainedSymmetry(symmetry1, symmetry2))
+            self._multiplication_table = m
+        return self._multiplication_table
+
+    @property
+    def inverse_table(self):
+        if self._inverse_table is None:
+            inv = np.zeros([len(self)], dtype=int)
+            for i, symmetry in enumerate(self):
+                inv[i] = self.index(InverseSymmetry(symmetry))
+            self._inverse_table = inv
+        return self._inverse_table
+
+    def moment_action(self, moment_transform):
         return (moment_transform.matrix[:, self.permutations] @ moment_transform.inverse).swapaxes(0, 1)
 
-    def inverse_moment_representations(self, moment_transform):
+    def inverse_moment_action(self, moment_transform):
         return (moment_transform.matrix[:, self.inverse_permutations] @ moment_transform.inverse).swapaxes(0, 1)
 
     def _new_symmetries(self, candidates):

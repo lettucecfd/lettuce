@@ -27,15 +27,4 @@ from lettuce.force import *
 from lettuce.observables import *
 
 from lettuce.flows import *
-
-# torch import is required
-# by the generated files
-# to be loaded correct
-
-import torch
-
-# generated extension files
-
-#import lettuce.cpp
-import lettuce.cuda
-
+from lettuce.extension import *

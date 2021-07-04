@@ -3,12 +3,14 @@
 cmake_minimum_required(VERSION 3.1)
 
 set(THIS CudaExt)
-project(${THIS} LANGUAGES CUDA)
+project(${THIS} LANGUAGES CXX CUDA)
 
 # Fetch all the Information necessary to build the Cuda Extension
 
-file(GLOB CUDA_CU_SOURCES *.cu)
+file(GLOB CUDA_CU_SOURCES  *.cu)
 file(GLOB CUDA_CUH_SOURCES *.cuh)
+file(GLOB CUDA_CPP_SOURCES *.cpp)
+file(GLOB CUDA_HPP_SOURCES *.hpp)
 
 execute_process(COMMAND python -c "from torch.utils.cpp_extension import _find_cuda_home; print(_find_cuda_home(), end='')" OUTPUT_VARIABLE CUDA_HOME_DIR)
 set(CUDA_INCLUDE_DIR ${CUDA_HOME_DIR}/include)
@@ -22,11 +24,14 @@ execute_process(COMMAND python -c "from torch.utils.cpp_extension import library
 add_library(${THIS})
 set_target_properties(${THIS} PROPERTIES
         LINKER_LANGUAGE            CUDA
+        CXX_STANDARD               11
+        CXX_STANDARD_REQUIRED      ON
+        CXX_SEPARABLE_COMPILATION  ON
         CUDA_STANDARD              11
         CUDA_STANDARD_REQUIRED     ON
         CUDA_SEPARABLE_COMPILATION ON)
 
-foreach(CUDA_SOURCE IN LISTS CUDA_CU_SOURCES CUDA_CUH_SOURCES)
+foreach(CUDA_SOURCE IN LISTS CUDA_CU_SOURCES CUDA_CUH_SOURCES CUDA_CPP_SOURCES CUDA_HPP_SOURCES)
     target_sources(${THIS} PUBLIC ${CUDA_SOURCE})
     message(STATUS "Added Source  File      to Target ${THIS}: ${CUDA_SOURCE}")
 endforeach()

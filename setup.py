@@ -4,7 +4,7 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
-from torch.utils.cpp_extension import BuildExtension, CUDAExtensio  # , CppExtension
+from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 import versioneer
 
 with open('README.rst') as readme_file:
@@ -16,6 +16,7 @@ with open('HISTORY.rst') as history_file:
 requirements = ['Click>=6.0', "torch>=1.2", "numpy", "matplotlib", "pyevtk"]
 
 setup_requirements = ['pytest-runner', 'pytest']
+
 
 def get_cmdclass():
     """merge cmdclass of versioneer with the cmdclass of torch's cpp build extension"""
@@ -56,15 +57,18 @@ setup(
     name='lettuce',
     packages=find_packages(include=['lettuce', 'lettuce.flows']),
     ext_modules=[
-        #CppExtension(
+        # CppExtension(
         #    name='lettuce.cpp',
         #    sources=['lettuce/extensions/cpp/lettuce.cpp'],
         #    extra_compile_args=['-fopenmp'],
         #    extra_link_args=['-lgomp']
-        #),
+        # ),
         CUDAExtension(
-            name='lettuce.cuda',
-            sources=['lettuce/extensions/cuda/lettuce.cu']
+            name='lettuce._CudaExtension',
+            sources=[
+                'lettuce/extensions/cuda/lettuce_cuda.cpp',
+                'lettuce/extensions/cuda/lettuce_cuda_kernel.cu'
+            ]
         )
     ],
     setup_requires=setup_requirements,
@@ -74,4 +78,3 @@ setup(
     cmdclass=get_cmdclass(),
     zip_safe=False,
 )
-

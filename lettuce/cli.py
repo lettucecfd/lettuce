@@ -66,10 +66,6 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
 
     # setup and run simulation
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    print(device)
-    print(dtype)
-    print(type(device))
-    print(type(dtype))
     flow_class, stencil = flow_by_name[flow]
     lattice = Lattice(stencil, device, dtype)
     flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)

@@ -97,27 +97,15 @@ def baseline(num_steps, resolution):
 
 
 if __name__ == '__main__':
+    def bench(num_steps, resolution):
+        print(f"bench for num_steps:{num_steps} and resolution:{resolution}")
+        print(f"extension: {extension(num_steps, resolution)} mlups")
+        print(f"baseline:  {baseline(num_steps, resolution)} mlups")
+        print()
 
-    print("bench for num_steps:10 and resolution:1026")
-    print(f"extension: {extension(10, 1026)} mlups")
-    print(f"baseline:  {baseline(10, 1026)} mlups")
-    print()
 
-    print("bench for num_steps:100 and resolution:1026")
-    print(f"extension: {extension(100, 1026)} mlups")
-    print(f"baseline:  {baseline(100, 1026)} mlups")
-    print()
-
-    print("bench for num_steps:10 and resolution:3074")
-    print(f"extension: {extension(10, 3074)} mlups")
-    print(f"baseline:  {baseline(10, 3074)} mlups")
-    print()
-
-    print("bench for num_steps:100 and resolution:3074")
-    print(f"extension: {extension(100, 3074)} mlups")
-    print(f"baseline:  {baseline(100, 3074)} mlups")
-    print()
-
-    print("bench for num_steps:250 and resolution:2050")
-    print(f"extension: {extension(250, 2050)} mlups")
-    print(f"baseline:  {baseline(250, 2050)} mlups")
+    bench(10, 1024)
+    bench(100, 1024)
+    bench(10, 3072)
+    bench(100, 3072)
+    bench(250, 2048)

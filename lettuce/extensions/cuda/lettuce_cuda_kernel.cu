@@ -47,81 +47,59 @@ using c_index_t = const unsigned int;
  * @param f_next a memory region as big as f which is used to write the simulation results into
  * @param collision the calculated collision value which will be added to f before streaming. TODO later this value must be calculated locally
  * @param width the width of the field
- * @param length the length of the memory region (f/f_next) which is equal to with*height of the field
+ * @param length the length of the memory region (f/f_next) (second dimension) which is equal to with*height of the field
  */
-template<typename scalar_t, index_t horizontal_offset, index_t vertical_offset>
+template<typename scalar_t>
 __global__ void
-lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t *collision, c_index_t width, c_index_t length)
+lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t *collision, c_index_t width, c_index_t height, c_index_t length)
 {
+    // pre calculate the vertical and horizontal indices before streaming
     const auto horizontal_index = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto vertical_index = blockIdx.y * blockDim.y + threadIdx.y;
+    const auto vertical_index   = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // pre calculate the vertical and horizontal offsets before streaming
+    const auto &horizontal_offset = horizontal_index;
+    const auto vertical_offset    = vertical_index * width;
+
+    // pre calculate the vertical and horizontal offsets after streaming
+    const auto vertical_t_offset   = ((vertical_index == 0)            ? height : (vertical_index - 1)) * width;
+    const auto vertical_b_offset   = (((vertical_index + 1) == height) ? 0      : (vertical_index + 1)) * width;
+    const auto horizontal_l_offset = (horizontal_index == 0)           ? width  : (horizontal_index - 1);
+    const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0      : (horizontal_index + 1);
+
+    // pre calculate the current index
+    const auto index = vertical_offset + horizontal_offset;
 
     /*
      * read and collide
      */
 
-    // calculate the index for each force
-    const auto index = ([&]()
-    {
-        const auto previous_lines_offset = (vertical_index + vertical_offset) * width;
-        const auto previous_nodes_offset = horizontal_index + horizontal_offset;
-        return previous_lines_offset + previous_nodes_offset;
-    }());
-    const auto index_r = (length * 1u) + index;
-    const auto index_b = (length * 2u) + index;
-    const auto index_l = (length * 3u) + index;
-    const auto index_t = (length * 4u) + index;
-    const auto index_br = (length * 5u) + index;
-    const auto index_tr = (length * 6u) + index;
-    const auto index_tl = (length * 7u) + index;
-    const auto index_bl = (length * 8u) + index;
-
-    // apply collision
-    const auto force_tl_next = f[index_tl] + collision[index_tl];
-    const auto force_t_next  = f[index_t]  + collision[index_t];
-    const auto force_tr_next = f[index_tr] + collision[index_tr];
-    const auto force_l_next  = f[index_l]  + collision[index_l];
-    const auto force_next    = f[index]    + collision[index];
-    const auto force_r_next  = f[index_r]  + collision[index_r];
-    const auto force_bl_next = f[index_bl] + collision[index_bl];
-    const auto force_b_next  = f[index_b]  + collision[index_b];
-    const auto force_br_next = f[index_br] + collision[index_br];
+    // TODO write some inline documentation
+    auto index_it = index; const auto force_next    = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_r_next  = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_b_next  = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_l_next  = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_t_next  = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_br_next = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_tr_next = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_tl_next = f[index_it] + collision[index_it];
+    index_it += length;    const auto force_bl_next = f[index_it] + collision[index_it];
 
     /*
      * steam and write
      */
 
-    // helper functions (for readability) (will be optimised away)
-    const auto stream_l = [](c_index_t i)
-    { return i - 1; };
-    const auto stream_r = [](c_index_t i)
-    { return i + 1; };
-    const auto stream_t = [&width](c_index_t i)
-    { return i - width; };
-    const auto stream_b = [&width](c_index_t i)
-    { return i + width; };
+    f_next[index] = force_next;
 
-    // calculate the new index for each force
-    const auto &streamed_index = index;
-    const auto streamed_index_r = stream_r(index_r);
-    const auto streamed_index_b = stream_b(index_b);
-    const auto streamed_index_l = stream_l(index_l);
-    const auto streamed_index_t = stream_t(index_t);
-    const auto streamed_index_br = stream_b(streamed_index_r);
-    const auto streamed_index_tr = stream_t(streamed_index_r);
-    const auto streamed_index_tl = stream_t(streamed_index_l);
-    const auto streamed_index_bl = stream_b(streamed_index_l);
-
-    // write next forces
-    f_next[streamed_index_tl] = force_tl_next;
-    f_next[streamed_index_t] = force_t_next;
-    f_next[streamed_index_tr] = force_tr_next;
-    f_next[streamed_index_l] = force_l_next;
-    f_next[streamed_index] = force_next;
-    f_next[streamed_index_r] = force_r_next;
-    f_next[streamed_index_bl] = force_bl_next;
-    f_next[streamed_index_b] = force_b_next;
-    f_next[streamed_index_br] = force_br_next;
+    // TODO write some inline documentation
+    auto dim_offset_it = length; f_next[dim_offset_it + horizontal_r_offset + vertical_offset  ] = force_r_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_offset   + vertical_b_offset] = force_b_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_offset  ] = force_l_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_offset   + vertical_t_offset] = force_t_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_r_offset + vertical_b_offset] = force_br_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_r_offset + vertical_t_offset] = force_tr_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_t_offset] = force_tl_next;
+    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_b_offset] = force_bl_next;
 }
 
 void
@@ -137,27 +115,16 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor coll
      * calculate constant values
      */
 
-    // TODO these values are used in a template. either dispatch the template or make these a preprocessor constant!
-    constexpr auto horizontal_offset = 1u;
-    constexpr auto vertical_offset = 1u;
-
     const auto width = static_cast<index_t> (f.sizes()[1]);
     const auto height = static_cast<index_t> (f.sizes()[2]);
 
     const auto block_count = ([&]()
     {
-        const auto horizontal_ghost_node_count = 2u * horizontal_offset;
-        const auto vertical_ghost_node_count = 2u * vertical_offset;
+        assert((width % thread_count.x) == 0u);
+        assert((height % thread_count.y) == 0u);
 
-        const auto processing_width = width - horizontal_ghost_node_count;
-        const auto processing_height = height - vertical_ghost_node_count;
-
-        // TODO check weather to wrap into a debug only
-        assert((processing_width % thread_count.x) == 0u);
-        assert((processing_height % thread_count.y) == 0u);
-
-        const auto horizontal_block_count = processing_width / thread_count.x;
-        const auto vertical_block_count = processing_height / thread_count.y;
+        const auto horizontal_block_count = width / thread_count.x;
+        const auto vertical_block_count = height / thread_count.y;
 
         return dim3{horizontal_block_count, vertical_block_count};
     }());
@@ -168,11 +135,12 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor coll
 
     AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_stream_and_collide", ([&]
     {
-        lettuce_cuda_stream_and_collide_kernel<scalar_t, 1u, 1u><<<block_count, thread_count>>>(
+        lettuce_cuda_stream_and_collide_kernel<scalar_t><<<block_count, thread_count>>>(
                 f.data<scalar_t>(),
                 f_next.data<scalar_t>(),
                 collision.data<scalar_t>(),
                 width,
+                height,
                 width * height
         );
     }));

@@ -6,7 +6,6 @@ from copy import copy
 import pytest
 import numpy as np
 from lettuce import *
-import torch
 
 
 def test_collision_conserves_mass(Collision, f_all_lattices):
@@ -91,33 +90,3 @@ def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     collision = MRTCollision(lattice, np.array([0.5] * 9), Transform(lattice))
     f = collision(collision(f))
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
-
-
-@pytest.mark.slow
-def test_equivariant_mrt(symmetry_group, dtype_device):
-    dtype, device = dtype_device
-    lattice = Lattice(symmetry_group.stencil, dtype=dtype, device=device)
-    try:
-        moment_transform = get_default_moment_transform(lattice)
-    except LettuceException:
-        pytest.skip()
-    n_moment_orders = len(set([sum(name.count(x) for x in "xyz") for name in moment_transform.names]))
-    net = torch.nn.Linear(lattice.Q, n_moment_orders)
-    collision = EquivariantNeuralCollision(0.51, net, moment_transform)
-    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
-    for p in symmetry_group.permutations:
-        assert torch.allclose(
-            collision(f[p]),
-            collision(f)[p],
-            atol=1e-3
-        )
-
-
-def test_equivariant_mrt_failure():
-    lattice = Lattice(D2Q9, "cpu")
-    moment_transform = D2Q9Dellar(lattice)
-    net = torch.nn.Linear(lattice.Q, 6)
-    collision = EquivariantNeuralCollision(0.51, net, moment_transform)
-    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
-    with pytest.raises(LettuceInvalidNetworkOutput):
-        collision(f)

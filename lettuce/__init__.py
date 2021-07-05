@@ -27,5 +27,6 @@ from lettuce.simulation import *
 from lettuce.force import *
 from lettuce.observables import *
 from lettuce.symmetry import *
+from lettuce.neural import *
 
 from lettuce.flows import *

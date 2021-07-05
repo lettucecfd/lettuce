@@ -58,7 +58,7 @@ def dtype_device(request, device):
     return request.param, device
 
 
-@pytest.fixture(params=STENCILS, scope="session")
+@pytest.fixture(params=STENCILS)
 def stencil(request):
     """Run a test for all stencils."""
     return request.param
@@ -100,14 +100,14 @@ def f_transform(request, f_all_lattices):
         pytest.skip("Stencil not supported for this transform.")
 
 
-@pytest.fixture(params=COLLISION_MODELS, scope="session")
+@pytest.fixture(params=COLLISION_MODELS)
 def Collision(request):
     """Run a test for all stencils."""
     return request.param
 
 
-@pytest.fixture(scope="session")
-def symmetry_group(stencil):
-    group = SymmetryGroup(stencil)
+@pytest.fixture(params=STENCILS, scope="session", autouse=True)
+def symmetry_group(request):
+    group = SymmetryGroup(request.param)
     return group
 

@@ -45,10 +45,10 @@ class Transform:
         return [self.names.index(name) for name in moment_names]
 
     def transform(self, f):
-        return f
+        return self.lattice.einsum("ij,j->i", (self.matrix, f))
 
     def inverse_transform(self, m):
-        return m
+        return self.lattice.einsum("ij,j->i", (self.inverse, m))
 
     def equilibrium(self, m):
         """A very inefficient and basic implementation of the equilibrium moments.
@@ -81,12 +81,6 @@ class D1Q3Transform(Transform):
         super(D1Q3Transform, self).__init__(lattice, self.names)
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     # def equilibrium(self, m):
     #    # TODO
@@ -125,12 +119,6 @@ class D2Q9Dellar(Transform):
         )
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
         meq = torch.zeros_like(m)
@@ -181,12 +169,6 @@ class D2Q9Lallemand(Transform):
         )
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
         """From Lallemand and Luo"""
@@ -403,12 +385,6 @@ class D3Q27Hermite(Transform):
         )
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
         meq = torch.zeros_like(m)

@@ -100,9 +100,6 @@ def test_equivariant_net_selected_moments(symmetry_group, dtype_device):
     moment_orders = np.array([sum(name.count(x) for x in "xyz") for name in moments.names])
     in_indices = np.where(moment_orders <= 2)[0]
     out_indices = np.where(moment_orders > 2)[0]
-    #net = torch.nn.Linear(len(in_indices), len(out_indices))
-    #in_indices = np.arange(1 + lattice.D)
-    #out_indices = np.arange(1 + lattice.D, lattice.Q)
     net = torch.nn.Sequential(
         torch.nn.Linear(len(in_indices), 23),
         torch.nn.ReLU(),
@@ -144,8 +141,6 @@ def test_equivariant_mrt(symmetry_group, dtype_device):
     collision = EquivariantNeuralCollision(0.7, net, moment_transform)
     f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
     for p in symmetry_group.permutations:
-        print(torch.norm(collision(f[p]) - collision(f)[p]).item())
-        print(collision(f[p])/(collision(f)[p]))
         assert torch.allclose(
             collision(f[p]),
             collision(f)[p],

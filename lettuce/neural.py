@@ -3,21 +3,41 @@ import string
 import torch
 import numpy as np
 
-from lettuce.util import LettuceInvalidNetworkOutput, LettuceException
 from lettuce.symmetry import SymmetryGroup
 
 __all__= ["GConv", "GConvPermutation", "EquivariantNet", "EquivariantNeuralCollision"]
 
 
 class GConv(torch.nn.Module):
-    """Group Convolution Layer
+    """Group Convolution Layer.
+    Linear layer without bias that is equivariant with respect to a given symmetry group.
+
+    Parameters
+    ----------
+    in_channels : int
+        number of input channels
+    out_channels : int
+        number of input channels
+    group_action : torch.Tensor
+        Tensor of shape (group_order, dim, dim) that defines the group representation in GL(n).
+        For the LBM: M * P_g * M^{-1} gives the moment action for the g-th permutation of fs.
+    inverse_group_action : torch.Tensor
+        Tensor of shape (group_order, dim, dim) that defines the inverse group representation in GL(n).
+    in_indices : np.ndarray
+        Index array. Indices of the input tensors that are convolved.
+    out_indices : np.ndarray
+        Index array. Indices of the output tensors of the convolution.
+    feature_dim : int
+        Dimensions that contains the features (in the LBM, the Q-dimension).
+    channel_dim : int
+        Dimension that contains the channels.
     """
     def __init__(
         self,
         in_channels,
         out_channels,
         group_actions,
-        inverse_group_actions=None,
+        inverse_group_actions,
         in_indices=None,
         out_indices=None,
         feature_dim=1,
@@ -53,6 +73,16 @@ class GConv(torch.nn.Module):
 
 class GConvPermutation(GConv):
     """Group Convolution Layer based on permutations as group actions
+
+    See GConv. The only difference are in the following parameters.
+
+    Parameters
+    ----------
+    group_action : np.ndarray
+        Index tensor of shape (group_order, dim) that defines the permutations.
+    inverse_group_action : np.ndarray
+        Index tensor of shape (group_order, dim) that defines the permutations.
+
     """
     def __init__(
         self,
@@ -89,6 +119,16 @@ class EquivariantNet(torch.nn.Module):
 
     Parameters
     ----------
+    net : torch.nn.Module
+        The net that is wrapped to be equivariant.
+    group_actions : torch.Tensor
+        see GConv
+    inverse_group_actions : torch.Tensor
+        see GConv
+    in_indices : np.ndarray
+        see GConv
+    out_indices : np.ndarray
+        see GConv
     """
     def __init__(
         self,
@@ -133,9 +173,14 @@ class EquivariantNeuralCollision(torch.nn.Module):
         ...
     moment_transform : Transform
         The moment transformation.
-
+    in_indices : np.ndarray
+        Indices of the moments that the learned relaxation rates are conditined on.
+        If None, use all moments with order <= 2.
+    out_indices : np.ndarray
+        Indices of the moments that relaxation rates are learned for.
+        If None, use all moments with order > 2.
     """
-    def __init__(self, lower_tau, tau_net, moment_transform):
+    def __init__(self, lower_tau, tau_net, moment_transform, in_indices=None, out_indices=None):
         super().__init__()
         self.trafo = moment_transform
         self.lattice = moment_transform.lattice
@@ -145,8 +190,8 @@ class EquivariantNeuralCollision(torch.nn.Module):
         self.last_taus = None
         # symmetries; wrap tau net equivariant
         symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)
-        self.in_indices = np.where(self.moment_order <= 2)[0]
-        self.out_indices = np.where(self.moment_order > 2)[0]
+        self.in_indices = np.where(self.moment_order <= 2)[0] if in_indices is None else in_indices
+        self.out_indices = np.where(self.moment_order > 2)[0] if out_indices is None else out_indices
         self.net = EquivariantNet(
             tau_net,
             symmetry_group.moment_action(moment_transform),

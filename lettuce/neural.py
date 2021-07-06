@@ -107,9 +107,17 @@ class EquivariantNet(torch.nn.Module):
         self.net = net
 
     def forward(self, x):
-        x_in_group = torch.einsum("gij,...j->g...i", self.inverse_actions[:, :, self.in_indices], x)
+        x_in_group = torch.einsum(
+            "gij,...j->g...i",
+            self.inverse_actions[:, self.in_indices, :][:, :, self.in_indices],
+            x
+        )
         out_group = self.net(x_in_group)
-        out = torch.einsum("gij,g...j->...i", self.actions[:, self.out_indices, :], out_group)
+        out = torch.einsum(
+            "gij,g...j->...i",
+            self.actions[:, self.out_indices, :][:, :, self.out_indices],
+            out_group
+        )
         return out
 
 
@@ -121,15 +129,8 @@ class EquivariantNeuralCollision(torch.nn.Module):
     ----------
     lower_tau : float
         The default relaxation parameter operating on lower-order moments.
-        Lower-order moments are defined in the sense that `tau_net`
-        does not produce output for those orders. See documentation there.
     tau_net : torch.nn.Module
-        A network that receives moments and returns unconstrained relaxation parameters for the highest-order moments.
-        The input shape to the network is (..., Q), where "..." is any number of batch and grid dimensions
-        and Q is the number of discrete distributions at each node.
-        The output shape is (..., N), where N is the number of moment ORDERS, whose relaxation is prescribed
-        by the network. Only the N highest moment orders will be relaxed.
-        Note that the output of the network should be unconstrained and will be rendered > 0.5 by this class.
+        ...
     moment_transform : Transform
         The moment transformation.
 
@@ -139,44 +140,42 @@ class EquivariantNeuralCollision(torch.nn.Module):
         self.trafo = moment_transform
         self.lattice = moment_transform.lattice
         self.tau = lower_tau
-        self.net = tau_net.to(dtype=self.lattice.dtype, device=self.lattice.device)
-        # symmetries
-        symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)
-        self.rep = symmetry_group.moment_action(moment_transform)
         # infer moment order from moment name
         self.moment_order = np.array([sum(name.count(x) for x in "xyz") for name in moment_transform.names])
         self.last_taus = None
+        # symmetries; wrap tau net equivariant
+        symmetry_group = SymmetryGroup(moment_transform.lattice.stencil)
+        self.in_indices = np.where(self.moment_order <= 2)[0]
+        self.out_indices = np.where(self.moment_order > 2)[0]
+        self.net = EquivariantNet(
+            tau_net,
+            symmetry_group.moment_action(moment_transform),
+            symmetry_group.inverse_moment_action(moment_transform),
+            in_indices=self.in_indices,
+            out_indices=self.out_indices
+        )
+        self.net.to(dtype=self.lattice.dtype, device=self.lattice.device)
 
     @staticmethod
     def gt_half(a):
         """transform into a value > 0.5"""
-        return 0.5 + torch.exp(a)
+        result = 1.5 + torch.nn.ELU()(a)
+        assert (result >= 0.5).all()
+        return result
 
     def _compute_relaxation_parameters(self, m):
+        # move Q-axis to the back
+        q_dim = len(m.shape) - 1 - self.lattice.D
+        m = m.moveaxis(q_dim, len(m.shape)-1)
         # default taus
         taus = self.tau * torch.ones_like(m)
-        # compute m under all symmetry group representations
-        y = torch.einsum(
-            f"npq, ...q{'xyz'[:self.lattice.D]} -> n...{'xyz'[:self.lattice.D]}p",
-            self.rep, m
-        )
-        # compute higher-order taus from neural network
-        y = self.net(y).sum(0)
+        # compute higher-order taus from lower-order ones through neural network
+        tau = self.net(m[..., self.in_indices])
         # move Q-axis in front of grid axes
-        q_dim = len(y.shape) - 1 - self.lattice.D
-        tau = y.moveaxis(len(y.shape) - 1, q_dim)
         # render tau > 0.5
         tau = self.gt_half(tau)
-        # apply learned taus to highest order moments
-        moment_orders = np.sort(np.unique(self.moment_order))
-        if not len(moment_orders) >= tau.shape[q_dim]:
-            raise LettuceInvalidNetworkOutput(
-                f"Network produced {tau.shape[q_dim]} taus but only {len(moment_orders)} "
-                f"are available. Moments of each order are relaxed with the same tau."
-            )
-        learned_tau_moment_orders = moment_orders[-tau.shape[q_dim]:]
-        for i, order in enumerate(learned_tau_moment_orders):
-            taus[self.moment_order == order] = tau[i]
+        taus[..., self.out_indices] = tau
+        taus = taus.moveaxis(len(tau.shape) - 1, q_dim)
         return taus
 
     def forward(self, f):

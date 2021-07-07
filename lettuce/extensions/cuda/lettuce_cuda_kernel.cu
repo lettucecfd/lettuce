@@ -31,6 +31,121 @@ using c_index_t = const unsigned int;
  * ```
  */
 
+template<typename scalar_t>
+__device__ __forceinline__ void
+d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
+{
+    /*
+     * define some constants for the d2q9 stencil
+     */
+
+    constexpr scalar_t sqrt_3 = static_cast<scalar_t> (1.7320508075688772935274463415058723669428052538103806280558069794);
+    constexpr scalar_t d2q9_e[9][2] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}, {1.0, 1.0}, {-1.0, 1.0}, {-1.0, -1.0}, {1.0, -1.0}};
+    constexpr scalar_t d2q9_w[9] = {4.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
+    constexpr scalar_t d2q9_cs = 1.0 / sqrt_3;
+    constexpr scalar_t d2q9_cs_pow_two = d2q9_cs * d2q9_cs;
+    constexpr scalar_t d2q9_two_cs_pow_two = d2q9_cs_pow_two + d2q9_cs_pow_two;
+
+    /*
+     * begin calculating the equilibrium
+     */
+
+    const scalar_t j[2] = {
+            d2q9_e[0][0] * f[0]
+                    + d2q9_e[1][0] * f[1]
+                    + d2q9_e[2][0] * f[2]
+                    + d2q9_e[3][0] * f[3]
+                    + d2q9_e[4][0] * f[4]
+                    + d2q9_e[5][0] * f[5]
+                    + d2q9_e[6][0] * f[6]
+                    + d2q9_e[7][0] * f[7]
+                    + d2q9_e[8][0] * f[8],
+            d2q9_e[0][1] * f[0]
+                    + d2q9_e[1][1] * f[1]
+                    + d2q9_e[2][1] * f[2]
+                    + d2q9_e[3][1] * f[3]
+                    + d2q9_e[4][1] * f[4]
+                    + d2q9_e[5][1] * f[5]
+                    + d2q9_e[6][1] * f[6]
+                    + d2q9_e[7][1] * f[7]
+                    + d2q9_e[8][1] * f[8]
+    };
+
+    const scalar_t rho = f[0] + f[1] + f[2] + f[3] + f[4] + f[5] + f[6] + f[7] + f[8];
+
+    const scalar_t u[2] = {j[0] / rho, j[1] / rho};
+
+    const scalar_t exu[9] = {
+            d2q9_e[0][0] * u[0] + d2q9_e[0][1] * u[1],
+            d2q9_e[1][0] * u[0] + d2q9_e[1][1] * u[1],
+            d2q9_e[2][0] * u[0] + d2q9_e[2][1] * u[1],
+            d2q9_e[3][0] * u[0] + d2q9_e[3][1] * u[1],
+            d2q9_e[4][0] * u[0] + d2q9_e[4][1] * u[1],
+            d2q9_e[5][0] * u[0] + d2q9_e[5][1] * u[1],
+            d2q9_e[6][0] * u[0] + d2q9_e[6][1] * u[1],
+            d2q9_e[7][0] * u[0] + d2q9_e[7][1] * u[1],
+            d2q9_e[8][0] * u[0] + d2q9_e[8][1] * u[1]
+    };
+    const scalar_t uxu = u[0] * u[0] + u[1] * u[1];
+
+    // TODO is there a better name for this variables?
+
+    const scalar_t tmp0[9] = {
+            exu[0] / d2q9_cs_pow_two,
+            exu[1] / d2q9_cs_pow_two,
+            exu[2] / d2q9_cs_pow_two,
+            exu[3] / d2q9_cs_pow_two,
+            exu[4] / d2q9_cs_pow_two,
+            exu[5] / d2q9_cs_pow_two,
+            exu[6] / d2q9_cs_pow_two,
+            exu[7] / d2q9_cs_pow_two,
+            exu[8] / d2q9_cs_pow_two
+    };
+    const scalar_t tmp[9] = {
+            rho * (((exu[0] + exu[0] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[0] * tmp0[0])) + 1),
+            rho * (((exu[1] + exu[1] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[1] * tmp0[1])) + 1),
+            rho * (((exu[2] + exu[2] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[2] * tmp0[2])) + 1),
+            rho * (((exu[3] + exu[3] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[3] * tmp0[3])) + 1),
+            rho * (((exu[4] + exu[4] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[4] * tmp0[4])) + 1),
+            rho * (((exu[5] + exu[5] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[5] * tmp0[5])) + 1),
+            rho * (((exu[6] + exu[6] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[6] * tmp0[6])) + 1),
+            rho * (((exu[7] + exu[7] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[7] * tmp0[7])) + 1),
+            rho * (((exu[8] + exu[8] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[8] * tmp0[8])) + 1)
+    };
+
+    const scalar_t feq[9] = {
+            tmp[0] * d2q9_w[0],
+            tmp[1] * d2q9_w[1],
+            tmp[2] * d2q9_w[2],
+            tmp[3] * d2q9_w[3],
+            tmp[4] * d2q9_w[4],
+            tmp[5] * d2q9_w[5],
+            tmp[6] * d2q9_w[6],
+            tmp[7] * d2q9_w[7],
+            tmp[8] * d2q9_w[8]
+    };
+
+    /*
+     * avoid recalculating the inverse of tau
+     */
+
+    const scalar_t tau_inv = 1.0 / tau;
+
+    /*
+     * finally apply the collision operator
+     */
+
+    f[0] = f[0] - (tau_inv * (f[0] - feq[0]));
+    f[1] = f[1] - (tau_inv * (f[1] - feq[1]));
+    f[2] = f[2] - (tau_inv * (f[2] - feq[2]));
+    f[3] = f[3] - (tau_inv * (f[3] - feq[3]));
+    f[4] = f[4] - (tau_inv * (f[4] - feq[4]));
+    f[5] = f[5] - (tau_inv * (f[5] - feq[5]));
+    f[6] = f[6] - (tau_inv * (f[6] - feq[6]));
+    f[7] = f[7] - (tau_inv * (f[7] - feq[7]));
+    f[8] = f[8] - (tau_inv * (f[8] - feq[8]));
+}
+
 /**
  * collide and stream the given field (f)
  *
@@ -41,17 +156,15 @@ using c_index_t = const unsigned int;
  * 4. write all nodes (to f_next)
  *
  * @tparam scalar_t the scalar type of the tensor passed. typically defined by AT_DISPATCH_FLOATING_TYPES
- * @tparam horizontal_offset number of ghost nodes to the left and right of the processing data
- * @tparam vertical_offset number of ghost nodes to the top and bottom of the processing data
  * @param f the fluid forces at time t (at the moment)
  * @param f_next a memory region as big as f which is used to write the simulation results into
- * @param collision the calculated collision value which will be added to f before streaming. TODO later this value must be calculated locally
+ * @param tau TODO document better what tau is
  * @param width the width of the field
  * @param length the length of the memory region (f/f_next) (second dimension) which is equal to with*height of the field
  */
 template<typename scalar_t>
 __global__ void
-lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t *collision, c_index_t width, c_index_t height, c_index_t length)
+lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t tau, c_index_t width, c_index_t height, c_index_t length)
 {
     // pre calculate the vertical and horizontal indices before streaming
     const auto horizontal_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -71,39 +184,52 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
     const auto index = vertical_offset + horizontal_offset;
 
     /*
-     * read and collide
+     * standard stream & read
      */
 
-    // TODO write some inline documentation
-    auto index_it = index; const auto force_next    = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_r_next  = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_b_next  = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_l_next  = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_t_next  = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_br_next = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_tr_next = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_tl_next = f[index_it] + collision[index_it];
-    index_it += length;    const auto force_bl_next = f[index_it] + collision[index_it];
+    scalar_t next[9];
+    {
+        // center farce is trivial as it stays in place
+        next[0] = f[index];
+
+        // the index from which to stream from is calculated by:
+        // - a dimensional offset (which is calculated by iteration)
+        //   [by using an iterator bypass some multiplications]
+        // - a relative horizontal offset (corresponding to the dimension)
+        // - a relative vertical offset (corresponding to the dimension)
+        auto dim_offset_it = length; next[1] = f[dim_offset_it + horizontal_r_offset + vertical_offset  ];
+        dim_offset_it += length;     next[2] = f[dim_offset_it + horizontal_offset   + vertical_b_offset];
+        dim_offset_it += length;     next[3] = f[dim_offset_it + horizontal_l_offset + vertical_offset  ];
+        dim_offset_it += length;     next[4] = f[dim_offset_it + horizontal_offset   + vertical_t_offset];
+        dim_offset_it += length;     next[5] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
+        dim_offset_it += length;     next[6] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
+        dim_offset_it += length;     next[7] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
+        dim_offset_it += length;     next[8] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
+    }
 
     /*
-     * steam and write
+     * collide & write
      */
 
-    f_next[index] = force_next;
+    {
+        d3q9_quadratic_equilibrium_collision<scalar_t>(next, tau);
 
-    // TODO write some inline documentation
-    auto dim_offset_it = length; f_next[dim_offset_it + horizontal_r_offset + vertical_offset  ] = force_r_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_offset   + vertical_b_offset] = force_b_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_offset  ] = force_l_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_offset   + vertical_t_offset] = force_t_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_r_offset + vertical_b_offset] = force_br_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_r_offset + vertical_t_offset] = force_tr_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_t_offset] = force_tl_next;
-    dim_offset_it += length;     f_next[dim_offset_it + horizontal_l_offset + vertical_b_offset] = force_bl_next;
+        // the writing index is trivial as it is the same relative index in each dimension
+        // [by using an iterator bypass some multiplications]
+        auto index_it = index; f_next[index_it] = next[0];
+        index_it += length;    f_next[index_it] = next[1];
+        index_it += length;    f_next[index_it] = next[2];
+        index_it += length;    f_next[index_it] = next[3];
+        index_it += length;    f_next[index_it] = next[4];
+        index_it += length;    f_next[index_it] = next[5];
+        index_it += length;    f_next[index_it] = next[6];
+        index_it += length;    f_next[index_it] = next[7];
+        index_it += length;    f_next[index_it] = next[8];
+    }
 }
 
 void
-lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor collision)
+lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
 {
     /*
      * Use all threads of one block (asserting the block support 1024 threads)
@@ -138,7 +264,7 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor coll
         lettuce_cuda_stream_and_collide_kernel<scalar_t><<<block_count, thread_count>>>(
                 f.data<scalar_t>(),
                 f_next.data<scalar_t>(),
-                collision.data<scalar_t>(),
+                static_cast<scalar_t>(tau),
                 width,
                 height,
                 width * height

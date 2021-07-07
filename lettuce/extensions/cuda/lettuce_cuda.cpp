@@ -13,17 +13,17 @@
 // Forward declare Cuda Function
 
 void
-lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor collision);
+lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau);
 
 // C++ Interface
 
 void
-lettuce_stream_and_collide(at::Tensor f, at::Tensor f_next, at::Tensor collision)
+lettuce_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
 {
     assert(f.sizes().size() == 3);
     assert(f.sizes()[0] == 9);
 
-    lettuce_cuda_stream_and_collide(f, f_next, collision);
+    lettuce_cuda_stream_and_collide(f, f_next, tau);
 }
 
 #ifdef TORCH_EXTENSION_NAME

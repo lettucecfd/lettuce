@@ -14,6 +14,7 @@ import pstats
 import click
 import torch
 import numpy as np
+from torch import nn
 
 from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
 from lettuce import __version__ as lettuce_version
@@ -146,10 +147,19 @@ def convergence(ctx, init_f_neq, native):
 
                 simulation._report()
 
-                # print(simulation.f.shape)
-
             else:
-                simulation.step(1)
+                if simulation.i == 0:
+                    simulation._report()
+
+                simulation.i += 1
+
+                simulation.f = simulation.streaming(simulation.f)
+                simulation.f = simulation.collision(simulation.f)
+
+                for boundary in simulation._boundaries:
+                    simulation.f = boundary(simulation.f)
+
+                simulation._report()
 
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
@@ -166,6 +176,111 @@ def convergence(ctx, init_f_neq, native):
         sys.exit(1)
     else:
         return 0
+
+
+@main.command()
+@click.option("--native", default=True, help="")
+@click.pass_context
+def scratch(ctx, native):
+    device = torch.device("cuda:0")
+    dtype = torch.double
+    flow_class = TaylorGreenVortex2D
+    stencil = D2Q9
+
+    def init(resolution):
+        lattice = Lattice(stencil, device, dtype)
+        flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
+        force = Guo(
+            lattice,
+            tau=flow.units.relaxation_parameter_lu,
+            acceleration=flow.units.convert_acceleration_to_lu(flow.force)
+        ) if hasattr(flow, "acceleration") else None
+        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
+        streaming = StandardStreaming(lattice)
+        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        return lattice, collision, streaming, simulation
+
+    def _stream_and_collide(simulation, native_, f_next=None):
+        if native_:
+            assert f_next is not None
+            stream_and_collide(simulation.f, f_next, simulation.collision.tau)
+            simulation.f, f_next = f_next, simulation.f
+        else:
+            simulation.streaming(simulation.f)
+            simulation.collision(simulation.f)
+
+    def simulate(num_steps, resolution, native_):
+
+        lattice, collision, streaming, simulation = init(resolution)
+        f_next = None if not native_ else torch.empty(simulation.f.shape, device=device, dtype=dtype)
+
+        start = timer()
+        for _ in range(num_steps):
+            simulation.i += 1
+            _stream_and_collide(simulation, native_=native_, f_next=f_next)
+
+        seconds = timer() - start
+        mlups = num_steps * simulation.lattice.rho(simulation.f).numel() / 1e6 / seconds
+        return simulation.f, mlups, seconds
+
+    def bench(num_steps, resolution):
+        print(f"bench for num_steps:{num_steps} and resolution:{resolution}")
+
+        _, mlups, _ = simulate(num_steps, resolution, native_=True)
+        del _
+        print(f"extension: {mlups} mlups")
+
+        _, mlups, _ = simulate(num_steps, resolution, native_=False)
+        del _
+        print(f"baseline:  {mlups} mlups\n")
+
+    def assert_equal(num_steps, resolution):
+        print(f"assert equal for num_steps:{num_steps} and resolution:{resolution}")
+
+        f_ext, _, _ = simulate(num_steps, resolution, native_=True)
+        f_org, _, _ = simulate(num_steps, resolution, native_=False)
+        mse = nn.MSELoss(reduction='none')(f_ext, f_org)
+
+        print(f"mse_max:  {torch.max(mse)}\n"
+              f"mse_min:  {torch.min(mse)}\n"
+              f"mse_sum:  {torch.sum(mse)}\n")
+
+    def test_streaming():
+        f = torch.empty((9, 16, 16), device=device, dtype=dtype)
+        f_next = torch.ones((9, 16, 16), device=device, dtype=dtype)
+
+        for q in range(9):
+            i = 1.0
+            for x in range(16):
+                for y in range(16):
+                    f[q, x, y] = i
+                    i = i + 1.0
+
+        stream_and_collide(f, f_next, 1.0)
+
+        torch.set_printoptions(edgeitems=8)
+        for q in range(9):
+            print(f"q := {q}\n{f[q]}\n{f_next[q]}\n")
+
+    # test_streaming()
+
+    # assert_equal(1, 128, native=native)
+    # assert_equal(2, 128, native=native)
+    # assert_equal(16, 128, native=native)
+    # assert_equal(32, 128, native=native)
+    # assert_equal(100, 128, native=native)
+
+    # bench(8000, 3072, native_=native)
+
+    simulate(1000, 2048, native_=True)
+
+    # bench(250, 1024)
+    # bench(250, 2048)
+    # bench(250, 3072)
+    # bench(1000, 3072)
+    # bench(2000, 2048)
+
+    return 0
 
 
 if __name__ == "__main__":

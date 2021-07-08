@@ -31,16 +31,6 @@ using c_index_t = const unsigned int;
  * ```
  */
 
-#define MM 0
-#define RM 1
-#define MB 2
-#define LM 3
-#define MT 4
-#define RB 5
-#define LB 6
-#define LT 7
-#define RT 8
-
 template<typename scalar_t>
 __device__ __forceinline__ void
 d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
@@ -49,7 +39,7 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
      * define some constants for the d2q9 stencil
      */
 
-    constexpr scalar_t sqrt_3 = static_cast<scalar_t> (1.7320508075688772935274463415058723669428052538103806280558069794);
+    constexpr auto sqrt_3 = static_cast<scalar_t> (1.7320508075688772935274463415058723669428052538103806280558069794);
     constexpr scalar_t d2q9_e[9][2] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}, {1.0, 1.0}, {-1.0, 1.0}, {-1.0, -1.0}, {1.0, -1.0}};
     constexpr scalar_t d2q9_w[9] = {4.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
     constexpr scalar_t d2q9_cs = 1.0 / sqrt_3;
@@ -112,15 +102,15 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
             exu[8] / d2q9_cs_pow_two
     };
     const scalar_t tmp[9] = {
-            rho * (((exu[0] + exu[0] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[0] * tmp0[0])) + 1),
-            rho * (((exu[1] + exu[1] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[1] * tmp0[1])) + 1),
-            rho * (((exu[2] + exu[2] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[2] * tmp0[2])) + 1),
-            rho * (((exu[3] + exu[3] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[3] * tmp0[3])) + 1),
-            rho * (((exu[4] + exu[4] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[4] * tmp0[4])) + 1),
-            rho * (((exu[5] + exu[5] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[5] * tmp0[5])) + 1),
-            rho * (((exu[6] + exu[6] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[6] * tmp0[6])) + 1),
-            rho * (((exu[7] + exu[7] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[7] * tmp0[7])) + 1),
-            rho * (((exu[8] + exu[8] - uxu) / d2q9_two_cs_pow_two) + (static_cast<scalar_t> (0.5) * (tmp0[8] * tmp0[8])) + 1)
+            rho * (((exu[0] + exu[0] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[0] * tmp0[0])) + 1.0),
+            rho * (((exu[1] + exu[1] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[1] * tmp0[1])) + 1.0),
+            rho * (((exu[2] + exu[2] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[2] * tmp0[2])) + 1.0),
+            rho * (((exu[3] + exu[3] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[3] * tmp0[3])) + 1.0),
+            rho * (((exu[4] + exu[4] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[4] * tmp0[4])) + 1.0),
+            rho * (((exu[5] + exu[5] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[5] * tmp0[5])) + 1.0),
+            rho * (((exu[6] + exu[6] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[6] * tmp0[6])) + 1.0),
+            rho * (((exu[7] + exu[7] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[7] * tmp0[7])) + 1.0),
+            rho * (((exu[8] + exu[8] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[8] * tmp0[8])) + 1.0)
     };
 
     const scalar_t feq[9] = {
@@ -181,8 +171,8 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
     const auto vertical_index   = blockIdx.y * blockDim.y + threadIdx.y;
 
     // pre calculate the vertical and horizontal offsets before streaming
-    const auto &horizontal_offset = horizontal_index;
-    const auto vertical_offset    = vertical_index * width;
+    const auto &horizontal_m_offset = horizontal_index;
+    const auto vertical_m_offset    = vertical_index * width;
 
     // pre calculate the vertical and horizontal offsets after streaming
     const auto vertical_t_offset   = ((vertical_index == 0)            ? height-1 : (vertical_index - 1)) * width;
@@ -191,7 +181,7 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
     const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0        : (horizontal_index + 1);
 
     // pre calculate the current index
-    const auto index = vertical_offset + horizontal_offset;
+    const auto index = vertical_m_offset + horizontal_m_offset;
 
     /*
      * standard stream & read
@@ -199,24 +189,35 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
 
     scalar_t next[9];
     {
+        // constants to visualize the streaming better
+        // maybe this is not necessary and we replace the values inline
+        constexpr index_t mm = 0;
+        constexpr index_t rm = 1;
+        constexpr index_t mb = 2;
+        constexpr index_t lm = 3;
+        constexpr index_t mt = 4;
+        constexpr index_t rb = 5;
+        constexpr index_t lb = 6;
+        constexpr index_t lt = 7;
+        constexpr index_t rt = 8;
         constexpr index_t opposite[9] = {0, 3, 4, 1, 2, 7, 8, 5, 6};
 
-        // center farce is trivial as it stays in place
-        next[MM] = f[index];
+        // center force is trivial as it stays in place
+        next[mm] = f[index];
 
         // the index from which to stream from is calculated by:
         // - a dimensional offset (which is calculated by iteration)
         //   [by using an iterator bypass some multiplications]
         // - a relative horizontal offset (corresponding to the dimension)
         // - a relative vertical offset (corresponding to the dimension)
-        auto dim_offset_it = length; next[opposite[RM]] = f[dim_offset_it + horizontal_r_offset + vertical_offset  ];
-        dim_offset_it += length;     next[opposite[MB]] = f[dim_offset_it + horizontal_offset   + vertical_b_offset];
-        dim_offset_it += length;     next[opposite[LM]] = f[dim_offset_it + horizontal_l_offset + vertical_offset  ];
-        dim_offset_it += length;     next[opposite[MT]] = f[dim_offset_it + horizontal_offset   + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[RB]] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
-        dim_offset_it += length;     next[opposite[LB]] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[LT]] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[RT]] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
+        auto dim_offset_it = length; next[opposite[rm]] = f[dim_offset_it + horizontal_r_offset + vertical_m_offset];
+        dim_offset_it += length;     next[opposite[mb]] = f[dim_offset_it + horizontal_m_offset + vertical_b_offset];
+        dim_offset_it += length;     next[opposite[lm]] = f[dim_offset_it + horizontal_l_offset + vertical_m_offset];
+        dim_offset_it += length;     next[opposite[mt]] = f[dim_offset_it + horizontal_m_offset + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[rb]] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
+        dim_offset_it += length;     next[opposite[lb]] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[lt]] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[rt]] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
     }
 
     /*
@@ -228,15 +229,15 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
 
         // the writing index is trivial as it is the same relative index in each dimension
         // [by using an iterator bypass some multiplications]
-        auto index_it = index; f_next[index_it] = next[MM];
-        index_it += length;    f_next[index_it] = next[RM];
-        index_it += length;    f_next[index_it] = next[MB];
-        index_it += length;    f_next[index_it] = next[LM];
-        index_it += length;    f_next[index_it] = next[MT];
-        index_it += length;    f_next[index_it] = next[RB];
-        index_it += length;    f_next[index_it] = next[LB];
-        index_it += length;    f_next[index_it] = next[LT];
-        index_it += length;    f_next[index_it] = next[RT];
+        auto index_it = index; f_next[index_it] = next[0];
+        index_it += length;    f_next[index_it] = next[1];
+        index_it += length;    f_next[index_it] = next[2];
+        index_it += length;    f_next[index_it] = next[3];
+        index_it += length;    f_next[index_it] = next[4];
+        index_it += length;    f_next[index_it] = next[5];
+        index_it += length;    f_next[index_it] = next[6];
+        index_it += length;    f_next[index_it] = next[7];
+        index_it += length;    f_next[index_it] = next[8];
     }
 }
 
@@ -281,5 +282,9 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
                 height,
                 width * height
         );
+        cudaDeviceSynchronize(); // TODO maybe replace with torch.cuda.sync().
+                                 //      this may be more efficient as is bridges
+                                 //      the time to return from the native code.
+                                 //      but maybe this time is not noticeable ...
     }));
 }

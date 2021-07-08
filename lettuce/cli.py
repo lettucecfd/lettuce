@@ -183,7 +183,7 @@ def convergence(ctx, init_f_neq, native):
 @click.pass_context
 def scratch(ctx, native):
     device = torch.device("cuda:0")
-    dtype = torch.double
+    dtype = torch.float
     flow_class = TaylorGreenVortex2D
     stencil = D2Q9
 

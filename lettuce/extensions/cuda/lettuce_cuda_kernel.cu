@@ -47,9 +47,16 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
     constexpr scalar_t d2q9_two_cs_pow_two = d2q9_cs_pow_two + d2q9_cs_pow_two;
 
     /*
+     * avoid recalculating the inverse of tau
+     */
+
+    const scalar_t tau_inv = 1.0 / tau;
+
+    /*
      * begin calculating the equilibrium
      */
 
+    const scalar_t rho = f[0] + f[1] + f[2] + f[3] + f[4] + f[5] + f[6] + f[7] + f[8];
     const scalar_t j[2] = {
               d2q9_e[0][0] * f[0]
             + d2q9_e[1][0] * f[1]
@@ -71,79 +78,25 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
             + d2q9_e[8][1] * f[8]
     };
 
-    const scalar_t rho = f[0] + f[1] + f[2] + f[3] + f[4] + f[5] + f[6] + f[7] + f[8];
-
     const scalar_t u[2] = {j[0] / rho, j[1] / rho};
-
-    const scalar_t exu[9] = {
-            d2q9_e[0][0] * u[0] + d2q9_e[0][1] * u[1],
-            d2q9_e[1][0] * u[0] + d2q9_e[1][1] * u[1],
-            d2q9_e[2][0] * u[0] + d2q9_e[2][1] * u[1],
-            d2q9_e[3][0] * u[0] + d2q9_e[3][1] * u[1],
-            d2q9_e[4][0] * u[0] + d2q9_e[4][1] * u[1],
-            d2q9_e[5][0] * u[0] + d2q9_e[5][1] * u[1],
-            d2q9_e[6][0] * u[0] + d2q9_e[6][1] * u[1],
-            d2q9_e[7][0] * u[0] + d2q9_e[7][1] * u[1],
-            d2q9_e[8][0] * u[0] + d2q9_e[8][1] * u[1]
-    };
     const scalar_t uxu = u[0] * u[0] + u[1] * u[1];
 
-    // TODO is there a better name for this variables?
+#pragma unroll
+    for (index_t i = 0; i < 9; ++i)
+    {
+        const scalar_t exu = d2q9_e[i][0] * u[0] + d2q9_e[i][1] * u[1];
 
-    const scalar_t tmp0[9] = {
-            exu[0] / d2q9_cs_pow_two,
-            exu[1] / d2q9_cs_pow_two,
-            exu[2] / d2q9_cs_pow_two,
-            exu[3] / d2q9_cs_pow_two,
-            exu[4] / d2q9_cs_pow_two,
-            exu[5] / d2q9_cs_pow_two,
-            exu[6] / d2q9_cs_pow_two,
-            exu[7] / d2q9_cs_pow_two,
-            exu[8] / d2q9_cs_pow_two
-    };
-    const scalar_t tmp[9] = {
-            rho * (((exu[0] + exu[0] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[0] * tmp0[0])) + 1.0),
-            rho * (((exu[1] + exu[1] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[1] * tmp0[1])) + 1.0),
-            rho * (((exu[2] + exu[2] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[2] * tmp0[2])) + 1.0),
-            rho * (((exu[3] + exu[3] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[3] * tmp0[3])) + 1.0),
-            rho * (((exu[4] + exu[4] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[4] * tmp0[4])) + 1.0),
-            rho * (((exu[5] + exu[5] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[5] * tmp0[5])) + 1.0),
-            rho * (((exu[6] + exu[6] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[6] * tmp0[6])) + 1.0),
-            rho * (((exu[7] + exu[7] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[7] * tmp0[7])) + 1.0),
-            rho * (((exu[8] + exu[8] - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0[8] * tmp0[8])) + 1.0)
-    };
+        const scalar_t tmp0 = exu / d2q9_cs_pow_two;
+        const scalar_t tmp1 = rho * (((exu + exu - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0 * tmp0)) + 1.0);
 
-    const scalar_t feq[9] = {
-            tmp[0] * d2q9_w[0],
-            tmp[1] * d2q9_w[1],
-            tmp[2] * d2q9_w[2],
-            tmp[3] * d2q9_w[3],
-            tmp[4] * d2q9_w[4],
-            tmp[5] * d2q9_w[5],
-            tmp[6] * d2q9_w[6],
-            tmp[7] * d2q9_w[7],
-            tmp[8] * d2q9_w[8]
-    };
+        const scalar_t feq = tmp1 * d2q9_w[i];
 
-    /*
-     * avoid recalculating the inverse of tau
-     */
+        /*
+         * finally apply the collision operator
+         */
 
-    const scalar_t tau_inv = 1.0 / tau;
-
-    /*
-     * finally apply the collision operator
-     */
-
-    f[0] = f[0] - (tau_inv * (f[0] - feq[0]));
-    f[1] = f[1] - (tau_inv * (f[1] - feq[1]));
-    f[2] = f[2] - (tau_inv * (f[2] - feq[2]));
-    f[3] = f[3] - (tau_inv * (f[3] - feq[3]));
-    f[4] = f[4] - (tau_inv * (f[4] - feq[4]));
-    f[5] = f[5] - (tau_inv * (f[5] - feq[5]));
-    f[6] = f[6] - (tau_inv * (f[6] - feq[6]));
-    f[7] = f[7] - (tau_inv * (f[7] - feq[7]));
-    f[8] = f[8] - (tau_inv * (f[8] - feq[8]));
+        f[i] = f[i] - (tau_inv * (f[i] - feq));
+    }
 }
 
 /**

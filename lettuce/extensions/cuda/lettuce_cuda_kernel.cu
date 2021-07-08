@@ -31,6 +31,16 @@ using c_index_t = const unsigned int;
  * ```
  */
 
+#define MM 0
+#define RM 1
+#define MB 2
+#define LM 3
+#define MT 4
+#define RB 5
+#define LB 6
+#define LT 7
+#define RT 8
+
 template<typename scalar_t>
 __device__ __forceinline__ void
 d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
@@ -51,24 +61,24 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
      */
 
     const scalar_t j[2] = {
-            d2q9_e[0][0] * f[0]
-                    + d2q9_e[1][0] * f[1]
-                    + d2q9_e[2][0] * f[2]
-                    + d2q9_e[3][0] * f[3]
-                    + d2q9_e[4][0] * f[4]
-                    + d2q9_e[5][0] * f[5]
-                    + d2q9_e[6][0] * f[6]
-                    + d2q9_e[7][0] * f[7]
-                    + d2q9_e[8][0] * f[8],
-            d2q9_e[0][1] * f[0]
-                    + d2q9_e[1][1] * f[1]
-                    + d2q9_e[2][1] * f[2]
-                    + d2q9_e[3][1] * f[3]
-                    + d2q9_e[4][1] * f[4]
-                    + d2q9_e[5][1] * f[5]
-                    + d2q9_e[6][1] * f[6]
-                    + d2q9_e[7][1] * f[7]
-                    + d2q9_e[8][1] * f[8]
+              d2q9_e[0][0] * f[0]
+            + d2q9_e[1][0] * f[1]
+            + d2q9_e[2][0] * f[2]
+            + d2q9_e[3][0] * f[3]
+            + d2q9_e[4][0] * f[4]
+            + d2q9_e[5][0] * f[5]
+            + d2q9_e[6][0] * f[6]
+            + d2q9_e[7][0] * f[7]
+            + d2q9_e[8][0] * f[8],
+              d2q9_e[0][1] * f[0]
+            + d2q9_e[1][1] * f[1]
+            + d2q9_e[2][1] * f[2]
+            + d2q9_e[3][1] * f[3]
+            + d2q9_e[4][1] * f[4]
+            + d2q9_e[5][1] * f[5]
+            + d2q9_e[6][1] * f[6]
+            + d2q9_e[7][1] * f[7]
+            + d2q9_e[8][1] * f[8]
     };
 
     const scalar_t rho = f[0] + f[1] + f[2] + f[3] + f[4] + f[5] + f[6] + f[7] + f[8];
@@ -175,10 +185,10 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
     const auto vertical_offset    = vertical_index * width;
 
     // pre calculate the vertical and horizontal offsets after streaming
-    const auto vertical_t_offset   = ((vertical_index == 0)            ? height : (vertical_index - 1)) * width;
-    const auto vertical_b_offset   = (((vertical_index + 1) == height) ? 0      : (vertical_index + 1)) * width;
-    const auto horizontal_l_offset = (horizontal_index == 0)           ? width  : (horizontal_index - 1);
-    const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0      : (horizontal_index + 1);
+    const auto vertical_t_offset   = ((vertical_index == 0)            ? height-1 : (vertical_index - 1)) * width;
+    const auto vertical_b_offset   = (((vertical_index + 1) == height) ? 0        : (vertical_index + 1)) * width;
+    const auto horizontal_l_offset = (horizontal_index == 0)           ? width-1  : (horizontal_index - 1);
+    const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0        : (horizontal_index + 1);
 
     // pre calculate the current index
     const auto index = vertical_offset + horizontal_offset;
@@ -189,22 +199,24 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
 
     scalar_t next[9];
     {
+        constexpr index_t opposite[9] = {0, 3, 4, 1, 2, 7, 8, 5, 6};
+
         // center farce is trivial as it stays in place
-        next[0] = f[index];
+        next[MM] = f[index];
 
         // the index from which to stream from is calculated by:
         // - a dimensional offset (which is calculated by iteration)
         //   [by using an iterator bypass some multiplications]
         // - a relative horizontal offset (corresponding to the dimension)
         // - a relative vertical offset (corresponding to the dimension)
-        auto dim_offset_it = length; next[1] = f[dim_offset_it + horizontal_r_offset + vertical_offset  ];
-        dim_offset_it += length;     next[2] = f[dim_offset_it + horizontal_offset   + vertical_b_offset];
-        dim_offset_it += length;     next[3] = f[dim_offset_it + horizontal_l_offset + vertical_offset  ];
-        dim_offset_it += length;     next[4] = f[dim_offset_it + horizontal_offset   + vertical_t_offset];
-        dim_offset_it += length;     next[5] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
-        dim_offset_it += length;     next[6] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
-        dim_offset_it += length;     next[7] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
-        dim_offset_it += length;     next[8] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
+        auto dim_offset_it = length; next[opposite[RM]] = f[dim_offset_it + horizontal_r_offset + vertical_offset  ];
+        dim_offset_it += length;     next[opposite[MB]] = f[dim_offset_it + horizontal_offset   + vertical_b_offset];
+        dim_offset_it += length;     next[opposite[LM]] = f[dim_offset_it + horizontal_l_offset + vertical_offset  ];
+        dim_offset_it += length;     next[opposite[MT]] = f[dim_offset_it + horizontal_offset   + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[RB]] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
+        dim_offset_it += length;     next[opposite[LB]] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[LT]] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
+        dim_offset_it += length;     next[opposite[RT]] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
     }
 
     /*
@@ -212,19 +224,19 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
      */
 
     {
-        d3q9_quadratic_equilibrium_collision<scalar_t>(next, tau);
+        d3q9_quadratic_equilibrium_collision<scalar_t>(&(next[0]), tau);
 
         // the writing index is trivial as it is the same relative index in each dimension
         // [by using an iterator bypass some multiplications]
-        auto index_it = index; f_next[index_it] = next[0];
-        index_it += length;    f_next[index_it] = next[1];
-        index_it += length;    f_next[index_it] = next[2];
-        index_it += length;    f_next[index_it] = next[3];
-        index_it += length;    f_next[index_it] = next[4];
-        index_it += length;    f_next[index_it] = next[5];
-        index_it += length;    f_next[index_it] = next[6];
-        index_it += length;    f_next[index_it] = next[7];
-        index_it += length;    f_next[index_it] = next[8];
+        auto index_it = index; f_next[index_it] = next[MM];
+        index_it += length;    f_next[index_it] = next[RM];
+        index_it += length;    f_next[index_it] = next[MB];
+        index_it += length;    f_next[index_it] = next[LM];
+        index_it += length;    f_next[index_it] = next[MT];
+        index_it += length;    f_next[index_it] = next[RB];
+        index_it += length;    f_next[index_it] = next[LB];
+        index_it += length;    f_next[index_it] = next[LT];
+        index_it += length;    f_next[index_it] = next[RT];
     }
 }
 
@@ -235,7 +247,7 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
      * Use all threads of one block (asserting the block support 1024 threads)
      */
 
-    const auto thread_count = dim3{32u, 32u};
+    const auto thread_count = dim3{16u, 16u};
 
     /*
      * calculate constant values

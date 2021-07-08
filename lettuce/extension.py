@@ -9,6 +9,6 @@ import torch
 import lettuce._CudaExtension
 
 
-def stream_and_collide(f, f_next, collision):
+def stream_and_collide(f, f_next, tau):
     # noinspection PyUnresolvedReferences,PyProtectedMember
-    lettuce._CudaExtension.stream_and_collide(f, f_next, collision)
+    lettuce._CudaExtension.stream_and_collide(f, f_next, tau)

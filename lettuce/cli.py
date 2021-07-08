@@ -22,6 +22,10 @@ from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import flow_by_name
 from lettuce.force import Guo
 
+from lettuce.extension import stream_and_collide
+from copy import deepcopy
+from timeit import default_timer as timer
+
 
 @click.group()
 @click.version_option(version=lettuce_version)
@@ -97,8 +101,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out):
 
 @main.command()
 @click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
+@click.option("--native", default=False, help="")
 @click.pass_context
-def convergence(ctx, init_f_neq):
+def convergence(ctx, init_f_neq, native):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
     lattice = Lattice(D2Q9, device, dtype)
@@ -120,8 +125,32 @@ def convergence(ctx, init_f_neq):
             simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)
         simulation.reporters.append(error_reporter)
+
+        f_next = None
+        if native:
+            f_next = deepcopy(simulation.f)
+            f_next = f_next.to(device)
+
         for _ in range(10 * resolution):
-            simulation.step(1)
+
+            if native:
+                if simulation.i == 0:
+                    simulation._report()
+
+                simulation.i += 1
+                stream_and_collide(simulation.f, f_next, collision.tau)
+                simulation.f, f_next = f_next, simulation.f
+
+                for boundary in simulation._boundaries:
+                    simulation.f = boundary(simulation.f)
+
+                simulation._report()
+
+                # print(simulation.f.shape)
+
+            else:
+                simulation.step(1)
+
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
         factor_p = 0 if error_p_old is None else error_p_old / error_p

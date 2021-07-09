@@ -23,7 +23,7 @@ class BGKCollision:
         rho = self.lattice.rho(f)
         u_eq = 0 if self.force is None else self.force.u_eq(f)
         u = self.lattice.u(f) + u_eq
-        feq: torch.Tensor = self.lattice.equilibrium(rho, u)
+        feq = self.lattice.equilibrium(rho, u)
         Si = 0 if self.force is None else self.force.source_term(u)
         return f - 1.0 / self.tau * (f - feq) + Si
 

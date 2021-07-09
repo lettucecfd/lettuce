@@ -14,33 +14,25 @@
 #endif
 
 using index_t = unsigned int;
-using c_index_t = const unsigned int;
-
-/*
- * sample for a cuda helper function:
- *
- * ```CUDA
- *
- *     template<typename scalar_t>
- *     __device__ __forceinline__ scalar_t
- *     identity(scalar_t x)
- *     {
- *         return x;
- *     }
- *
- * ```
- */
 
 template<typename scalar_t>
 __device__ __forceinline__ void
-d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
+d2q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
 {
     /*
      * define some constants for the d2q9 stencil
      */
 
     constexpr auto sqrt_3 = static_cast<scalar_t> (1.7320508075688772935274463415058723669428052538103806280558069794);
-    constexpr scalar_t d2q9_e[9][2] = {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {-1.0, 0.0}, {0.0, -1.0}, {1.0, 1.0}, {-1.0, 1.0}, {-1.0, -1.0}, {1.0, -1.0}};
+    constexpr scalar_t d2q9_e[9][2] = {{0.0,  0.0},
+                                       {1.0,  0.0},
+                                       {0.0,  1.0},
+                                       {-1.0, 0.0},
+                                       {0.0,  -1.0},
+                                       {1.0,  1.0},
+                                       {-1.0, 1.0},
+                                       {-1.0, -1.0},
+                                       {1.0,  -1.0}};
     constexpr scalar_t d2q9_w[9] = {4.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
     constexpr scalar_t d2q9_cs = 1.0 / sqrt_3;
     constexpr scalar_t d2q9_cs_pow_two = d2q9_cs * d2q9_cs;
@@ -88,7 +80,6 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
 
         const scalar_t tmp0 = exu / d2q9_cs_pow_two;
         const scalar_t tmp1 = rho * (((exu + exu - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0 * tmp0)) + 1.0);
-
         const scalar_t feq = tmp1 * d2q9_w[i];
 
         /*
@@ -99,10 +90,87 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
     }
 }
 
+template<typename scalar_t>
+__device__ __forceinline__ void
+d2q9_read(const scalar_t *f, scalar_t *f_reg, index_t length, index_t index)
+{
+    // the reading index is trivial as it is the same relative index in each dimension
+    // [by using an iterator bypass some multiplications]
+    auto index_it = index; f_reg[0] = f[index_it];
+    index_it += length;    f_reg[1] = f[index_it];
+    index_it += length;    f_reg[2] = f[index_it];
+    index_it += length;    f_reg[3] = f[index_it];
+    index_it += length;    f_reg[4] = f[index_it];
+    index_it += length;    f_reg[5] = f[index_it];
+    index_it += length;    f_reg[6] = f[index_it];
+    index_it += length;    f_reg[7] = f[index_it];
+    index_it += length;    f_reg[8] = f[index_it];
+}
+
+template<typename scalar_t>
+__device__ __forceinline__ void
+d2q9_standard_stream_read(
+        const scalar_t *f, scalar_t *f_reg,
+        index_t width, index_t height, index_t length,
+        index_t index, index_t horizontal_index, index_t vertical_index,
+        index_t vertical_m_offset)
+{
+    /*
+     * define needed variables for the streaming
+     */
+
+    // alter name for convenience
+    const auto &horizontal_m_offset = horizontal_index;
+
+    // pre calculate the vertical and horizontal offsets
+    const auto vertical_t_offset = ((vertical_index == 0) ? height - 1 : (vertical_index - 1)) * width;
+    const auto vertical_b_offset = (((vertical_index + 1) == height) ? 0 : (vertical_index + 1)) * width;
+    const auto horizontal_l_offset = (horizontal_index == 0) ? width - 1 : (horizontal_index - 1);
+    const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0 : (horizontal_index + 1);
+
+    /*
+     * read the neighbor distributions into the current/register node
+     */
+
+    // center force is trivial as it stays in place
+    f_reg[0] = f[index];
+
+    // the index from which to stream from is calculated by:
+    // - a dimensional offset (which is calculated by iteration)
+    //   [by using an iterator bypass some multiplications]
+    // - a relative horizontal offset (corresponding to the dimension)
+    // - a relative vertical offset (corresponding to the dimension)
+    auto dim_offset_it = length; f_reg[1] = f[dim_offset_it + horizontal_m_offset + vertical_t_offset];
+    dim_offset_it += length;     f_reg[2] = f[dim_offset_it + horizontal_l_offset + vertical_m_offset];
+    dim_offset_it += length;     f_reg[3] = f[dim_offset_it + horizontal_m_offset + vertical_b_offset];
+    dim_offset_it += length;     f_reg[4] = f[dim_offset_it + horizontal_r_offset + vertical_m_offset];
+    dim_offset_it += length;     f_reg[5] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
+    dim_offset_it += length;     f_reg[6] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
+    dim_offset_it += length;     f_reg[7] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
+    dim_offset_it += length;     f_reg[8] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
+}
+
+template<typename scalar_t>
+__device__ __forceinline__ void
+d2q9_write(const scalar_t *f_reg, scalar_t *f_next, index_t length, index_t index)
+{
+    // the writing index is trivial as it is the same relative index in each dimension
+    // [by using an iterator bypass some multiplications]
+    auto index_it = index; f_next[index_it] = f_reg[0];
+    index_it += length;    f_next[index_it] = f_reg[1];
+    index_it += length;    f_next[index_it] = f_reg[2];
+    index_it += length;    f_next[index_it] = f_reg[3];
+    index_it += length;    f_next[index_it] = f_reg[4];
+    index_it += length;    f_next[index_it] = f_reg[5];
+    index_it += length;    f_next[index_it] = f_reg[6];
+    index_it += length;    f_next[index_it] = f_reg[7];
+    index_it += length;    f_next[index_it] = f_reg[8];
+}
+
 /**
  * collide and stream the given field (f)
  *
- * steps:
+ * steps: TODO out of date documentation
  * 1. read all nodes (from f)
  * 2. add collision value (local)
  * 3. stream values (local)
@@ -117,81 +185,101 @@ d3q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
  */
 template<typename scalar_t>
 __global__ void
-lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t tau, c_index_t width, c_index_t height, c_index_t length)
+lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t tau, index_t width, index_t height, index_t length)
 {
+    /*
+     * define needed variables for the streaming
+     */
+
     // pre calculate the vertical and horizontal indices before streaming
     const auto horizontal_index = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto vertical_index   = blockIdx.y * blockDim.y + threadIdx.y;
+    const auto vertical_index = blockIdx.y * blockDim.y + threadIdx.y;
 
     // pre calculate the vertical and horizontal offsets before streaming
     const auto &horizontal_m_offset = horizontal_index;
-    const auto vertical_m_offset    = vertical_index * width;
-
-    // pre calculate the vertical and horizontal offsets after streaming
-    const auto vertical_t_offset   = ((vertical_index == 0)            ? height-1 : (vertical_index - 1)) * width;
-    const auto vertical_b_offset   = (((vertical_index + 1) == height) ? 0        : (vertical_index + 1)) * width;
-    const auto horizontal_l_offset = (horizontal_index == 0)           ? width-1  : (horizontal_index - 1);
-    const auto horizontal_r_offset = ((horizontal_index + 1) == width) ? 0        : (horizontal_index + 1);
+    const auto vertical_m_offset = vertical_index * width;
 
     // pre calculate the current index
     const auto index = vertical_m_offset + horizontal_m_offset;
 
     /*
-     * standard stream & read
+     * do the work
      */
 
-    scalar_t next[9];
-    {
-        // constants to visualize the streaming better
-        // maybe this is not necessary and we replace the values inline
-        constexpr index_t mm = 0;
-        constexpr index_t rm = 1;
-        constexpr index_t mb = 2;
-        constexpr index_t lm = 3;
-        constexpr index_t mt = 4;
-        constexpr index_t rb = 5;
-        constexpr index_t lb = 6;
-        constexpr index_t lt = 7;
-        constexpr index_t rt = 8;
-        constexpr index_t opposite[9] = {0, 3, 4, 1, 2, 7, 8, 5, 6};
+    // standard stream & read
+    scalar_t f_reg[9];
+    d2q9_standard_stream_read(f, &(f_reg[0]), width, height, length, index, horizontal_index, vertical_index, vertical_m_offset);
 
-        // center force is trivial as it stays in place
-        next[mm] = f[index];
+    // collide & write
+    d2q9_quadratic_equilibrium_collision<scalar_t>(&(f_reg[0]), tau);
+    d2q9_write(f_reg, f_next, length, index);
+}
 
-        // the index from which to stream from is calculated by:
-        // - a dimensional offset (which is calculated by iteration)
-        //   [by using an iterator bypass some multiplications]
-        // - a relative horizontal offset (corresponding to the dimension)
-        // - a relative vertical offset (corresponding to the dimension)
-        auto dim_offset_it = length; next[opposite[rm]] = f[dim_offset_it + horizontal_r_offset + vertical_m_offset];
-        dim_offset_it += length;     next[opposite[mb]] = f[dim_offset_it + horizontal_m_offset + vertical_b_offset];
-        dim_offset_it += length;     next[opposite[lm]] = f[dim_offset_it + horizontal_l_offset + vertical_m_offset];
-        dim_offset_it += length;     next[opposite[mt]] = f[dim_offset_it + horizontal_m_offset + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[rb]] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
-        dim_offset_it += length;     next[opposite[lb]] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[lt]] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
-        dim_offset_it += length;     next[opposite[rt]] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
-    }
+/**
+ * TODO document
+ */
+template<typename scalar_t>
+__global__ void
+lettuce_cuda_stream_kernel(const scalar_t *f, scalar_t *f_next, index_t width, index_t height, index_t length)
+{
+    /*
+     * define needed variables for the streaming
+     */
+
+    // pre calculate the vertical and horizontal indices before streaming
+    const auto horizontal_index = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto vertical_index = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // pre calculate the vertical and horizontal offsets before streaming
+    const auto &horizontal_m_offset = horizontal_index;
+    const auto vertical_m_offset = vertical_index * width;
+
+    // pre calculate the current index
+    const auto index = vertical_m_offset + horizontal_m_offset;
 
     /*
-     * collide & write
+     * do the work
      */
 
-    {
-        d3q9_quadratic_equilibrium_collision<scalar_t>(&(next[0]), tau);
+    // standard stream & read & write
+    scalar_t f_reg[9];
+    d2q9_standard_stream_read(f, &(f_reg[0]), width, height, length, index, horizontal_index, vertical_index, vertical_m_offset);
+    d2q9_write(f_reg, f_next, length, index);
+}
 
-        // the writing index is trivial as it is the same relative index in each dimension
-        // [by using an iterator bypass some multiplications]
-        auto index_it = index; f_next[index_it] = next[0];
-        index_it += length;    f_next[index_it] = next[1];
-        index_it += length;    f_next[index_it] = next[2];
-        index_it += length;    f_next[index_it] = next[3];
-        index_it += length;    f_next[index_it] = next[4];
-        index_it += length;    f_next[index_it] = next[5];
-        index_it += length;    f_next[index_it] = next[6];
-        index_it += length;    f_next[index_it] = next[7];
-        index_it += length;    f_next[index_it] = next[8];
-    }
+/**
+ * TODO document
+ */
+template<typename scalar_t>
+__global__ void
+lettuce_cuda_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t tau, index_t width, index_t height, index_t length)
+{
+    /*
+     * define needed variables for the streaming
+     */
+
+    // pre calculate the vertical and horizontal indices before streaming
+    const auto horizontal_index = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto vertical_index = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // pre calculate the vertical and horizontal offsets before streaming
+    const auto &horizontal_m_offset = horizontal_index;
+    const auto vertical_m_offset = vertical_index * width;
+
+    // pre calculate the current index
+    const auto index = vertical_m_offset + horizontal_m_offset;
+
+    /*
+     * do the work
+     */
+
+    // read
+    scalar_t f_reg[9];
+    d2q9_read(f, &(f_reg[0]), length, index);
+
+    // collide & write
+    d2q9_quadratic_equilibrium_collision<scalar_t>(&(f_reg[0]), tau);
+    d2q9_write(f_reg, f_next, length, index);
 }
 
 void
@@ -228,6 +316,101 @@ lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
     AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_stream_and_collide", ([&]
     {
         lettuce_cuda_stream_and_collide_kernel<scalar_t><<<block_count, thread_count>>>(
+                f.data<scalar_t>(),
+                f_next.data<scalar_t>(),
+                static_cast<scalar_t>(tau),
+                width,
+                height,
+                width * height
+        );
+        cudaDeviceSynchronize(); // TODO maybe replace with torch.cuda.sync().
+        //      this may be more efficient as is bridges
+        //      the time to return from the native code.
+        //      but maybe this time is not noticeable ...
+    }));
+}
+
+void
+lettuce_cuda_stream(at::Tensor f, at::Tensor f_next)
+{
+    /*
+     * Use all threads of one block (asserting the block support 1024 threads)
+     */
+
+    const auto thread_count = dim3{16u, 16u};
+
+    /*
+     * calculate constant values
+     */
+
+    const auto width = static_cast<index_t> (f.sizes()[1]);
+    const auto height = static_cast<index_t> (f.sizes()[2]);
+
+    const auto block_count = ([&]()
+    {
+        assert((width % thread_count.x) == 0u);
+        assert((height % thread_count.y) == 0u);
+
+        const auto horizontal_block_count = width / thread_count.x;
+        const auto vertical_block_count = height / thread_count.y;
+
+        return dim3{horizontal_block_count, vertical_block_count};
+    }());
+
+    /*
+     * call the cuda kernel in a safe way for all supported float types
+     */
+
+    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_stream_and_collide", ([&]
+    {
+        lettuce_cuda_stream_kernel<scalar_t><<<block_count, thread_count>>>(
+                f.data<scalar_t>(),
+                f_next.data<scalar_t>(),
+                width,
+                height,
+                width * height
+        );
+        cudaDeviceSynchronize(); // TODO maybe replace with torch.cuda.sync().
+                                 //      this may be more efficient as is bridges
+                                 //      the time to return from the native code.
+                                 //      but maybe this time is not noticeable ...
+    }));
+}
+
+void
+lettuce_cuda_collide(at::Tensor f, at::Tensor f_next, double tau)
+{
+    /*
+     * Use all threads of one block (asserting the block support 1024 threads)
+     */
+
+    const auto thread_count = dim3{16u, 16u};
+
+    /*
+     * calculate constant values
+     */
+
+    const auto width = static_cast<index_t> (f.sizes()[1]);
+    const auto height = static_cast<index_t> (f.sizes()[2]);
+
+    const auto block_count = ([&]()
+    {
+        assert((width % thread_count.x) == 0u);
+        assert((height % thread_count.y) == 0u);
+
+        const auto horizontal_block_count = width / thread_count.x;
+        const auto vertical_block_count = height / thread_count.y;
+
+        return dim3{horizontal_block_count, vertical_block_count};
+    }());
+
+    /*
+     * call the cuda kernel in a safe way for all supported float types
+     */
+
+    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_stream_and_collide", ([&]
+    {
+        lettuce_cuda_collide_kernel<scalar_t><<<block_count, thread_count>>>(
                 f.data<scalar_t>(),
                 f_next.data<scalar_t>(),
                 static_cast<scalar_t>(tau),

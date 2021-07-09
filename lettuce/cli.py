@@ -12,6 +12,7 @@ import cProfile
 import pstats
 
 import click
+import pytest
 import torch
 import numpy as np
 from torch import nn
@@ -23,7 +24,7 @@ from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
 from lettuce.flows import flow_by_name
 from lettuce.force import Guo
 
-from lettuce.extension import stream_and_collide
+import lettuce.extension as cuda_ext
 from copy import deepcopy
 from timeit import default_timer as timer
 
@@ -139,7 +140,7 @@ def convergence(ctx, init_f_neq, native):
                     simulation._report()
 
                 simulation.i += 1
-                stream_and_collide(simulation.f, f_next, collision.tau)
+                cuda_ext.stream_and_collide(simulation.f, f_next, collision.tau)
                 simulation.f, f_next = f_next, simulation.f
 
                 for boundary in simulation._boundaries:
@@ -183,41 +184,232 @@ def convergence(ctx, init_f_neq, native):
 @click.pass_context
 def scratch(ctx, native):
     device = torch.device("cuda:0")
-    dtype = torch.float
+    dtype = torch.double
     flow_class = TaylorGreenVortex2D
     stencil = D2Q9
 
     def init(resolution):
         lattice = Lattice(stencil, device, dtype)
         flow = flow_class(resolution=resolution, reynolds_number=1, mach_number=0.05, lattice=lattice)
-        force = Guo(
-            lattice,
-            tau=flow.units.relaxation_parameter_lu,
-            acceleration=flow.units.convert_acceleration_to_lu(flow.force)
-        ) if hasattr(flow, "acceleration") else None
-        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
+        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=None)
         streaming = StandardStreaming(lattice)
         simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
         return lattice, collision, streaming, simulation
 
-    def _stream_and_collide(simulation, native_, f_next=None):
-        if native_:
-            assert f_next is not None
-            stream_and_collide(simulation.f, f_next, simulation.collision.tau)
-            simulation.f, f_next = f_next, simulation.f
-        else:
-            simulation.streaming(simulation.f)
-            simulation.collision(simulation.f)
+    def test_stream():
 
-    def simulate(num_steps, resolution, native_):
+        w, h = 32, 32
+
+        # f = torch.empty((9, w, h), device=device, dtype=dtype)
+        # for q in range(9):
+        #     for x in range(w):
+        #         for y in range(h):
+        #             f[q, x, y] = x * h + y
+
+        f = torch.rand((9, w, h), device=device, dtype=dtype)
+
+        f_ext_next = torch.zeros((9, w, h), device=device, dtype=dtype)
+        cuda_ext.stream(f, f_ext_next)
+
+        lattice = Lattice(stencil, device, dtype)
+        f_org_next = deepcopy(f)
+        for i in range(1, lattice.Q):
+            shifts = tuple(lattice.stencil.e[i])
+            dims = tuple(np.arange(lattice.D))
+            f_org_next[i] = torch.roll(f_org_next[i], shifts=shifts, dims=dims)
+
+        mse = nn.MSELoss(reduction='none')(f_ext_next, f_org_next)
+        for q in range(9):
+
+            mse_max = torch.max(mse[q]).cpu()
+            mse_min = torch.min(mse[q]).cpu()
+            mse_sum = torch.sum(mse[q]).cpu()
+
+            print(f"q={q}\n"
+                  f"mse_max:  {mse_max}\n"
+                  f"mse_min:  {mse_min}\n"
+                  f"mse_sum:  {mse_sum}\n")
+
+            if mse_sum > 0.0:
+                torch.set_printoptions(edgeitems=8)
+                torch.set_printoptions(precision=64)
+                f_ext_next = f_ext_next.cpu().numpy()
+                f_org_next = f_org_next.cpu().numpy()
+                print(f"q := {q}\n"
+                      f"{f_ext_next[q]}\n"
+                      f"{f_org_next[q]}\n"
+                      f"{f_org_next[q] - f_ext_next[q]}\n")
+                return
+
+    def test_collide():
+
+        w, h = 32, 32
+
+        # f = torch.empty((9, w, h), device=device, dtype=dtype)
+        # for q in range(9):
+        #     for x in range(w):
+        #         for y in range(h):
+        #             f[q, x, y] = x * h + y
+
+        f = torch.rand((9, w, h), device=device, dtype=dtype)
+
+        lattice = Lattice(stencil, device, dtype)
+
+        f_ext_next = torch.zeros((9, w, h), device=device, dtype=dtype)
+        cuda_ext.collide(f, f_ext_next, 1.0)
+        f_ext_next = torch.nan_to_num(f_ext_next)
+
+        f_org_next = f - (f - lattice.equilibrium(lattice.rho(f), lattice.u(f)))
+        f_org_next = torch.nan_to_num(f_org_next)
+
+        mse = nn.MSELoss(reduction='none')(f_ext_next, f_org_next)
+        for q in range(9):
+
+            mse_max = torch.max(mse[q]).cpu()
+            mse_min = torch.min(mse[q]).cpu()
+            mse_sum = torch.sum(mse[q]).cpu()
+
+            print(f"q={q}\n"
+                  f"mse_max:  {mse_max}\n"
+                  f"mse_min:  {mse_min}\n"
+                  f"mse_sum:  {mse_sum}\n")
+
+            if mse_sum > float(1.0e-25):
+                torch.set_printoptions(edgeitems=8)
+                torch.set_printoptions(precision=64)
+                f_ext_next = f_ext_next.cpu().numpy()
+                f_org_next = f_org_next.cpu().numpy()
+                print(f"q := {q}\n"
+                      f"{f_ext_next[q]}\n"
+                      f"{f_org_next[q]}\n"
+                      f"{f_org_next[q] - f_ext_next[q]}\n")
+                return
+
+    def test_stream_collide():
+
+        w, h = 32, 32
+
+        # f = torch.empty((9, w, h), device=device, dtype=dtype)
+        # for q in range(9):
+        #     for x in range(w):
+        #         for y in range(h):
+        #             f[q, x, y] = x * h + y
+
+        f = torch.rand((9, w, h), device=device, dtype=dtype)
+
+        lattice = Lattice(stencil, device, dtype)
+
+        f_ext_next = torch.zeros((9, w, h), device=device, dtype=dtype)
+        cuda_ext.stream(f, f_ext_next)
+        cuda_ext.collide(f_ext_next, f_ext_next, 1.0)
+        f_ext_next = torch.nan_to_num(f_ext_next)
+
+        f_org_next = deepcopy(f)
+
+        for i in range(1, lattice.Q):
+            shifts = tuple(lattice.stencil.e[i])
+            dims = tuple(np.arange(lattice.D))
+            f_org_next[i] = torch.roll(f_org_next[i], shifts=shifts, dims=dims)
+
+        f_org_next = f_org_next - (f_org_next - lattice.equilibrium(lattice.rho(f_org_next), lattice.u(f_org_next)))
+        f_org_next = torch.nan_to_num(f_org_next)
+
+        mse = nn.MSELoss(reduction='none')(f_ext_next, f_org_next)
+        for q in range(9):
+
+            mse_max = torch.max(mse[q]).cpu()
+            mse_min = torch.min(mse[q]).cpu()
+            mse_sum = torch.sum(mse[q]).cpu()
+
+            print(f"q={q}\n"
+                  f"mse_max:  {mse_max}\n"
+                  f"mse_min:  {mse_min}\n"
+                  f"mse_sum:  {mse_sum}\n")
+
+            if mse_sum > float(1.0e-25):
+                torch.set_printoptions(edgeitems=8)
+                torch.set_printoptions(precision=64)
+                f_ext_next = f_ext_next.cpu().numpy()
+                f_org_next = f_org_next.cpu().numpy()
+                print(f"q := {q}\n"
+                      f"{f_ext_next[q]}\n"
+                      f"{f_org_next[q]}\n"
+                      f"{f_org_next[q] - f_ext_next[q]}\n")
+                return
+
+    def test_stream_and_collide(num_steps, resolution):
+
+        w, h = resolution, resolution
+
+        f = torch.rand((9, w, h), dtype=dtype).cpu()
+
+        lattice = Lattice(stencil, device, dtype)
+
+        f_ext = deepcopy(f).cuda()
+        f_ext_next = torch.zeros((9, w, h), device=device, dtype=dtype)
+        for _ in range(num_steps):
+            cuda_ext.stream_and_collide(f_ext, f_ext_next, 1.0)
+            f_ext, f_ext_next = f_ext_next, f_ext
+        del f_ext_next
+        f_ext = torch.nan_to_num(f_ext).cpu()
+
+        f_org = deepcopy(f).cuda()
+        for _ in range(num_steps):
+            for i in range(1, lattice.Q):
+                shifts = tuple(lattice.stencil.e[i])
+                dims = tuple(np.arange(lattice.D))
+                f_org[i] = torch.roll(f_org[i], shifts=shifts, dims=dims)
+            f_org = f_org - (f_org - lattice.equilibrium(lattice.rho(f_org), lattice.u(f_org)))
+
+        f_org = torch.nan_to_num(f_org).cpu()
+
+        mse = nn.MSELoss(reduction='none')(f_ext, f_org).cpu()
+        for q in range(9):
+
+            mse_max = torch.max(mse[q])
+            mse_min = torch.min(mse[q])
+            mse_sum = torch.sum(mse[q])
+
+            print(f"q={q}\n"
+                  f"mse_max:  {mse_max}\n"
+                  f"mse_min:  {mse_min}\n"
+                  f"mse_sum:  {mse_sum}\n")
+
+            if mse_sum > float(0.000_000_000_000_000_1):
+                torch.set_printoptions(edgeitems=8)
+                torch.set_printoptions(precision=64)
+                f_ext = f_ext.numpy()
+                f_org = f_org.numpy()
+                print(f"q := {q}\n"
+                      f"{f_ext[q]}\n"
+                      f"{f_org[q]}\n"
+                      f"{f_org[q] - f_ext[q]}\n")
+                return
+
+    def simulate(num_steps, resolution):
 
         lattice, collision, streaming, simulation = init(resolution)
-        f_next = None if not native_ else torch.empty(simulation.f.shape, device=device, dtype=dtype)
 
         start = timer()
         for _ in range(num_steps):
             simulation.i += 1
-            _stream_and_collide(simulation, native_=native_, f_next=f_next)
+            simulation.streaming(simulation.f)
+            simulation.collision(simulation.f)
+
+        seconds = timer() - start
+        mlups = num_steps * simulation.lattice.rho(simulation.f).numel() / 1e6 / seconds
+        return simulation.f, mlups, seconds
+
+    def simulate_extension(num_steps, resolution):
+
+        lattice, collision, streaming, simulation = init(resolution)
+        f_next = torch.empty(simulation.f.shape, device=device, dtype=dtype)
+
+        start = timer()
+        for _ in range(num_steps):
+            simulation.i += 1
+            cuda_ext.stream_and_collide(simulation.f, f_next, simulation.collision.tau)
+            simulation.f, f_next = f_next, simulation.f
 
         seconds = timer() - start
         mlups = num_steps * simulation.lattice.rho(simulation.f).numel() / 1e6 / seconds
@@ -226,59 +418,24 @@ def scratch(ctx, native):
     def bench(num_steps, resolution):
         print(f"bench for num_steps:{num_steps} and resolution:{resolution}")
 
-        _, mlups, _ = simulate(num_steps, resolution, native_=True)
+        _, mlups, _ = simulate_extension(num_steps, resolution)
         del _
         print(f"extension: {mlups} mlups")
 
-        _, mlups, _ = simulate(num_steps, resolution, native_=False)
+        _, mlups, _ = simulate(num_steps, resolution)
         del _
         print(f"baseline:  {mlups} mlups\n")
 
-    def assert_equal(num_steps, resolution):
-        print(f"assert equal for num_steps:{num_steps} and resolution:{resolution}")
+    test_stream()
+    test_collide()
+    test_stream_collide()
+    test_stream_and_collide(100, 1024)
 
-        f_ext, _, _ = simulate(num_steps, resolution, native_=True)
-        f_org, _, _ = simulate(num_steps, resolution, native_=False)
-        mse = nn.MSELoss(reduction='none')(f_ext, f_org)
-
-        print(f"mse_max:  {torch.max(mse)}\n"
-              f"mse_min:  {torch.min(mse)}\n"
-              f"mse_sum:  {torch.sum(mse)}\n")
-
-    def test_streaming():
-        f = torch.empty((9, 16, 16), device=device, dtype=dtype)
-        f_next = torch.ones((9, 16, 16), device=device, dtype=dtype)
-
-        for q in range(9):
-            i = 1.0
-            for x in range(16):
-                for y in range(16):
-                    f[q, x, y] = i
-                    i = i + 1.0
-
-        stream_and_collide(f, f_next, 1.0)
-
-        torch.set_printoptions(edgeitems=8)
-        for q in range(9):
-            print(f"q := {q}\n{f[q]}\n{f_next[q]}\n")
-
-    # test_streaming()
-
-    # assert_equal(1, 128, native=native)
-    # assert_equal(2, 128, native=native)
-    # assert_equal(16, 128, native=native)
-    # assert_equal(32, 128, native=native)
-    # assert_equal(100, 128, native=native)
-
-    # bench(8000, 3072, native_=native)
-
-    simulate(1000, 2048, native_=True)
-
-    # bench(250, 1024)
-    # bench(250, 2048)
-    # bench(250, 3072)
-    # bench(1000, 3072)
-    # bench(2000, 2048)
+    bench(250, 1024)
+    bench(250, 2048)
+    bench(250, 3072)
+    bench(1000, 3072)
+    bench(2000, 2048)
 
     return 0
 

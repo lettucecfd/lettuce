@@ -15,6 +15,12 @@
 void
 lettuce_cuda_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau);
 
+void
+lettuce_cuda_stream(at::Tensor f, at::Tensor f_next);
+
+void
+lettuce_cuda_collide(at::Tensor f, at::Tensor f_next, double tau);
+
 // C++ Interface
 
 #define CHECK_CUDA(x) TORCH_CHECK((x).device().is_cuda(), #x " must be a CUDA tensor")
@@ -34,9 +40,31 @@ lettuce_stream_and_collide(at::Tensor f, at::Tensor f_next, double tau)
     lettuce_cuda_stream_and_collide(f, f_next, tau);
 }
 
+void
+lettuce_stream(at::Tensor f, at::Tensor f_next)
+{
+    CHECK_INPUT(f);
+    CHECK_INPUT(f_next);
+    TORCH_CHECK(f.sizes() == f_next.sizes(), "f and f_next need to have the same dimensions!")
+
+    lettuce_cuda_stream(f, f_next);
+}
+
+void
+lettuce_collide(at::Tensor f, at::Tensor f_next, double tau)
+{
+    CHECK_INPUT(f);
+    CHECK_INPUT(f_next);
+    TORCH_CHECK(f.sizes() == f_next.sizes(), "f and f_next need to have the same dimensions!")
+
+    lettuce_cuda_collide(f, f_next, tau);
+}
+
 #ifdef TORCH_EXTENSION_NAME
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {
     m.def("stream_and_collide", &lettuce_stream_and_collide, "lettuce stream and collide (Cuda)");
+    m.def("stream", &lettuce_stream, "lettuce stream (Cuda)");
+    m.def("collide", &lettuce_collide, "lettuce collide (Cuda)");
 }
 #endif

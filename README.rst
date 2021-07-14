@@ -28,6 +28,16 @@ It provides
 * Rapid Prototyping in 2D and 3D
 * Usage of neural networks and automatic differentiation within LBM
 
+Resources
+---------
+- `Documentation`_
+- Presentation at CFDML2021 - `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
+
+.. _Documentation: https://lettuceboltzmann.readthedocs.io
+.. _Preprint: https://arxiv.org/pdf/2106.12929.pdf
+.. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
+.. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
+.. _Code: https://github.com/lettucecfd/lettuce-paper
 
 Getting Started
 ---------------
@@ -60,10 +70,6 @@ More advanced examples_ are available as jupyter notebooks:
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
 .. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
 .. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
-
-A complete documentation is available here_.
-
-.. _here: https://lettuceboltzmann.readthedocs.io
 
 
 Installation

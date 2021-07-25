@@ -13,31 +13,15 @@
 #pragma warning ( pop )
 #endif
 
+#include "lettuce_cuda_stencil.cu"
+#include "lettuce_cuda_lattice.cu"
+
 using index_t = unsigned int;
 
-template<typename scalar_t>
+template<typename scalar_t, index_t D, index_t Q, stencil<scalar_t, D, Q> STENCIL>
 __device__ __forceinline__ void
-d2q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
+quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
 {
-    /*
-     * define some constants for the d2q9 stencil
-     */
-
-    constexpr auto sqrt_3 = static_cast<scalar_t> (1.7320508075688772935274463415058723669428052538103806280558069794);
-    constexpr scalar_t d2q9_e[9][2] = {{0.0,  0.0},
-                                       {1.0,  0.0},
-                                       {0.0,  1.0},
-                                       {-1.0, 0.0},
-                                       {0.0,  -1.0},
-                                       {1.0,  1.0},
-                                       {-1.0, 1.0},
-                                       {-1.0, -1.0},
-                                       {1.0,  -1.0}};
-    constexpr scalar_t d2q9_w[9] = {4.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0};
-    constexpr scalar_t d2q9_cs = 1.0 / sqrt_3;
-    constexpr scalar_t d2q9_cs_pow_two = d2q9_cs * d2q9_cs;
-    constexpr scalar_t d2q9_two_cs_pow_two = d2q9_cs_pow_two + d2q9_cs_pow_two;
-
     /*
      * avoid recalculating the inverse of tau
      */
@@ -48,27 +32,14 @@ d2q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
      * begin calculating the equilibrium
      */
 
-    const scalar_t rho = f[0] + f[1] + f[2] + f[3] + f[4] + f[5] + f[6] + f[7] + f[8];
-    const scalar_t j[2] = {
-              d2q9_e[0][0] * f[0]
-            + d2q9_e[1][0] * f[1]
-            + d2q9_e[2][0] * f[2]
-            + d2q9_e[3][0] * f[3]
-            + d2q9_e[4][0] * f[4]
-            + d2q9_e[5][0] * f[5]
-            + d2q9_e[6][0] * f[6]
-            + d2q9_e[7][0] * f[7]
-            + d2q9_e[8][0] * f[8],
-              d2q9_e[0][1] * f[0]
-            + d2q9_e[1][1] * f[1]
-            + d2q9_e[2][1] * f[2]
-            + d2q9_e[3][1] * f[3]
-            + d2q9_e[4][1] * f[4]
-            + d2q9_e[5][1] * f[5]
-            + d2q9_e[6][1] * f[6]
-            + d2q9_e[7][1] * f[7]
-            + d2q9_e[8][1] * f[8]
-    };
+    constexpr auto cs_pow_two = STENCIL.cs * STENCIL.cs;
+    constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;
+
+    scalar_t rho;
+    lattice::rho<scalar_t, D>(f, &rho);
+
+    scalar_t j[2];
+    lattice::j<scalar_t, D, Q, STENCIL>(f, &j);
 
     const scalar_t u[2] = {j[0] / rho, j[1] / rho};
     const scalar_t uxu = u[0] * u[0] + u[1] * u[1];
@@ -76,11 +47,11 @@ d2q9_quadratic_equilibrium_collision(scalar_t *f, scalar_t tau)
 #pragma unroll
     for (index_t i = 0; i < 9; ++i)
     {
-        const scalar_t exu = d2q9_e[i][0] * u[0] + d2q9_e[i][1] * u[1];
+        const scalar_t exu = STENCIL.e[i][0] * u[0] + STENCIL.e[i][1] * u[1];
 
-        const scalar_t tmp0 = exu / d2q9_cs_pow_two;
-        const scalar_t tmp1 = rho * (((exu + exu - uxu) / d2q9_two_cs_pow_two) + (0.5 * (tmp0 * tmp0)) + 1.0);
-        const scalar_t feq = tmp1 * d2q9_w[i];
+        const scalar_t tmp0 = exu / cs_pow_two;
+        const scalar_t tmp1 = rho * (((exu + exu - uxu) / two_cs_pow_two) + (0.5 * (tmp0 * tmp0)) + 1.0);
+        const scalar_t feq = tmp1 * STENCIL.w[i];
 
         /*
          * finally apply the collision operator
@@ -140,14 +111,22 @@ d2q9_standard_stream_read(
     //   [by using an iterator bypass some multiplications]
     // - a relative horizontal offset (corresponding to the dimension)
     // - a relative vertical offset (corresponding to the dimension)
-    auto dim_offset_it = length; f_reg[1] = f[dim_offset_it + horizontal_m_offset + vertical_t_offset];
-    dim_offset_it += length;     f_reg[2] = f[dim_offset_it + horizontal_l_offset + vertical_m_offset];
-    dim_offset_it += length;     f_reg[3] = f[dim_offset_it + horizontal_m_offset + vertical_b_offset];
-    dim_offset_it += length;     f_reg[4] = f[dim_offset_it + horizontal_r_offset + vertical_m_offset];
-    dim_offset_it += length;     f_reg[5] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
-    dim_offset_it += length;     f_reg[6] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
-    dim_offset_it += length;     f_reg[7] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
-    dim_offset_it += length;     f_reg[8] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
+    auto dim_offset_it = length;
+    f_reg[1] = f[dim_offset_it + horizontal_m_offset + vertical_t_offset];
+    dim_offset_it += length;
+    f_reg[2] = f[dim_offset_it + horizontal_l_offset + vertical_m_offset];
+    dim_offset_it += length;
+    f_reg[3] = f[dim_offset_it + horizontal_m_offset + vertical_b_offset];
+    dim_offset_it += length;
+    f_reg[4] = f[dim_offset_it + horizontal_r_offset + vertical_m_offset];
+    dim_offset_it += length;
+    f_reg[5] = f[dim_offset_it + horizontal_l_offset + vertical_t_offset];
+    dim_offset_it += length;
+    f_reg[6] = f[dim_offset_it + horizontal_l_offset + vertical_b_offset];
+    dim_offset_it += length;
+    f_reg[7] = f[dim_offset_it + horizontal_r_offset + vertical_b_offset];
+    dim_offset_it += length;
+    f_reg[8] = f[dim_offset_it + horizontal_r_offset + vertical_t_offset];
 }
 
 template<typename scalar_t>
@@ -156,15 +135,24 @@ d2q9_write(const scalar_t *f_reg, scalar_t *f_next, index_t length, index_t inde
 {
     // the writing index is trivial as it is the same relative index in each dimension
     // [by using an iterator bypass some multiplications]
-    auto index_it = index; f_next[index_it] = f_reg[0];
-    index_it += length;    f_next[index_it] = f_reg[1];
-    index_it += length;    f_next[index_it] = f_reg[2];
-    index_it += length;    f_next[index_it] = f_reg[3];
-    index_it += length;    f_next[index_it] = f_reg[4];
-    index_it += length;    f_next[index_it] = f_reg[5];
-    index_it += length;    f_next[index_it] = f_reg[6];
-    index_it += length;    f_next[index_it] = f_reg[7];
-    index_it += length;    f_next[index_it] = f_reg[8];
+    auto index_it = index;
+    f_next[index_it] = f_reg[0];
+    index_it += length;
+    f_next[index_it] = f_reg[1];
+    index_it += length;
+    f_next[index_it] = f_reg[2];
+    index_it += length;
+    f_next[index_it] = f_reg[3];
+    index_it += length;
+    f_next[index_it] = f_reg[4];
+    index_it += length;
+    f_next[index_it] = f_reg[5];
+    index_it += length;
+    f_next[index_it] = f_reg[6];
+    index_it += length;
+    f_next[index_it] = f_reg[7];
+    index_it += length;
+    f_next[index_it] = f_reg[8];
 }
 
 /**
@@ -211,7 +199,7 @@ lettuce_cuda_stream_and_collide_kernel(const scalar_t *f, scalar_t *f_next, scal
     d2q9_standard_stream_read(f, &(f_reg[0]), width, height, length, index, horizontal_index, vertical_index, vertical_m_offset);
 
     // collide & write
-    d2q9_quadratic_equilibrium_collision<scalar_t>(&(f_reg[0]), tau);
+    quadratic_equilibrium_collision<scalar_t, 2, 9, d2q9<scalar_t>>(&(f_reg[0]), tau);
     d2q9_write(f_reg, f_next, length, index);
 }
 
@@ -278,7 +266,7 @@ lettuce_cuda_collide_kernel(const scalar_t *f, scalar_t *f_next, scalar_t tau, i
     d2q9_read(f, &(f_reg[0]), length, index);
 
     // collide & write
-    d2q9_quadratic_equilibrium_collision<scalar_t>(&(f_reg[0]), tau);
+    quadratic_equilibrium_collision<scalar_t, 2, 9, d2q9<scalar_t>>(&(f_reg[0]), tau);
     d2q9_write(f_reg, f_next, length, index);
 }
 
@@ -371,9 +359,9 @@ lettuce_cuda_stream(at::Tensor f, at::Tensor f_next)
                 width * height
         );
         cudaDeviceSynchronize(); // TODO maybe replace with torch.cuda.sync().
-                                 //      this may be more efficient as is bridges
-                                 //      the time to return from the native code.
-                                 //      but maybe this time is not noticeable ...
+        //      this may be more efficient as is bridges
+        //      the time to return from the native code.
+        //      but maybe this time is not noticeable ...
     }));
 }
 
@@ -419,8 +407,8 @@ lettuce_cuda_collide(at::Tensor f, at::Tensor f_next, double tau)
                 width * height
         );
         cudaDeviceSynchronize(); // TODO maybe replace with torch.cuda.sync().
-                                 //      this may be more efficient as is bridges
-                                 //      the time to return from the native code.
-                                 //      but maybe this time is not noticeable ...
+        //      this may be more efficient as is bridges
+        //      the time to return from the native code.
+        //      but maybe this time is not noticeable ...
     }));
 }

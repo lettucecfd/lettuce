@@ -105,15 +105,15 @@ class UnitConversion:
     def convert_energy_to_pu(self, energy_lu):
         """Energy is defined here in units of [density * velocity**2]"""
         return (
-                energy_lu * (self.characteristic_density_pu * self.characteristic_velocity_pu ** 2)
-                / (self.characteristic_density_lu * self.characteristic_velocity_lu ** 2)
+            energy_lu * (self.characteristic_density_pu * self.characteristic_velocity_pu ** 2)
+            / (self.characteristic_density_lu * self.characteristic_velocity_lu ** 2)
         )
 
     def convert_energy_to_lu(self, energy_pu):
         """Energy is defined here in units of [density * velocity**2]"""
         return (
-                energy_pu * (self.characteristic_density_lu * self.characteristic_velocity_lu ** 2)
-                / (self.characteristic_density_pu * self.characteristic_velocity_pu ** 2)
+            energy_pu * (self.characteristic_density_lu * self.characteristic_velocity_lu ** 2)
+            / (self.characteristic_density_pu * self.characteristic_velocity_pu ** 2)
         )
 
     def convert_incompressible_energy_to_pu(self, energy_lu):

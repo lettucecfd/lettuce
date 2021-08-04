@@ -1,0 +1,36 @@
+
+engines:
+  # ... CONFIG CONTENT ...
+  pep8:
+    enabled: true
+    # ... CONFIG CONTENT ...
+    checks:
+        E731:  # do not assign a lambda expression, use a def
+            enabled: false
+        E402:  # module level import not at top of file
+            enabled: false
+        E501: # maximum line length
+            enabled: false
+
+checks:
+    argument-count:
+        enabled: false
+    complex-logic:
+        enabled: false
+    file-lines:
+        enabled: false
+    method-complexity:
+        enabled: false
+    method-count:
+        enabled: false
+    method-lines:
+        enabled: false
+    nested-control-flow:
+        enabled: false
+    return-statements:
+        enabled: false
+    similar-code:
+        enabled: false
+    identical-code:
+        enabled: true
+

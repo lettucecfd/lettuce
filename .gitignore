@@ -4,6 +4,9 @@ Makefile
 .gitattributes
 .editorconfig
 
+# generated files
+lettuce_cuda/
+lettuce/cuda/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -110,6 +113,3 @@ ENV/
 
 # data folder
 data/
-
-# pytorch cuda and c++ extensions
-cmake-build-*/

@@ -27,4 +27,3 @@ from lettuce.force import *
 from lettuce.observables import *
 
 from lettuce.flows import *
-from lettuce.extension import *

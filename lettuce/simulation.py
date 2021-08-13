@@ -75,7 +75,6 @@ class Simulation:
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self._report()
-
         end = timer()
         seconds = end - start
         num_grid_points = self.lattice.rho(self.f).numel()

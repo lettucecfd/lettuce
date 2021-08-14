@@ -10,6 +10,7 @@ class Equilibrium:
 
 class QuadraticEquilibrium(Equilibrium):
     def __init__(self, lattice):
+        self.name = 'quadratic'
         self.lattice = lattice
 
     def __call__(self, rho, u, *args):
@@ -33,6 +34,7 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     """
 
     def __call__(self, rho, u, *args):
+        self.name = 'quadratic'
         return self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,

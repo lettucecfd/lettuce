@@ -1,14 +1,27 @@
 from lettuce.gencuda import *
 
-rw_frame = '''{{
+read_frame = '''{{
         auto index_it = offset;
-        {target}[0] = {source}[index_it];
+        f_reg[0] = {source}[index_it];
 
 #pragma unroll
         for(index_t i = 1; i < q; ++i)
         {{
             index_it += length{length_index};
-            {target}[i] = {source}[index_it];
+            f_reg[i] = {source}[index_it];
+        }}
+    }}
+'''
+
+write_frame = '''{{
+        auto index_it = offset;
+        {target}[index_it] = f_reg[0];
+
+#pragma unroll
+        for(index_t i = 1; i < q; ++i)
+        {{
+            index_it += length{length_index};
+            {target}[index_it] = f_reg[i];
         }}
     }}
 '''
@@ -79,7 +92,7 @@ class ReadWrite(Stream):
 
             gen.idx()
             gen.idx('scalar_t f_reg[q];')
-            gen.idx(rw_frame.format(target='f_reg', source='f', length_index=length_index))
+            gen.idx(read_frame.format(source='f', length_index=length_index))
 
             if support_no_collision:
                 indices = ', '.join([f"index{d}" for d in range(gen.stencil.d_)])
@@ -88,7 +101,7 @@ class ReadWrite(Stream):
 
             gen.wrt('}')
             gen.wrt()
-            gen.wrt(rw_frame.format(target='f_next', source='f_reg', length_index=length_index))
+            gen.wrt(write_frame.format(target='f', length_index=length_index))
 
 
 class StandardStream(Stream):
@@ -219,7 +232,7 @@ class StandardStream(Stream):
                         gen.idx(f"    {index_it}     {{ const auto abs_index = index_it + offset; f_reg[{q}] = "
                                 f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[q]}]; }}")
                 else:
-                    gen.idx(f"    f_reg[{q}] = f[index_it + {offsets[q]}];")
+                    gen.idx(f"    {index_it}     f_reg[{q}] = f[index_it + {offsets[q]}];")
 
             gen.idx('}')
             gen.idx()
@@ -231,4 +244,4 @@ class StandardStream(Stream):
             # write
             gen.wrt('}')
             gen.wrt()
-            gen.wrt(rw_frame.format(target='f_next', source='f_reg', length_index=length_index))
+            gen.wrt(write_frame.format(target='f_next', length_index=length_index))

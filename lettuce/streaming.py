@@ -19,6 +19,7 @@ class StandardStreaming:
     """
 
     def __init__(self, lattice):
+        self.name = 'standard'
         self.lattice = lattice
         self._no_stream_mask = None
 

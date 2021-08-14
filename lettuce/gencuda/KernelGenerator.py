@@ -1,6 +1,7 @@
 import re
 
 from lettuce.gencuda import *
+from lettuce.gencuda.util import pretty_print_c_
 
 cuda_frame = '''
 #if _MSC_VER && !__INTEL_COMPILER
@@ -53,6 +54,9 @@ lettuce_cuda_{signature}({wrapper_parameter})
 '''
 
 cpp_frame = '''
+#ifndef {guard}
+#define {guard}
+
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning ( push )
 #pragma warning ( disable : 4067 )
@@ -80,10 +84,7 @@ void
     lettuce_cuda_{signature}({wrapper_parameter_values});
 }}
 
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
-{{
-    m.def("{signature}", &{signature}, "{signature}");
-}}
+#endif //{guard}
 '''
 
 py_frame = '''
@@ -92,6 +93,7 @@ def {signature}(simulation: 'lettuce.Simulation'):
     {py_buffer}
     # noinspection PyUnresolvedReferences
     {module}.{signature}({py_parameter_values})
+    torch.cuda.synchronize()
 '''
 
 
@@ -204,11 +206,14 @@ class KernelGenerator:
     def signature(self):
         return self.signature_
 
+    def header_guard_(self):
+        return f"lettuce_{self.signature()}_hpp".upper()
+
     def cuda_file_name(self):
         return f"lettuce_cuda_{self.signature()}.cu"
 
     def cpp_file_name(self):
-        return f"lettuce_cuda_{self.signature()}.cpp"
+        return f"lettuce_{self.signature()}.hpp"
 
     def registered(self, obj: any):
         return self.register_.__contains__(obj)
@@ -254,22 +259,6 @@ class KernelGenerator:
     def py(self, it=''):
         self.py_buffer_.append(it)
 
-    def pretty_print_c_(self, buffer: str):
-        if self.pretty_print:
-            # remove spaces before new line
-            buffer = re.sub(r' +\n', '\n', buffer)
-            # remove multiple empty lines
-            buffer = re.sub(r'\n\n\n+', '\n\n', buffer)
-            # remove whitespace at end and begin
-            buffer = re.sub(r'\n+$', '\n', buffer)
-            buffer = re.sub(r'^\n*', '', buffer)
-            # place preprocessor directives at start of line
-            buffer = re.sub(r'\n +#', '\n#', buffer)
-            # remove unnecessary whitespace between closures
-            buffer = re.sub(r'{\n\n+', '{\n', buffer)
-            buffer = re.sub(r'}\n\n+(\s*)}', r'}\n\1}', buffer)
-        return buffer
-
     def bake_cuda(self):
         buffer = cuda_frame.format(signature=self.signature(),
                                    hard_buffer='\n    '.join(self.hard_buffer_),
@@ -282,14 +271,21 @@ class KernelGenerator:
                                    kernel_parameter=', '.join(self.kernel_parameter_signature_),
                                    kernel_parameter_values=', '.join(self.kernel_parameter_value_))
 
-        return self.pretty_print_c_(buffer)
+        if self.pretty_print:
+            buffer = pretty_print_c_(buffer)
+
+        return buffer
 
     def bake_cpp(self):
-        buffer = cpp_frame.format(signature=self.signature(),
+        buffer = cpp_frame.format(guard=self.header_guard_(),
+                                  signature=self.signature(),
                                   wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
                                   wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
 
-        return self.pretty_print_c_(buffer)
+        if self.pretty_print:
+            buffer = pretty_print_c_(buffer)
+
+        return buffer
 
     def bake_py(self, module: str):
         buffer = py_frame.format(signature=self.signature(),

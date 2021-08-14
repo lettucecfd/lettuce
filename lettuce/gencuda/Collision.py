@@ -26,7 +26,7 @@ class BKGCollision(Collision):
         """
         """
         super().__init__()
-        self.name = 'bkg'
+        self.name = 'bgk'
 
     def tau_inv(self, gen: 'KernelGenerator'):
         """

@@ -15,6 +15,7 @@ __all__ = [
 
 class BGKCollision:
     def __init__(self, lattice, tau, force=None):
+        self.name = 'bgk'
         self.force = force
         self.lattice = lattice
         self.tau = tau

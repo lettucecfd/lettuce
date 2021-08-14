@@ -1,15 +1,18 @@
 """Lattice Boltzmann Solver"""
 
+import pickle
+import warnings
+from copy import deepcopy
 from timeit import default_timer as timer
+
+import numpy as np
+import torch
+
+import lettuce.cuda
 from lettuce import (
     LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
 )
 from lettuce.util import pressure_poisson
-import pickle
-from copy import deepcopy
-import warnings
-import torch
-import numpy as np
 
 __all__ = ["Simulation"]
 
@@ -24,7 +27,7 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming):
+    def __init__(self, flow, lattice, collision, streaming, native: bool = True):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
@@ -49,18 +52,60 @@ class Simulation:
 
         # Define masks, where the collision or streaming are not applied
         x = flow.grid
-        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
+        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
         no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
 
         # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
         for boundary in self._boundaries:
             if hasattr(boundary, "make_no_collision_mask"):
-                self.no_collision_mask = self.no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
+                no_collision_mask = no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
             if hasattr(boundary, "make_no_stream_mask"):
                 no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
         if no_stream_mask.any():
             self.streaming.no_stream_mask = no_stream_mask
+
+        self.no_collision_mask = no_collision_mask if no_collision_mask.any() else None
+
+        self.stream_and_collide = Simulation.stream_and_collide_
+
+        if native:
+
+            if str(lattice.device) == 'cpu':
+                return
+
+            if not hasattr(self.lattice.stencil, 'name'):
+                print('stencil not natively implemented')
+                return
+            if not hasattr(self.lattice.equilibrium, 'name'):
+                print('equilibrium not natively implemented')
+                return
+            if not hasattr(self.collision, 'name'):
+                print('collision not natively implemented')
+                return
+            if not hasattr(self.streaming, 'name'):
+                print('stream not natively implemented')
+                return
+
+            stencil_name = self.lattice.stencil.name
+            equilibrium_name = self.lattice.equilibrium.name
+            collision_name = self.collision.name
+            stream_name = self.streaming.name
+
+            self.stream_and_collide = lettuce.cuda.resolve(
+                stencil_name, equilibrium_name, collision_name, stream_name,
+                self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
+
+            self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
+
+    @staticmethod
+    def stream_and_collide_(simulation):
+        simulation.f = simulation.streaming(simulation.f)
+        # Perform the collision routine everywhere, expect where the no_collision_mask is true
+        if simulation.no_collision_mask is not None:
+            simulation.f = torch.where(simulation.no_collision_mask, simulation.f, simulation.collision(simulation.f))
+        else:
+            simulation.collision(simulation.f)
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
@@ -69,15 +114,25 @@ class Simulation:
             self._report()
         for _ in range(num_steps):
             self.i += 1
-            self.f = self.streaming(self.f)
-            # Perform the collision routine everywhere, expect where the no_collision_mask is true
-            self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
+            self.stream_and_collide(self)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self._report()
+
         end = timer()
         seconds = end - start
+
+        num_grid_points = self.f.shape[1]
+        for d in range(1, self.lattice.stencil.D()):
+            num_grid_points *= self.f.shape[d + 1]
+        print(num_grid_points)
+
+        num_grid_points = self.f.numel() / self.lattice.stencil.Q()
+        print(num_grid_points)
+
         num_grid_points = self.lattice.rho(self.f).numel()
+        print(num_grid_points)
+
         mlups = num_steps * num_grid_points / 1e6 / seconds
         return mlups
 

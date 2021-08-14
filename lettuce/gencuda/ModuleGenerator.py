@@ -1,14 +1,20 @@
 import os
-import re
 import shutil
 
 from lettuce.gencuda import *
+from lettuce.gencuda.util import pretty_print_c_, pretty_print_py_
 
 py_frame = '''
-# noinspection PyUnresolvedReferences
 import torch
+import os
 
-import lettuce.Simulation
+import lettuce.simulation
+
+# on windows add cuda path for
+# native module to find all dll's
+if os.name == 'nt':
+    os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
+
 import {module}
 
 {py_buffer}
@@ -25,7 +31,28 @@ def resolve(stencil: str, equilibrium: str, collision: str, stream: str = None,
     if support_no_collision is not None and support_no_collision:
         extra = '_ncm'
 
-    return locals()[f"{{stencil}}_{{equilibrium}}_{{collision}}_{{stream}}{{extra}}"]
+    return globals()[f"{{stencil}}_{{equilibrium}}_{{collision}}_{{stream}}{{extra}}"]
+'''
+
+pybind_frame = '''
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning ( push )
+#pragma warning ( disable : 4067 )
+#pragma warning ( disable : 4624 )
+#endif
+
+#include <torch/extension.h>
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning ( pop )
+#endif
+
+{includes}
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
+{{
+    {definitions}
+}}
 '''
 
 
@@ -131,17 +158,6 @@ class ModuleGenerator:
 
         self.pretty_print = pretty_print
 
-    def pretty_print_py_(self, buffer: str):
-        if self.pretty_print:
-            # remove spaces before new line
-            buffer = re.sub(r' +\n', '\n', buffer)
-            # remove whitespace at end and begin
-            buffer = re.sub(r'\n+$', '\n', buffer)
-            buffer = re.sub(r'^\n*', '', buffer)
-            # remove whitespace at end and begin
-            buffer = re.sub(r'\s*\ndef ', '\n\n\ndef ', buffer)
-        return buffer
-
     def create_module(self):
 
         py_module = os.path.join('lettuce', 'cuda')
@@ -153,6 +169,8 @@ class ModuleGenerator:
         os.mkdir(py_module)
 
         buffer: [str] = []
+        pybind_include_buffer: [str] = []
+        pybind_definition_buffer: [str] = []
 
         for entry in self.matrix_list:
             gen = ModuleMatrix.gen_from_entry_(entry, self.pretty_print)
@@ -167,9 +185,21 @@ class ModuleGenerator:
 
             buffer.append(gen.bake_py(cuda_module))
 
-        buffer = py_frame.format(module=cuda_module, py_buffer='\n'.join(buffer))
-        buffer = self.pretty_print_py_(buffer)
+            pybind_include_buffer.append(f'#include "{gen.cpp_file_name()}"')
+            pybind_definition_buffer.append(f'm.def("{gen.signature()}", &{gen.signature()}, "{gen.signature()}");')
 
+        buffer = py_frame.format(module=cuda_module, py_buffer='\n'.join(buffer))
+        if self.pretty_print:
+            buffer = pretty_print_py_(buffer)
         module_file = open(os.path.join(py_module, '__init__.py'), 'w')
         module_file.write(buffer)
         module_file.close()
+
+        buffer = pybind_frame.format(includes='\n'.join(pybind_include_buffer),
+                                     definitions='\n    '.join(pybind_definition_buffer))
+        if self.pretty_print:
+            buffer = pretty_print_c_(buffer)
+        module_file = open(os.path.join(cuda_module, 'lettuce_pybind.cpp'), 'w')
+        module_file.write(buffer)
+        module_file.close()
+

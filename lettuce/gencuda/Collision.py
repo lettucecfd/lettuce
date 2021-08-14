@@ -18,7 +18,7 @@ class Collision:
         assert False, 'Not implemented Error'
 
 
-class BKGCollision(Collision):
+class BGKCollision(Collision):
     """
     """
 

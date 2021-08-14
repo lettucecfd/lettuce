@@ -5,15 +5,10 @@ def main():
     """
     """
 
-    # stencils = [D1Q3(), D2Q9(), D3Q19(), D3Q27()]
-    stencils = [D2Q9()]
-
-    mat = ModuleMatrix(stencils,
+    mat = ModuleMatrix([D1Q3(), D2Q9(), D3Q19(), D3Q27()],
                        [StandardStream()],
                        [QuadraticEquilibrium()],
-                       [BKGCollision()],
-                       support_no_stream=[False],
-                       support_no_collision=[False])
+                       [BGKCollision()])
 
     ModuleGenerator([mat], pretty_print=True).create_module()
 

@@ -48,7 +48,6 @@ lettuce_cuda_{signature}({wrapper_parameter})
     AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{signature}", [&]
     {{
         lettuce_cuda_{signature}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
-        cudaDeviceSynchronize();
     }});
 }}
 '''
@@ -90,10 +89,11 @@ void
 py_frame = '''
 def {signature}(simulation: 'lettuce.Simulation'):
     """"""
-    {py_buffer}
+    {py_pre_buffer}
     # noinspection PyUnresolvedReferences
     {module}.{signature}({py_parameter_values})
     torch.cuda.synchronize()
+    {py_post_buffer}
 '''
 
 
@@ -115,7 +115,8 @@ class KernelGenerator:
     collision_buffer_: [str]
     write_buffer_: [str]
     wrapper_buffer_: [str]
-    py_buffer_: [str]
+    py_pre_buffer_: [str]
+    py_post_buffer_: [str]
 
     signature_: str
 
@@ -176,7 +177,8 @@ class KernelGenerator:
         self.collision_buffer_ = []
         self.write_buffer_ = []
         self.wrapper_buffer_ = []
-        self.py_buffer_ = []
+        self.py_pre_buffer_ = []
+        self.py_post_buffer_ = []
 
         self.signature_ = ''
 
@@ -256,8 +258,11 @@ class KernelGenerator:
     def wrt(self, it=''):
         self.write_buffer_.append(it)
 
-    def py(self, it=''):
-        self.py_buffer_.append(it)
+    def pyr(self, it=''):
+        self.py_pre_buffer_.append(it)
+
+    def pyo(self, it=''):
+        self.py_post_buffer_.append(it)
 
     def bake_cuda(self):
         buffer = cuda_frame.format(signature=self.signature(),
@@ -289,7 +294,8 @@ class KernelGenerator:
 
     def bake_py(self, module: str):
         buffer = py_frame.format(signature=self.signature(),
-                                 py_buffer='\n    '.join(self.py_buffer_),
+                                 py_pre_buffer='\n    '.join(self.py_pre_buffer_),
+                                 py_post_buffer='\n    '.join(self.py_post_buffer_),
                                  module=module,
                                  py_parameter_values=', '.join(self.wrapper_py_parameter_value_))
 

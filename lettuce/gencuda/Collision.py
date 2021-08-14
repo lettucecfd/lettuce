@@ -32,7 +32,7 @@ class BKGCollision(Collision):
         """
         """
         if not gen.wrapper_hooked('tau_inv'):
-            gen.py("assert hasattr(simulation.collision, 'tau')")
+            gen.pyr("assert hasattr(simulation.collision, 'tau')")
             gen.wrapper_hook('tau_inv', 'const double tau_inv', 'tau_inv', '1./simulation.collision.tau')
         if not gen.kernel_hooked('tau_inv'):
             gen.kernel_hook('tau_inv', 'const scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')

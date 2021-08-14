@@ -40,7 +40,7 @@ class Stream:
         """
         """
         if not gen.wrapper_hooked('no_stream_mask'):
-            gen.py("assert hasattr(simulation.streaming, 'no_stream_mask')")
+            gen.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
             gen.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
                              'no_stream_mask', 'simulation.streaming.no_stream_mask')
         if not gen.kernel_hooked('no_stream_mask'):
@@ -50,7 +50,7 @@ class Stream:
         """
         """
         if not gen.wrapper_hooked('no_collision_mask'):
-            gen.py("assert hasattr(simulation, 'no_collision_mask')")
+            gen.pyr("assert hasattr(simulation, 'no_collision_mask')")
             gen.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
                              'no_collision_mask', 'simulation.no_collision_mask')
         if not gen.kernel_hooked('no_collision_mask'):
@@ -120,9 +120,11 @@ class StandardStream(Stream):
         if not gen.registered('f_next'):
             gen.register('f_next')
 
+            gen.pyo('simulation.f, simulation.f_next = simulation.f_next, simulation.f')
+
             # generate code
             if not gen.wrapper_hooked('f_next'):
-                gen.py("assert hasattr(simulation, 'f_next')")
+                gen.pyr("assert hasattr(simulation, 'f_next')")
                 gen.wrapper_hook('f_next', 'at::Tensor f_next', 'f_next', 'simulation.f_next')
             if not gen.kernel_hooked('f_next'):
                 gen.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')

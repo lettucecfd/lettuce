@@ -27,11 +27,15 @@ def resolve(stencil: str, equilibrium: str, collision: str, stream: str = None,
 
     extra = ''
     if support_no_stream is not None and support_no_stream:
-        extra = '_nsm'
+        extra += '_nsm'
     if support_no_collision is not None and support_no_collision:
-        extra = '_ncm'
+        extra += '_ncm'
 
-    return globals()[f"{{stencil}}_{{equilibrium}}_{{collision}}_{{stream}}{{extra}}"]
+    signature = f"{{stencil}}_{{equilibrium}}_{{collision}}_{{stream}}{{extra}}"
+    if signature in globals():
+        return globals()[signature]
+
+    return None
 '''
 
 pybind_frame = '''

@@ -15,7 +15,7 @@ __all__ = [
 
 class NoCollision:
     def __init__(self):
-        self.name = 'bgkCollision'
+        self.name = 'onCollision'
 
     def __call__(self, f):
         return f

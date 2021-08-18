@@ -92,11 +92,16 @@ class Simulation:
             collision_name = self.collision.name
             stream_name = self.streaming.name
 
-            self.stream_and_collide = lettuce.cuda.resolve(
+            stream_and_collide_ = lettuce.cuda.resolve(
                 stencil_name, equilibrium_name, collision_name, stream_name,
                 self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
 
-            self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
+            if stream_and_collide_ is None:
+                return
+
+            self.stream_and_collide = stream_and_collide_
+            if stream_name != 'noStream':
+                self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @staticmethod
     def stream_and_collide_(simulation):

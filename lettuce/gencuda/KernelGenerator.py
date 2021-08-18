@@ -199,7 +199,12 @@ class KernelGenerator:
         if support_no_collision:
             extra += '_ncm'
 
-        self.signature_ = f"{self.stencil.name}_{self.equilibrium.name}_{self.collision.name}_{self.stream.name}{extra}"
+        self.signature_ = (f"{self.stencil.name}"
+                           f"_{self.equilibrium.name}"
+                           f"_{self.collision.name}"
+                           f"_{self.stream.name}"
+                           f"{extra}")
+
         self.stream.read_write(self, support_no_stream, support_no_collision)
         self.collision.collide(self)
 
@@ -263,16 +268,17 @@ class KernelGenerator:
         self.py_post_buffer_.append(it)
 
     def bake_cuda(self):
-        buffer = cuda_frame.format(signature=self.signature(),
-                                   hard_buffer='\n    '.join(self.hard_buffer_),
-                                   index_buffer='\n    '.join(self.index_buffer_),
-                                   node_buffer='\n        '.join(self.node_buffer_),
-                                   collision_buffer='\n            '.join(self.collision_buffer_),
-                                   write_buffer='\n    '.join(self.write_buffer_),
-                                   wrapper_buffer='\n    '.join(self.wrapper_buffer_),
-                                   wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
-                                   kernel_parameter=', '.join(self.kernel_parameter_signature_),
-                                   kernel_parameter_values=', '.join(self.kernel_parameter_value_))
+        buffer = cuda_frame.format(
+            signature=self.signature(),
+            hard_buffer='\n    '.join(self.hard_buffer_),
+            index_buffer='\n    '.join(self.index_buffer_),
+            node_buffer='\n        '.join(self.node_buffer_),
+            collision_buffer='\n            '.join(self.collision_buffer_),
+            write_buffer='\n    '.join(self.write_buffer_),
+            wrapper_buffer='\n    '.join(self.wrapper_buffer_),
+            wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
+            kernel_parameter=', '.join(self.kernel_parameter_signature_),
+            kernel_parameter_values=', '.join(self.kernel_parameter_value_))
 
         if self.pretty_print:
             buffer = pretty_print_c_(buffer)
@@ -280,10 +286,11 @@ class KernelGenerator:
         return buffer
 
     def bake_cpp(self):
-        buffer = cpp_frame.format(guard=self.header_guard_(),
-                                  signature=self.signature(),
-                                  wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
-                                  wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
+        buffer = cpp_frame.format(
+            guard=self.header_guard_(),
+            signature=self.signature(),
+            wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
+            wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
 
         if self.pretty_print:
             buffer = pretty_print_c_(buffer)
@@ -291,10 +298,11 @@ class KernelGenerator:
         return buffer
 
     def bake_py(self, module: str):
-        buffer = py_frame.format(signature=self.signature(),
-                                 py_pre_buffer='\n    '.join(self.py_pre_buffer_),
-                                 py_post_buffer='\n    '.join(self.py_post_buffer_),
-                                 module=module,
-                                 py_parameter_values=', '.join(self.wrapper_py_parameter_value_))
+        buffer = py_frame.format(
+            signature=self.signature(),
+            py_pre_buffer='\n    '.join(self.py_pre_buffer_),
+            py_post_buffer='\n    '.join(self.py_post_buffer_),
+            module=module,
+            py_parameter_values=', '.join(self.wrapper_py_parameter_value_))
 
         return buffer

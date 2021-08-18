@@ -186,8 +186,8 @@ class StandardStream(Stream):
                 offset = []
                 all_zero = True
                 for d in range(gen.stencil.d_):
-                    offset.append(f"dim{d}_offset{direction_slot[gen.stencil.e_[q][gen.stencil.d_-1-d]]}")
-                    all_zero = all_zero and (gen.stencil.e_[q][gen.stencil.d_-1-d] == 0)
+                    offset.append(f"dim{d}_offset{direction_slot[gen.stencil.e_[q][gen.stencil.d_ - 1 - d]]}")
+                    all_zero = all_zero and (gen.stencil.e_[q][gen.stencil.d_ - 1 - d] == 0)
 
                 if all_zero:
                     offsets.append('offset')

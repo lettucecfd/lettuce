@@ -103,8 +103,15 @@ class ModuleMatrix:
         self.cuda = cuda if cuda is not None else [Cuda()]
         self.lattice = lattice if lattice is not None else [Lattice()]
 
-        self.support_no_stream = support_no_stream if support_no_stream is not None else [True, False]
-        self.support_no_collision = support_no_collision if support_no_collision is not None else [True, False]
+        if support_no_stream is not None:
+            self.support_no_stream = support_no_stream
+        else:
+            self.support_no_stream = [True, False]
+
+        if support_no_collision is not None:
+            self.support_no_collision = support_no_collision
+        else:
+            self.support_no_collision = [True, False]
 
     def entries_(self):
         matrix_entries = []
@@ -188,7 +195,9 @@ class ModuleGenerator:
             buffer.append(gen.bake_py(cuda_module))
 
             pybind_include_buffer.append(f'#include "{gen.cpp_file_name()}"')
-            pybind_definition_buffer.append(f'm.def("{gen.signature()}", &{gen.signature()}, "{gen.signature()}");')
+            pybind_definition_buffer.append(f'm.def("{gen.signature()}", '
+                                            f'&{gen.signature()}, '
+                                            f'"{gen.signature()}");')
 
         buffer = py_frame.format(module=cuda_module, py_buffer='\n'.join(buffer))
         if self.pretty_print:
@@ -204,4 +213,3 @@ class ModuleGenerator:
         module_file = open(os.path.join(cuda_module, 'lettuce_pybind.cpp'), 'w')
         module_file.write(buffer)
         module_file.close()
-

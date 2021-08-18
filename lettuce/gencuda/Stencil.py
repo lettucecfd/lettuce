@@ -7,7 +7,9 @@ class Stencil:
     """
     """
 
-    def __init__(self, name: str, d: int, q: int, e: [[int]], w: [float], cs: float, opposite: [int]):
+    def __init__(self, name: str, d: int, q: int,
+                 e: [[int]], w: [float], cs: float,
+                 opposite: [int]):
         """
         """
 
@@ -146,4 +148,5 @@ class D3Q27(Stencil):
                [-1, 1, -1], [1, -1, -1], [-1, 1, 1]],
             w=[8. / 27.] + [2. / 27.] * 6 + [1. / 54.] * 12 + [1. / 216.] * 8,
             cs=1. / math.sqrt(3.),
-            opposite=[0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17, 20, 19, 22, 21, 24, 23, 26, 25])
+            opposite=[0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14,
+                      13, 16, 15, 18, 17, 20, 19, 22, 21, 24, 23, 26, 25])

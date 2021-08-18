@@ -10,7 +10,7 @@ class Equilibrium:
 
 class QuadraticEquilibrium(Equilibrium):
     def __init__(self, lattice):
-        self.name = 'quadratic'
+        self.name = 'quadraticEquilibrium'
         self.lattice = lattice
 
     def __call__(self, rho, u, *args):

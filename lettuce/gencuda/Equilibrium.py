@@ -24,7 +24,7 @@ class QuadraticEquilibrium(Equilibrium):
         """
         """
         super().__init__()
-        self.name = 'quadratic'
+        self.name = 'quadraticEquilibrium'
 
     def uxu(self, gen: 'KernelGenerator'):
         """

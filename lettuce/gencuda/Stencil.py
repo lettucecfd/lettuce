@@ -51,8 +51,8 @@ class Stencil:
             self.q(gen)
 
             # generate
-            buffer = [f"{{{', '.join([str(x) + 'u' for x in e])}}}" for e in self.e_]
-            gen.hrd(f"constexpr index_t e[q][d] = {{{', '.join(buffer)}}};")
+            buffer = [f"{{{', '.join([str(x) + '.0' for x in e])}}}" for e in self.e_]
+            gen.hrd(f"constexpr scalar_t e[q][d] = {{{', '.join(buffer)}}};")
 
     def w(self, gen: 'KernelGenerator'):
         """

@@ -34,7 +34,7 @@ class Stream:
     def __init__(self):
         """
         """
-        self.name = 'invalid'
+        self.name = 'invalidStream'
 
     def no_stream_mask(self, gen: 'KernelGenerator'):
         """
@@ -62,7 +62,7 @@ class Stream:
         assert False, "Not implemented Error"
 
 
-class ReadWrite(Stream):
+class NoStream(Stream):
     """
     """
 
@@ -70,7 +70,7 @@ class ReadWrite(Stream):
         """
         """
         super().__init__()
-        self.name = 'rw'
+        self.name = 'noStream'
 
     def read_write(self, gen: 'KernelGenerator', support_no_stream: bool, support_no_collision: bool):
         """
@@ -112,7 +112,7 @@ class StandardStream(Stream):
         """
         """
         super().__init__()
-        self.name = 'standard'
+        self.name = 'standardStream'
 
     def f_next(self, gen: 'KernelGenerator'):
         """
@@ -144,7 +144,7 @@ class StandardStream(Stream):
             if d > 0:
                 gen.cuda.length(gen, d - 1, n=True)
 
-                gen.idx(f"const index_t &dim{d}_offset0 = index{d};")
+                gen.idx(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
                 gen.idx(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
                         f"? 0 : (index{d} + 1)) * length{d - 1};")
                 gen.idx(f"const index_t dim{d}_offset2 = ((index{d} == 0) "
@@ -180,14 +180,14 @@ class StandardStream(Stream):
             # read with stream
             length_index = gen.stencil.d_ - 1
 
-            direction_slot = {0: 0, 1: 1, -1: 2}
+            direction_slot = {0: 0, -1: 1, 1: 2}
             offsets = []
             for q in range(gen.stencil.q_):
                 offset = []
                 all_zero = True
                 for d in range(gen.stencil.d_):
-                    offset.append(f"dim{d}_offset{direction_slot[gen.stencil.e_[q][d]]}")
-                    all_zero = all_zero and (gen.stencil.e_[q][d] == 0)
+                    offset.append(f"dim{d}_offset{direction_slot[gen.stencil.e_[q][gen.stencil.d_-1-d]]}")
+                    all_zero = all_zero and (gen.stencil.e_[q][gen.stencil.d_-1-d] == 0)
 
                 if all_zero:
                     offsets.append('offset')

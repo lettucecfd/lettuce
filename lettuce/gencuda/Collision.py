@@ -10,12 +10,29 @@ class Collision:
     def __init__(self):
         """
         """
-        self.name = 'invalid'
+        self.name = 'invalidCollision'
 
     def collide(self, gen: 'KernelGenerator'):
         """
         """
         assert False, 'Not implemented Error'
+
+
+class NoCollision(Collision):
+    """
+    """
+
+    def __init__(self):
+        """
+        """
+        super().__init__()
+        self.name = 'noCollision'
+
+    def collide(self, gen: 'KernelGenerator'):
+        """
+        """
+        if not gen.registered('collide()'):
+            gen.register('collide()')
 
 
 class BGKCollision(Collision):
@@ -26,7 +43,7 @@ class BGKCollision(Collision):
         """
         """
         super().__init__()
-        self.name = 'bgk'
+        self.name = 'bgkCollision'
 
     def tau_inv(self, gen: 'KernelGenerator'):
         """

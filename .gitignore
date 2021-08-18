@@ -5,6 +5,7 @@ Makefile
 .editorconfig
 
 # generated files
+scratch/
 lettuce_cuda/
 lettuce/cuda/
 

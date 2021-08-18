@@ -156,6 +156,8 @@ class ModuleGenerator:
             for black_matrix in black_matrices:
                 self.matrix_list -= black_matrix.entries_()
 
+        self.matrix_list = set(self.matrix_list)
+
         self.pretty_print = pretty_print
 
     def create_module(self):

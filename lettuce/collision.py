@@ -13,9 +13,17 @@ __all__ = [
 ]
 
 
+class NoCollision:
+    def __init__(self):
+        self.name = 'bgkCollision'
+
+    def __call__(self, f):
+        return f
+
+
 class BGKCollision:
     def __init__(self, lattice, tau, force=None):
-        self.name = 'bgk'
+        self.name = 'bgkCollision'
         self.force = force
         self.lattice = lattice
         self.tau = tau

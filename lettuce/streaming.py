@@ -2,10 +2,30 @@
 Streaming Step
 """
 
-import torch
 import numpy as np
+import torch
 
-__all__ = ["StandardStreaming"]
+__all__ = ["NoStreaming", "StandardStreaming"]
+
+
+class NoStreaming:
+    """
+    """
+
+    def __init__(self):
+        self.name = 'noStream'
+        self._no_stream_mask = None
+
+    @property
+    def no_stream_mask(self):
+        return self._no_stream_mask
+
+    @no_stream_mask.setter
+    def no_stream_mask(self, mask):
+        self._no_stream_mask = mask
+
+    def __call__(self, f):
+        return f
 
 
 class StandardStreaming:
@@ -19,7 +39,7 @@ class StandardStreaming:
     """
 
     def __init__(self, lattice):
-        self.name = 'standard'
+        self.name = 'standardStream'
         self.lattice = lattice
         self._no_stream_mask = None
 

@@ -24,9 +24,9 @@ class Cuda:
 
             # we target 512 threads at the moment
             if 1 == gen.stencil.d_:
-                gen.wrp("const auto thread_count = dim3{512u};")
+                gen.wrp("const auto thread_count = dim3{16u};")
             if 2 == gen.stencil.d_:
-                gen.wrp("const auto thread_count = dim3{32u, 16u};")
+                gen.wrp("const auto thread_count = dim3{16u, 16u};")
             if 3 == gen.stencil.d_:
                 gen.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
 

@@ -122,16 +122,7 @@ class Simulation:
         end = timer()
         seconds = end - start
 
-        num_grid_points = self.f.shape[1]
-        for d in range(1, self.lattice.stencil.D()):
-            num_grid_points *= self.f.shape[d + 1]
-        print(num_grid_points)
-
         num_grid_points = self.f.numel() / self.lattice.stencil.Q()
-        print(num_grid_points)
-
-        num_grid_points = self.lattice.rho(self.f).numel()
-        print(num_grid_points)
 
         mlups = num_steps * num_grid_points / 1e6 / seconds
         return mlups

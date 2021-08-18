@@ -8,3 +8,16 @@ from lettuce.gencuda.Collision import Collision, NoCollision, BGKCollision
 
 from lettuce.gencuda.KernelGenerator import KernelGenerator
 from lettuce.gencuda.ModuleGenerator import ModuleMatrix, ModuleGenerator
+
+__all__ = [
+    'Cuda',
+    'Lattice',
+
+    'Stencil', 'D1Q3', 'D2Q9', 'D3Q19', 'D3Q27',
+    'Stream', 'NoStream', 'StandardStream',
+    'Equilibrium', 'QuadraticEquilibrium',
+    'Collision', 'NoCollision', 'BGKCollision',
+
+    'KernelGenerator',
+    'ModuleMatrix', 'ModuleGenerator',
+]

@@ -3,13 +3,12 @@
 
 """The setup script."""
 
-import torch
 import os
 import versioneer
 
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -29,7 +28,7 @@ def get_cmdclass():
 
     # This assert should not fail as versioneer (right now) not writes build_ext.
     # This assert should prevent bugs when versioneer changes its behavior.
-    assert not ('build_ext' in cmdclass), "versioneer should not write \'build_ext\' in cmdclass." \
+    assert not ('build_ext' in cmdclass), "versioneer should not write 'build_ext' in cmdclass." \
                                           "Please contact the developers about this bug!"
 
     cmdclass['build_ext'] = BuildExtension

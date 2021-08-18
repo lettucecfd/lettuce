@@ -1,5 +1,3 @@
-import re
-
 from lettuce.gencuda import *
 from lettuce.gencuda.util import pretty_print_c_
 

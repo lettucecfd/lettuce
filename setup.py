@@ -74,13 +74,13 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.gen_native', 'lettuce.native']),
     ext_modules=[
         CUDAExtension(
             name='lettuce_native',
             sources=get_native_sources()
         )
     ],
+    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.gen_native', 'lettuce.native']),
     setup_requires=setup_requirements,
     test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',

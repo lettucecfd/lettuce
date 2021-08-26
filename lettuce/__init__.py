@@ -20,6 +20,7 @@ try:
     native_available = True
 
 except ImportError:
+    print('failed to load native module')
     native_available = False
 
 

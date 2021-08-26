@@ -6,8 +6,8 @@ Makefile
 
 # generated files
 scratch/
-lettuce_cuda/
-lettuce/cuda/
+lettuce_native/
+lettuce/native/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

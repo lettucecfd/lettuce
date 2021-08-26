@@ -1,5 +1,7 @@
 import numpy as np
 
+from lettuce import gen_native
+
 __all__ = ["Stencil", "D1Q3", "D2Q9", "D3Q27", "D3Q19"]
 
 
@@ -15,7 +17,7 @@ class Stencil:
 
 
 class D1Q3(Stencil):
-    name = 'd1q3'
+    native_class = gen_native.NativeD1Q3
     e = np.array([[0], [1], [-1]])
     w = np.array([2.0 / 3.0, 1.0 / 6.0, 1.0 / 6.0])
     cs = 1 / np.sqrt(3)
@@ -23,7 +25,7 @@ class D1Q3(Stencil):
 
 
 class D2Q9(Stencil):
-    name = 'd2q9'
+    native_class = gen_native.NativeD2Q9
     e = np.array([[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]])
     w = np.array([4.0 / 9.0] + [1.0 / 9.0] * 4 + [1.0 / 36.0] * 4)
     cs = 1 / np.sqrt(3)
@@ -31,7 +33,7 @@ class D2Q9(Stencil):
 
 
 class D3Q19(Stencil):
-    name = 'd3q19'
+    native_class = gen_native.NativeD3Q19
     e = np.array([
         [0, 0, 0],
         [1, 0, 0],
@@ -62,7 +64,7 @@ class D3Q19(Stencil):
 
 
 class D3Q27(Stencil):
-    name = 'd3q27'
+    native_class = gen_native.NativeD3Q27
     e = np.array([
         [0, 0, 0],
         [1, 0, 0],

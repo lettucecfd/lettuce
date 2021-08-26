@@ -1,4 +1,5 @@
 import torch
+from lettuce import gen_native
 
 __all__ = ["Equilibrium", "QuadraticEquilibrium", "IncompressibleQuadraticEquilibrium",
            "QuadraticEquilibrium_LessMemory"]
@@ -9,8 +10,10 @@ class Equilibrium:
 
 
 class QuadraticEquilibrium(Equilibrium):
+
+    native_class = gen_native.NativeEquilibriumQuadratic
+
     def __init__(self, lattice):
-        self.name = 'quadraticEquilibrium'
         self.lattice = lattice
 
     def __call__(self, rho, u, *args):

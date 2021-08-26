@@ -5,6 +5,8 @@ Streaming Step
 import numpy as np
 import torch
 
+from lettuce import *
+
 __all__ = ["NoStreaming", "StandardStreaming"]
 
 
@@ -12,8 +14,9 @@ class NoStreaming:
     """
     """
 
+    native_class = gen_native.NativeStreamingNo
+
     def __init__(self):
-        self.name = 'noStream'
         self._no_stream_mask = None
 
     @property
@@ -38,8 +41,9 @@ class StandardStreaming:
         If None, stream all (also around all boundaries).
     """
 
+    native_class = gen_native.NativeStreamingStandard
+
     def __init__(self, lattice):
-        self.name = 'standardStream'
         self.lattice = lattice
         self._no_stream_mask = None
 

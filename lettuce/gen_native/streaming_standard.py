@@ -1,120 +1,18 @@
-from lettuce.gencuda import *
-
-read_frame = '''{{
-        auto index_it = offset;
-        f_reg[0] = {source}[index_it];
-
-#pragma unroll
-        for(index_t i = 1; i < q; ++i)
-        {{
-            index_it += length{length_index};
-            f_reg[i] = {source}[index_it];
-        }}
-    }}
-'''
-
-write_frame = '''{{
-        auto index_it = offset;
-        {target}[index_it] = f_reg[0];
-
-#pragma unroll
-        for(index_t i = 1; i < q; ++i)
-        {{
-            index_it += length{length_index};
-            {target}[index_it] = f_reg[i];
-        }}
-    }}
-'''
+from lettuce.gen_native import *
 
 
-class Stream:
+class NativeStreamingStandard(NativeStreaming):
     """
     """
 
-    def __init__(self):
-        """
-        """
-        self.name = 'invalidStream'
+    name = 'standardStream'
 
-    def no_stream_mask(self, gen: 'KernelGenerator'):
-        """
-        """
-        if not gen.wrapper_hooked('no_stream_mask'):
-            gen.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
-            gen.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
-                             'no_stream_mask', 'simulation.streaming.no_stream_mask')
-        if not gen.kernel_hooked('no_stream_mask'):
-            gen.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
-
-    def no_collision_mask(self, gen: 'KernelGenerator'):
-        """
-        """
-        if not gen.wrapper_hooked('no_collision_mask'):
-            gen.pyr("assert hasattr(simulation, 'no_collision_mask')")
-            gen.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
-                             'no_collision_mask', 'simulation.no_collision_mask')
-        if not gen.kernel_hooked('no_collision_mask'):
-            gen.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask', 'no_collision_mask.data<byte_t>()')
-
-    def read_write(self, gen: 'KernelGenerator', support_no_stream: bool, support_no_collision: bool):
-        """
-        """
-        assert False, "Not implemented Error"
-
-
-class NoStream(Stream):
-    """
-    """
-
-    def __init__(self):
-        """
-        """
+    @staticmethod
+    def __init__():
         super().__init__()
-        self.name = 'noStream'
 
-    def read_write(self, gen: 'KernelGenerator', support_no_stream: bool, support_no_collision: bool):
-        """
-        """
-        if not gen.registered('read_write()'):
-            gen.register('read_write()')
-
-            # dependencies:
-
-            if support_no_collision:
-                self.no_collision_mask(gen)
-
-            gen.stencil.q(gen)
-            gen.cuda.length(gen, gen.stencil.d_ - 1, n=True)
-            gen.cuda.offset(gen)
-
-            # read
-            length_index = gen.stencil.d_ - 1
-
-            gen.idx()
-            gen.idx('scalar_t f_reg[q];')
-            gen.idx(read_frame.format(source='f', length_index=length_index))
-
-            if support_no_collision:
-                indices = ', '.join([f"index{d}" for d in range(gen.stencil.d_)])
-                gen.idx(f"if(!no_collision_mask[{indices}])")
-            gen.idx('{')
-
-            gen.wrt('}')
-            gen.wrt()
-            gen.wrt(write_frame.format(target='f', length_index=length_index))
-
-
-class StandardStream(Stream):
-    """
-    """
-
-    def __init__(self):
-        """
-        """
-        super().__init__()
-        self.name = 'standardStream'
-
-    def f_next(self, gen: 'KernelGenerator'):
+    @staticmethod
+    def f_next(gen: 'GeneratorKernel'):
         """
         """
         if not gen.registered('f_next'):
@@ -129,7 +27,8 @@ class StandardStream(Stream):
             if not gen.kernel_hooked('f_next'):
                 gen.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
-    def dim_offset(self, gen: 'KernelGenerator', d: int):
+    @staticmethod
+    def dim_offset(gen: 'GeneratorKernel', d: int):
         """
         """
         if not gen.registered(f"dim{d}_offset"):
@@ -137,12 +36,12 @@ class StandardStream(Stream):
 
             # dependencies
             gen.cuda.index(gen, d)
-            gen.cuda.dimension(gen, d, n=True)
+            gen.cuda.dimension(gen, d, hook_into_kernel=True)
 
             # generate
 
             if d > 0:
-                gen.cuda.length(gen, d - 1, n=True)
+                gen.cuda.length(gen, d - 1, hook_into_kernel=True)
 
                 gen.idx(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
                 gen.idx(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
@@ -155,7 +54,8 @@ class StandardStream(Stream):
                 gen.idx(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
                 gen.idx(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
-    def read_write(self, gen: 'KernelGenerator', support_no_stream: bool, support_no_collision: bool):
+    @classmethod
+    def read_write(cls, gen: 'GeneratorKernel', support_no_stream: bool, support_no_collision: bool):
         """
         """
         if not gen.registered('read_write()'):
@@ -164,18 +64,18 @@ class StandardStream(Stream):
             # dependencies:
 
             if support_no_stream:
-                self.no_stream_mask(gen)
+                cls.no_stream_mask(gen)
 
             if support_no_collision:
-                self.no_collision_mask(gen)
+                cls.no_collision_mask(gen)
 
-            self.f_next(gen)
+            cls.f_next(gen)
             gen.stencil.q(gen)
             gen.cuda.offset(gen)
-            gen.cuda.length(gen, d=gen.stencil.d_ - 1, n=True)
+            gen.cuda.length(gen, d=gen.stencil.d_ - 1, hook_into_kernel=True)
 
             for d in range(gen.stencil.d_):
-                self.dim_offset(gen, d)
+                cls.dim_offset(gen, d)
 
             # read with stream
             length_index = gen.stencil.d_ - 1
@@ -246,4 +146,4 @@ class StandardStream(Stream):
             # write
             gen.wrt('}')
             gen.wrt()
-            gen.wrt(write_frame.format(target='f_next', length_index=length_index))
+            gen.wrt(cls.write_frame_.format(target='f_next', length_index=length_index))

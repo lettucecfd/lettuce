@@ -1,32 +1,18 @@
-from lettuce.gencuda import KernelGenerator
+from lettuce.gen_native import *
 
 
-class Equilibrium:
+class NativeEquilibriumQuadratic(NativeEquilibrium):
     """
     """
 
-    def __init__(self):
-        """
-        """
-        self.name = 'invalid'
+    name = 'quadraticEquilibrium'
 
-    def f_eq(self, gen: 'KernelGenerator'):
-        """
-        """
-        pass
-
-
-class QuadraticEquilibrium(Equilibrium):
-    """
-    """
-
-    def __init__(self):
-        """
-        """
+    @staticmethod
+    def __init__():
         super().__init__()
-        self.name = 'quadraticEquilibrium'
 
-    def uxu(self, gen: 'KernelGenerator'):
+    @staticmethod
+    def uxu(gen: 'GeneratorKernel'):
         """
         """
 
@@ -43,7 +29,8 @@ class QuadraticEquilibrium(Equilibrium):
 
             gen.nde(f"const auto uxu = {' + '.join(summands)};")
 
-    def exu(self, gen: 'KernelGenerator'):
+    @staticmethod
+    def exu(gen: 'GeneratorKernel'):
         """
         """
 
@@ -61,7 +48,8 @@ class QuadraticEquilibrium(Equilibrium):
 
             gen.cln(f"const auto exu = {' + '.join(summands)};")
 
-    def cs_pow_two(self, gen: 'KernelGenerator'):
+    @staticmethod
+    def cs_pow_two(gen: 'GeneratorKernel'):
         """
         """
 
@@ -74,7 +62,8 @@ class QuadraticEquilibrium(Equilibrium):
             # generate
             gen.nde('constexpr auto cs_pow_two = cs * cs;')
 
-    def two_cs_pow_two(self, gen: 'KernelGenerator'):
+    @classmethod
+    def two_cs_pow_two(cls, gen: 'GeneratorKernel'):
         """
         """
 
@@ -82,12 +71,13 @@ class QuadraticEquilibrium(Equilibrium):
             gen.register('two_cs_pow_two<scalar_t>')
 
             # dependencies
-            self.cs_pow_two(gen)
+            cls.cs_pow_two(gen)
 
             # generate
             gen.nde('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
-    def f_eq_tmp(self, gen: 'KernelGenerator'):
+    @classmethod
+    def f_eq_tmp(cls, gen: 'GeneratorKernel'):
         """
         """
 
@@ -95,13 +85,14 @@ class QuadraticEquilibrium(Equilibrium):
             gen.register('f_eq_tmp')
 
             # dependencies
-            self.exu(gen)
-            self.cs_pow_two(gen)
+            cls.exu(gen)
+            cls.cs_pow_two(gen)
 
             # generate
             gen.cln('const auto f_eq_tmp = exu / cs_pow_two;')
 
-    def f_eq(self, gen: 'KernelGenerator'):
+    @classmethod
+    def f_eq(cls, gen: 'GeneratorKernel'):
         """
         """
 
@@ -110,10 +101,10 @@ class QuadraticEquilibrium(Equilibrium):
 
             # dependencies
             gen.lattice.rho(gen)
-            self.exu(gen)
-            self.uxu(gen)
-            self.two_cs_pow_two(gen)
-            self.f_eq_tmp(gen)
+            cls.exu(gen)
+            cls.uxu(gen)
+            cls.two_cs_pow_two(gen)
+            cls.f_eq_tmp(gen)
             gen.stencil.w(gen)
 
             # generate

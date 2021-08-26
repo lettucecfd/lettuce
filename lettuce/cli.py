@@ -115,7 +115,7 @@ def convergence(ctx, init_f_neq):
                                    lattice=lattice)
         collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
         streaming = StandardStreaming(lattice)
-        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, native=False)
+        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
         if init_f_neq:
             simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)

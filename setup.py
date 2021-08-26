@@ -4,11 +4,12 @@
 """The setup script."""
 
 import os
-import versioneer
+from subprocess import Popen
 
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
-from subprocess import Popen
+
+import versioneer
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -35,19 +36,19 @@ def get_cmdclass():
     return cmdclass
 
 
-def get_lettuce_cuda_sources():
+def get_native_sources():
     """"""
 
-    process = Popen(['python', '-m', 'lettuce.gencuda'])
+    process = Popen(['python', '-m', 'lettuce.gen_native'])
     _, stderr = process.communicate()
     assert stderr is None, stderr
 
     def source(f: str):
-        is_file = os.path.isfile(os.path.join('lettuce_cuda', f))
+        is_file = os.path.isfile(os.path.join('lettuce_native', f))
         is_source = f.endswith('.cu') or f.endswith('.cpp')
         return is_file and is_source
 
-    return [os.path.join('lettuce_cuda', f) for f in os.listdir('lettuce_cuda') if source(f)]
+    return [os.path.join('lettuce_native', f) for f in os.listdir('lettuce_native') if source(f)]
 
 
 setup(
@@ -73,11 +74,11 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.cuda']),
+    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.gen_native', 'lettuce.native']),
     ext_modules=[
         CUDAExtension(
-            name='lettuce_cuda',
-            sources=get_lettuce_cuda_sources()
+            name='lettuce_native',
+            sources=get_native_sources()
         )
     ],
     setup_requires=setup_requirements,

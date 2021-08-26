@@ -1,21 +1,21 @@
-from lettuce.gencuda import *
+from lettuce.gen_native import *
 
-all_stencil = [D1Q3(), D2Q9(), D3Q19(), D3Q27()]
-all_stream = [StandardStream()]
-all_equilibrium = [QuadraticEquilibrium()]
-all_collision = [BGKCollision()]
+all_stencil = [NativeD1Q3, NativeD2Q9, NativeD3Q19, NativeD3Q27]
+all_stream = [NativeStreamingStandard]
+all_equilibrium = [NativeEquilibriumQuadratic]
+all_collision = [NativeCollisionBGK]
 
 
 def main():
     """
     """
 
-    all_mat = ModuleMatrix(all_stencil, all_stream, all_equilibrium, all_collision)
+    all_mat = GeneratorModule.Matrix(all_stencil, all_stream, all_equilibrium, all_collision)
 
     # combine all equilibrium & collision with no stream:
     # > test_equilibrium_and_collision_mat = ModuleMatrix(
-    # >     [D2Q9()],
-    # >     [NoStream()],
+    # >     [D2Q9],
+    # >     [NoStream],
     # >     all_equilibrium,
     # >     all_collision,
     # >     support_no_stream=[False],
@@ -23,14 +23,14 @@ def main():
 
     # combine all stream with no collision:
     # > test_stream_mat = ModuleMatrix(
-    # >     [D2Q9()],
+    # >     [D2Q9],
     # >     all_stream,
-    # >     [QuadraticEquilibrium()],
-    # >     [NoCollision()],
+    # >     [QuadraticEquilibrium],
+    # >     [NoCollision],
     # >     support_no_stream=[False],
     # >     support_no_collision=[False])
 
-    ModuleGenerator([all_mat], pretty_print=True).create_module()
+    GeneratorModule([all_mat], pretty_print=True).create_module()
 
 
 if __name__ == '__main__':

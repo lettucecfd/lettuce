@@ -10,6 +10,28 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
+import lettuce.gen_native as gen_native
+
+# import native if available
+# else create a pseudo variable
+try:
+    import lettuce.native as native
+
+    native_available = True
+
+except ImportError:
+    native_available = False
+
+
+    class PseudoNative:
+        # noinspection PyUnusedLocal
+        @staticmethod
+        def resolve(*args):
+            return None
+
+
+    native = PseudoNative()
+
 from lettuce.util import *
 from lettuce.unit import *
 from lettuce.lattices import *

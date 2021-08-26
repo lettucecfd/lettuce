@@ -1,7 +1,7 @@
-from lettuce.gencuda import *
-from lettuce.gencuda.util import pretty_print_c_
+from lettuce.gen_native import *
+from lettuce.gen_native.generator_util import pretty_print_c_
 
-cuda_frame = '''
+native_frame = '''
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning ( push )
 #pragma warning ( disable : 4067 )
@@ -85,7 +85,7 @@ void
 '''
 
 py_frame = '''
-def {signature}(simulation: 'lettuce.Simulation'):
+def {signature}(simulation):
     """"""
     {py_pre_buffer}
     # noinspection PyUnresolvedReferences
@@ -95,7 +95,221 @@ def {signature}(simulation: 'lettuce.Simulation'):
 '''
 
 
-class KernelGenerator:
+class NativeCuda:
+    """
+    This class provides variables that scale the Cuda kernel (thread_count and block_count).
+    A Cuda kernel implicitly provides the variables blockIdx, blockDim and threadIdx.
+    This variables and variables calculated from them are also provided by this class.
+    All of this variables have the type index_t (aka unsigned int)
+    or dim3 (struct of three index_t variables).
+    """
+
+    @staticmethod
+    def __init__():
+        raise NotImplementedError("This class is not meant to be constructed "
+                                  "as it provides only static fields and methods!")
+
+    @staticmethod
+    def thread_count(gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('thread_count'):
+            gen.register('thread_count')
+
+            # TODO find an algorithm for this instead of hard coding
+            # for d in range(self.stencil.d_):
+            #    # dependencies
+            #    self.dimension(gen, d)
+
+            # we target 512 threads at the moment
+            if 1 == gen.stencil.d_:
+                gen.wrp("const auto thread_count = dim3{16u};")
+            if 2 == gen.stencil.d_:
+                gen.wrp("const auto thread_count = dim3{16u, 16u};")
+            if 3 == gen.stencil.d_:
+                gen.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
+
+    @classmethod
+    def block_count(cls, gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('block_count'):
+            gen.register('block_count')
+
+            # dependencies
+            cls.thread_count(gen)
+            for d in range(gen.stencil.d_):
+                cls.dimension(gen, d, hook_into_kernel=False)
+
+            # generate
+            coord = {0: 'x', 1: 'y', 2: 'z'}
+
+            gen.wrp('')
+            for d in range(gen.stencil.d_):
+                gen.wrp(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
+
+            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(gen.stencil.d_)])
+
+            gen.wrp(f"const auto block_count = dim3{{{dimensions}}};")
+            gen.wrp('')
+
+    @staticmethod
+    def index(gen: 'GeneratorKernel', d: int):
+        """
+        """
+
+        if not gen.registered(f"index{d}"):
+            gen.register(f"index{d}")
+
+            # generate
+            coord = {0: 'x', 1: 'y', 2: 'z'}
+
+            gen.idx(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
+
+    @staticmethod
+    def dimension(gen: 'GeneratorKernel', d: int, hook_into_kernel: bool):
+        """
+        """
+
+        if not gen.registered(('dimension', d)):
+            gen.register(('dimension', d))
+
+            gen.wrp(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
+
+        if hook_into_kernel and not gen.kernel_hooked(('dimension', d)):
+            gen.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
+
+    @classmethod
+    def length(cls, gen: 'GeneratorKernel', d: int, hook_into_kernel: bool):
+        """
+        """
+
+        if d == 0:  # length0 is an alias
+
+            if not gen.registered(('length', 0, hook_into_kernel)):
+                gen.register(('length', 0, hook_into_kernel))
+
+                # dependencies
+                cls.dimension(gen, 0, hook_into_kernel=hook_into_kernel)
+
+                # generation
+                if hook_into_kernel:
+                    gen.idx('const index_t &length0 = dimension0;')
+                else:
+                    gen.wrp('const index_t &length0 = dimension0;')
+
+        else:
+
+            if not gen.registered(('length', d)):
+                gen.register(('length', d))
+
+                # dependencies
+                cls.dimension(gen, d, hook_into_kernel=False)
+                cls.length(gen, d - 1, hook_into_kernel=False)
+
+                # generation
+                gen.wrp(f"const index_t length{d} = dimension{d} * length{d - 1};")
+
+            if hook_into_kernel and not gen.kernel_hooked(('length', d)):
+                gen.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
+
+    @classmethod
+    def offset(cls, gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('offset'):
+            gen.register('offset')
+
+            # dependencies
+            cls.index(gen, 0)
+            for d in range(1, gen.stencil.d_):
+                cls.index(gen, d)
+                cls.length(gen, d - 1, hook_into_kernel=True)
+
+            # generate
+            offsets = ['(index0)']
+            for d in range(1, gen.stencil.d_):
+                offsets.append(f"(index{d} * length{d - 1})")
+
+            gen.idx(f"const index_t offset = {' + '.join(offsets)};")
+
+
+class NativeLattice:
+    """
+    """
+
+    @staticmethod
+    def __init__():
+        raise NotImplementedError("This class is not meant to be constructed "
+                                  "as it provides only static fields and methods!")
+
+    @staticmethod
+    def rho(gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('rho'):
+            gen.register('rho')
+
+            # generate
+            f_eq_sum = ' + '.join([f"f_reg[{q}]" for q in range(gen.stencil.q_)])
+
+            gen.nde(f"const auto rho = {f_eq_sum};")
+
+    @classmethod
+    def rho_inv(cls, gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('rho_inv'):
+            gen.register('rho_inv')
+
+            # dependencies
+            cls.rho(gen)
+
+            # generate
+            gen.nde('const auto rho_inv = 1.0 / rho;')
+
+    @classmethod
+    def u(cls, gen: 'GeneratorKernel'):
+        """
+        """
+
+        if not gen.registered('u'):
+            gen.register('u')
+
+            # dependencies
+            gen.stencil.d(gen)
+            gen.stencil.e(gen)
+
+            if gen.stencil.d_ > 1:
+                cls.rho_inv(gen)
+
+            # generate
+            div_rho = ' * rho_inv' if gen.stencil.d_ > 1 else ' / rho'
+
+            gen.nde(f"const scalar_t u[d]{{")
+            for d in range(gen.stencil.d_):
+                summands = []
+                for q in range(gen.stencil.q_):
+                    summands.append(f"e[{q}][{d}] * f_reg[{q}]")
+                gen.nde(f"    ({' + '.join(summands)})" + div_rho + ',')
+            gen.nde('};')
+            gen.nde()
+
+
+class GeneratorKernel:
+    cuda: 'NativeCuda' = NativeCuda
+    lattice: 'NativeLattice' = NativeLattice
+
+    stencil: 'NativeStencil'
+    streaming: 'NativeStreaming'
+    equilibrium: 'NativeEquilibrium'
+    collision: 'NativeCollision'
+
     register_: [object] = []
 
     wrapper_parameter_register_: [object]
@@ -119,38 +333,18 @@ class KernelGenerator:
     signature_: str
 
     def __init__(self,
-                 stencil: 'Stencil',
-                 stream: 'Stream',
-                 equilibrium: 'Equilibrium',
-                 collision: 'Collision',
-
+                 stencil: 'NativeStencil',
+                 streaming: 'NativeStreaming',
+                 equilibrium: 'NativeEquilibrium',
+                 collision: 'NativeCollision',
                  support_no_stream: bool,
                  support_no_collision: bool,
-
-                 cuda: 'Cuda' = None,
-                 lattice: 'Lattice' = None,
-
                  pretty_print: bool = False):
-        """
-        :param cuda:
-        :param lattice:
-        :param stencil:
-        :param stream:
-        :param equilibrium:
-        :param collision:
-        :param support_no_stream:
-        :param support_no_collision:
-        :param pretty_print:
-        """
 
         self.stencil = stencil
-        self.stream = stream
+        self.streaming = streaming
         self.equilibrium = equilibrium
         self.collision = collision
-
-        self.cuda = cuda if cuda is not None else Cuda()
-        self.lattice = lattice if lattice is not None else Lattice()
-
         self.pretty_print = pretty_print
 
         #
@@ -202,10 +396,10 @@ class KernelGenerator:
         self.signature_ = (f"{self.stencil.name}"
                            f"_{self.equilibrium.name}"
                            f"_{self.collision.name}"
-                           f"_{self.stream.name}"
+                           f"_{self.streaming.name}"
                            f"{extra}")
 
-        self.stream.read_write(self, support_no_stream, support_no_collision)
+        self.streaming.read_write(self, support_no_stream, support_no_collision)
         self.collision.collide(self)
 
     def signature(self):
@@ -214,7 +408,7 @@ class KernelGenerator:
     def header_guard_(self):
         return f"lettuce_{self.signature()}_hpp".upper()
 
-    def cuda_file_name(self):
+    def native_file_name(self):
         return f"lettuce_cuda_{self.signature()}.cu"
 
     def cpp_file_name(self):
@@ -267,8 +461,8 @@ class KernelGenerator:
     def pyo(self, it=''):
         self.py_post_buffer_.append(it)
 
-    def bake_cuda(self):
-        buffer = cuda_frame.format(
+    def bake_native(self):
+        buffer = native_frame.format(
             signature=self.signature(),
             hard_buffer='\n    '.join(self.hard_buffer_),
             index_buffer='\n    '.join(self.index_buffer_),

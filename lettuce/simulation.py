@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 import numpy as np
 import torch
 
-import lettuce.cuda
+from lettuce import native
 from lettuce import (
     LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
 )
@@ -27,7 +27,7 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming, native: bool = True):
+    def __init__(self, flow, lattice, collision, streaming, use_native: bool = True):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
@@ -69,34 +69,35 @@ class Simulation:
 
         self.stream_and_collide = Simulation.stream_and_collide_
 
-        if native:
+        if use_native:
 
             if str(lattice.device) == 'cpu':
                 return
 
-            if not hasattr(self.lattice.stencil, 'name'):
+            if not hasattr(self.lattice.stencil, 'native_class'):
                 print('stencil not natively implemented')
                 return
-            if not hasattr(self.lattice.equilibrium, 'name'):
+            if not hasattr(self.lattice.equilibrium, 'native_class'):
                 print('equilibrium not natively implemented')
                 return
-            if not hasattr(self.collision, 'name'):
+            if not hasattr(self.collision, 'native_class'):
                 print('collision not natively implemented')
                 return
-            if not hasattr(self.streaming, 'name'):
+            if not hasattr(self.streaming, 'native_class'):
                 print('stream not natively implemented')
                 return
 
-            stencil_name = self.lattice.stencil.name
-            equilibrium_name = self.lattice.equilibrium.name
-            collision_name = self.collision.name
-            stream_name = self.streaming.name
+            stencil_name = self.lattice.stencil.native_class.name
+            equilibrium_name = self.lattice.equilibrium.native_class.name
+            collision_name = self.collision.native_class.name
+            stream_name = self.streaming.native_class.name
 
-            stream_and_collide_ = lettuce.cuda.resolve(
+            stream_and_collide_ = native.resolve(
                 stencil_name, equilibrium_name, collision_name, stream_name,
                 self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
 
             if stream_and_collide_ is None:
+                print('combination not natively generated')
                 return
 
             self.stream_and_collide = stream_and_collide_

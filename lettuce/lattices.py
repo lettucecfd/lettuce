@@ -25,7 +25,8 @@ class Lattice:
         self.stencil = stencil
         self.device = device
         self.dtype = dtype
-        self._use_native = use_native
+        self._use_native = None
+        self.use_native = use_native
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
         self.cs = self.convert_to_tensor(stencil.cs)
@@ -128,3 +129,4 @@ class Lattice:
                 raise LettuceException("Bad dimension.")
         equation = ",".join(inputs) + "->" + output
         return torch.einsum(equation, fields, **kwargs)
+

@@ -214,45 +214,6 @@ class StreamAndCollide(ClassWithNativeImplementation):
         super().__init__(collision.lattice, collision, streaming, no_stream_mask.any(), no_collision_mask.any())
 
     def call(self):
-
-        if no_stream_mask.any():
-            self.streaming.no_stream_mask = no_stream_mask
-
-        self.no_collision_mask = no_collision_mask if no_collision_mask.any() else None
-
-        self.stream_and_collide = Simulation.stream_and_collide_
-
-        if lattice.use_native:
-
-            if str(lattice.device) == 'cpu':
-                return
-
-            if not hasattr(self.lattice.stencil, 'native_class'):
-                print('stencil not natively implemented')
-                return
-            if not hasattr(self.lattice.equilibrium, 'native_class'):
-                print('equilibrium not natively implemented')
-                return
-            if not hasattr(self.collision, 'native_class'):
-                print('collision not natively implemented')
-                return
-            if not hasattr(self.streaming, 'native_class'):
-                print('stream not natively implemented')
-                return
-
-            stencil_name = self.lattice.stencil.native_class.name
-            equilibrium_name = self.lattice.equilibrium.native_class.name
-            collision_name = self.collision.native_class.name
-            stream_name = self.streaming.native_class.name
-
-            stream_and_collide_ = native.resolve(
-                stencil_name, equilibrium_name, collision_name, stream_name,
-                self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
-
-            if stream_and_collide_ is None:
-                print('combination not natively generated')
-                return
-
             self.stream_and_collide = stream_and_collide_
             if stream_name != 'noStream':
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())

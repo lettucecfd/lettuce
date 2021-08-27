@@ -17,8 +17,8 @@ class ClassWithNativeImplementation:
         self.native_call = None
         from ..collision import NoCollision
         from ..streaming import NoStreaming
-        collision = NoCollision if collision is None else collision
-        streaming = NoStreaming if streaming is None else streaming
+        self.collision = NoCollision if collision is None else collision
+        self.streaming = NoStreaming if streaming is None else streaming
 
         if lattice.use_native:
             if not hasattr(lattice.stencil, 'native_class'):
@@ -47,13 +47,13 @@ class ClassWithNativeImplementation:
                 print('combination not natively generated')
 
 
-    def call(self, *args, **kwargs):
+    def call(self, f):
         # virtual method
         return NotImplemented
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, f):
         if self.native_call is not None: 
-            return self.native_call(*args, **kwargs)
+            return self.native_call(f, self)
         else:
-            return self.call(*args, **kwargs)
+            return self.call(f)
 

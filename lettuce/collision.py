@@ -16,23 +16,23 @@ __all__ = [
 
 
 class NoCollision:
-
     native_class = gen_native.NativeCollisionNo
 
     def __call__(self, f):
         return f
 
 
-class BGKCollision:
+class BGKCollision(gen_native.ClassWithNativeImplementation):
 
     native_class = gen_native.NativeCollisionBGK
 
     def __init__(self, lattice, tau, force=None):
+        super().__init__(lattice, collision=self)
         self.force = force
         self.lattice = lattice
         self.tau = tau
 
-    def __call__(self, f):
+    def call(self, f):
         rho = self.lattice.rho(f)
         u_eq = 0 if self.force is None else self.force.u_eq(f)
         u = self.lattice.u(f) + u_eq

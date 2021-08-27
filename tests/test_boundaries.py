@@ -154,7 +154,7 @@ def test_equilibrium_pressure_outlet(dtype_device):
             ]
 
     flow = MyObstacle(32, 32, reynolds_number=10, mach_number=0.1, lattice=lattice, char_length_lu=10)
-    mask = np.zeros_like(flow.grid[0], dtype=np.bool)
+    mask = np.zeros_like(flow.grid[0], dtype=bool)
     mask[10:20, 10:20] = 1
     flow.mask = mask
     simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),

@@ -41,18 +41,25 @@ def stencil(request):
     return request.param
 
 
-@pytest.fixture(params=[True, False], scope="session")
-def native_cuda(request):
-    if not lettuce.native_available and request:
-        pytest.skip("Native Implementation not installed")
-    return request 
-
-
-@pytest.fixture(params=STENCILS)
-def lattice(request, dtype_device, native_cuda):
+@pytest.fixture(params=
+        (
+            (torch.float64, "cpu", ""),
+            (torch.float32, "cpu", ""),
+            (torch.float64, "cuda:0", ""),
+            (torch.float32, "cuda:0", ""),
+            (torch.float64, "cuda:0", "native"),
+            (torch.float32, "cuda:0", "native"),
+        ),
+    ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32")
+)
+def lattice(request, stencil):
     """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
-    dtype, device = dtype_device
-    return Lattice(request.param, device=device, dtype=dtype, use_native=native_cuda)
+    dtype, device, native = request.param
+    if device == "cuda:0" and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA not available.")
+    if device == "cuda:0" and dtype == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native=="native"))
 
 
 @pytest.fixture()

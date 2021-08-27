@@ -9,8 +9,11 @@ import numpy as np
 import torch
 
 from lettuce import native
+from lettuce.gen_native import ClassWithNativeImplementation
+
 from lettuce import (
-    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
+    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient,
+    StandardStreaming
 )
 from lettuce.util import pressure_poisson
 
@@ -27,11 +30,11 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming):
+    def __init__(self, flow, lattice, collision, streaming=None):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
-        self.streaming = streaming
+        self.streaming = StandardStreaming(lattice) if streaming is None else streaming
         self.i = 0
 
         grid = flow.grid
@@ -52,8 +55,8 @@ class Simulation:
 
         # Define masks, where the collision or streaming are not applied
         x = flow.grid
-        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
-        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
+        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool)).to(dtype=torch.bool)
+        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool)).to(dtype=torch.bool)
 
         # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
@@ -63,9 +66,8 @@ class Simulation:
             if hasattr(boundary, "make_no_stream_mask"):
                 no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
         if no_stream_mask.any():
-            self.streaming.no_stream_mask = no_stream_mask
-
-        self.no_collision_mask = no_collision_mask if no_collision_mask.any() else None
+            self.streaming.no_stream_mask = no_stream_mask.to(torch.uint8)
+        self.no_collision_mask = no_collision_mask.to(torch.uint8) if no_collision_mask.any() else None
 
         self.stream_and_collide = Simulation.stream_and_collide_
 
@@ -205,3 +207,61 @@ class Simulation:
         """Load f as np.array using pickle module."""
         with open(filename, "rb") as fp:
             self.f = pickle.load(fp)
+
+
+class StreamAndCollide(ClassWithNativeImplementation):
+    def __init__(self, collision, streaming, no_streaming_mask, no_collision_mask):
+        super().__init__(collision.lattice, collision, streaming, no_stream_mask.any(), no_collision_mask.any())
+
+    def call(self):
+
+        if no_stream_mask.any():
+            self.streaming.no_stream_mask = no_stream_mask
+
+        self.no_collision_mask = no_collision_mask if no_collision_mask.any() else None
+
+        self.stream_and_collide = Simulation.stream_and_collide_
+
+        if lattice.use_native:
+
+            if str(lattice.device) == 'cpu':
+                return
+
+            if not hasattr(self.lattice.stencil, 'native_class'):
+                print('stencil not natively implemented')
+                return
+            if not hasattr(self.lattice.equilibrium, 'native_class'):
+                print('equilibrium not natively implemented')
+                return
+            if not hasattr(self.collision, 'native_class'):
+                print('collision not natively implemented')
+                return
+            if not hasattr(self.streaming, 'native_class'):
+                print('stream not natively implemented')
+                return
+
+            stencil_name = self.lattice.stencil.native_class.name
+            equilibrium_name = self.lattice.equilibrium.native_class.name
+            collision_name = self.collision.native_class.name
+            stream_name = self.streaming.native_class.name
+
+            stream_and_collide_ = native.resolve(
+                stencil_name, equilibrium_name, collision_name, stream_name,
+                self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
+
+            if stream_and_collide_ is None:
+                print('combination not natively generated')
+                return
+
+            self.stream_and_collide = stream_and_collide_
+            if stream_name != 'noStream':
+                self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
+
+    def call(self, f):
+        self.streaming(simulation.f)
+        # Perform the collision routine everywhere, expect where the no_collision_mask is true
+        if self.no_collision_mask is not None:
+            returnsimulation.f = torch.where(simulation.no_collision_mask, simulation.f, simulation.collision(simulation.f))
+        else:
+            simulation.collision(simulation.f)
+

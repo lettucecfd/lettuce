@@ -20,7 +20,7 @@ class Obstacle2D(object):
 
     Attributes
     ----------
-    mask : np.array with dtype = np.bool
+    mask : np.array with dtype = bool
         Boolean mask to define the obstacle. The shape of this object is the shape of the grid.
         Initially set to zero (no obstacle).
 
@@ -53,7 +53,7 @@ class Obstacle2D(object):
             characteristic_length_lu=char_length_lu, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
-        self._mask = np.zeros(shape=(self.resolution_x, self.resolution_y), dtype=np.bool)
+        self._mask = np.zeros(shape=(self.resolution_x, self.resolution_y), dtype=bool)
 
     @property
     def mask(self):
@@ -62,12 +62,12 @@ class Obstacle2D(object):
     @mask.setter
     def mask(self, m):
         assert isinstance(m, np.ndarray) and m.shape == (self.resolution_x, self.resolution_y)
-        self._mask = m.astype(np.bool)
+        self._mask = m.astype(bool)
 
     def initial_solution(self, x):
         p = np.zeros_like(x[0], dtype=float)[None, ...]
         u_char = np.array([self.units.characteristic_velocity_pu, 0.0])[..., None, None]
-        u = (1 - self.mask.astype(np.float)) * u_char
+        u = (1 - self.mask.astype(float)) * u_char
         return p, u
 
     @property
@@ -111,7 +111,7 @@ class Obstacle3D(object):
             characteristic_length_pu=1,
             characteristic_velocity_pu=1)
 
-        self._mask = np.zeros(shape=(self.resolution_x, self.resolution_y, self.resolution_z), dtype=np.bool)
+        self._mask = np.zeros(shape=(self.resolution_x, self.resolution_y, self.resolution_z), dtype=bool)
 
     @property
     def mask(self):
@@ -120,12 +120,12 @@ class Obstacle3D(object):
     @mask.setter
     def mask(self, m):
         assert isinstance(m, np.ndarray) and m.shape == (self.resolution_x, self.resolution_y, self.resolution_z)
-        self._mask = m.astype(np.bool)
+        self._mask = m.astype(bool)
 
     def initial_solution(self, x):
         p = np.zeros_like(x[0], dtype=float)[None, ...]
         u_char = np.array([self.units.characteristic_velocity_pu, 0.0, 0.0])[..., None, None, None]
-        u = (1 - self.mask.astype(np.float)) * u_char
+        u = (1 - self.mask.astype(float)) * u_char
         return p, u
 
     @property

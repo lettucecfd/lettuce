@@ -62,17 +62,20 @@ def test_divergence(stencil, dtype_device):
 
 @pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
 def test_obstacle(stencil, dtype_device):
+    """only api test"""
     dtype, device = dtype_device
     lattice = Lattice(stencil, dtype=dtype, device=device)
-
+    nx = 32
+    ny = 16
+    nz = 16
     if stencil is D2Q9:
-        mask = np.zeros([20, 10])
+        mask = np.zeros([nx, ny])
         mask[3:6, 3:6] = 1
-        flow = Obstacle2D(20, 10, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle2D(nx, ny, 100, 0.1, lattice=lattice, char_length_lu=3)
     if stencil is D3Q27:
-        mask = np.zeros([20, 10, 5])
+        mask = np.zeros([nx, ny, nz])
         mask[3:6, 3:6, :] = 1
-        flow = Obstacle3D(20, 10, 5, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle3D(nx, ny, nz, 100, 0.1, lattice=lattice, char_length_lu=3)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0
     streaming = StandardStreaming(lattice)

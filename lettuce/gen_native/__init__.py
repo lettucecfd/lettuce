@@ -13,13 +13,13 @@ from lettuce.gen_native.stencil_d3q27 import NativeD3Q27
 from lettuce.gen_native.streaming import NativeStreaming
 from lettuce.gen_native.streaming_no import NativeStreamingNo
 from lettuce.gen_native.streaming_standard import NativeStreamingStandard
+from lettuce.gen_native.wrapper import ClassWithNativeImplementation
 
 __all__ = [
     'NativeStencil', 'NativeD1Q3', 'NativeD2Q9', 'NativeD3Q19', 'NativeD3Q27',
     'NativeStreaming', 'NativeStreamingNo', 'NativeStreamingStandard',
     'NativeEquilibrium', 'NativeEquilibriumQuadratic',
     'NativeCollision', 'NativeCollisionNo', 'NativeCollisionBGK',
-
     'NativeCuda', 'NativeLattice', 'GeneratorKernel',
-    'GeneratorModule',
+    'GeneratorModule', 'ClassWithNativeImplementation'
 ]

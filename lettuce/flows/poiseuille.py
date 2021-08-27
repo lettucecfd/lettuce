@@ -15,13 +15,13 @@ class PoiseuilleFlow2D(object):
         self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=1,
+            characteristic_length_lu=resolution - 1, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
         self.initialize_with_zeros = initialize_with_zeros
 
     def analytic_solution(self, grid):
-        half_lattice_spacing = 0.5 / self.resolution
+        half_lattice_spacing = 0.5 / ( self.resolution-1 )
         x, y = grid
         nu = self.units.viscosity_pu
         rho = 1
@@ -42,8 +42,8 @@ class PoiseuilleFlow2D(object):
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution + 1, endpoint=True)
-        y = np.linspace(0, 1, num=self.resolution + 1, endpoint=True)
+        x = np.linspace(0, 1, num=self.resolution, endpoint=True)
+        y = np.linspace(0, 1, num=self.resolution, endpoint=True)
         return np.meshgrid(x, y, indexing='ij')
 
     @property

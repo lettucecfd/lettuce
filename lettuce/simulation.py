@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 import numpy as np
 import torch
 
-from lettuce import native
+from lettuce import native, _USE_NATIVE_DEFAULT
 from lettuce import (
     LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
 )
@@ -27,7 +27,7 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming, use_native: bool = True):
+    def __init__(self, flow, lattice, collision, streaming, use_native: bool = _USE_NATIVE_DEFAULT):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision

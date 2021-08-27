@@ -126,7 +126,7 @@ def test_masks(dtype_device):
     """test if masks are applied from boundary conditions"""
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, dtype=dtype, device=device)
-    flow = Obstacle2D(10, 5, 100, 0.1, lattice, 2)
+    flow = Obstacle2D(16, 16, 128, 0.1, lattice, 2)
     flow.mask[1, 1] = 1
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow, lattice, None, streaming)
@@ -153,13 +153,13 @@ def test_equilibrium_pressure_outlet(dtype_device):
                 BounceBackBoundary(self.mask, self.units.lattice)
             ]
 
-    flow = MyObstacle(30, 30, reynolds_number=10, mach_number=0.1, lattice=lattice, char_length_lu=10)
+    flow = MyObstacle(32, 32, reynolds_number=10, mach_number=0.1, lattice=lattice, char_length_lu=10)
     mask = np.zeros_like(flow.grid[0], dtype=np.bool)
     mask[10:20, 10:20] = 1
     flow.mask = mask
     simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),
                             StandardStreaming(lattice))
-    simulation.step(20)
+    simulation.step(30)
     rho = lattice.rho(simulation.f)
     u = lattice.u(simulation.f)
     feq = lattice.equilibrium(torch.ones_like(rho), u)

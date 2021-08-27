@@ -73,3 +73,12 @@ def f_transform(request, f_all_lattices):
         return f, Transform(lattice)
     else:
         pytest.skip("Stencil not supported for this transform.")
+
+
+@pytest.fixture(scope="session")
+def native_and_non_native():
+    lettuce.use_native(False)
+    yield
+    lettuce.use_native()
+    yield
+

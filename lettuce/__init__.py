@@ -5,10 +5,26 @@
 __author__ = """Andreas Kraemer"""
 __email__ = 'kraemer.research@gmail.com'
 
+
+# ==== VERSIONING ====
+
 from ._version import get_versions
 
 __version__ = get_versions()['version']
 del get_versions
+
+
+# ==== NATIVE CUDA IMPLEMENTATION ====
+
+global _USE_NATIVE_DEFAULT 
+_USE_NATIVE_DEFAULT = False
+def use_native(use_native : bool = True):
+    """Toggle wether the native CUDA implementation is
+    used by default
+    """
+    global _USE_NATIVE_DEFAULT
+    _USE_NATIVE_DEFAULT = use_native
+
 
 import lettuce.gen_native as gen_native
 
@@ -32,6 +48,9 @@ except ImportError:
 
 
     native = PseudoNative()
+
+
+# ==== MODULE IMPORTS ====
 
 from lettuce.util import *
 from lettuce.unit import *

@@ -7,13 +7,26 @@ import torch
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.util import LettuceException
 
+from lettuce import gen_native
+
 __all__ = [
     "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision", "RegularizedCollision",
     "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
 ]
 
 
+class NoCollision:
+
+    native_class = gen_native.NativeCollisionNo
+
+    def __call__(self, f):
+        return f
+
+
 class BGKCollision:
+
+    native_class = gen_native.NativeCollisionBGK
+
     def __init__(self, lattice, tau, force=None):
         self.force = force
         self.lattice = lattice

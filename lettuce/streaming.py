@@ -2,10 +2,33 @@
 Streaming Step
 """
 
-import torch
 import numpy as np
+import torch
 
-__all__ = ["StandardStreaming"]
+from lettuce import *
+
+__all__ = ["NoStreaming", "StandardStreaming"]
+
+
+class NoStreaming:
+    """
+    """
+
+    native_class = gen_native.NativeStreamingNo
+
+    def __init__(self):
+        self._no_stream_mask = None
+
+    @property
+    def no_stream_mask(self):
+        return self._no_stream_mask
+
+    @no_stream_mask.setter
+    def no_stream_mask(self, mask):
+        self._no_stream_mask = mask
+
+    def __call__(self, f):
+        return f
 
 
 class StandardStreaming:
@@ -17,6 +40,8 @@ class StandardStreaming:
         Boolean mask with the same shape as the distribution function f.
         If None, stream all (also around all boundaries).
     """
+
+    native_class = gen_native.NativeStreamingStandard
 
     def __init__(self, lattice):
         self.lattice = lattice

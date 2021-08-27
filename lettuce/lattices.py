@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 import torch
 
+from lettuce import native_available
 from lettuce.util import LettuceException
 from lettuce.equilibrium import QuadraticEquilibrium
 
@@ -20,10 +21,11 @@ __all__ = ["Lattice"]
 
 class Lattice:
 
-    def __init__(self, stencil, device, dtype=torch.float):
+    def __init__(self, stencil, device, dtype=torch.float, use_native=native_available):
         self.stencil = stencil
         self.device = device
         self.dtype = dtype
+        self._use_native = use_native
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
         self.cs = self.convert_to_tensor(stencil.cs)
@@ -39,6 +41,18 @@ class Lattice:
     @property
     def Q(self):
         return self.stencil.e.shape[0]
+
+    @property
+    def use_native(self):
+        return self._use_native
+
+    @use_native.setter
+    def use_native(self, use_native: bool = True):
+        if use_native and not native_available:
+            raise LettuceException("Not compiled with native CUDA extensions.")
+        self._use_native = use_native
+            
+
 
     def convert_to_tensor(self, array):
 

@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 import numpy as np
 import torch
 
-from lettuce import native, _USE_NATIVE_DEFAULT
+from lettuce import native
 from lettuce import (
     LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
 )
@@ -27,7 +27,7 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming, use_native: bool = _USE_NATIVE_DEFAULT):
+    def __init__(self, flow, lattice, collision, streaming):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
@@ -69,7 +69,7 @@ class Simulation:
 
         self.stream_and_collide = Simulation.stream_and_collide_
 
-        if use_native:
+        if lattice.use_native:
 
             if str(lattice.device) == 'cpu':
                 return

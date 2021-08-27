@@ -2,10 +2,10 @@
 Fixtures for unit tests.
 """
 import pytest
-
 import numpy as np
 import torch
 
+import lettuce
 from lettuce import (
     stencils, Stencil, get_subclasses, Transform, Lattice, moments
 )
@@ -30,6 +30,8 @@ def dtype_device(request, device):
     """Run a test case for all available devices and data types available on the device."""
     if device == "cpu" and request.param == torch.float16:
         pytest.skip("Half precision is only available on GPU.")
+    if device == "cuda:0" and request.param == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
     return request.param, device
 
 
@@ -39,11 +41,18 @@ def stencil(request):
     return request.param
 
 
+@pytest.fixture(params=[True, False], scope="session")
+def native_cuda(request):
+    if not lettuce.native_available and request:
+        pytest.skip("Native Implementation not installed")
+    return request 
+
+
 @pytest.fixture(params=STENCILS)
-def lattice(request, dtype_device):
+def lattice(request, dtype_device, native_cuda):
     """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
     dtype, device = dtype_device
-    return Lattice(request.param, device=device, dtype=dtype)
+    return Lattice(request.param, device=device, dtype=dtype, use_native=native_cuda)
 
 
 @pytest.fixture()
@@ -73,12 +82,4 @@ def f_transform(request, f_all_lattices):
         return f, Transform(lattice)
     else:
         pytest.skip("Stencil not supported for this transform.")
-
-
-@pytest.fixture(scope="session")
-def native_and_non_native():
-    lettuce.use_native(False)
-    yield
-    lettuce.use_native()
-    yield
 

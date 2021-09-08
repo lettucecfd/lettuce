@@ -10,25 +10,25 @@ class KernelGenerator:
     streaming: 'NativeStreaming'
     collision: 'NativeCollision'
 
-    register_: [object] = []
+    _register: [object] = []
 
-    wrapper_parameter_register_: [object]
-    wrapper_parameter_name_: [str]
-    wrapper_parameter_value_: [str]
-    wrapper_py_parameter_value_: [str]
+    _launcher_parameter_register: [object]
+    _launcher_parameter_name: [str]
+    _launcher_parameter_value: [str]
+    _launcher_py_parameter_value: [str]
 
-    kernel_parameter_register_: [object]
-    kernel_parameter_name_: [str]
-    kernel_parameter_value_: [str]
+    _kernel_parameter_register: [object]
+    _kernel_parameter_name: [str]
+    _kernel_parameter_value: [str]
 
-    hard_buffer_: [str]
-    index_buffer_: [str]
-    node_buffer_: [str]
-    collision_buffer_: [str]
-    write_buffer_: [str]
-    wrapper_buffer_: [str]
-    py_pre_buffer_: [str]
-    py_post_buffer_: [str]
+    _constexpr_buffer: [str]
+    _index_buffer: [str]
+    _node_buffer: [str]
+    _distribution_buffer: [str]
+    _write_buffer: [str]
+    _launcher_buffer: [str]
+    _python_wrapper_before_buffer: [str]
+    _python_wrapper_after_buffer: [str]
 
     def __init__(self,
                  stencil: 'NativeStencil',
@@ -45,29 +45,29 @@ class KernelGenerator:
         # reset
         #
 
-        self.register_ = []
+        self._register = []
 
-        self.wrapper_parameter_register_ = []
-        self.wrapper_parameter_name_ = []
-        self.wrapper_parameter_value_ = []
-        self.wrapper_py_parameter_value_ = []
+        self._launcher_parameter_register = []
+        self._launcher_parameter_name = []
+        self._launcher_parameter_value = []
+        self._launcher_py_parameter_value = []
 
-        self.kernel_parameter_register_ = []
-        self.kernel_parameter_name_ = []
-        self.kernel_parameter_value_ = []
+        self._kernel_parameter_register = []
+        self._kernel_parameter_name = []
+        self._kernel_parameter_value = []
 
         # buffer for pre calculations in different contexts
-        self.hard_buffer_ = []
-        self.index_buffer_ = []
-        self.node_buffer_ = []
-        self.collision_buffer_ = []
-        self.write_buffer_ = []
-        self.wrapper_buffer_ = []
-        self.py_pre_buffer_ = []
-        self.py_post_buffer_ = []
+        self._constexpr_buffer = []
+        self._index_buffer = []
+        self._node_buffer = []
+        self._distribution_buffer = []
+        self._write_buffer = []
+        self._launcher_buffer = []
+        self._python_wrapper_before_buffer = []
+        self._python_wrapper_after_buffer = []
 
         # default parameter
-        self.wrapper_hook('f', 'at::Tensor f', 'f', 'simulation.f')
+        self.launcher_hook('f', 'at::Tensor f', 'f', 'simulation.f')
         self.kernel_hook('f', 'scalar_t *f', 'f.data<scalar_t>()')
 
         # default variables
@@ -95,64 +95,64 @@ class KernelGenerator:
         return f"lettuce_{self.name()}.hpp"
 
     def registered(self, obj: any):
-        return self.register_.__contains__(obj)
+        return self._register.__contains__(obj)
 
     def register(self, obj: any):
-        self.register_.append(obj)
+        self._register.append(obj)
 
-    def wrapper_hooked(self, obj: any):
-        return self.wrapper_parameter_register_.__contains__(obj)
+    def launcher_hooked(self, obj: any):
+        return self._launcher_parameter_register.__contains__(obj)
 
-    def wrapper_hook(self, obj: any, name: str, value: str, py_value: str):
-        self.wrapper_parameter_register_.append(obj)
-        self.wrapper_parameter_name_.append(name)
-        self.wrapper_parameter_value_.append(value)
-        self.wrapper_py_parameter_value_.append(py_value)
+    def launcher_hook(self, obj: any, name: str, value: str, py_value: str):
+        self._launcher_parameter_register.append(obj)
+        self._launcher_parameter_name.append(name)
+        self._launcher_parameter_value.append(value)
+        self._launcher_py_parameter_value.append(py_value)
 
     def kernel_hooked(self, obj: any):
-        return self.kernel_parameter_register_.__contains__(obj)
+        return self._kernel_parameter_register.__contains__(obj)
 
     def kernel_hook(self, obj: any, name: str, value: str):
-        self.kernel_parameter_register_.append(obj)
-        self.kernel_parameter_name_.append(name)
-        self.kernel_parameter_value_.append(value)
+        self._kernel_parameter_register.append(obj)
+        self._kernel_parameter_name.append(name)
+        self._kernel_parameter_value.append(value)
 
-    def hrd(self, it=''):
-        self.hard_buffer_.append(it)
+    def append_constexpr_buffer(self, it=''):
+        self._constexpr_buffer.append(it)
 
-    def wrp(self, it=''):
-        self.wrapper_buffer_.append(it)
+    def append_launcher_buffer(self, it=''):
+        self._launcher_buffer.append(it)
 
-    def idx(self, it=''):
-        self.index_buffer_.append(it)
+    def append_index_buffer(self, it=''):
+        self._index_buffer.append(it)
 
-    def nde(self, it=''):
-        self.node_buffer_.append(it)
+    def append_node_buffer(self, it=''):
+        self._node_buffer.append(it)
 
-    def cln(self, it=''):
-        self.collision_buffer_.append(it)
+    def append_distribution_buffer(self, it=''):
+        self._distribution_buffer.append(it)
 
-    def wrt(self, it=''):
-        self.write_buffer_.append(it)
+    def append_write_buffer(self, it=''):
+        self._write_buffer.append(it)
 
-    def pyr(self, it=''):
-        self.py_pre_buffer_.append(it)
+    def append_python_wrapper_before_buffer(self, it=''):
+        self._python_wrapper_before_buffer.append(it)
 
-    def pyo(self, it=''):
-        self.py_post_buffer_.append(it)
+    def append_python_wrapper_after_buffer(self, it=''):
+        self._python_wrapper_after_buffer.append(it)
 
     def bake_native(self):
         buffer = _load_template('cuda_kernel').format(
             name=self.name(),
-            hard_buffer='\n    '.join(self.hard_buffer_),
-            index_buffer='\n    '.join(self.index_buffer_),
-            node_buffer='\n        '.join(self.node_buffer_),
-            collision_buffer='\n            '.join(self.collision_buffer_),
-            write_buffer='\n    '.join(self.write_buffer_),
-            wrapper_buffer='\n    '.join(self.wrapper_buffer_),
-            wrapper_parameter=', '.join(self.wrapper_parameter_name_),
-            kernel_parameter=', '.join(self.kernel_parameter_name_),
-            kernel_parameter_values=', '.join(self.kernel_parameter_value_))
+            constexpr_buffer='\n    '.join(self._constexpr_buffer),
+            index_buffer='\n    '.join(self._index_buffer),
+            node_buffer='\n        '.join(self._node_buffer),
+            distribution_buffer='\n            '.join(self._distribution_buffer),
+            write_buffer='\n    '.join(self._write_buffer),
+            launcher_buffer='\n    '.join(self._launcher_buffer),
+            launcher_parameter=', '.join(self._launcher_parameter_name),
+            kernel_parameter=', '.join(self._kernel_parameter_name),
+            kernel_parameter_values=', '.join(self._kernel_parameter_value))
 
         if self.pretty_print:
             buffer = _pretty_print_c(buffer)
@@ -163,8 +163,8 @@ class KernelGenerator:
         buffer = _load_template('cpp_wrapper').format(
             guard=self.header_guard_(),
             name=self.name(),
-            wrapper_parameter=', '.join(self.wrapper_parameter_name_),
-            wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
+            launcher_parameter=', '.join(self._launcher_parameter_name),
+            launcher_parameter_values=', '.join(self._launcher_parameter_value))
 
         if self.pretty_print:
             buffer = _pretty_print_c(buffer)
@@ -174,9 +174,9 @@ class KernelGenerator:
     def bake_py(self, module: str):
         buffer = _load_template('python_wrapper').format(
             name=self.name(),
-            py_pre_buffer='\n    '.join(self.py_pre_buffer_),
-            py_post_buffer='\n    '.join(self.py_post_buffer_),
+            python_wrapper_before_buffer='\n    '.join(self._python_wrapper_before_buffer),
+            python_wrapper_after_buffer='\n    '.join(self._python_wrapper_after_buffer),
             module=module,
-            py_parameter_values=', '.join(self.wrapper_py_parameter_value_))
+            launcher_py_parameter_value=', '.join(self._launcher_py_parameter_value))
 
         return buffer

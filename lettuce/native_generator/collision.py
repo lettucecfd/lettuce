@@ -25,9 +25,9 @@ class NativeCollision(NativeLatticeBase):
         raise AbstractMethodInvokedError()
 
     def generate_no_collision_mask(self, generator: 'KernelGenerator'):
-        if not generator.wrapper_hooked('no_collision_mask'):
-            generator.pyr("assert hasattr(simulation, 'no_collision_mask')")
-            generator.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
+        if not generator.launcher_hooked('no_collision_mask'):
+            generator.append_python_wrapper_before_buffer("assert hasattr(simulation, 'no_collision_mask')")
+            generator.launcher_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
                                    'no_collision_mask', 'simulation.no_collision_mask')
         if not generator.kernel_hooked('no_collision_mask'):
             generator.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask',
@@ -67,9 +67,9 @@ class NativeBGKCollision(NativeCollision):
         return NativeBGKCollision(equilibrium, support_no_collision_mask)
 
     def generate_tau_inv(self, generator: 'KernelGenerator'):
-        if not generator.wrapper_hooked('tau_inv'):
-            generator.pyr("assert hasattr(simulation.collision, 'tau')")
-            generator.wrapper_hook('tau_inv', 'const double tau_inv', 'tau_inv', '1./simulation.collision.tau')
+        if not generator.launcher_hooked('tau_inv'):
+            generator.append_python_wrapper_before_buffer("assert hasattr(simulation.collision, 'tau')")
+            generator.launcher_hook('tau_inv', 'const double tau_inv', 'tau_inv', '1./simulation.collision.tau')
         if not generator.kernel_hooked('tau_inv'):
             generator.kernel_hook('tau_inv', 'const scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 
@@ -87,6 +87,6 @@ class NativeBGKCollision(NativeCollision):
 
             # generate
             if self.support_no_collision_mask:
-                generator.idx(f"if(!no_collision_mask[offset])")
+                generator.append_index_buffer(f"if(!no_collision_mask[offset])")
 
-            generator.cln('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')
+            generator.append_distribution_buffer('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')

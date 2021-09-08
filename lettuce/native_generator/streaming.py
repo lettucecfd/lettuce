@@ -47,9 +47,9 @@ class NativeStreaming(NativeLatticeBase):
         raise AbstractMethodInvokedError()
 
     def generate_no_stream_mask(self, generator: 'KernelGenerator'):
-        if not generator.wrapper_hooked('no_stream_mask'):
-            generator.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
-            generator.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
+        if not generator.launcher_hooked('no_stream_mask'):
+            generator.append_python_wrapper_before_buffer("assert hasattr(simulation.streaming, 'no_stream_mask')")
+            generator.launcher_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
                                    'no_stream_mask', 'simulation.streaming.no_stream_mask')
         if not generator.kernel_hooked('no_stream_mask'):
             generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
@@ -81,12 +81,12 @@ class NativeNoStreaming(NativeStreaming):
             # read
             length_index = generator.stencil.stencil.d() - 1
 
-            generator.idx()
-            generator.idx('scalar_t f_reg[q];')
-            generator.idx(read_frame.format(source='f', length_index=length_index))
+            generator.append_index_buffer()
+            generator.append_index_buffer('scalar_t f_reg[q];')
+            generator.append_index_buffer(read_frame.format(source='f', length_index=length_index))
 
-            generator.wrt()
-            generator.wrt(write_frame.format(target='f', length_index=length_index))
+            generator.append_write_buffer()
+            generator.append_write_buffer(write_frame.format(target='f', length_index=length_index))
 
 
 class NativeStandardStreaming(NativeStreaming):
@@ -103,12 +103,12 @@ class NativeStandardStreaming(NativeStreaming):
         if not generator.registered('f_next'):
             generator.register('f_next')
 
-            generator.pyo('simulation.f, simulation.f_next = simulation.f_next, simulation.f')
+            generator.append_python_wrapper_after_buffer('simulation.f, simulation.f_next = simulation.f_next, simulation.f')
 
             # generate code
-            if not generator.wrapper_hooked('f_next'):
-                generator.pyr("assert hasattr(simulation, 'f_next')")
-                generator.wrapper_hook('f_next', 'at::Tensor f_next', 'f_next', 'simulation.f_next')
+            if not generator.launcher_hooked('f_next'):
+                generator.append_python_wrapper_before_buffer("assert hasattr(simulation, 'f_next')")
+                generator.launcher_hook('f_next', 'at::Tensor f_next', 'f_next', 'simulation.f_next')
             if not generator.kernel_hooked('f_next'):
                 generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
@@ -125,16 +125,16 @@ class NativeStandardStreaming(NativeStreaming):
             if d > 0:
                 generator.cuda.generate_length(generator, d - 1, hook_into_kernel=True)
 
-                generator.idx(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
-                generator.idx(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
+                generator.append_index_buffer(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
+                generator.append_index_buffer(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
                               f"? 0 : (index{d} + 1)) * length{d - 1};")
-                generator.idx(f"const index_t dim{d}_offset2 = ((index{d} == 0) "
+                generator.append_index_buffer(f"const index_t dim{d}_offset2 = ((index{d} == 0) "
                               f"? dimension{d} - 1 : (index{d} - 1)) * length{d - 1};")
 
             else:
-                generator.idx(f"const index_t &dim0_offset0 = index0;")
-                generator.idx(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
-                generator.idx(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
+                generator.append_index_buffer(f"const index_t &dim0_offset0 = index0;")
+                generator.append_index_buffer(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
+                generator.append_index_buffer(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
     def generate_read_write(self, generator: 'KernelGenerator'):
         if not generator.registered('read_write()'):
@@ -171,19 +171,19 @@ class NativeStandardStreaming(NativeStreaming):
                 else:
                     offsets.append(' + '.join(offset))
 
-            generator.idx()
-            generator.idx('scalar_t f_reg[q];')
-            generator.idx('{')
+            generator.append_index_buffer()
+            generator.append_index_buffer('scalar_t f_reg[q];')
+            generator.append_index_buffer('{')
 
             # stream index 0
 
             if self.support_no_streaming_mask:
                 if offsets[0] == 'offset':
-                    generator.idx(f'    f_reg[0] = f[offset];')
+                    generator.append_index_buffer(f'    f_reg[0] = f[offset];')
                 else:
-                    generator.idx(f'    f_reg[0] = no_stream_mask[offset] ? f[offset] : f[{offsets[0]}];')
+                    generator.append_index_buffer(f'    f_reg[0] = no_stream_mask[offset] ? f[offset] : f[{offsets[0]}];')
             else:
-                generator.idx(f"    f_reg[0] = f[{offsets[0]}];")
+                generator.append_index_buffer(f"    f_reg[0] = f[{offsets[0]}];")
 
             # stream index 1
 
@@ -191,12 +191,12 @@ class NativeStandardStreaming(NativeStreaming):
 
             if self.support_no_streaming_mask:
                 if offsets[1] == 'offset':
-                    generator.idx(f"    {index_it} f_reg[1] = f[index_it + offset];")
+                    generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + offset];")
                 else:
-                    generator.idx(f"    {index_it} {{ const auto abs_index = index_it + offset; f_reg[1] = "
+                    generator.append_index_buffer(f"    {index_it} {{ const auto abs_index = index_it + offset; f_reg[1] = "
                                   f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[1]}]; }}")
             else:
-                generator.idx(f"    {index_it} f_reg[1] = f[index_it + {offsets[1]}];")
+                generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + {offsets[1]}];")
 
             # stream index n
 
@@ -206,16 +206,16 @@ class NativeStandardStreaming(NativeStreaming):
 
                 if self.support_no_streaming_mask:
                     if offsets[q] == 'offset':
-                        generator.idx(f"    {index_it}     f_reg[{q}] = f[index_it + offset];")
+                        generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + offset];")
                     else:
-                        generator.idx(f"    {index_it}     {{ const auto abs_index = index_it + offset; f_reg[{q}] = "
+                        generator.append_index_buffer(f"    {index_it}     {{ const auto abs_index = index_it + offset; f_reg[{q}] = "
                                       f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[q]}]; }}")
                 else:
-                    generator.idx(f"    {index_it}     f_reg[{q}] = f[index_it + {offsets[q]}];")
+                    generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + {offsets[q]}];")
 
-            generator.idx('}')
-            generator.idx()
+            generator.append_index_buffer('}')
+            generator.append_index_buffer()
 
             # write
-            generator.wrt()
-            generator.wrt(write_frame.format(target='f_next', length_index=length_index))
+            generator.append_write_buffer()
+            generator.append_write_buffer(write_frame.format(target='f_next', length_index=length_index))

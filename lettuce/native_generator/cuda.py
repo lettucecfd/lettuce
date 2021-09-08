@@ -21,11 +21,11 @@ class NativeCuda:
 
             # we target 512 threads at the moment
             if 1 == generator.stencil.stencil.d():
-                generator.wrp("const auto thread_count = dim3{16u};")
+                generator.append_launcher_buffer("const auto thread_count = dim3{16u};")
             if 2 == generator.stencil.stencil.d():
-                generator.wrp("const auto thread_count = dim3{16u, 16u};")
+                generator.append_launcher_buffer("const auto thread_count = dim3{16u, 16u};")
             if 3 == generator.stencil.stencil.d():
-                generator.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
+                generator.append_launcher_buffer("const auto thread_count = dim3{8u, 8u, 8u};")
 
     def generate_block_count(self, generator: 'KernelGenerator'):
         if not generator.registered('block_count'):
@@ -39,14 +39,14 @@ class NativeCuda:
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
 
-            generator.wrp('')
+            generator.append_launcher_buffer('')
             for d in range(generator.stencil.stencil.d()):
-                generator.wrp(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
+                generator.append_launcher_buffer(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
 
             dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(generator.stencil.stencil.d())])
 
-            generator.wrp(f"const auto block_count = dim3{{{dimensions}}};")
-            generator.wrp('')
+            generator.append_launcher_buffer(f"const auto block_count = dim3{{{dimensions}}};")
+            generator.append_launcher_buffer('')
 
     def generate_index(self, generator: 'KernelGenerator', d: int):
         if not generator.registered(f"index{d}"):
@@ -55,13 +55,13 @@ class NativeCuda:
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
 
-            generator.idx(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
+            generator.append_index_buffer(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
 
     def generate_dimension(self, generator: 'KernelGenerator', d: int, hook_into_kernel: bool):
         if not generator.registered(('dimension', d)):
             generator.register(('dimension', d))
 
-            generator.wrp(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
+            generator.append_launcher_buffer(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
 
         if hook_into_kernel and not generator.kernel_hooked(('dimension', d)):
             generator.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
@@ -77,9 +77,9 @@ class NativeCuda:
 
                 # generation
                 if hook_into_kernel:
-                    generator.idx('const index_t &length0 = dimension0;')
+                    generator.append_index_buffer('const index_t &length0 = dimension0;')
                 else:
-                    generator.wrp('const index_t &length0 = dimension0;')
+                    generator.append_launcher_buffer('const index_t &length0 = dimension0;')
 
         else:
 
@@ -91,7 +91,7 @@ class NativeCuda:
                 self.generate_length(generator, d - 1, hook_into_kernel=False)
 
                 # generation
-                generator.wrp(f"const index_t length{d} = dimension{d} * length{d - 1};")
+                generator.append_launcher_buffer(f"const index_t length{d} = dimension{d} * length{d - 1};")
 
             if hook_into_kernel and not generator.kernel_hooked(('length', d)):
                 generator.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
@@ -111,4 +111,4 @@ class NativeCuda:
             for d in range(1, generator.stencil.stencil.d()):
                 offsets.append(f"(index{d} * length{d - 1})")
 
-            generator.idx(f"const index_t offset = {' + '.join(offsets)};")
+            generator.append_index_buffer(f"const index_t offset = {' + '.join(offsets)};")

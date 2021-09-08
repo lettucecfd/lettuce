@@ -14,18 +14,18 @@
 #endif
 
 void
-lettuce_cuda_{name}({wrapper_parameter});
+lettuce_cuda_{name}({launcher_parameter});
 
 #define CHECK_CUDA(x) TORCH_CHECK((x).device().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK((x).is_contiguous(), #x " must be contiguous")
 
 void
-{name}({wrapper_parameter})
+{name}({launcher_parameter})
 {{
     CHECK_CUDA(f);
     CHECK_CONTIGUOUS(f);
 
-    lettuce_cuda_{name}({wrapper_parameter_values});
+    lettuce_cuda_{name}({launcher_parameter_values});
 }}
 
 #endif //{guard}

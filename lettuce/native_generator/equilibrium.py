@@ -24,7 +24,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             for d in range(generator.stencil.stencil.d()):
                 summands.append(f"u[{d}] * u[{d}]")
 
-            generator.nde(f"const auto uxu = {' + '.join(summands)};")
+            generator.append_node_buffer(f"const auto uxu = {' + '.join(summands)};")
 
     def generate_exu(self, generator: 'KernelGenerator'):
         if not generator.registered('exu'):
@@ -39,7 +39,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             for d in range(generator.stencil.stencil.d()):
                 summands.append(f"e[i][{d}] * u[{d}]")
 
-            generator.cln(f"const auto exu = {' + '.join(summands)};")
+            generator.append_distribution_buffer(f"const auto exu = {' + '.join(summands)};")
 
     def generate_cs_pow_two(self, generator: 'KernelGenerator'):
         if not generator.registered('cs_pow_two<scalar_t>'):
@@ -49,7 +49,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             generator.stencil.generate_cs(generator)
 
             # generate
-            generator.nde('constexpr auto cs_pow_two = cs * cs;')
+            generator.append_node_buffer('constexpr auto cs_pow_two = cs * cs;')
 
     def generate_two_cs_pow_two(self, generator: 'KernelGenerator'):
         if not generator.registered('two_cs_pow_two<scalar_t>'):
@@ -59,7 +59,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             self.generate_cs_pow_two(generator)
 
             # generate
-            generator.nde('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
+            generator.append_node_buffer('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
     def generate_f_eq_tmp(self, generator: 'KernelGenerator'):
         if not generator.registered('f_eq_tmp'):
@@ -70,7 +70,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             self.generate_cs_pow_two(generator)
 
             # generate
-            generator.cln('const auto f_eq_tmp = exu / cs_pow_two;')
+            generator.append_distribution_buffer('const auto f_eq_tmp = exu / cs_pow_two;')
 
     def generate_f_eq(self, generator: 'KernelGenerator'):
         if not generator.registered('f_eq'):
@@ -85,5 +85,5 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             generator.stencil.generate_w(generator)
 
             # generate
-            generator.cln('const auto f_eq = '
+            generator.append_distribution_buffer('const auto f_eq = '
                           'rho * (((exu + exu - uxu) / two_cs_pow_two) + (0.5 * (f_eq_tmp * f_eq_tmp)) + 1.0) * w[i];')

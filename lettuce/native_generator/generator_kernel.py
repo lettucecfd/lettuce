@@ -21,7 +21,7 @@ using byte_t = unsigned char;
 
 template<typename scalar_t>
 __global__ void
-lettuce_cuda_{signature}_kernel({kernel_parameter})
+lettuce_cuda_{name}_kernel({kernel_parameter})
 {{
     {hard_buffer}
 
@@ -39,13 +39,13 @@ lettuce_cuda_{signature}_kernel({kernel_parameter})
 }}
 
 void
-lettuce_cuda_{signature}({wrapper_parameter})
+lettuce_cuda_{name}({wrapper_parameter})
 {{
     {wrapper_buffer}
 
-    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{signature}", [&]
+    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{name}", [&]
     {{
-        lettuce_cuda_{signature}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
+        lettuce_cuda_{name}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
     }});
 }}
 '''
@@ -67,29 +67,29 @@ cpp_frame = '''
 #endif
 
 void
-lettuce_cuda_{signature}({wrapper_parameter});
+lettuce_cuda_{name}({wrapper_parameter});
 
 #define CHECK_CUDA(x) TORCH_CHECK((x).device().is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK((x).is_contiguous(), #x " must be contiguous")
 
 void
-{signature}({wrapper_parameter})
+{name}({wrapper_parameter})
 {{
     CHECK_CUDA(f);
     CHECK_CONTIGUOUS(f);
 
-    lettuce_cuda_{signature}({wrapper_parameter_values});
+    lettuce_cuda_{name}({wrapper_parameter_values});
 }}
 
 #endif //{guard}
 '''
 
 py_frame = '''
-def {signature}(simulation):
+def {name}(simulation):
     """"""
     {py_pre_buffer}
     # noinspection PyUnresolvedReferences
-    {module}.{signature}({py_parameter_values})
+    {module}.{name}({py_parameter_values})
     torch.cuda.synchronize()
     {py_post_buffer}
 '''
@@ -106,12 +106,12 @@ class GeneratorKernel:
     register_: [object] = []
 
     wrapper_parameter_register_: [object]
-    wrapper_parameter_signature_: [str]
+    wrapper_parameter_name_: [str]
     wrapper_parameter_value_: [str]
     wrapper_py_parameter_value_: [str]
 
     kernel_parameter_register_: [object]
-    kernel_parameter_signature_: [str]
+    kernel_parameter_name_: [str]
     kernel_parameter_value_: [str]
 
     hard_buffer_: [str]
@@ -122,8 +122,6 @@ class GeneratorKernel:
     wrapper_buffer_: [str]
     py_pre_buffer_: [str]
     py_post_buffer_: [str]
-
-    signature_: str
 
     def __init__(self,
                  stencil: 'NativeStencil',
@@ -143,12 +141,12 @@ class GeneratorKernel:
         self.register_ = []
 
         self.wrapper_parameter_register_ = []
-        self.wrapper_parameter_signature_ = []
+        self.wrapper_parameter_name_ = []
         self.wrapper_parameter_value_ = []
         self.wrapper_py_parameter_value_ = []
 
         self.kernel_parameter_register_ = []
-        self.kernel_parameter_signature_ = []
+        self.kernel_parameter_name_ = []
         self.kernel_parameter_value_ = []
 
         # buffer for pre calculations in different contexts
@@ -160,8 +158,6 @@ class GeneratorKernel:
         self.wrapper_buffer_ = []
         self.py_pre_buffer_ = []
         self.py_post_buffer_ = []
-
-        self.signature_ = ''
 
         # default parameter
         self.wrapper_hook('f', 'at::Tensor f', 'f', 'simulation.f')
@@ -176,22 +172,20 @@ class GeneratorKernel:
         # generate
         #
 
-        self.signature_ = f"{self.stencil.name}_{self.collision.name}_{self.streaming.name}"
-
         self.streaming.read_write(self)
         self.collision.collision(self)
 
-    def signature(self):
-        return self.signature_
+    def name(self):
+        return f"{self.stencil.name}_{self.collision.name}_{self.streaming.name}"
 
     def header_guard_(self):
-        return f"lettuce_{self.signature()}_hpp".upper()
+        return f"lettuce_{self.name()}_hpp".upper()
 
     def native_file_name(self):
-        return f"lettuce_cuda_{self.signature()}.cu"
+        return f"lettuce_cuda_{self.name()}.cu"
 
     def cpp_file_name(self):
-        return f"lettuce_{self.signature()}.hpp"
+        return f"lettuce_{self.name()}.hpp"
 
     def registered(self, obj: any):
         return self.register_.__contains__(obj)
@@ -202,18 +196,18 @@ class GeneratorKernel:
     def wrapper_hooked(self, obj: any):
         return self.wrapper_parameter_register_.__contains__(obj)
 
-    def wrapper_hook(self, obj: any, signature: str, value: str, py_value: str):
+    def wrapper_hook(self, obj: any, name: str, value: str, py_value: str):
         self.wrapper_parameter_register_.append(obj)
-        self.wrapper_parameter_signature_.append(signature)
+        self.wrapper_parameter_name_.append(name)
         self.wrapper_parameter_value_.append(value)
         self.wrapper_py_parameter_value_.append(py_value)
 
     def kernel_hooked(self, obj: any):
         return self.kernel_parameter_register_.__contains__(obj)
 
-    def kernel_hook(self, obj: any, signature: str, value: str):
+    def kernel_hook(self, obj: any, name: str, value: str):
         self.kernel_parameter_register_.append(obj)
-        self.kernel_parameter_signature_.append(signature)
+        self.kernel_parameter_name_.append(name)
         self.kernel_parameter_value_.append(value)
 
     def hrd(self, it=''):
@@ -242,15 +236,15 @@ class GeneratorKernel:
 
     def bake_native(self):
         buffer = native_frame.format(
-            signature=self.signature(),
+            name=self.name(),
             hard_buffer='\n    '.join(self.hard_buffer_),
             index_buffer='\n    '.join(self.index_buffer_),
             node_buffer='\n        '.join(self.node_buffer_),
             collision_buffer='\n            '.join(self.collision_buffer_),
             write_buffer='\n    '.join(self.write_buffer_),
             wrapper_buffer='\n    '.join(self.wrapper_buffer_),
-            wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
-            kernel_parameter=', '.join(self.kernel_parameter_signature_),
+            wrapper_parameter=', '.join(self.wrapper_parameter_name_),
+            kernel_parameter=', '.join(self.kernel_parameter_name_),
             kernel_parameter_values=', '.join(self.kernel_parameter_value_))
 
         if self.pretty_print:
@@ -261,8 +255,8 @@ class GeneratorKernel:
     def bake_cpp(self):
         buffer = cpp_frame.format(
             guard=self.header_guard_(),
-            signature=self.signature(),
-            wrapper_parameter=', '.join(self.wrapper_parameter_signature_),
+            name=self.name(),
+            wrapper_parameter=', '.join(self.wrapper_parameter_name_),
             wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
 
         if self.pretty_print:
@@ -272,7 +266,7 @@ class GeneratorKernel:
 
     def bake_py(self, module: str):
         buffer = py_frame.format(
-            signature=self.signature(),
+            name=self.name(),
             py_pre_buffer='\n    '.join(self.py_pre_buffer_),
             py_post_buffer='\n    '.join(self.py_post_buffer_),
             module=module,

@@ -6,7 +6,7 @@ class NativeEquilibrium(NativeLatticeBase):
         raise AbstractMethodInvokedError()
 
 
-class NativeEquilibriumQuadratic(NativeEquilibrium):
+class NativeQuadraticEquilibrium(NativeEquilibrium):
     _name = 'Quadratic'
 
     def __init__(self):

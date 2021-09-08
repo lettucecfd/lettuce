@@ -19,21 +19,21 @@ import {module}
 
 {py_buffer}
 
-def resolve(stencil: str, equilibrium: str, collision: str, stream: str = None,
-            support_no_stream: bool = None, support_no_collision: bool = None):
-    """"""
+def resolve(stencil: str,
+            collision: str,
+            equilibrium: str = None,
+            stream: str = None,
+            support_no_stream: bool = None,
+            support_no_collision: bool = None):
+    stream = stream if stream is not None else 'standard'
+    equilibrium = equilibrium if equilibrium is not None else ''
 
-    stream = stream if stream is not None else "standard"
+    nsm = 'Masked' if support_no_stream is not None and support_no_stream else ''
+    ncm = 'Masked' if support_no_collision is not None and support_no_collision else ''
 
-    extra = ''
-    if support_no_stream is not None and support_no_stream:
-        extra += '_nsm'
-    if support_no_collision is not None and support_no_collision:
-        extra += '_ncm'
-
-    signature = f"{{stencil}}_{{equilibrium}}_{{collision}}_{{stream}}{{extra}}"
-    if signature in globals():
-        return globals()[signature]
+    name = f"{{stencil}}_{{collision}}{{equilibrium}}{{ncm}}_{{stream}}{{nsm}}"
+    if name in globals():
+        return globals()[name]
 
     return None
 '''
@@ -178,9 +178,9 @@ class GeneratorModule:
             buffer.append(gen.bake_py(native_module))
 
             pybind_include_buffer.append(f'#include "{gen.cpp_file_name()}"')
-            pybind_definition_buffer.append(f'm.def("{gen.signature()}", '
-                                            f'&{gen.signature()}, '
-                                            f'"{gen.signature()}");')
+            pybind_definition_buffer.append(f'm.def("{gen.name()}", '
+                                            f'&{gen.name()}, '
+                                            f'"{gen.name()}");')
 
         buffer = py_frame.format(module=native_module, py_buffer='\n'.join(buffer))
         if self.pretty_print:

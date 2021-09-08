@@ -11,7 +11,7 @@ class NativeCollision(NativeLatticeBase):
 
     # noinspection PyShadowingNames
     def __init__(self, equilibrium: NativeEquilibrium = None, support_no_collision_mask=False):
-        self.equilibrium = equilibrium if equilibrium is not None else NativeEquilibriumQuadratic()
+        self.equilibrium = equilibrium if equilibrium is not None else NativeQuadraticEquilibrium()
         self.support_no_collision_mask = support_no_collision_mask
 
     @property
@@ -37,7 +37,7 @@ class NativeCollision(NativeLatticeBase):
         raise AbstractMethodInvokedError()
 
 
-class NativeCollisionNo(NativeCollision):
+class NativeNoCollision(NativeCollision):
     _name = 'noCollision'
 
     def __init__(self):
@@ -49,14 +49,14 @@ class NativeCollisionNo(NativeCollision):
 
     @staticmethod
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):
-        return NativeCollisionBGK()
+        return NativeBGKCollision()
 
     def collision(self, generator: 'GeneratorKernel'):
         if not generator.registered('collision()'):
             generator.register('collision()')
 
 
-class NativeCollisionBGK(NativeCollision):
+class NativeBGKCollision(NativeCollision):
     _name = 'bgkCollision'
 
     def __init__(self, equilibrium: NativeEquilibrium = None, support_no_collision_mask=False):
@@ -64,7 +64,7 @@ class NativeCollisionBGK(NativeCollision):
 
     @staticmethod
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):
-        return NativeCollisionBGK(equilibrium, support_no_collision_mask)
+        return NativeBGKCollision(equilibrium, support_no_collision_mask)
 
     def tau_inv(self, generator: 'GeneratorKernel'):
         if not generator.wrapper_hooked('tau_inv'):

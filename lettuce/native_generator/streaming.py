@@ -61,7 +61,7 @@ class NativeStreaming(NativeLatticeBase):
         raise AbstractMethodInvokedError()
 
 
-class NativeStreamingNo(NativeStreaming):
+class NativeNoStreaming(NativeStreaming):
     _name = 'noStreaming'
 
     def __init__(self):
@@ -69,7 +69,7 @@ class NativeStreamingNo(NativeStreaming):
 
     @staticmethod
     def create(support_no_streaming_mask: bool):
-        return NativeStreamingNo()
+        return NativeNoStreaming()
 
     def read_write(self, generator: 'GeneratorKernel'):
         if not generator.registered('read_write()'):
@@ -92,7 +92,7 @@ class NativeStreamingNo(NativeStreaming):
             generator.wrt(self.write_frame_.format(target='f', length_index=length_index))
 
 
-class NativeStreamingStandard(NativeStreaming):
+class NativeStandardStreaming(NativeStreaming):
     _name = 'standardStreaming'
 
     def __init__(self, support_no_streaming_mask=False):
@@ -100,7 +100,7 @@ class NativeStreamingStandard(NativeStreaming):
 
     @staticmethod
     def create(support_no_streaming_mask: bool):
-        return NativeStreamingStandard(support_no_streaming_mask)
+        return NativeStandardStreaming(support_no_streaming_mask)
 
     def f_next(self, generator: 'GeneratorKernel'):
         if not generator.registered('f_next'):

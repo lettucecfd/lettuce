@@ -6,9 +6,9 @@ from .stencil import NativeStencil
 
 from .util import AbstractMethodInvokedError
 
-from .streaming import NativeStreaming, NativeStreamingNo, NativeStreamingStandard
-from .equilibrium import NativeEquilibrium, NativeEquilibriumQuadratic
-from .collision import NativeCollision, NativeCollisionBGK, NativeCollisionNo
+from .streaming import NativeStreaming, NativeNoStreaming, NativeStandardStreaming
+from .equilibrium import NativeEquilibrium, NativeQuadraticEquilibrium
+from .collision import NativeCollision, NativeBGKCollision, NativeNoCollision
 
 from .generator_kernel import GeneratorKernel
 from .generator_module import GeneratorModule

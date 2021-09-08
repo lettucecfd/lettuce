@@ -2,9 +2,9 @@ from . import *
 from .. import all_stencils
 
 all_stencils = all_stencils()
-all_streamings = [NativeStreamingStandard]
-all_equilibriums = [NativeEquilibriumQuadratic]
-all_collisions = [NativeCollisionBGK]
+all_streamings = [NativeStandardStreaming]
+all_equilibriums = [NativeQuadraticEquilibrium]
+all_collisions = [NativeBGKCollision]
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
 
     all_mats += [GeneratorModule.Matrix(
         all_stencils,
-        [NativeStreamingNo],
+        [NativeNoStreaming],
         all_equilibriums,
         all_collisions,
         support_no_stream=[False],
@@ -22,7 +22,7 @@ def main():
         all_stencils,
         all_streamings,
         [None],
-        [NativeCollisionNo],
+        [NativeNoCollision],
         support_no_stream=[False],
         support_no_collision=[False])]
 

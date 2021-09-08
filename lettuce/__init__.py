@@ -35,22 +35,26 @@ from .util import LettuceException, LettuceWarning, InefficientCodeWarning, Expe
 from .util import get_subclasses, torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
 from .unit import UnitConversion
 
-from .stencils import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
-from .lattices import Lattice
-from .force import Guo, ShanChen
+# TODO equilibrium should not be a member of lattice
+#      equilibrium should be a member of collision
 from .equilibrium import Equilibrium, QuadraticEquilibrium
 from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
+
+from .stencil import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
+from .lattice import Lattice
+from .force import Guo, ShanChen
 from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
 from .collision import RegularizedCollision, SmagorinskyCollision, TRTCollision, BGKInitialization
 from .streaming import NoStreaming, StandardStreaming
 
-from .flows import *
-
-from .moments import moment_tensor, get_default_moment_transform
-from .moments import Moments, Transform, D1Q3Transform, D2Q9Lallemand, D2Q9Dellar, D3Q27Hermite
-from .reporters import write_image, write_vtk, VTKReporter, ObservableReporter, ErrorReporter
-from .reporters import MaxUReporter, EnergyReporter, EnstrophyReporter, SpectrumReporter
+from .moment import moment_tensor, get_default_moment_transform
+from .moment import Moments, Transform, D1Q3Transform, D2Q9Lallemand, D2Q9Dellar, D3Q27Hermite
+from .reporter import write_image, write_vtk, VTKReporter, ObservableReporter, ErrorReporter
+from .reporter import MaxUReporter, EnergyReporter, EnstrophyReporter, SpectrumReporter
 from .boundary import BounceBackBoundary, AntiBounceBackOutlet, EquilibriumBoundaryPU, EquilibriumOutletP
-from .observables import Observable, MaximumVelocity, IncompressibleKineticEnergy, Enstrophy, EnergySpectrum
+from .observable import Observable, MaximumVelocity, IncompressibleKineticEnergy, Enstrophy, EnergySpectrum
 
 from .simulation import Simulation
+
+# example flows
+from .flow import *

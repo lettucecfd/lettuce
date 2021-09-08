@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 from lettuce import Lattice, D2Q9, D3Q27, BGKCollision, DecayingTurbulence, StandardStreaming, Simulation
-from lettuce.flows.taylorgreen import TaylorGreenVortex3D, TaylorGreenVortex2D
+from lettuce.flow.taylorgreen import TaylorGreenVortex3D, TaylorGreenVortex2D
 from lettuce.observables import EnergySpectrum, IncompressibleKineticEnergy
 
 

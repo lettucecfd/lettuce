@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from lettuce import D2Q9
 from lettuce import Lattice, Simulation, BGKCollision, StandardStreaming
-from lettuce.flows.poiseuille import PoiseuilleFlow2D
+from lettuce.flow.poiseuille import PoiseuilleFlow2D
 from lettuce.force import Guo, ShanChen
 
 

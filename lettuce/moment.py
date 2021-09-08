@@ -9,7 +9,7 @@ import torch
 
 from . import *
 
-_ALL_STENCILS = get_subclasses(Stencil, module=stencils)
+_ALL_STENCILS = get_subclasses(Stencil, module=stencil)
 
 
 def moment_tensor(e, multiindex):

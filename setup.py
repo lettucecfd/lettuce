@@ -3,9 +3,6 @@
 
 """The setup script."""
 
-import os
-from subprocess import Popen
-
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
@@ -37,7 +34,8 @@ def get_cmdclass():
 
 
 # def get_native_sources():
-#     """"""
+#     import os
+#     from subprocess import Popen
 #
 #     process = Popen(['python', '-m', 'lettuce.gen_native'])
 #     _, stderr = process.communicate()
@@ -80,7 +78,7 @@ setup(
     #         sources=get_native_sources()
     #     )
     # ],
-    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.gen_native', 'lettuce.native']),
+    packages=find_packages(include=['lettuce', 'lettuce.flow', 'lettuce.gen_native', 'lettuce.native']),
     setup_requires=setup_requirements,
     test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',

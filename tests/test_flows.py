@@ -5,7 +5,7 @@ from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q
 from lettuce import torch_gradient, DecayingTurbulence
 from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
 from lettuce import Obstacle2D, Obstacle3D
-from lettuce.flows.poiseuille import PoiseuilleFlow2D
+from lettuce.flow.poiseuille import PoiseuilleFlow2D
 
 # Flows to test
 INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence]

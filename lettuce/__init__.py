@@ -10,7 +10,7 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
-import lettuce.gen_native as gen_native
+import lettuce.native_generator as native_generator
 
 # import native if available
 # else create a pseudo variable

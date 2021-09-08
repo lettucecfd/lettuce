@@ -8,14 +8,14 @@ from . import *
 
 
 class NoCollision:
-    native_class = gen_native.NativeCollisionNo
+    native_class = native_generator.NativeCollisionNo
 
     def __call__(self, f):
         return f
 
 
 class BGKCollision:
-    native_class = gen_native.NativeCollisionBGK
+    native_class = native_generator.NativeCollisionBGK
 
     def __init__(self, lattice, tau, force=None):
         self.force = force

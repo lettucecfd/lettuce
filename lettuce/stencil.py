@@ -15,7 +15,7 @@ class Stencil:
 
 
 class D1Q3(Stencil):
-    native_class = gen_native.NativeD1Q3
+    native_class = native_generator.NativeD1Q3
     e = np.array([[0], [1], [-1]])
     w = np.array([2.0 / 3.0, 1.0 / 6.0, 1.0 / 6.0])
     cs = 1 / np.sqrt(3)
@@ -23,7 +23,7 @@ class D1Q3(Stencil):
 
 
 class D2Q9(Stencil):
-    native_class = gen_native.NativeD2Q9
+    native_class = native_generator.NativeD2Q9
     e = np.array([[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]])
     w = np.array([4.0 / 9.0] + [1.0 / 9.0] * 4 + [1.0 / 36.0] * 4)
     cs = 1 / np.sqrt(3)
@@ -31,7 +31,7 @@ class D2Q9(Stencil):
 
 
 class D3Q19(Stencil):
-    native_class = gen_native.NativeD3Q19
+    native_class = native_generator.NativeD3Q19
     e = np.array([
         [0, 0, 0],
         [1, 0, 0],
@@ -62,7 +62,7 @@ class D3Q19(Stencil):
 
 
 class D3Q27(Stencil):
-    native_class = gen_native.NativeD3Q27
+    native_class = native_generator.NativeD3Q27
     e = np.array([
         [0, 0, 0],
         [1, 0, 0],

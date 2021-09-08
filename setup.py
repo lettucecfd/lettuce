@@ -78,7 +78,7 @@ setup(
     #         sources=get_native_sources()
     #     )
     # ],
-    packages=find_packages(include=['lettuce', 'lettuce.flow', 'lettuce.gen_native', 'lettuce.native']),
+    packages=find_packages(include=['lettuce', 'lettuce.flow', 'lettuce.native_generator', 'lettuce.native']),
     setup_requires=setup_requirements,
     test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',

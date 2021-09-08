@@ -12,7 +12,7 @@ class NoStreaming:
     """
     """
 
-    native_class = gen_native.NativeStreamingNo
+    native_class = native_generator.NativeStreamingNo
 
     def __init__(self):
         self._no_stream_mask = None
@@ -39,7 +39,7 @@ class StandardStreaming:
         If None, stream all (also around all boundaries).
     """
 
-    native_class = gen_native.NativeStreamingStandard
+    native_class = native_generator.NativeStreamingStandard
 
     def __init__(self, lattice):
         self.lattice = lattice

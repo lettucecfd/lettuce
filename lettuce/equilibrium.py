@@ -8,7 +8,7 @@ class Equilibrium:
 
 
 class QuadraticEquilibrium(Equilibrium):
-    native_class = gen_native.NativeEquilibriumQuadratic
+    native_class = native_generator.NativeEquilibriumQuadratic
 
     def __init__(self, lattice):
         self.lattice = lattice

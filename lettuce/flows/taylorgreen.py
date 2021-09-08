@@ -4,7 +4,7 @@ Taylor-Green vortex in 2D and 3D.
 
 import numpy as np
 
-from lettuce.unit import UnitConversion
+from .. import UnitConversion
 
 
 class TaylorGreenVortex2D:

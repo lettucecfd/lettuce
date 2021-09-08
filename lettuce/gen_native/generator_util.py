@@ -1,7 +1,7 @@
 import re
 
 
-def pretty_print_c_(buffer: str):
+def _pretty_print_c(buffer: str):
     # remove spaces before new line
     buffer = re.sub(r' +\n', '\n', buffer)
     # remove multiple empty lines
@@ -17,7 +17,7 @@ def pretty_print_c_(buffer: str):
     return buffer
 
 
-def pretty_print_py_(buffer: str):
+def _pretty_print_py(buffer: str):
     # remove spaces before new line
     buffer = re.sub(r' +\n', '\n', buffer)
     # remove whitespace at end and begin

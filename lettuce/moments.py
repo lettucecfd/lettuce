@@ -3,18 +3,13 @@ Moments and cumulants of the distribution function.
 """
 
 import warnings
-import torch
-import lettuce
-from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses, ExperimentalWarning
-from lettuce.stencils import Stencil, D1Q3, D2Q9, D3Q27
+
 import numpy as np
+import torch
 
-__all__ = [
-    "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
-    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
-]
+from . import *
 
-_ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
+_ALL_STENCILS = get_subclasses(Stencil, module=stencils)
 
 
 def moment_tensor(e, multiindex):

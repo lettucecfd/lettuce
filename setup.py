@@ -36,19 +36,19 @@ def get_cmdclass():
     return cmdclass
 
 
-def get_native_sources():
-    """"""
-
-    process = Popen(['python', '-m', 'lettuce.gen_native'])
-    _, stderr = process.communicate()
-    assert stderr is None, stderr
-
-    def source(f: str):
-        is_file = os.path.isfile(os.path.join('lettuce_native', f))
-        is_source = f.endswith('.cu') or f.endswith('.cpp')
-        return is_file and is_source
-
-    return [os.path.join('lettuce_native', f) for f in os.listdir('lettuce_native') if source(f)]
+# def get_native_sources():
+#     """"""
+#
+#     process = Popen(['python', '-m', 'lettuce.gen_native'])
+#     _, stderr = process.communicate()
+#     assert stderr is None, stderr
+#
+#     def source(f: str):
+#         is_file = os.path.isfile(os.path.join('lettuce_native', f))
+#         is_source = f.endswith('.cu') or f.endswith('.cpp')
+#         return is_file and is_source
+#
+#     return [os.path.join('lettuce_native', f) for f in os.listdir('lettuce_native') if source(f)]
 
 
 setup(
@@ -74,12 +74,12 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    ext_modules=[
-        CUDAExtension(
-            name='lettuce_native',
-            sources=get_native_sources()
-        )
-    ],
+    # ext_modules=[
+    #     CUDAExtension(
+    #         name='lettuce_native',
+    #         sources=get_native_sources()
+    #     )
+    # ],
     packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.gen_native', 'lettuce.native']),
     setup_requires=setup_requirements,
     test_suite='tests',

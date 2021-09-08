@@ -15,11 +15,10 @@ The no-collision mask has the same dimensions as the grid (x, y, (z)).
 
 """
 
-import torch
 import numpy as np
-from lettuce import (LettuceException)
+import torch
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
+from . import *
 
 
 class BounceBackBoundary:

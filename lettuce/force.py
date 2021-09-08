@@ -1,6 +1,3 @@
-__all__ = ["Guo", "ShanChen"]
-
-
 class Guo:
     def __init__(self, lattice, tau, acceleration):
         self.lattice = lattice

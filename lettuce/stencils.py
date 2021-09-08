@@ -1,8 +1,6 @@
 import numpy as np
 
-from lettuce import gen_native
-
-__all__ = ["Stencil", "D1Q3", "D2Q9", "D3Q27", "D3Q19"]
+from . import *
 
 
 class Stencil:

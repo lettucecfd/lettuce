@@ -1,6 +1,6 @@
 import json
 
-from lettuce.gen_native import *
+from . import *
 
 
 class NativeStencil:

@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from lettuce.gen_native import *
-from lettuce.gen_native.generator_util import pretty_print_c_, pretty_print_py_
+from . import *
+from .generator_util import _pretty_print_c, _pretty_print_py
 
 py_frame = '''
 import torch
@@ -180,7 +180,7 @@ class GeneratorModule:
 
         buffer = py_frame.format(module=native_module, py_buffer='\n'.join(buffer))
         if self.pretty_print:
-            buffer = pretty_print_py_(buffer)
+            buffer = _pretty_print_py(buffer)
         module_file = open(os.path.join(py_module, '__init__.py'), 'w')
         module_file.write(buffer)
         module_file.close()
@@ -188,7 +188,7 @@ class GeneratorModule:
         buffer = pybind_frame.format(includes='\n'.join(pybind_include_buffer),
                                      definitions='\n    '.join(pybind_definition_buffer))
         if self.pretty_print:
-            buffer = pretty_print_c_(buffer)
+            buffer = _pretty_print_c(buffer)
         module_file = open(os.path.join(native_module, 'lettuce_pybind.cpp'), 'w')
         module_file.write(buffer)
         module_file.close()

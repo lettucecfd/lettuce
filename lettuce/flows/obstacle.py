@@ -1,6 +1,5 @@
 import numpy as np
-from lettuce.unit import UnitConversion
-from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
+from .. import UnitConversion, EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
 
 
 class Obstacle2D(object):

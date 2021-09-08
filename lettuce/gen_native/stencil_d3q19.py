@@ -1,6 +1,6 @@
 import math
 
-from lettuce.gen_native import *
+from . import *
 
 
 class NativeD3Q19(NativeStencil):

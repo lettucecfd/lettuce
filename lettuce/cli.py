@@ -7,20 +7,16 @@ To get help for terminal commands, open a console and type:
 
 """
 
-import sys
 import cProfile
 import pstats
+import sys
 
 import click
-import torch
 import numpy as np
+import torch
 
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
 from lettuce import __version__ as lettuce_version
-
-from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
-from lettuce.flows import flow_by_name
-from lettuce.force import Guo
+from . import *
 
 
 @click.group()

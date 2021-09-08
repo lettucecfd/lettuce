@@ -2,7 +2,7 @@
 
 """Top-level package for lettuce."""
 
-__author__ = """Andreas Kraemer"""
+__author__ = 'Andreas Kraemer'
 __email__ = 'kraemer.research@gmail.com'
 
 from ._version import get_versions
@@ -20,9 +20,6 @@ try:
     native_available = True
 
 except ImportError:
-    print('failed to load native module')
-    native_available = False
-
 
     class PseudoNative:
         # noinspection PyUnusedLocal
@@ -32,21 +29,28 @@ except ImportError:
 
 
     native = PseudoNative()
+    native_available = False
 
-from lettuce.util import *
-from lettuce.unit import *
-from lettuce.lattices import *
-from lettuce.equilibrium import *
-from lettuce.stencils import *
-from lettuce.moments import *
-from lettuce.reporters import *
+from .util import LettuceException, LettuceWarning, InefficientCodeWarning, ExperimentalWarning
+from .util import get_subclasses, torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
+from .unit import UnitConversion
 
-from lettuce.collision import *
-from lettuce.streaming import *
-from lettuce.boundary import *
-from lettuce.reporters import *
-from lettuce.simulation import *
-from lettuce.force import *
-from lettuce.observables import *
+from .stencils import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
+from .lattices import Lattice
+from .force import Guo, ShanChen
+from .equilibrium import Equilibrium, QuadraticEquilibrium
+from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
+from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
+from .collision import RegularizedCollision, SmagorinskyCollision, TRTCollision, BGKInitialization
+from .streaming import NoStreaming, StandardStreaming
 
-from lettuce.flows import *
+from .flows import *
+
+from .moments import moment_tensor, get_default_moment_transform
+from .moments import Moments, Transform, D1Q3Transform, D2Q9Lallemand, D2Q9Dellar, D3Q27Hermite
+from .reporters import write_image, write_vtk, VTKReporter, ObservableReporter, ErrorReporter
+from .reporters import MaxUReporter, EnergyReporter, EnstrophyReporter, SpectrumReporter
+from .boundary import BounceBackBoundary, AntiBounceBackOutlet, EquilibriumBoundaryPU, EquilibriumOutletP
+from .observables import Observable, MaximumVelocity, IncompressibleKineticEnergy, Enstrophy, EnergySpectrum
+
+from .simulation import Simulation

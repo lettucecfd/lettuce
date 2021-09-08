@@ -1,4 +1,4 @@
-from lettuce.gen_native import *
+from . import *
 
 
 class NativeEquilibriumQuadratic(NativeEquilibrium):

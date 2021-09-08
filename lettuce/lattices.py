@@ -9,13 +9,11 @@ Its stencil is still accessible trough Lattice.stencil.
 """
 
 import warnings
+
 import numpy as np
 import torch
 
-from lettuce.util import LettuceException
-from lettuce.equilibrium import QuadraticEquilibrium
-
-__all__ = ["Lattice"]
+from . import *
 
 
 class Lattice:

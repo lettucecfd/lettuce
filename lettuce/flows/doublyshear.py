@@ -4,7 +4,7 @@ Special Inputs & standard value: shear_layer_width = 80, initial_perturbation_ma
 """
 
 import numpy as np
-from lettuce.unit import UnitConversion
+from .. import UnitConversion
 
 
 class DoublyPeriodicShear2D:

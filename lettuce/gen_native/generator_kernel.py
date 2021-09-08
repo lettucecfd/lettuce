@@ -1,5 +1,5 @@
-from lettuce.gen_native import *
-from lettuce.gen_native.generator_util import pretty_print_c_
+from . import *
+from .generator_util import _pretty_print_c
 
 native_frame = '''
 #if _MSC_VER && !__INTEL_COMPILER
@@ -475,7 +475,7 @@ class GeneratorKernel:
             kernel_parameter_values=', '.join(self.kernel_parameter_value_))
 
         if self.pretty_print:
-            buffer = pretty_print_c_(buffer)
+            buffer = _pretty_print_c(buffer)
 
         return buffer
 
@@ -487,7 +487,7 @@ class GeneratorKernel:
             wrapper_parameter_values=', '.join(self.wrapper_parameter_value_))
 
         if self.pretty_print:
-            buffer = pretty_print_c_(buffer)
+            buffer = _pretty_print_c(buffer)
 
         return buffer
 

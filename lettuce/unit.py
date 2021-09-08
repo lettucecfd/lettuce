@@ -8,8 +8,6 @@ pu = physical units
 import numpy as np
 import torch
 
-__all__ = ["UnitConversion"]
-
 
 class UnitConversion:
     """

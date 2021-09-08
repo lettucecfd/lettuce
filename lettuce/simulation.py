@@ -8,13 +8,7 @@ from timeit import default_timer as timer
 import numpy as np
 import torch
 
-from lettuce import native
-from lettuce import (
-    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
-)
-from lettuce.util import pressure_poisson
-
-__all__ = ["Simulation"]
+from . import *
 
 
 class Simulation:

@@ -1,4 +1,4 @@
-from lettuce.gen_native import *
+from . import *
 
 all_stencil = [NativeD1Q3, NativeD2Q9, NativeD3Q19, NativeD3Q27]
 all_stream = [NativeStreamingStandard]

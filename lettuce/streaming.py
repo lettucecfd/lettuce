@@ -5,9 +5,7 @@ Streaming Step
 import numpy as np
 import torch
 
-from lettuce import *
-
-__all__ = ["NoStreaming", "StandardStreaming"]
+from . import *
 
 
 class NoStreaming:

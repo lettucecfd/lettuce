@@ -2,7 +2,7 @@ from . import *
 
 
 class NativeEquilibrium(NativeLatticeBase):
-    def generate_f_eq(self, generator: 'GeneratorKernel'):
+    def generate_f_eq(self, generator: 'KernelGenerator'):
         raise AbstractMethodInvokedError()
 
 
@@ -12,7 +12,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
     def __init__(self):
         super().__init__()
 
-    def generate_uxu(self, generator: 'GeneratorKernel'):
+    def generate_uxu(self, generator: 'KernelGenerator'):
         if not generator.registered('uxu'):
             generator.register('uxu')
 
@@ -26,7 +26,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             generator.nde(f"const auto uxu = {' + '.join(summands)};")
 
-    def generate_exu(self, generator: 'GeneratorKernel'):
+    def generate_exu(self, generator: 'KernelGenerator'):
         if not generator.registered('exu'):
             generator.register('exu')
 
@@ -41,7 +41,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             generator.cln(f"const auto exu = {' + '.join(summands)};")
 
-    def generate_cs_pow_two(self, generator: 'GeneratorKernel'):
+    def generate_cs_pow_two(self, generator: 'KernelGenerator'):
         if not generator.registered('cs_pow_two<scalar_t>'):
             generator.register('cs_pow_two<scalar_t>')
 
@@ -51,7 +51,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             # generate
             generator.nde('constexpr auto cs_pow_two = cs * cs;')
 
-    def generate_two_cs_pow_two(self, generator: 'GeneratorKernel'):
+    def generate_two_cs_pow_two(self, generator: 'KernelGenerator'):
         if not generator.registered('two_cs_pow_two<scalar_t>'):
             generator.register('two_cs_pow_two<scalar_t>')
 
@@ -61,7 +61,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             # generate
             generator.nde('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
-    def generate_f_eq_tmp(self, generator: 'GeneratorKernel'):
+    def generate_f_eq_tmp(self, generator: 'KernelGenerator'):
         if not generator.registered('f_eq_tmp'):
             generator.register('f_eq_tmp')
 
@@ -72,7 +72,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             # generate
             generator.cln('const auto f_eq_tmp = exu / cs_pow_two;')
 
-    def generate_f_eq(self, generator: 'GeneratorKernel'):
+    def generate_f_eq(self, generator: 'KernelGenerator'):
         if not generator.registered('f_eq'):
             generator.register('f_eq')
 

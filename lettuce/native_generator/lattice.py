@@ -2,7 +2,7 @@ from . import *
 
 
 class NativeLattice:
-    def generate_rho(self, generator: 'GeneratorKernel'):
+    def generate_rho(self, generator: 'KernelGenerator'):
         if not generator.registered('rho'):
             generator.register('rho')
 
@@ -11,7 +11,7 @@ class NativeLattice:
 
             generator.nde(f"const auto rho = {f_eq_sum};")
 
-    def generate_rho_inv(self, generator: 'GeneratorKernel'):
+    def generate_rho_inv(self, generator: 'KernelGenerator'):
         if not generator.registered('rho_inv'):
             generator.register('rho_inv')
 
@@ -21,7 +21,7 @@ class NativeLattice:
             # generate
             generator.nde('const auto rho_inv = 1.0 / rho;')
 
-    def generate_u(self, generator: 'GeneratorKernel'):
+    def generate_u(self, generator: 'KernelGenerator'):
         if not generator.registered('u'):
             generator.register('u')
 

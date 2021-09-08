@@ -3,64 +3,11 @@ import shutil
 from typing import Type, Optional
 
 from . import *
-from .generator_util import _pretty_print_c, _pretty_print_py
+from . import _pretty_print_c, _pretty_print_py, _load_template
 from .. import Stencil
 
-py_frame = '''
-import torch
-import os
 
-# on windows add cuda path for
-# native module to find all dll's
-if os.name == 'nt':
-    os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
-
-import {module}
-
-{py_buffer}
-
-def resolve(stencil: str,
-            collision: str,
-            equilibrium: str = None,
-            stream: str = None,
-            support_no_stream: bool = None,
-            support_no_collision: bool = None):
-    stream = stream if stream is not None else 'standard'
-    equilibrium = equilibrium if equilibrium is not None else ''
-
-    nsm = 'Masked' if support_no_stream is not None and support_no_stream else ''
-    ncm = 'Masked' if support_no_collision is not None and support_no_collision else ''
-
-    name = f"{{stencil}}_{{collision}}{{equilibrium}}{{ncm}}_{{stream}}{{nsm}}"
-    if name in globals():
-        return globals()[name]
-
-    return None
-'''
-
-pybind_frame = '''
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( push )
-#pragma warning ( disable : 4067 )
-#pragma warning ( disable : 4624 )
-#endif
-
-#include <torch/extension.h>
-
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( pop )
-#endif
-
-{includes}
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
-{{
-    {definitions}
-}}
-'''
-
-
-class GeneratorModule:
+class ModuleGenerator:
     """
     """
 
@@ -126,7 +73,7 @@ class GeneratorModule:
             base_stencil: Type[Stencil] = entry[0]
             stencil = NativeStencil(base_stencil)
 
-            return GeneratorKernel(stencil=stencil,
+            return KernelGenerator(stencil=stencil,
                                    streaming=streaming,
                                    collision=collision,
                                    pretty_print=pretty_print)
@@ -135,8 +82,8 @@ class GeneratorModule:
     pretty_print: bool
 
     def __init__(self,
-                 white_matrices: ['GeneratorModule.Matrix'],
-                 black_matrices: ['GeneratorModule.Matrix'] = None,
+                 white_matrices: ['Matrix'],
+                 black_matrices: ['Matrix'] = None,
                  pretty_print: bool = False):
         self.matrix_list = []
         for white_matrix in white_matrices:
@@ -165,7 +112,7 @@ class GeneratorModule:
         pybind_definition_buffer: [str] = []
 
         for entry in self.matrix_list:
-            gen = GeneratorModule.Matrix.gen_from_entry(entry, self.pretty_print)
+            gen = ModuleGenerator.Matrix.gen_from_entry(entry, self.pretty_print)
 
             cuda_file = open(os.path.join(native_module, gen.native_file_name()), 'w')
             cuda_file.write(gen.bake_native())
@@ -182,17 +129,22 @@ class GeneratorModule:
                                             f'&{gen.name()}, '
                                             f'"{gen.name()}");')
 
-        buffer = py_frame.format(module=native_module, py_buffer='\n'.join(buffer))
+        buffer = _load_template('python_module').format(module=native_module,
+                                                        py_buffer='\n'.join(buffer))
+
         if self.pretty_print:
             buffer = _pretty_print_py(buffer)
+
         module_file = open(os.path.join(py_module, '__init__.py'), 'w')
         module_file.write(buffer)
         module_file.close()
 
-        buffer = pybind_frame.format(includes='\n'.join(pybind_include_buffer),
-                                     definitions='\n    '.join(pybind_definition_buffer))
+        buffer = _load_template('cpp_pybind11').format(includes='\n'.join(pybind_include_buffer),
+                                                       definitions='\n    '.join(pybind_definition_buffer))
+
         if self.pretty_print:
             buffer = _pretty_print_c(buffer)
+
         module_file = open(os.path.join(native_module, 'lettuce_pybind.cpp'), 'w')
         module_file.write(buffer)
         module_file.close()

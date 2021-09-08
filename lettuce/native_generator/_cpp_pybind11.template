@@ -1,0 +1,18 @@
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning ( push )
+#pragma warning ( disable : 4067 )
+#pragma warning ( disable : 4624 )
+#endif
+
+#include <torch/extension.h>
+
+#if _MSC_VER && !__INTEL_COMPILER
+#pragma warning ( pop )
+#endif
+
+{includes}
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
+{{
+    {definitions}
+}}

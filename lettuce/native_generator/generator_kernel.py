@@ -1,101 +1,8 @@
 from . import *
-from .generator_util import _pretty_print_c
-
-native_frame = '''
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( push )
-#pragma warning ( disable : 4067 )
-#pragma warning ( disable : 4624 )
-#endif
-
-#include <torch/torch.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
-
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( pop )
-#endif
-
-using index_t = unsigned int;
-using byte_t = unsigned char;
-
-template<typename scalar_t>
-__global__ void
-lettuce_cuda_{name}_kernel({kernel_parameter})
-{{
-    {hard_buffer}
-
-    {index_buffer}
-    {{
-        {node_buffer}
-
-#pragma unroll
-        for (index_t i = 0; i < q; ++i)
-        {{
-            {collision_buffer}
-        }}
-    }}
-    {write_buffer}
-}}
-
-void
-lettuce_cuda_{name}({wrapper_parameter})
-{{
-    {wrapper_buffer}
-
-    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{name}", [&]
-    {{
-        lettuce_cuda_{name}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
-    }});
-}}
-'''
-
-cpp_frame = '''
-#ifndef {guard}
-#define {guard}
-
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( push )
-#pragma warning ( disable : 4067 )
-#pragma warning ( disable : 4624 )
-#endif
-
-#include <torch/extension.h>
-
-#if _MSC_VER && !__INTEL_COMPILER
-#pragma warning ( pop )
-#endif
-
-void
-lettuce_cuda_{name}({wrapper_parameter});
-
-#define CHECK_CUDA(x) TORCH_CHECK((x).device().is_cuda(), #x " must be a CUDA tensor")
-#define CHECK_CONTIGUOUS(x) TORCH_CHECK((x).is_contiguous(), #x " must be contiguous")
-
-void
-{name}({wrapper_parameter})
-{{
-    CHECK_CUDA(f);
-    CHECK_CONTIGUOUS(f);
-
-    lettuce_cuda_{name}({wrapper_parameter_values});
-}}
-
-#endif //{guard}
-'''
-
-py_frame = '''
-def {name}(simulation):
-    """"""
-    {py_pre_buffer}
-    # noinspection PyUnresolvedReferences
-    {module}.{name}({py_parameter_values})
-    torch.cuda.synchronize()
-    {py_post_buffer}
-'''
+from . import _load_template, _pretty_print_c
 
 
-class GeneratorKernel:
+class KernelGenerator:
     cuda: 'NativeCuda' = NativeCuda()
     lattice: 'NativeLattice' = NativeLattice()
 
@@ -235,7 +142,7 @@ class GeneratorKernel:
         self.py_post_buffer_.append(it)
 
     def bake_native(self):
-        buffer = native_frame.format(
+        buffer = _load_template('cuda_kernel').format(
             name=self.name(),
             hard_buffer='\n    '.join(self.hard_buffer_),
             index_buffer='\n    '.join(self.index_buffer_),
@@ -253,7 +160,7 @@ class GeneratorKernel:
         return buffer
 
     def bake_cpp(self):
-        buffer = cpp_frame.format(
+        buffer = _load_template('cpp_wrapper').format(
             guard=self.header_guard_(),
             name=self.name(),
             wrapper_parameter=', '.join(self.wrapper_parameter_name_),
@@ -265,7 +172,7 @@ class GeneratorKernel:
         return buffer
 
     def bake_py(self, module: str):
-        buffer = py_frame.format(
+        buffer = _load_template('python_wrapper').format(
             name=self.name(),
             py_pre_buffer='\n    '.join(self.py_pre_buffer_),
             py_post_buffer='\n    '.join(self.py_post_buffer_),

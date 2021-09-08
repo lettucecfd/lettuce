@@ -17,21 +17,21 @@ class NativeStencil(NativeLatticeBase):
     def name(self):
         return self._name
 
-    def generate_d(self, generator: 'GeneratorKernel'):
+    def generate_d(self, generator: 'KernelGenerator'):
         if not generator.registered('d'):
             generator.register('d')
 
             # generate
             generator.hrd(f"constexpr index_t d = {self.stencil.d()};")
 
-    def generate_q(self, generator: 'GeneratorKernel'):
+    def generate_q(self, generator: 'KernelGenerator'):
         if not generator.registered('q'):
             generator.register('q')
 
             # generate
             generator.hrd(f"constexpr index_t q = {self.stencil.q()};")
 
-    def generate_e(self, generator: 'GeneratorKernel'):
+    def generate_e(self, generator: 'KernelGenerator'):
         if not generator.registered('e'):
             generator.register('e')
 
@@ -43,7 +43,7 @@ class NativeStencil(NativeLatticeBase):
             buffer = [f"{{{', '.join([str(x) + '.0' for x in e])}}}" for e in self.stencil.e]
             generator.hrd(f"constexpr scalar_t e[q][d] = {{{', '.join(buffer)}}};")
 
-    def generate_w(self, generator: 'GeneratorKernel'):
+    def generate_w(self, generator: 'KernelGenerator'):
         if not generator.registered('w'):
             generator.register('w')
 
@@ -55,7 +55,7 @@ class NativeStencil(NativeLatticeBase):
             buffer = ',\n                               '.join(buffer)
             generator.hrd(f"constexpr scalar_t w[q] = {{{buffer}}};")
 
-    def generate_cs(self, generator: 'GeneratorKernel'):
+    def generate_cs(self, generator: 'KernelGenerator'):
         if not generator.registered('cs'):
             generator.register('cs')
 

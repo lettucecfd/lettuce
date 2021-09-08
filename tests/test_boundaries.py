@@ -130,8 +130,8 @@ def test_masks(dtype_device):
     flow.mask[1, 1] = 1
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow, lattice, None, streaming)
-    assert simulation.streaming.no_stream_mask.any()
-    assert simulation.no_collision_mask.any()
+    assert simulation.streaming.no_streaming_mask.any()
+    assert simulation.collision.no_collision_mask.any()
 
 
 def test_equilibrium_pressure_outlet(dtype_device):

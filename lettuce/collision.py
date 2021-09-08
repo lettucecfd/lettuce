@@ -1,26 +1,44 @@
 """
 Collision models
 """
+from typing import Optional
 
 import torch
 
 from . import *
+from .native_generator import NativeNoCollision, NativeBGKCollision
 
 
-class NoCollision:
-    native_class = native_generator.NativeNoCollision
+class Collision(LatticeBase):
+    no_collision_mask: Optional[torch.Tensor]
+
+    def __call__(self, f: torch.Tensor):
+        raise AbstractMethodInvokedError()
+
+
+class NoCollision(Collision):
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> NativeNoCollision:
+        assert self.no_collision_mask is None, 'no_collision_mask makes no sense in class NoCollision'
+        return NativeNoCollision()
 
     def __call__(self, f):
         return f
 
 
-class BGKCollision:
-    native_class = native_generator.NativeBGKCollision
-
-    def __init__(self, lattice, tau, force=None):
+class BGKCollision(Collision):
+    def __init__(self, lattice: Lattice, tau, force=None, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.force = force
-        self.lattice = lattice
         self.tau = tau
+
+    def native_available(self) -> bool:
+        return self.lattice.equilibrium.native_available()
+
+    def create_native(self) -> NativeBGKCollision:
+        return NativeBGKCollision(self.lattice.equilibrium.create_native(), self.no_collision_mask is not None)
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
@@ -31,15 +49,15 @@ class BGKCollision:
         return f - 1.0 / self.tau * (f - feq) + Si
 
 
-class MRTCollision:
+class MRTCollision(Collision):
     """Multiple relaxation time collision operator
 
     This is an MRT operator in the most general sense of the word.
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
 
-    def __init__(self, lattice, transform, relaxation_parameters):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, transform, relaxation_parameters, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.transform = transform
         self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
 
@@ -51,12 +69,12 @@ class MRTCollision:
         return f
 
 
-class TRTCollision:
+class TRTCollision(Collision):
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
 
-    def __init__(self, lattice, tau, tau_minus=1.0):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, tau, tau_minus=1.0, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.tau_plus = tau
         self.tau_minus = tau_minus
 
@@ -72,11 +90,11 @@ class TRTCollision:
         return f
 
 
-class RegularizedCollision:
+class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
 
-    def __init__(self, lattice, tau):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.tau = tau
         self.Q_matrix = torch.zeros([lattice.q, lattice.d, lattice.d], device=lattice.device, dtype=lattice.dtype)
 
@@ -103,11 +121,11 @@ class RegularizedCollision:
         return f
 
 
-class KBCCollision2D:
+class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
 
-    def __init__(self, lattice, tau):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+        super().__init__(lattice, use_native)
         assert lattice.q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
@@ -181,11 +199,11 @@ class KBCCollision2D:
         return f
 
 
-class KBCCollision3D:
+class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
 
-    def __init__(self, lattice, tau):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+        super().__init__(lattice, use_native)
         assert lattice.q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
         self.beta = 1. / (2 * tau)
@@ -272,12 +290,12 @@ class KBCCollision3D:
         return f
 
 
-class SmagorinskyCollision:
+class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
-    def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
+    def __init__(self, lattice: Lattice, tau, smagorinsky_constant=0.17, force=None, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.force = force
-        self.lattice = lattice
         self.tau = tau
         self.iterations = 2
         self.tau_eff = tau
@@ -303,11 +321,11 @@ class SmagorinskyCollision:
         return f - 1.0 / self.tau_eff * (f - feq) + Si
 
 
-class BGKInitialization:
+class BGKInitialization(Collision):
     """Keep velocity constant."""
 
-    def __init__(self, lattice, flow, moment_transformation):
-        self.lattice = lattice
+    def __init__(self, lattice: Lattice, flow, moment_transformation, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation
         p, u = flow.initial_solution(flow.grid)

@@ -14,6 +14,7 @@ del get_versions
 from .stencil import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
 
 import lettuce.native_generator as native_generator
+from .native_generator import AbstractMethodInvokedError
 
 # import native if available
 # else create a pseudo variable
@@ -45,6 +46,7 @@ from .equilibrium import Equilibrium, QuadraticEquilibrium
 from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
 
 from .lattice import Lattice
+from .lattice_base import LatticeBase
 from .force import Guo, ShanChen
 from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
 from .collision import RegularizedCollision, SmagorinskyCollision, TRTCollision, BGKInitialization

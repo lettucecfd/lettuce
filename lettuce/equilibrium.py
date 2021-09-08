@@ -1,17 +1,25 @@
+from typing import Optional
+
 import torch
 
 from . import *
+from .native_generator import NativeQuadraticEquilibrium
 
 
-class Equilibrium:
-    pass
+class Equilibrium(LatticeBase):
+    def __call__(self, rho, u):
+        raise AbstractMethodInvokedError()
 
 
 class QuadraticEquilibrium(Equilibrium):
-    native_class = native_generator.NativeQuadraticEquilibrium
+    def __init__(self, lattice: Lattice, use_native: bool = True):
+        super().__init__(lattice, use_native)
 
-    def __init__(self, lattice):
-        self.lattice = lattice
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> NativeQuadraticEquilibrium:
+        return NativeQuadraticEquilibrium()
 
     def __call__(self, rho, u, *args):
         exu = torch.tensordot(self.lattice.e, u, dims=1)
@@ -44,7 +52,8 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
 
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice, rho0=1.0):
+    def __init__(self, lattice: Lattice, rho0=1.0, use_native: bool = True):
+        super().__init__(lattice, use_native)
         self.lattice = lattice
         self.rho0 = rho0
 

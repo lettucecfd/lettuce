@@ -70,7 +70,7 @@ def test_vtk_reporter_mask(tmpdir):
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     vtk_reporter = VTKReporter(lattice, flow, interval=1, filename_base=tmpdir / "output")
     simulation.reporters.append(vtk_reporter)
-    vtk_reporter.output_mask(simulation.no_collision_mask)
+    vtk_reporter.output_mask(simulation.collision.no_collision_mask)
     simulation.step(2)
     assert os.path.isfile(tmpdir / "output_mask.vtr")
     assert os.path.isfile(tmpdir / "output_00000000.vtr")

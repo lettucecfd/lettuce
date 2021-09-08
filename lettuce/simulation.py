@@ -56,10 +56,11 @@ class Simulation:
                 no_collision_mask = no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
             if hasattr(boundary, "make_no_stream_mask"):
                 no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
-        if no_stream_mask.any():
-            self.streaming.no_stream_mask = no_stream_mask
 
-        self.no_collision_mask = no_collision_mask if no_collision_mask.any() else None
+        if no_stream_mask.any():
+            self.streaming.no_streaming_mask = no_stream_mask
+        if no_collision_mask.any():
+            self.collision.no_collision_mask = no_collision_mask
 
         self.stream_and_collide = Simulation.stream_and_collide_
 
@@ -88,7 +89,7 @@ class Simulation:
 
             stream_and_collide_ = native.resolve(
                 stencil_name, equilibrium_name, collision_name, stream_name,
-                self.streaming.no_stream_mask is not None, self.no_collision_mask is not None)
+                self.streaming.no_streaming_mask is not None, self.collision.no_collision_mask is not None)
 
             if stream_and_collide_ is None:
                 print('combination not natively generated')
@@ -99,13 +100,13 @@ class Simulation:
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @staticmethod
-    def stream_and_collide_(simulation):
-        simulation.f = simulation.streaming(simulation.f)
+    def stream_and_collide_(self):
+        self.f = self.streaming(self.f)
         # Perform the collision routine everywhere, expect where the no_collision_mask is true
-        if simulation.no_collision_mask is not None:
-            simulation.f = torch.where(simulation.no_collision_mask, simulation.f, simulation.collision(simulation.f))
+        if self.collision.no_collision_mask is not None:
+            self.f = torch.where(self.collision.no_collision_mask, self.f, self.collision(self.f))
         else:
-            simulation.collision(simulation.f)
+            self.collision(self.f)
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""

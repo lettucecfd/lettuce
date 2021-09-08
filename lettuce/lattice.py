@@ -25,14 +25,17 @@ class Lattice:
     cs: torch.Tensor
     equilibrium: Equilibrium
 
-    def __init__(self, stencil: Stencil, device: torch.device, dtype: torch.dtype = None):
+    use_native: bool
+
+    def __init__(self, stencil: Stencil, device: torch.device, dtype=torch.float, use_native=True):
         self.stencil = stencil
         self.device = device
-        self.dtype = dtype if dtype is not None else torch.float
+        self.dtype = dtype
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
         self.cs = self.convert_to_tensor(stencil.cs)
         self.equilibrium = QuadraticEquilibrium(self)
+        self.use_native = use_native
 
     def __str__(self):
         return f"Lattice (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"

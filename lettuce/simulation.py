@@ -34,9 +34,9 @@ class Simulation:
             LettuceException(f"Wrong dimension of initial pressure field. "
                              f"Expected {[1] + list(grid[0].shape)}, "
                              f"but got {list(p.shape)}.")
-        assert list(u.shape) == [lattice.D] + list(grid[0].shape), \
+        assert list(u.shape) == [lattice.d] + list(grid[0].shape), \
             LettuceException("Wrong dimension of initial velocity field."
-                             f"Expected {[lattice.D] + list(grid[0].shape)}, "
+                             f"Expected {[lattice.d] + list(grid[0].shape)}, "
                              f"but got {list(u.shape)}.")
         u = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
         rho = lattice.convert_to_tensor(flow.units.convert_pressure_pu_to_density_lu(p))
@@ -122,7 +122,7 @@ class Simulation:
         end = timer()
         seconds = end - start
 
-        num_grid_points = self.f.numel() / self.lattice.stencil.Q()
+        num_grid_points = self.f.numel() / self.lattice.stencil.q()
 
         mlups = num_steps * num_grid_points / 1e6 / seconds
         return mlups
@@ -177,13 +177,13 @@ class Simulation:
         grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
         S = torch.cat([grad_u0, grad_u1])
 
-        if self.lattice.D == 3:
+        if self.lattice.d == 3:
             grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
             S = torch.cat([S, grad_u2])
 
         Pi_1 = 1.0 * self.flow.units.relaxation_parameter_lu * rho * S / self.lattice.cs ** 2
         Q = (torch.einsum('ia,ib->iab', [self.lattice.e, self.lattice.e])
-             - torch.eye(self.lattice.D, device=self.lattice.device, dtype=self.lattice.dtype) * self.lattice.cs ** 2)
+             - torch.eye(self.lattice.d, device=self.lattice.device, dtype=self.lattice.dtype) * self.lattice.cs ** 2)
         Pi_1_Q = self.lattice.einsum('ab,iab->i', [Pi_1, Q])
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 

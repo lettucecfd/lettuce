@@ -44,63 +44,63 @@ class DecayingTurbulence:
         ek /= np.sum(ek)
         ek *= self.ic_energy
         self.spectrum = ek[..., None] * wavemask
-        self.spectrum = np.sum(self.spectrum, axis=tuple((np.arange(self.units.lattice.D))))
+        self.spectrum = np.sum(self.spectrum, axis=tuple((np.arange(self.units.lattice.d))))
         return ek, wavenumber
 
     def _generate_initial_velocity(self, ek, wavenumber):
         dx = self.units.convert_length_to_pu(1.0)
         u = np.random.random(np.array(wavenumber).shape) * 2 * np.pi + 0j
-        u = [np.fft.fftn(u[dim], axes=tuple((np.arange(self.units.lattice.D)))) for dim in range(self.units.lattice.D)]
+        u = [np.fft.fftn(u[dim], axes=tuple((np.arange(self.units.lattice.d)))) for dim in range(self.units.lattice.d)]
 
-        u_real = [u[dim].real for dim in range(self.units.lattice.D)]
-        u_imag = [u[dim].imag for dim in range(self.units.lattice.D)]
-        for dim in range(self.units.lattice.D):
+        u_real = [u[dim].real for dim in range(self.units.lattice.d)]
+        u_imag = [u[dim].imag for dim in range(self.units.lattice.d)]
+        for dim in range(self.units.lattice.d):
             u_real[dim].ravel()[0] = 0
             u_imag[dim].ravel()[0] = 0
 
-        u_real_h = [np.sqrt(2 / self.units.lattice.D * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
-                    * u_real[dim] for dim in range(self.units.lattice.D)]
-        u_imag_h = [np.sqrt(2 / self.units.lattice.D * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
-                    * u_imag[dim] for dim in range(self.units.lattice.D)]
-        for dim in range(self.units.lattice.D):
+        u_real_h = [np.sqrt(2 / self.units.lattice.d * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
+                    * u_real[dim] for dim in range(self.units.lattice.d)]
+        u_imag_h = [np.sqrt(2 / self.units.lattice.d * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
+                    * u_imag[dim] for dim in range(self.units.lattice.d)]
+        for dim in range(self.units.lattice.d):
             u_real_h[dim].ravel()[0] = 0
             u_imag_h[dim].ravel()[0] = 0
 
         ### Remove divergence
         # modified wave number sin(k*dx) is used, as the gradient below uses second order cental differences
         # Modify if other schemes are used or use kx, ky if you don't know the modified wavenumber !!!
-        wavenumber_modified = [np.sin(wavenumber[dim] * dx) / dx for dim in range(self.units.lattice.D)]
+        wavenumber_modified = [np.sin(wavenumber[dim] * dx) / dx for dim in range(self.units.lattice.d)]
         wavenorm_modified = np.linalg.norm(wavenumber_modified, axis=0) + 1e-16
 
         divergence_real = np.zeros(self.dimensions)
         divergence_imag = np.zeros(self.dimensions)
-        for dim in range(self.units.lattice.D):
+        for dim in range(self.units.lattice.d):
             divergence_real += wavenumber_modified[dim] * u_real_h[dim]
             divergence_imag += wavenumber_modified[dim] * u_imag_h[dim]
 
         u_real = [u_real_h[dim] - divergence_real * wavenumber_modified[dim]
-                  / wavenorm_modified ** 2 for dim in range(self.units.lattice.D)]
+                  / wavenorm_modified ** 2 for dim in range(self.units.lattice.d)]
         u_imag = [u_imag_h[dim] - divergence_imag * wavenumber_modified[dim]
-                  / wavenorm_modified ** 2 for dim in range(self.units.lattice.D)]
-        for dim in range(self.units.lattice.D):
+                  / wavenorm_modified ** 2 for dim in range(self.units.lattice.d)]
+        for dim in range(self.units.lattice.d):
             u_real[dim].ravel()[0] = 0
             u_imag[dim].ravel()[0] = 0
 
         ### Scale velocity field to achieve the desired inicial energy
-        e_kin = [np.sum(u_real[dim] ** 2 + u_imag[dim] ** 2) for dim in range(self.units.lattice.D)]
+        e_kin = [np.sum(u_real[dim] ** 2 + u_imag[dim] ** 2) for dim in range(self.units.lattice.d)]
         e_kin = np.sum(e_kin) * .5
 
         factor = np.sqrt(self.ic_energy / e_kin)
-        u_real = [u_real[dim] * factor for dim in range(self.units.lattice.D)]
-        u_imag = [u_imag[dim] * factor for dim in range(self.units.lattice.D)]
+        u_real = [u_real[dim] * factor for dim in range(self.units.lattice.d)]
+        u_imag = [u_imag[dim] * factor for dim in range(self.units.lattice.d)]
 
         ### Backtransformation to physical space
-        norm = ((self.resolution * dx ** (1 - self.units.lattice.D) * np.sqrt(self.units.characteristic_length_pu))
-                if self.units.lattice.D == 3 else (self.resolution / dx))
+        norm = ((self.resolution * dx ** (1 - self.units.lattice.d) * np.sqrt(self.units.characteristic_length_pu))
+                if self.units.lattice.d == 3 else (self.resolution / dx))
 
         u = np.asarray([
-            (np.fft.ifftn(u_real[dim] + u_imag[dim] * 1.0j, axes=tuple((np.arange(self.units.lattice.D)))) * norm).real
-            for dim in range(self.units.lattice.D)])
+            (np.fft.ifftn(u_real[dim] + u_imag[dim] * 1.0j, axes=tuple((np.arange(self.units.lattice.d)))) * norm).real
+            for dim in range(self.units.lattice.d)])
 
         return u
 
@@ -121,7 +121,7 @@ class DecayingTurbulence:
 
     @property
     def grid(self):
-        grid = [np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False) for _ in range(self.units.lattice.D)]
+        grid = [np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False) for _ in range(self.units.lattice.d)]
         return np.meshgrid(*grid)
 
     @property

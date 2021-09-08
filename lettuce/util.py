@@ -184,7 +184,7 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
         p[0],
         dx,
         units.lattice.device,
-        dim=units.lattice.D,
+        dim=units.lattice.d,
         tol_abs=tol_abs,
         max_num_steps=max_num_steps
     )[None, ...]

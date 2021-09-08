@@ -39,7 +39,7 @@ def test_equilibrium_boundary_pu(f_lattice):
     mask = (f[0] > 0).cpu().numpy()  # will contain all points
     units = UnitConversion(lattice, reynolds_number=1)
     pressure = 0
-    velocity = 0.1 * np.ones(lattice.D)
+    velocity = 0.1 * np.ones(lattice.d)
     feq = lattice.equilibrium(
         lattice.convert_to_tensor(units.convert_pressure_pu_to_density_lu(pressure)),
         lattice.convert_to_tensor(units.convert_velocity_to_lu(velocity))
@@ -60,8 +60,8 @@ def test_anti_bounce_back_outlet(f_lattice):
     # generates reference value of f using non-dynamic formula
     f_ref = f
     u = lattice.u(f)
-    D = lattice.stencil.D()
-    Q = lattice.stencil.Q()
+    D = lattice.stencil.d()
+    Q = lattice.stencil.q()
 
     if D == 3:
         direction = [1, 0, 0]

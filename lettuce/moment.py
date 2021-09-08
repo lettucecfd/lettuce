@@ -30,8 +30,8 @@ def get_default_moment_transform(lattice):
 
 class Moments:
     def __init__(self, lattice):
-        self.rho = moment_tensor(lattice.e, lattice.convert_to_tensor(np.zeros(lattice.D)))
-        self.j = moment_tensor(lattice.e, lattice.convert_to_tensor(np.eye(lattice.D)))
+        self.rho = moment_tensor(lattice.e, lattice.convert_to_tensor(np.zeros(lattice.d)))
+        self.j = moment_tensor(lattice.e, lattice.convert_to_tensor(np.eye(lattice.d)))
         # ... TODO ...
 
 
@@ -41,7 +41,7 @@ class Transform:
 
     def __init__(self, lattice, names=None):
         self.lattice = lattice
-        self.names = [f"m{i}" for i in range(lattice.Q)] if names is None else names
+        self.names = [f"m{i}" for i in range(lattice.q)] if names is None else names
 
     def __getitem__(self, moment_names):
         if not isinstance(moment_names, tuple):

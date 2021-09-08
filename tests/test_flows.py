@@ -43,7 +43,7 @@ def test_divergence(stencil, dtype_device):
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     ekin = flow.units.convert_incompressible_energy_to_pu(
-        torch.sum(lattice.incompressible_energy(simulation.f))) * flow.units.convert_length_to_pu(1.0) ** lattice.D
+        torch.sum(lattice.incompressible_energy(simulation.f))) * flow.units.convert_length_to_pu(1.0) ** lattice.d
 
     u0 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[0])
     u1 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[1])
@@ -52,7 +52,7 @@ def test_divergence(stencil, dtype_device):
     grad_u1 = torch_gradient(u1, dx=dx, order=6).cpu().numpy()
     divergence = np.sum(grad_u0[0] + grad_u1[1])
 
-    if lattice.D == 3:
+    if lattice.d == 3:
         u2 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[2])
         grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
         divergence += np.sum(grad_u2[2])

@@ -4,13 +4,17 @@ from . import *
 
 
 class Stencil:
+    e: np.ndarray
+    w: np.ndarray
+    cs: np.float
+    opposite: [int]
 
     @classmethod
-    def D(cls):
+    def d(cls):
         return cls.e.shape[1]
 
     @classmethod
-    def Q(cls):
+    def q(cls):
         return cls.e.shape[0]
 
 

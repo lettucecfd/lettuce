@@ -54,7 +54,7 @@ class StandardStreaming:
         self._no_stream_mask = mask
 
     def __call__(self, f):
-        for i in range(1, self.lattice.Q):
+        for i in range(1, self.lattice.q):
             if self.no_stream_mask is None:
                 f[i] = self._stream(f, i)
             else:
@@ -63,7 +63,7 @@ class StandardStreaming:
         return f
 
     def _stream(self, f, i):
-        return torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.D)))
+        return torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.d)))
 
 
 class SLStreaming:

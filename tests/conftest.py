@@ -50,7 +50,7 @@ def lattice(request, dtype_device):
 def f_lattice(lattice):
     """Run a test for all lattices; return a grid with 3^D sample distribution functions alongside the lattice."""
     np.random.seed(1)  # arbitrary, but deterministic
-    return lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D)), lattice
+    return lattice.convert_to_tensor(np.random.random([lattice.q] + [3] * lattice.d)), lattice
 
 
 @pytest.fixture(params=[Lattice])
@@ -59,7 +59,7 @@ def f_all_lattices(request, lattice):
     return a grid with 3^D sample distribution functions alongside the lattice.
     """
     np.random.seed(1)
-    f = np.random.random([lattice.Q] + [3] * lattice.D)
+    f = np.random.random([lattice.q] + [3] * lattice.d)
     Ltc = request.param
     ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype)
     return ltc.convert_to_tensor(f), ltc

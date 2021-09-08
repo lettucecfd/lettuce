@@ -17,11 +17,18 @@ from . import *
 
 
 class Lattice:
+    stencil: Stencil
+    device: torch.device
+    dtype: torch.dtype
+    e: torch.Tensor
+    w: torch.Tensor
+    cs: torch.Tensor
+    equilibrium: Equilibrium
 
-    def __init__(self, stencil, device, dtype=torch.float):
+    def __init__(self, stencil: Stencil, device: torch.device, dtype: torch.dtype = None):
         self.stencil = stencil
         self.device = device
-        self.dtype = dtype
+        self.dtype = dtype if dtype is not None else torch.float
         self.e = self.convert_to_tensor(stencil.e)
         self.w = self.convert_to_tensor(stencil.w)
         self.cs = self.convert_to_tensor(stencil.cs)
@@ -31,12 +38,12 @@ class Lattice:
         return f"Lattice (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
 
     @property
-    def D(self):
-        return self.stencil.e.shape[1]
+    def d(self):
+        return self.stencil.d()
 
     @property
-    def Q(self):
-        return self.stencil.e.shape[0]
+    def q(self):
+        return self.stencil.q()
 
     def convert_to_tensor(self, array):
 
@@ -104,7 +111,7 @@ class Lattice:
         for i, inp in enumerate(inputs):
             if len(inp) == len(fields[i].shape):
                 pass
-            elif len(inp) == len(fields[i].shape) - self.D:
+            elif len(inp) == len(fields[i].shape) - self.d:
                 inputs[i] += "..."
                 if not output.endswith("..."):
                     output += "..."

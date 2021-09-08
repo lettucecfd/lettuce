@@ -26,7 +26,7 @@ class UnitConversion:
         self.characteristic_length_lu = characteristic_length_lu
         self.characteristic_density_lu = characteristic_density_lu
         self.characteristic_density_pu = characteristic_density_pu
-        self.origin_pu = np.zeros([lattice.D]) if origin_pu is None else origin_pu
+        self.origin_pu = np.zeros([lattice.d]) if origin_pu is None else origin_pu
 
     @property
     def characteristic_velocity_lu(self):

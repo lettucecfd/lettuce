@@ -86,7 +86,7 @@ def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device=device, dtype=dtype)
     np.random.seed(1)  # arbitrary, but deterministic
-    f = lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D))
+    f = lattice.convert_to_tensor(np.random.random([lattice.q] + [3] * lattice.d))
     f_old = copy(f)
     collision = MRTCollision(lattice, Transform(lattice), np.array([0.5] * 9))
     f = collision(collision(f))

@@ -1,8 +1,10 @@
 import os
 import shutil
+from typing import Type, Optional
 
 from . import *
 from .generator_util import _pretty_print_c, _pretty_print_py
+from .. import Stencil
 
 py_frame = '''
 import torch
@@ -63,13 +65,10 @@ class GeneratorModule:
     """
 
     class Matrix:
-        """
-        """
-
-        stencil: ['NativeStencil']
-        stream: ['NativeStreaming']
-        equilibrium: ['NativeEquilibrium']
-        collision: ['NativeCollision']
+        stencils: ['NativeStencil']
+        streamings: ['NativeStreaming']
+        equilibriums: ['NativeEquilibrium']
+        collisions: ['NativeCollision']
 
         # by default all of these
         # versions should be created
@@ -77,19 +76,16 @@ class GeneratorModule:
         support_no_collision: [bool]
 
         def __init__(self,
-                     stencil: ['NativeStencil'],
-                     stream: ['NativeStreaming'],
-                     equilibrium: ['NativeEquilibrium'],
-                     collision: ['NativeCollision'],
+                     stencils: ['NativeStencil'],
+                     streamings: ['NativeStreaming'],
+                     equilibriums: ['NativeEquilibrium'],
+                     collisions: ['NativeCollision'],
                      support_no_stream: [bool] = None,
                      support_no_collision: [bool] = None):
-            """
-            """
-
-            self.stencil = stencil
-            self.stream = stream
-            self.equilibrium = equilibrium
-            self.collision = collision
+            self.stencils = stencils
+            self.streamings = streamings
+            self.equilibriums = equilibriums
+            self.collisions = collisions
 
             if support_no_stream is not None:
                 self.support_no_stream = support_no_stream
@@ -101,25 +97,38 @@ class GeneratorModule:
             else:
                 self.support_no_collision = [True, False]
 
-        def entries_(self):
+        def entries(self):
             matrix_entries = []
-            for a0 in self.stencil:
-                for a1 in self.stream:
-                    for a2 in self.equilibrium:
-                        for a3 in self.collision:
+            for a0 in self.stencils:
+                for a1 in self.streamings:
+                    for a2 in self.equilibriums:
+                        for a3 in self.collisions:
                             for a4 in self.support_no_stream:
                                 for a5 in self.support_no_collision:
                                     matrix_entries.append((a0, a1, a2, a3, a4, a5))
             return matrix_entries
 
         @staticmethod
-        def gen_from_entry_(entry, pretty_print: bool):
-            return GeneratorKernel(stencil=entry[0],
-                                   streaming=entry[1],
-                                   equilibrium=entry[2],
-                                   collision=entry[3],
-                                   support_no_stream=entry[4],
-                                   support_no_collision=entry[5],
+        def gen_from_entry(entry, pretty_print: bool):
+
+            support_no_streaming: bool = entry[4]
+            support_no_collision: bool = entry[5]
+
+            equilibrium_class: Optional[Type[NativeEquilibrium]] = entry[2]
+            equilibrium = equilibrium_class() if equilibrium_class is not None else None
+
+            collision_class: Type[NativeCollision] = entry[3]
+            collision = collision_class.create(equilibrium, support_no_collision)
+
+            streaming_class: Type[NativeStreaming] = entry[1]
+            streaming = streaming_class.create(support_no_streaming)
+
+            base_stencil: Type[Stencil] = entry[0]
+            stencil = NativeStencil(base_stencil)
+
+            return GeneratorKernel(stencil=stencil,
+                                   streaming=streaming,
+                                   collision=collision,
                                    pretty_print=pretty_print)
 
     matrix_list: []
@@ -129,18 +138,13 @@ class GeneratorModule:
                  white_matrices: ['GeneratorModule.Matrix'],
                  black_matrices: ['GeneratorModule.Matrix'] = None,
                  pretty_print: bool = False):
-        """
-        :param white_matrices:
-        :param black_matrices:
-        :param pretty_print:
-        """
-
         self.matrix_list = []
         for white_matrix in white_matrices:
-            self.matrix_list += white_matrix.entries_()
+            self.matrix_list += white_matrix.entries()
+
         if black_matrices is not None:
             for black_matrix in black_matrices:
-                self.matrix_list -= black_matrix.entries_()
+                self.matrix_list -= black_matrix.entries()
 
         self.matrix_list = set(self.matrix_list)
 
@@ -161,7 +165,7 @@ class GeneratorModule:
         pybind_definition_buffer: [str] = []
 
         for entry in self.matrix_list:
-            gen = GeneratorModule.Matrix.gen_from_entry_(entry, self.pretty_print)
+            gen = GeneratorModule.Matrix.gen_from_entry(entry, self.pretty_print)
 
             cuda_file = open(os.path.join(native_module, gen.native_file_name()), 'w')
             cuda_file.write(gen.bake_native())

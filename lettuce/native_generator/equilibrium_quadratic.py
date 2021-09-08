@@ -16,7 +16,7 @@ class NativeEquilibriumQuadratic(NativeEquilibrium):
 
             # generate
             summands = []
-            for d in range(generator.stencil.d_):
+            for d in range(generator.stencil.stencil.d()):
                 summands.append(f"u[{d}] * u[{d}]")
 
             generator.nde(f"const auto uxu = {' + '.join(summands)};")
@@ -31,7 +31,7 @@ class NativeEquilibriumQuadratic(NativeEquilibrium):
 
             # generate
             summands = []
-            for d in range(generator.stencil.d_):
+            for d in range(generator.stencil.stencil.d()):
                 summands.append(f"e[i][{d}] * u[{d}]")
 
             generator.cln(f"const auto exu = {' + '.join(summands)};")

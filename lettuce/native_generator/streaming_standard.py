@@ -2,14 +2,16 @@ from . import *
 
 
 class NativeStreamingStandard(NativeStreaming):
-    """
-    """
-
     _name = 'standardStreaming'
 
+    def __init__(self, support_no_streaming_mask=False):
+        super().__init__(support_no_streaming_mask)
+
+    @staticmethod
+    def create(support_no_streaming_mask: bool):
+        return NativeStreamingStandard(support_no_streaming_mask)
+
     def f_next(self, generator: 'GeneratorKernel'):
-        """
-        """
         if not generator.registered('f_next'):
             generator.register('f_next')
 
@@ -23,8 +25,6 @@ class NativeStreamingStandard(NativeStreaming):
                 generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
     def dim_offset(self, generator: 'GeneratorKernel', d: int):
-        """
-        """
         if not generator.registered(f"dim{d}_offset"):
             generator.register(f"dim{d}_offset")
 
@@ -48,39 +48,34 @@ class NativeStreamingStandard(NativeStreaming):
                 generator.idx(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
                 generator.idx(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
-    def read_write(self, generator: 'GeneratorKernel', support_no_stream: bool, support_no_collision: bool):
-        """
-        """
+    def read_write(self, generator: 'GeneratorKernel'):
         if not generator.registered('read_write()'):
             generator.register('read_write()')
 
             # dependencies:
 
-            if support_no_stream:
+            if self.support_no_streaming_mask:
                 self.no_stream_mask(generator)
-
-            if support_no_collision:
-                self.no_collision_mask(generator)
 
             self.f_next(generator)
             generator.stencil.q(generator)
             generator.cuda.offset(generator)
-            generator.cuda.length(generator, d=generator.stencil.d_ - 1, hook_into_kernel=True)
+            generator.cuda.length(generator, d=generator.stencil.stencil.d() - 1, hook_into_kernel=True)
 
-            for d in range(generator.stencil.d_):
+            for d in range(generator.stencil.stencil.d()):
                 self.dim_offset(generator, d)
 
             # read with stream
-            length_index = generator.stencil.d_ - 1
+            length_index = generator.stencil.stencil.d() - 1
 
             direction_slot = {0: 0, -1: 1, 1: 2}
             offsets = []
-            for q in range(generator.stencil.q_):
+            for q in range(generator.stencil.stencil.q()):
                 offset = []
                 all_zero = True
-                for d in range(generator.stencil.d_):
-                    offset.append(f"dim{d}_offset{direction_slot[generator.stencil.e_[q][generator.stencil.d_ - 1 - d]]}")
-                    all_zero = all_zero and (generator.stencil.e_[q][generator.stencil.d_ - 1 - d] == 0)
+                for d in range(generator.stencil.stencil.d()):
+                    offset.append(f"dim{d}_offset{direction_slot[generator.stencil.stencil.e[q][generator.stencil.stencil.d() - 1 - d]]}")
+                    all_zero = all_zero and (generator.stencil.stencil.e[q][generator.stencil.stencil.d() - 1 - d] == 0)
 
                 if all_zero:
                     offsets.append('offset')
@@ -93,7 +88,7 @@ class NativeStreamingStandard(NativeStreaming):
 
             # stream index 0
 
-            if support_no_stream:
+            if self.support_no_streaming_mask:
                 if offsets[0] == 'offset':
                     generator.idx(f'    f_reg[0] = f[offset];')
                 else:
@@ -105,7 +100,7 @@ class NativeStreamingStandard(NativeStreaming):
 
             index_it = f"auto index_it = length{length_index};"
 
-            if support_no_stream:
+            if self.support_no_streaming_mask:
                 if offsets[1] == 'offset':
                     generator.idx(f"    {index_it} f_reg[1] = f[index_it + offset];")
                 else:
@@ -118,9 +113,9 @@ class NativeStreamingStandard(NativeStreaming):
 
             index_it = f"index_it += length{length_index};"
 
-            for q in range(2, generator.stencil.q_):
+            for q in range(2, generator.stencil.stencil.q()):
 
-                if support_no_stream:
+                if self.support_no_streaming_mask:
                     if offsets[q] == 'offset':
                         generator.idx(f"    {index_it}     f_reg[{q}] = f[index_it + offset];")
                     else:
@@ -132,11 +127,6 @@ class NativeStreamingStandard(NativeStreaming):
             generator.idx('}')
             generator.idx()
 
-            if support_no_collision:
-                generator.idx(f"if(!no_collision_mask[offset])")
-            generator.idx('{')
-
             # write
-            generator.wrt('}')
             generator.wrt()
             generator.wrt(self.write_frame_.format(target='f_next', length_index=length_index))

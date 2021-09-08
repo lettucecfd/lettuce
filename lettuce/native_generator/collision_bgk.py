@@ -4,8 +4,12 @@ from . import *
 class NativeCollisionBGK(NativeCollision):
     _name = 'bgkCollision'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, equilibrium: NativeEquilibrium = None, support_no_collision_mask=False):
+        super().__init__(equilibrium, support_no_collision_mask)
+
+    @staticmethod
+    def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):
+        return NativeCollisionBGK(equilibrium, support_no_collision_mask)
 
     def tau_inv(self, generator: 'GeneratorKernel'):
         if not generator.wrapper_hooked('tau_inv'):
@@ -19,8 +23,15 @@ class NativeCollisionBGK(NativeCollision):
             generator.register('collide()')
 
             # dependencies
+
+            if self.support_no_collision_mask:
+                self.no_collision_mask(generator)
+
             self.tau_inv(generator)
-            generator.equilibrium.f_eq(generator)
+            self.equilibrium.f_eq(generator)
 
             # generate
+            if self.support_no_collision_mask:
+                generator.idx(f"if(!no_collision_mask[offset])")
+
             generator.cln('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')

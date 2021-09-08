@@ -29,41 +29,25 @@ write_frame = '''
 '''
 
 
-class NativeStreaming:
-    """
-    """
-
-    name = 'invalidStreaming'
+class NativeStreaming(NativeLatticeBase):
     read_frame_: str = read_frame
     write_frame_: str = write_frame
 
-    @staticmethod
-    def __init__():
-        raise NotImplementedError("This class is not meant to be constructed "
-                                  "as it provides only static fields and methods!")
-
-    @staticmethod
-    def no_stream_mask(gen: 'GeneratorKernel'):
-        """
-        """
-        if not gen.wrapper_hooked('no_stream_mask'):
-            gen.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
-            gen.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
+    def no_stream_mask(self, generator: 'GeneratorKernel'):
+        if not generator.wrapper_hooked('no_stream_mask'):
+            generator.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
+            generator.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
                              'no_stream_mask', 'simulation.streaming.no_stream_mask')
-        if not gen.kernel_hooked('no_stream_mask'):
-            gen.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
+        if not generator.kernel_hooked('no_stream_mask'):
+            generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
 
-    @staticmethod
-    def no_collision_mask(gen: 'GeneratorKernel'):
-        """
-        """
-        if not gen.wrapper_hooked('no_collision_mask'):
-            gen.pyr("assert hasattr(simulation, 'no_collision_mask')")
-            gen.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
+    def no_collision_mask(self, generator: 'GeneratorKernel'):
+        if not generator.wrapper_hooked('no_collision_mask'):
+            generator.pyr("assert hasattr(simulation, 'no_collision_mask')")
+            generator.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
                              'no_collision_mask', 'simulation.no_collision_mask')
-        if not gen.kernel_hooked('no_collision_mask'):
-            gen.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask', 'no_collision_mask.data<byte_t>()')
+        if not generator.kernel_hooked('no_collision_mask'):
+            generator.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask', 'no_collision_mask.data<byte_t>()')
 
-    @staticmethod
-    def read_write(gen: 'GeneratorKernel', support_no_stream: bool, support_no_collision: bool):
-        raise NotImplementedError("This method is only implemented by concrete subclasses!")
+    def read_write(self, generator: 'GeneratorKernel', support_no_stream: bool, support_no_collision: bool):
+        raise AbstractMethodInvokedError()

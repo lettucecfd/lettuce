@@ -2,16 +2,11 @@ from . import *
 
 
 class NativeCollisionNo(NativeCollision):
-    """
-    """
+    _name = 'noCollision'
 
-    name = 'noCollision'
-
-    @staticmethod
-    def __init__():
+    def __init__(self):
         super().__init__()
 
-    @staticmethod
-    def collide(gen: 'GeneratorKernel'):
-        if not gen.registered('collide()'):
-            gen.register('collide()')
+    def collision(self, generator: 'GeneratorKernel'):
+        if not generator.registered('collide()'):
+            generator.register('collide()')

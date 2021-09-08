@@ -10,6 +10,9 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
+# stencil is required by native generator to prevent code duplicates
+from .stencil import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
+
 import lettuce.native_generator as native_generator
 
 # import native if available
@@ -32,7 +35,8 @@ except ImportError:
     native_available = False
 
 from .util import LettuceException, LettuceWarning, InefficientCodeWarning, ExperimentalWarning
-from .util import get_subclasses, torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
+from .util import all_stencils, get_subclasses
+from .util import torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
 from .unit import UnitConversion
 
 # TODO equilibrium should not be a member of lattice
@@ -40,7 +44,6 @@ from .unit import UnitConversion
 from .equilibrium import Equilibrium, QuadraticEquilibrium
 from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
 
-from .stencil import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
 from .lattice import Lattice
 from .force import Guo, ShanChen
 from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision

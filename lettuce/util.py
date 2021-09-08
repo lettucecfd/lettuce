@@ -7,6 +7,11 @@ import inspect
 import torch
 
 
+def all_stencils():
+    import lettuce.stencil
+    return get_subclasses(lettuce.stencil.Stencil, module=lettuce.stencil)
+
+
 class LettuceException(Exception):
     pass
 

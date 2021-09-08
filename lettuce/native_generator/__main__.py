@@ -1,16 +1,13 @@
 from . import *
+from .. import all_stencils
 
-all_stencil = [NativeD1Q3, NativeD2Q9, NativeD3Q19, NativeD3Q27]
-all_stream = [NativeStreamingStandard]
-all_equilibrium = [NativeEquilibriumQuadratic]
-all_collision = [NativeCollisionBGK]
+all_streamings = [NativeStreamingStandard]
+all_equilibriums = [NativeEquilibriumQuadratic]
+all_collisions = [NativeCollisionBGK]
 
 
 def main():
-    """
-    """
-
-    all_mat = GeneratorModule.Matrix(all_stencil, all_stream, all_equilibrium, all_collision)
+    all_mat = GeneratorModule.Matrix(all_stencils, all_streamings, all_equilibriums, all_collisions)
 
     # combine all equilibrium & collision with no stream:
     # > test_equilibrium_and_collision_mat = ModuleMatrix(

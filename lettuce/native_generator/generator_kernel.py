@@ -104,18 +104,9 @@ class NativeCuda:
     or dim3 (struct of three index_t variables).
     """
 
-    @staticmethod
-    def __init__():
-        raise NotImplementedError("This class is not meant to be constructed "
-                                  "as it provides only static fields and methods!")
-
-    @staticmethod
-    def thread_count(gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('thread_count'):
-            gen.register('thread_count')
+    def thread_count(self, generator: 'GeneratorKernel'):
+        if not generator.registered('thread_count'):
+            generator.register('thread_count')
 
             # TODO find an algorithm for this instead of hard coding
             # for d in range(self.stencil.d_):
@@ -123,182 +114,142 @@ class NativeCuda:
             #    self.dimension(gen, d)
 
             # we target 512 threads at the moment
-            if 1 == gen.stencil.d_:
-                gen.wrp("const auto thread_count = dim3{16u};")
-            if 2 == gen.stencil.d_:
-                gen.wrp("const auto thread_count = dim3{16u, 16u};")
-            if 3 == gen.stencil.d_:
-                gen.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
+            if 1 == generator.stencil.stencil.d():
+                generator.wrp("const auto thread_count = dim3{16u};")
+            if 2 == generator.stencil.stencil.d():
+                generator.wrp("const auto thread_count = dim3{16u, 16u};")
+            if 3 == generator.stencil.stencil.d():
+                generator.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
 
-    @classmethod
-    def block_count(cls, gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('block_count'):
-            gen.register('block_count')
+    def block_count(self, generator: 'GeneratorKernel'):
+        if not generator.registered('block_count'):
+            generator.register('block_count')
 
             # dependencies
-            cls.thread_count(gen)
-            for d in range(gen.stencil.d_):
-                cls.dimension(gen, d, hook_into_kernel=False)
+            self.thread_count(generator)
+            for d in range(generator.stencil.stencil.d()):
+                self.dimension(generator, d, hook_into_kernel=False)
 
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
 
-            gen.wrp('')
-            for d in range(gen.stencil.d_):
-                gen.wrp(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
+            generator.wrp('')
+            for d in range(generator.stencil.stencil.d()):
+                generator.wrp(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
 
-            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(gen.stencil.d_)])
+            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(generator.stencil.stencil.d())])
 
-            gen.wrp(f"const auto block_count = dim3{{{dimensions}}};")
-            gen.wrp('')
+            generator.wrp(f"const auto block_count = dim3{{{dimensions}}};")
+            generator.wrp('')
 
-    @staticmethod
-    def index(gen: 'GeneratorKernel', d: int):
-        """
-        """
-
-        if not gen.registered(f"index{d}"):
-            gen.register(f"index{d}")
+    def index(self, generator: 'GeneratorKernel', d: int):
+        if not generator.registered(f"index{d}"):
+            generator.register(f"index{d}")
 
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
 
-            gen.idx(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
+            generator.idx(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
 
-    @staticmethod
-    def dimension(gen: 'GeneratorKernel', d: int, hook_into_kernel: bool):
-        """
-        """
+    def dimension(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
+        if not generator.registered(('dimension', d)):
+            generator.register(('dimension', d))
 
-        if not gen.registered(('dimension', d)):
-            gen.register(('dimension', d))
+            generator.wrp(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
 
-            gen.wrp(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
+        if hook_into_kernel and not generator.kernel_hooked(('dimension', d)):
+            generator.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
 
-        if hook_into_kernel and not gen.kernel_hooked(('dimension', d)):
-            gen.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
-
-    @classmethod
-    def length(cls, gen: 'GeneratorKernel', d: int, hook_into_kernel: bool):
-        """
-        """
-
+    def length(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
         if d == 0:  # length0 is an alias
 
-            if not gen.registered(('length', 0, hook_into_kernel)):
-                gen.register(('length', 0, hook_into_kernel))
+            if not generator.registered(('length', 0, hook_into_kernel)):
+                generator.register(('length', 0, hook_into_kernel))
 
                 # dependencies
-                cls.dimension(gen, 0, hook_into_kernel=hook_into_kernel)
+                self.dimension(generator, 0, hook_into_kernel=hook_into_kernel)
 
                 # generation
                 if hook_into_kernel:
-                    gen.idx('const index_t &length0 = dimension0;')
+                    generator.idx('const index_t &length0 = dimension0;')
                 else:
-                    gen.wrp('const index_t &length0 = dimension0;')
+                    generator.wrp('const index_t &length0 = dimension0;')
 
         else:
 
-            if not gen.registered(('length', d)):
-                gen.register(('length', d))
+            if not generator.registered(('length', d)):
+                generator.register(('length', d))
 
                 # dependencies
-                cls.dimension(gen, d, hook_into_kernel=False)
-                cls.length(gen, d - 1, hook_into_kernel=False)
+                self.dimension(generator, d, hook_into_kernel=False)
+                self.length(generator, d - 1, hook_into_kernel=False)
 
                 # generation
-                gen.wrp(f"const index_t length{d} = dimension{d} * length{d - 1};")
+                generator.wrp(f"const index_t length{d} = dimension{d} * length{d - 1};")
 
-            if hook_into_kernel and not gen.kernel_hooked(('length', d)):
-                gen.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
+            if hook_into_kernel and not generator.kernel_hooked(('length', d)):
+                generator.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
 
-    @classmethod
-    def offset(cls, gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('offset'):
-            gen.register('offset')
+    def offset(self, generator: 'GeneratorKernel'):
+        if not generator.registered('offset'):
+            generator.register('offset')
 
             # dependencies
-            cls.index(gen, 0)
-            for d in range(1, gen.stencil.d_):
-                cls.index(gen, d)
-                cls.length(gen, d - 1, hook_into_kernel=True)
+            self.index(generator, 0)
+            for d in range(1, generator.stencil.stencil.d()):
+                self.index(generator, d)
+                self.length(generator, d - 1, hook_into_kernel=True)
 
             # generate
             offsets = ['(index0)']
-            for d in range(1, gen.stencil.d_):
+            for d in range(1, generator.stencil.stencil.d()):
                 offsets.append(f"(index{d} * length{d - 1})")
 
-            gen.idx(f"const index_t offset = {' + '.join(offsets)};")
+            generator.idx(f"const index_t offset = {' + '.join(offsets)};")
 
 
 class NativeLattice:
-    """
-    """
-
-    @staticmethod
-    def __init__():
-        raise NotImplementedError("This class is not meant to be constructed "
-                                  "as it provides only static fields and methods!")
-
-    @staticmethod
-    def rho(gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('rho'):
-            gen.register('rho')
+    def rho(self, generator: 'GeneratorKernel'):
+        if not generator.registered('rho'):
+            generator.register('rho')
 
             # generate
-            f_eq_sum = ' + '.join([f"f_reg[{q}]" for q in range(gen.stencil.q_)])
+            f_eq_sum = ' + '.join([f"f_reg[{q}]" for q in range(generator.stencil.stencil.q())])
 
-            gen.nde(f"const auto rho = {f_eq_sum};")
+            generator.nde(f"const auto rho = {f_eq_sum};")
 
-    @classmethod
-    def rho_inv(cls, gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('rho_inv'):
-            gen.register('rho_inv')
+    def rho_inv(self, generator: 'GeneratorKernel'):
+        if not generator.registered('rho_inv'):
+            generator.register('rho_inv')
 
             # dependencies
-            cls.rho(gen)
+            self.rho(generator)
 
             # generate
-            gen.nde('const auto rho_inv = 1.0 / rho;')
+            generator.nde('const auto rho_inv = 1.0 / rho;')
 
-    @classmethod
-    def u(cls, gen: 'GeneratorKernel'):
-        """
-        """
-
-        if not gen.registered('u'):
-            gen.register('u')
+    def u(self, generator: 'GeneratorKernel'):
+        if not generator.registered('u'):
+            generator.register('u')
 
             # dependencies
-            gen.stencil.d(gen)
-            gen.stencil.e(gen)
+            generator.stencil.d(generator)
+            generator.stencil.e(generator)
 
-            if gen.stencil.d_ > 1:
-                cls.rho_inv(gen)
+            if generator.stencil.stencil.d() > 1:
+                self.rho_inv(generator)
 
             # generate
-            div_rho = ' * rho_inv' if gen.stencil.d_ > 1 else ' / rho'
+            div_rho = ' * rho_inv' if generator.stencil.stencil.d() > 1 else ' / rho'
 
-            gen.nde(f"const scalar_t u[d]{{")
-            for d in range(gen.stencil.d_):
+            generator.nde(f"const scalar_t u[d]{{")
+            for d in range(generator.stencil.stencil.d()):
                 summands = []
-                for q in range(gen.stencil.q_):
+                for q in range(generator.stencil.stencil.q()):
                     summands.append(f"e[{q}][{d}] * f_reg[{q}]")
-                gen.nde(f"    ({' + '.join(summands)})" + div_rho + ',')
-            gen.nde('};')
-            gen.nde()
+                generator.nde(f"    ({' + '.join(summands)})" + div_rho + ',')
+            generator.nde('};')
+            generator.nde()
 
 
 class GeneratorKernel:
@@ -400,7 +351,7 @@ class GeneratorKernel:
                            f"{extra}")
 
         self.streaming.read_write(self, support_no_stream, support_no_collision)
-        self.collision.collide(self)
+        self.collision.collision(self)
 
     def signature(self):
         return self.signature_

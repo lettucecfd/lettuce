@@ -1,85 +1,68 @@
 import json
+from typing import Type
 
 from . import *
+from .. import Stencil
 
 
-class NativeStencil:
-    """
-    """
+class NativeStencil(NativeLatticeBase):
+    _name: str
+    stencil: Type[Stencil]
 
-    name = 'invalidStencil'
+    def __init__(self, stencil: Type[Stencil]):
+        self._name = stencil.__name__.lower()
+        self.stencil = stencil
 
-    d_: int = None
-    q_: int = None
-    e_: [[int]] = None
-    w_: [float] = None
-    cs_: float = None
+    @property
+    def name(self):
+        return self._name
 
-    @staticmethod
-    def __init__():
-        raise NotImplementedError("This class is not meant to be constructed "
-                                  "as it provides only static fields and methods!")
+    def d(self, generator: 'GeneratorKernel'):
 
-    @classmethod
-    def d(cls, gen: 'GeneratorKernel'):
-        """
-        """
-        if not gen.registered('d'):
-            gen.register('d')
+        if not generator.registered('d'):
+            generator.register('d')
 
             # generate
-            gen.hrd(f"constexpr index_t d = {cls.d_};")
+            generator.hrd(f"constexpr index_t d = {self.stencil.d()};")
 
-    @classmethod
-    def q(cls, gen: 'GeneratorKernel'):
-        """
-        """
+    def q(self, generator: 'GeneratorKernel'):
 
-        if not gen.registered('q'):
-            gen.register('q')
+        if not generator.registered('q'):
+            generator.register('q')
 
             # generate
-            gen.hrd(f"constexpr index_t q = {cls.q_};")
+            generator.hrd(f"constexpr index_t q = {self.stencil.q()};")
 
-    @classmethod
-    def e(cls, gen: 'GeneratorKernel'):
-        """
-        """
+    def e(self, generator: 'GeneratorKernel'):
 
-        if not gen.registered('e'):
-            gen.register('e')
+        if not generator.registered('e'):
+            generator.register('e')
 
             # requirements
-            cls.d(gen)
-            cls.q(gen)
+            self.d(generator)
+            self.q(generator)
 
             # generate
-            buffer = [f"{{{', '.join([str(x) + '.0' for x in e])}}}" for e in cls.e_]
-            gen.hrd(f"constexpr scalar_t e[q][d] = {{{', '.join(buffer)}}};")
+            buffer = [f"{{{', '.join([str(x) + '.0' for x in e])}}}" for e in self.stencil.e]
+            generator.hrd(f"constexpr scalar_t e[q][d] = {{{', '.join(buffer)}}};")
 
-    @classmethod
-    def w(cls, gen: 'GeneratorKernel'):
-        """
-        """
+    def w(self, generator: 'GeneratorKernel'):
 
-        if not gen.registered('w'):
-            gen.register('w')
+        if not generator.registered('w'):
+            generator.register('w')
 
             # requirements
-            cls.q(gen)
+            self.q(generator)
 
             # generate
-            buffer = [json.dumps(w) for w in cls.w_]
+            buffer = [json.dumps(w) for w in self.stencil.w]
             buffer = ',\n                               '.join(buffer)
-            gen.hrd(f"constexpr scalar_t w[q] = {{{buffer}}};")
+            generator.hrd(f"constexpr scalar_t w[q] = {{{buffer}}};")
 
-    @classmethod
-    def cs(cls, gen: 'GeneratorKernel'):
-        """
-        """
+    def cs(self, generator: 'GeneratorKernel'):
 
-        if not gen.registered('cs'):
-            gen.register('cs')
+        if not generator.registered('cs'):
+            generator.register('cs')
 
             # generate
-            gen.hrd(f"constexpr scalar_t cs = {json.dumps(cls.cs_)};")
+            generator.hrd(f"constexpr scalar_t cs = {json.dumps(self.stencil.cs)};")

@@ -21,7 +21,7 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming, use_native: bool = True):
+    def __init__(self, flow, lattice, collision, streaming, use_native=True):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision

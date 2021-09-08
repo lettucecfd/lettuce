@@ -12,6 +12,10 @@ from .native_generator import NativeNoCollision, NativeBGKCollision
 class Collision(LatticeBase):
     no_collision_mask: Optional[torch.Tensor]
 
+    def __init__(self, lattice: Lattice, use_native=True):
+        super().__init__(lattice, use_native)
+        self.no_collision_mask = None
+
     def __call__(self, f: torch.Tensor):
         raise AbstractMethodInvokedError()
 
@@ -29,7 +33,7 @@ class NoCollision(Collision):
 
 
 class BGKCollision(Collision):
-    def __init__(self, lattice: Lattice, tau, force=None, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, force=None, use_native=True):
         super().__init__(lattice, use_native)
         self.force = force
         self.tau = tau
@@ -56,7 +60,7 @@ class MRTCollision(Collision):
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
 
-    def __init__(self, lattice: Lattice, transform, relaxation_parameters, use_native: bool = True):
+    def __init__(self, lattice: Lattice, transform, relaxation_parameters, use_native=True):
         super().__init__(lattice, use_native)
         self.transform = transform
         self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
@@ -73,7 +77,7 @@ class TRTCollision(Collision):
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
 
-    def __init__(self, lattice: Lattice, tau, tau_minus=1.0, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, tau_minus=1.0, use_native=True):
         super().__init__(lattice, use_native)
         self.tau_plus = tau
         self.tau_minus = tau_minus
@@ -93,7 +97,7 @@ class TRTCollision(Collision):
 class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
 
-    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
         self.tau = tau
         self.Q_matrix = torch.zeros([lattice.q, lattice.d, lattice.d], device=lattice.device, dtype=lattice.dtype)
@@ -124,7 +128,7 @@ class RegularizedCollision(Collision):
 class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
 
-    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
         assert lattice.q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
@@ -202,7 +206,7 @@ class KBCCollision2D(Collision):
 class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
 
-    def __init__(self, lattice: Lattice, tau, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
         assert lattice.q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
@@ -293,7 +297,7 @@ class KBCCollision3D(Collision):
 class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
-    def __init__(self, lattice: Lattice, tau, smagorinsky_constant=0.17, force=None, use_native: bool = True):
+    def __init__(self, lattice: Lattice, tau, smagorinsky_constant=0.17, force=None, use_native=True):
         super().__init__(lattice, use_native)
         self.force = force
         self.tau = tau
@@ -324,7 +328,7 @@ class SmagorinskyCollision(Collision):
 class BGKInitialization(Collision):
     """Keep velocity constant."""
 
-    def __init__(self, lattice: Lattice, flow, moment_transformation, use_native: bool = True):
+    def __init__(self, lattice: Lattice, flow, moment_transformation, use_native=True):
         super().__init__(lattice, use_native)
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation

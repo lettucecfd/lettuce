@@ -13,7 +13,7 @@ from .native_generator import NativeNoStreaming, NativeStandardStreaming
 class Streaming(LatticeBase):
     no_streaming_mask: Optional[torch.Tensor]
 
-    def __init__(self, lattice: Lattice, use_native: bool = True):
+    def __init__(self, lattice: Lattice, use_native=True):
         super().__init__(lattice, use_native)
 
     def __call__(self, f):
@@ -21,7 +21,7 @@ class Streaming(LatticeBase):
 
 
 class NoStreaming(Streaming):
-    def __init__(self, lattice: Lattice, use_native: bool = True):
+    def __init__(self, lattice: Lattice, use_native=True):
         super().__init__(lattice, use_native)
         self.no_streaming_mask = None
 
@@ -47,7 +47,7 @@ class StandardStreaming(Streaming):
 
     native_class = native_generator.NativeStandardStreaming
 
-    def __init__(self, lattice: Lattice, use_native: bool = True):
+    def __init__(self, lattice: Lattice, use_native=True):
         super().__init__(lattice, use_native)
         self.no_streaming_mask = None
 
@@ -75,6 +75,6 @@ class SLStreaming(Streaming):
     TODO (is there a good python package for octrees or do we have to write this ourselves?)
     """
 
-    def __init__(self, lattice: Lattice, grid, use_native: bool = True):
+    def __init__(self, lattice: Lattice, grid, use_native=True):
         super().__init__(lattice, use_native)
         raise NotImplementedError

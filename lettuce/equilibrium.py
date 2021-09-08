@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 
 from . import *
@@ -12,7 +10,7 @@ class Equilibrium(LatticeBase):
 
 
 class QuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice: Lattice, use_native: bool = True):
+    def __init__(self, lattice, use_native=True):
         super().__init__(lattice, use_native)
 
     def native_available(self) -> bool:
@@ -52,7 +50,7 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
 
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice: Lattice, rho0=1.0, use_native: bool = True):
+    def __init__(self, lattice, rho0=1.0, use_native=True):
         super().__init__(lattice, use_native)
         self.lattice = lattice
         self.rho0 = rho0

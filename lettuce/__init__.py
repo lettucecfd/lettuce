@@ -40,13 +40,15 @@ from .util import all_stencils, get_subclasses
 from .util import torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
 from .unit import UnitConversion
 
+# TODO move below .lattice after equilibrium was moved
+from .lattice_base import LatticeBase
+
 # TODO equilibrium should not be a member of lattice
 #      equilibrium should be a member of collision
 from .equilibrium import Equilibrium, QuadraticEquilibrium
 from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
 
 from .lattice import Lattice
-from .lattice_base import LatticeBase
 from .force import Guo, ShanChen
 from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
 from .collision import RegularizedCollision, SmagorinskyCollision, TRTCollision, BGKInitialization

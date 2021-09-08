@@ -1,13 +1,13 @@
 from typing import Optional
-from . import *
+
 from .native_generator.lattice_base import NativeLatticeBase
 
 
 class LatticeBase:
-    lattice: 'Lattice'
+    # lattice: Lattice  TODO add this type hint after import order is fixed
     use_native: bool
 
-    def __init__(self, lattice: 'Lattice', use_native: bool = True):
+    def __init__(self, lattice, use_native=True):
         self.lattice = lattice
         self.use_native = use_native
 

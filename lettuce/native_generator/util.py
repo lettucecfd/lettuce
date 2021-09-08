@@ -1,5 +1,3 @@
-
-
 class AbstractMethodInvokedError(NotImplementedError):
     def __init__(self):
         import inspect

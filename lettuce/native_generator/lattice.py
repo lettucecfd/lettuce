@@ -2,7 +2,7 @@ from . import *
 
 
 class NativeLattice:
-    def rho(self, generator: 'GeneratorKernel'):
+    def generate_rho(self, generator: 'GeneratorKernel'):
         if not generator.registered('rho'):
             generator.register('rho')
 
@@ -11,26 +11,26 @@ class NativeLattice:
 
             generator.nde(f"const auto rho = {f_eq_sum};")
 
-    def rho_inv(self, generator: 'GeneratorKernel'):
+    def generate_rho_inv(self, generator: 'GeneratorKernel'):
         if not generator.registered('rho_inv'):
             generator.register('rho_inv')
 
             # dependencies
-            self.rho(generator)
+            self.generate_rho(generator)
 
             # generate
             generator.nde('const auto rho_inv = 1.0 / rho;')
 
-    def u(self, generator: 'GeneratorKernel'):
+    def generate_u(self, generator: 'GeneratorKernel'):
         if not generator.registered('u'):
             generator.register('u')
 
             # dependencies
-            generator.stencil.d(generator)
-            generator.stencil.e(generator)
+            generator.stencil.generate_d(generator)
+            generator.stencil.generate_e(generator)
 
             if generator.stencil.stencil.d() > 1:
-                self.rho_inv(generator)
+                self.generate_rho_inv(generator)
 
             # generate
             div_rho = ' * rho_inv' if generator.stencil.stencil.d() > 1 else ' / rho'

@@ -24,7 +24,7 @@ class NativeCollision(NativeLatticeBase):
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask):
         raise AbstractMethodInvokedError()
 
-    def no_collision_mask(self, generator: 'GeneratorKernel'):
+    def generate_no_collision_mask(self, generator: 'GeneratorKernel'):
         if not generator.wrapper_hooked('no_collision_mask'):
             generator.pyr("assert hasattr(simulation, 'no_collision_mask')")
             generator.wrapper_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
@@ -33,7 +33,7 @@ class NativeCollision(NativeLatticeBase):
             generator.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask',
                                   'no_collision_mask.data<byte_t>()')
 
-    def collision(self, generator: 'GeneratorKernel'):
+    def generate_collision(self, generator: 'GeneratorKernel'):
         raise AbstractMethodInvokedError()
 
 
@@ -51,7 +51,7 @@ class NativeNoCollision(NativeCollision):
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):
         return NativeBGKCollision()
 
-    def collision(self, generator: 'GeneratorKernel'):
+    def generate_collision(self, generator: 'GeneratorKernel'):
         if not generator.registered('collision()'):
             generator.register('collision()')
 
@@ -66,24 +66,24 @@ class NativeBGKCollision(NativeCollision):
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):
         return NativeBGKCollision(equilibrium, support_no_collision_mask)
 
-    def tau_inv(self, generator: 'GeneratorKernel'):
+    def generate_tau_inv(self, generator: 'GeneratorKernel'):
         if not generator.wrapper_hooked('tau_inv'):
             generator.pyr("assert hasattr(simulation.collision, 'tau')")
             generator.wrapper_hook('tau_inv', 'const double tau_inv', 'tau_inv', '1./simulation.collision.tau')
         if not generator.kernel_hooked('tau_inv'):
             generator.kernel_hook('tau_inv', 'const scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 
-    def collision(self, generator: 'GeneratorKernel'):
+    def generate_collision(self, generator: 'GeneratorKernel'):
         if not generator.registered('collide()'):
             generator.register('collide()')
 
             # dependencies
 
             if self.support_no_collision_mask:
-                self.no_collision_mask(generator)
+                self.generate_no_collision_mask(generator)
 
-            self.tau_inv(generator)
-            self.equilibrium.f_eq(generator)
+            self.generate_tau_inv(generator)
+            self.equilibrium.generate_f_eq(generator)
 
             # generate
             if self.support_no_collision_mask:

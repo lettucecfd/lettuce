@@ -32,9 +32,6 @@ write_frame = '''
 class NativeStreaming(NativeLatticeBase):
     _name = 'invalidStreaming'
 
-    read_frame_: str = read_frame
-    write_frame_: str = write_frame
-
     support_no_streaming_mask: bool
 
     def __init__(self, support_no_streaming_mask=False):
@@ -49,7 +46,7 @@ class NativeStreaming(NativeLatticeBase):
     def create(support_no_streaming_mask: bool):
         raise AbstractMethodInvokedError()
 
-    def no_stream_mask(self, generator: 'GeneratorKernel'):
+    def generate_no_stream_mask(self, generator: 'GeneratorKernel'):
         if not generator.wrapper_hooked('no_stream_mask'):
             generator.pyr("assert hasattr(simulation.streaming, 'no_stream_mask')")
             generator.wrapper_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
@@ -57,7 +54,7 @@ class NativeStreaming(NativeLatticeBase):
         if not generator.kernel_hooked('no_stream_mask'):
             generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
 
-    def read_write(self, generator: 'GeneratorKernel'):
+    def generate_read_write(self, generator: 'GeneratorKernel'):
         raise AbstractMethodInvokedError()
 
 
@@ -71,25 +68,25 @@ class NativeNoStreaming(NativeStreaming):
     def create(support_no_streaming_mask: bool):
         return NativeNoStreaming()
 
-    def read_write(self, generator: 'GeneratorKernel'):
+    def generate_read_write(self, generator: 'GeneratorKernel'):
         if not generator.registered('read_write()'):
             generator.register('read_write()')
 
             # dependencies:
 
-            generator.stencil.q(generator)
-            generator.cuda.length(generator, generator.stencil.stencil.d() - 1, hook_into_kernel=True)
-            generator.cuda.offset(generator)
+            generator.stencil.generate_q(generator)
+            generator.cuda.generate_length(generator, generator.stencil.stencil.d() - 1, hook_into_kernel=True)
+            generator.cuda.generate_offset(generator)
 
             # read
             length_index = generator.stencil.stencil.d() - 1
 
             generator.idx()
             generator.idx('scalar_t f_reg[q];')
-            generator.idx(self.read_frame_.format(source='f', length_index=length_index))
+            generator.idx(read_frame.format(source='f', length_index=length_index))
 
             generator.wrt()
-            generator.wrt(self.write_frame_.format(target='f', length_index=length_index))
+            generator.wrt(write_frame.format(target='f', length_index=length_index))
 
 
 class NativeStandardStreaming(NativeStreaming):
@@ -102,7 +99,7 @@ class NativeStandardStreaming(NativeStreaming):
     def create(support_no_streaming_mask: bool):
         return NativeStandardStreaming(support_no_streaming_mask)
 
-    def f_next(self, generator: 'GeneratorKernel'):
+    def generate_f_next(self, generator: 'GeneratorKernel'):
         if not generator.registered('f_next'):
             generator.register('f_next')
 
@@ -115,18 +112,18 @@ class NativeStandardStreaming(NativeStreaming):
             if not generator.kernel_hooked('f_next'):
                 generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
-    def dim_offset(self, generator: 'GeneratorKernel', d: int):
+    def generate_dim_offset(self, generator: 'GeneratorKernel', d: int):
         if not generator.registered(f"dim{d}_offset"):
             generator.register(f"dim{d}_offset")
 
             # dependencies
-            generator.cuda.index(generator, d)
-            generator.cuda.dimension(generator, d, hook_into_kernel=True)
+            generator.cuda.generate_index(generator, d)
+            generator.cuda.generate_dimension(generator, d, hook_into_kernel=True)
 
             # generate
 
             if d > 0:
-                generator.cuda.length(generator, d - 1, hook_into_kernel=True)
+                generator.cuda.generate_length(generator, d - 1, hook_into_kernel=True)
 
                 generator.idx(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
                 generator.idx(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
@@ -139,22 +136,22 @@ class NativeStandardStreaming(NativeStreaming):
                 generator.idx(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
                 generator.idx(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
-    def read_write(self, generator: 'GeneratorKernel'):
+    def generate_read_write(self, generator: 'GeneratorKernel'):
         if not generator.registered('read_write()'):
             generator.register('read_write()')
 
             # dependencies:
 
             if self.support_no_streaming_mask:
-                self.no_stream_mask(generator)
+                self.generate_no_stream_mask(generator)
 
-            self.f_next(generator)
-            generator.stencil.q(generator)
-            generator.cuda.offset(generator)
-            generator.cuda.length(generator, d=generator.stencil.stencil.d() - 1, hook_into_kernel=True)
+            self.generate_f_next(generator)
+            generator.stencil.generate_q(generator)
+            generator.cuda.generate_offset(generator)
+            generator.cuda.generate_length(generator, d=generator.stencil.stencil.d() - 1, hook_into_kernel=True)
 
             for d in range(generator.stencil.stencil.d()):
-                self.dim_offset(generator, d)
+                self.generate_dim_offset(generator, d)
 
             # read with stream
             length_index = generator.stencil.stencil.d() - 1
@@ -221,4 +218,4 @@ class NativeStandardStreaming(NativeStreaming):
 
             # write
             generator.wrt()
-            generator.wrt(self.write_frame_.format(target='f_next', length_index=length_index))
+            generator.wrt(write_frame.format(target='f_next', length_index=length_index))

@@ -10,7 +10,7 @@ class NativeCuda:
     or dim3 (struct of three index_t variables).
     """
 
-    def thread_count(self, generator: 'GeneratorKernel'):
+    def generate_thread_count(self, generator: 'GeneratorKernel'):
         if not generator.registered('thread_count'):
             generator.register('thread_count')
 
@@ -27,14 +27,14 @@ class NativeCuda:
             if 3 == generator.stencil.stencil.d():
                 generator.wrp("const auto thread_count = dim3{8u, 8u, 8u};")
 
-    def block_count(self, generator: 'GeneratorKernel'):
+    def generate_block_count(self, generator: 'GeneratorKernel'):
         if not generator.registered('block_count'):
             generator.register('block_count')
 
             # dependencies
-            self.thread_count(generator)
+            self.generate_thread_count(generator)
             for d in range(generator.stencil.stencil.d()):
-                self.dimension(generator, d, hook_into_kernel=False)
+                self.generate_dimension(generator, d, hook_into_kernel=False)
 
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
@@ -48,7 +48,7 @@ class NativeCuda:
             generator.wrp(f"const auto block_count = dim3{{{dimensions}}};")
             generator.wrp('')
 
-    def index(self, generator: 'GeneratorKernel', d: int):
+    def generate_index(self, generator: 'GeneratorKernel', d: int):
         if not generator.registered(f"index{d}"):
             generator.register(f"index{d}")
 
@@ -57,7 +57,7 @@ class NativeCuda:
 
             generator.idx(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
 
-    def dimension(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
+    def generate_dimension(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
         if not generator.registered(('dimension', d)):
             generator.register(('dimension', d))
 
@@ -66,14 +66,14 @@ class NativeCuda:
         if hook_into_kernel and not generator.kernel_hooked(('dimension', d)):
             generator.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
 
-    def length(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
+    def generate_length(self, generator: 'GeneratorKernel', d: int, hook_into_kernel: bool):
         if d == 0:  # length0 is an alias
 
             if not generator.registered(('length', 0, hook_into_kernel)):
                 generator.register(('length', 0, hook_into_kernel))
 
                 # dependencies
-                self.dimension(generator, 0, hook_into_kernel=hook_into_kernel)
+                self.generate_dimension(generator, 0, hook_into_kernel=hook_into_kernel)
 
                 # generation
                 if hook_into_kernel:
@@ -87,8 +87,8 @@ class NativeCuda:
                 generator.register(('length', d))
 
                 # dependencies
-                self.dimension(generator, d, hook_into_kernel=False)
-                self.length(generator, d - 1, hook_into_kernel=False)
+                self.generate_dimension(generator, d, hook_into_kernel=False)
+                self.generate_length(generator, d - 1, hook_into_kernel=False)
 
                 # generation
                 generator.wrp(f"const index_t length{d} = dimension{d} * length{d - 1};")
@@ -96,15 +96,15 @@ class NativeCuda:
             if hook_into_kernel and not generator.kernel_hooked(('length', d)):
                 generator.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
 
-    def offset(self, generator: 'GeneratorKernel'):
+    def generate_offset(self, generator: 'GeneratorKernel'):
         if not generator.registered('offset'):
             generator.register('offset')
 
             # dependencies
-            self.index(generator, 0)
+            self.generate_index(generator, 0)
             for d in range(1, generator.stencil.stencil.d()):
-                self.index(generator, d)
-                self.length(generator, d - 1, hook_into_kernel=True)
+                self.generate_index(generator, d)
+                self.generate_length(generator, d - 1, hook_into_kernel=True)
 
             # generate
             offsets = ['(index0)']

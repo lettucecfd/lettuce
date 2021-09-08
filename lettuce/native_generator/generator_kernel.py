@@ -164,16 +164,16 @@ class GeneratorKernel:
         self.kernel_hook('f', 'scalar_t *f', 'f.data<scalar_t>()')
 
         # default variables
-        self.cuda.thread_count(self)
-        self.cuda.block_count(self)
-        self.stencil.q(self)
+        self.cuda.generate_thread_count(self)
+        self.cuda.generate_block_count(self)
+        self.stencil.generate_q(self)
 
         #
         # generate
         #
 
-        self.streaming.read_write(self)
-        self.collision.collision(self)
+        self.streaming.generate_read_write(self)
+        self.collision.generate_collision(self)
 
     def name(self):
         return f"{self.stencil.name}_{self.collision.name}_{self.streaming.name}"

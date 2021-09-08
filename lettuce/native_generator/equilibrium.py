@@ -2,7 +2,7 @@ from . import *
 
 
 class NativeEquilibrium(NativeLatticeBase):
-    def f_eq(self, generator: 'GeneratorKernel'):
+    def generate_f_eq(self, generator: 'GeneratorKernel'):
         raise AbstractMethodInvokedError()
 
 
@@ -12,12 +12,12 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
     def __init__(self):
         super().__init__()
 
-    def uxu(self, generator: 'GeneratorKernel'):
+    def generate_uxu(self, generator: 'GeneratorKernel'):
         if not generator.registered('uxu'):
             generator.register('uxu')
 
             # dependencies
-            generator.lattice.u(generator)
+            generator.lattice.generate_u(generator)
 
             # generate
             summands = []
@@ -26,13 +26,13 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             generator.nde(f"const auto uxu = {' + '.join(summands)};")
 
-    def exu(self, generator: 'GeneratorKernel'):
+    def generate_exu(self, generator: 'GeneratorKernel'):
         if not generator.registered('exu'):
             generator.register('exu')
 
             # dependencies
-            generator.stencil.e(generator)
-            generator.lattice.u(generator)
+            generator.stencil.generate_e(generator)
+            generator.lattice.generate_u(generator)
 
             # generate
             summands = []
@@ -41,48 +41,48 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             generator.cln(f"const auto exu = {' + '.join(summands)};")
 
-    def cs_pow_two(self, generator: 'GeneratorKernel'):
+    def generate_cs_pow_two(self, generator: 'GeneratorKernel'):
         if not generator.registered('cs_pow_two<scalar_t>'):
             generator.register('cs_pow_two<scalar_t>')
 
             # dependencies
-            generator.stencil.cs(generator)
+            generator.stencil.generate_cs(generator)
 
             # generate
             generator.nde('constexpr auto cs_pow_two = cs * cs;')
 
-    def two_cs_pow_two(self, generator: 'GeneratorKernel'):
+    def generate_two_cs_pow_two(self, generator: 'GeneratorKernel'):
         if not generator.registered('two_cs_pow_two<scalar_t>'):
             generator.register('two_cs_pow_two<scalar_t>')
 
             # dependencies
-            self.cs_pow_two(generator)
+            self.generate_cs_pow_two(generator)
 
             # generate
             generator.nde('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
-    def f_eq_tmp(self, generator: 'GeneratorKernel'):
+    def generate_f_eq_tmp(self, generator: 'GeneratorKernel'):
         if not generator.registered('f_eq_tmp'):
             generator.register('f_eq_tmp')
 
             # dependencies
-            self.exu(generator)
-            self.cs_pow_two(generator)
+            self.generate_exu(generator)
+            self.generate_cs_pow_two(generator)
 
             # generate
             generator.cln('const auto f_eq_tmp = exu / cs_pow_two;')
 
-    def f_eq(self, generator: 'GeneratorKernel'):
+    def generate_f_eq(self, generator: 'GeneratorKernel'):
         if not generator.registered('f_eq'):
             generator.register('f_eq')
 
             # dependencies
-            generator.lattice.rho(generator)
-            self.exu(generator)
-            self.uxu(generator)
-            self.two_cs_pow_two(generator)
-            self.f_eq_tmp(generator)
-            generator.stencil.w(generator)
+            generator.lattice.generate_rho(generator)
+            self.generate_exu(generator)
+            self.generate_uxu(generator)
+            self.generate_two_cs_pow_two(generator)
+            self.generate_f_eq_tmp(generator)
+            generator.stencil.generate_w(generator)
 
             # generate
             generator.cln('const auto f_eq = '

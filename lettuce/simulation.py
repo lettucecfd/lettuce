@@ -88,7 +88,7 @@ class Simulation:
                 return
 
             self.stream_and_collide = stream_and_collide_
-            if native_streaming.name != 'noStream':
+            if 'noStreaming' in native_streaming.name:  # TODO find a better way of storing f_next
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @staticmethod

@@ -1,5 +1,4 @@
 from . import *
-from . import _load_template
 from .. import all_stencils
 
 all_stencils = all_stencils()

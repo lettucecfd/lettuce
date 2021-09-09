@@ -8,9 +8,6 @@ from .. import Stencil
 
 
 class ModuleGenerator:
-    """
-    """
-
     class Matrix:
         stencils: ['NativeStencil']
         streamings: ['NativeStreaming']

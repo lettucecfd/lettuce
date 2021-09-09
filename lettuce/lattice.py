@@ -9,6 +9,7 @@ Its stencil is still accessible trough Lattice.stencil.
 """
 
 import warnings
+from typing import Type
 
 import numpy as np
 import torch
@@ -17,7 +18,7 @@ from . import *
 
 
 class Lattice:
-    stencil: Stencil
+    stencil: Type[Stencil]
     device: torch.device
     dtype: torch.dtype
     e: torch.Tensor
@@ -27,7 +28,7 @@ class Lattice:
 
     use_native: bool
 
-    def __init__(self, stencil: Stencil, device: torch.device, dtype=torch.float, use_native=True):
+    def __init__(self, stencil: Type[Stencil], device: torch.device, dtype=torch.float, use_native=True):
         self.stencil = stencil
         self.device = device
         self.dtype = dtype

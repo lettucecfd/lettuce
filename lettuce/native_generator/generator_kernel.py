@@ -83,7 +83,7 @@ class KernelGenerator:
         self.collision.generate_collision(self)
 
     def name(self):
-        return f"{self.stencil.name}_{self.collision.name}_{self.streaming.name}"
+        return f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}"
 
     def header_guard_(self):
         return f"lettuce_{self.name()}_hpp".upper()

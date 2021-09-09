@@ -44,15 +44,15 @@ from .unit import UnitConversion
 from .lattice_base import LatticeBase
 
 # TODO equilibrium should not be a member of lattice
-#      equilibrium should be a member of collision
+#      equilibrium should be a member of collision or independent
 from .equilibrium import Equilibrium, QuadraticEquilibrium
 from .equilibrium import IncompressibleQuadraticEquilibrium, QuadraticEquilibrium_LessMemory
 
 from .lattice import Lattice
 from .force import Guo, ShanChen
-from .collision import BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
+from .collision import Collision, NoCollision, BGKCollision, KBCCollision2D, KBCCollision3D, MRTCollision
 from .collision import RegularizedCollision, SmagorinskyCollision, TRTCollision, BGKInitialization
-from .streaming import NoStreaming, StandardStreaming
+from .streaming import Streaming, NoStreaming, StandardStreaming
 
 from .moment import moment_tensor, get_default_moment_transform
 from .moment import Moments, Transform, D1Q3Transform, D2Q9Lallemand, D2Q9Dellar, D3Q27Hermite

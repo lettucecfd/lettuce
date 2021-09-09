@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from . import *
+from .native_generator import NativeStencil
 
 
 class Simulation:
@@ -23,9 +24,9 @@ class Simulation:
 
     def __init__(self, flow, lattice, collision, streaming, use_native=True):
         self.flow = flow
-        self.lattice = lattice
-        self.collision = collision
-        self.streaming = streaming
+        self.lattice: Lattice = lattice
+        self.collision: Collision = collision
+        self.streaming: Streaming = streaming
         self.i = 0
 
         grid = flow.grid
@@ -69,34 +70,25 @@ class Simulation:
             if str(lattice.device) == 'cpu':
                 return
 
-            if not hasattr(self.lattice.stencil, 'native_class'):
-                print('stencil not natively implemented')
+            if not self.streaming.native_available():
+                print('streaming is not native available')
                 return
-            if not hasattr(self.lattice.equilibrium, 'native_class'):
-                print('equilibrium not natively implemented')
-                return
-            if not hasattr(self.collision, 'native_class'):
-                print('collision not natively implemented')
-                return
-            if not hasattr(self.streaming, 'native_class'):
-                print('stream not natively implemented')
+            if not self.collision.native_available():
+                print('collision is not native available')
                 return
 
-            stencil_name = self.lattice.stencil.native_class.name
-            equilibrium_name = self.lattice.equilibrium.native_class.name
-            collision_name = self.collision.native_class.name
-            stream_name = self.streaming.native_class.name
+            native_stencil = NativeStencil(self.lattice.stencil)
+            native_streaming = self.streaming.create_native()
+            native_collision = self.collision.create_native()
 
-            stream_and_collide_ = native.resolve(
-                stencil_name, equilibrium_name, collision_name, stream_name,
-                self.streaming.no_streaming_mask is not None, self.collision.no_collision_mask is not None)
+            stream_and_collide_ = native.resolve(native_stencil, native_streaming, native_collision)
 
             if stream_and_collide_ is None:
                 print('combination not natively generated')
                 return
 
             self.stream_and_collide = stream_and_collide_
-            if stream_name != 'noStream':
+            if native_streaming.name != 'noStream':
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @staticmethod

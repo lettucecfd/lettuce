@@ -89,6 +89,7 @@ class Simulation:
                 _dir = generator.format(_val)
                 generator.install(_dir)
 
+                stream_and_collide = generator.resolve()
                 if stream_and_collide is None:
                     print('failed to install native extension!')
                     return

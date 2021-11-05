@@ -182,8 +182,8 @@ class Generator:
         return output_root_dir
 
     def resolve(self):
-        import importlib
         try:
+            import importlib
             native = importlib.import_module(f"lettuce_native_{self.name}")
             # noinspection PyUnresolvedReferences
             return native.stream_and_collide
@@ -202,6 +202,12 @@ class Generator:
         setup_file = os.path.join(directory, 'setup.py')
         subprocess.call(['python', setup_file, 'install'], shell=True, cwd=directory)
         # TODO log error? 'failed to install combination. see log for more details!'
+
+        # after install the module is not registered
+        # so we need to reload the register
+        import importlib
+        import site
+        importlib.reload(site)
 
 
 if __name__ == '__main__':

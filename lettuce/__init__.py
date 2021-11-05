@@ -16,32 +16,13 @@ from .stencil import Stencil, D1Q3, D2Q9, D3Q27, D3Q19
 import lettuce.native_generator as native_generator
 from .native_generator import AbstractMethodInvokedError
 
-# import native if available
-# else create a pseudo variable
-try:
-    import lettuce.native as native
-
-    native_available = True
-
-except ImportError:
-
-    class PseudoNative:
-        # noinspection PyUnusedLocal
-        @staticmethod
-        def resolve(*args):
-            return None
-
-
-    native = PseudoNative()
-    native_available = False
-
 from .util import LettuceException, LettuceWarning, InefficientCodeWarning, ExperimentalWarning
 from .util import all_stencils, get_subclasses
 from .util import torch_gradient, torch_jacobi, grid_fine_to_coarse, pressure_poisson
 from .unit import UnitConversion
 
 # TODO move below .lattice after equilibrium was moved
-from .lattice_base import LatticeBase
+from .base import LatticeBase
 
 # TODO equilibrium should not be a member of lattice
 #      equilibrium should be a member of collision or independent

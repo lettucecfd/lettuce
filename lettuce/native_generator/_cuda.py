@@ -10,7 +10,7 @@ class NativeCuda:
     or dim3 (struct of three index_t variables).
     """
 
-    def generate_thread_count(self, generator: 'KernelGenerator'):
+    def generate_thread_count(self, generator: 'Generator'):
         if not generator.registered('thread_count'):
             generator.register('thread_count')
 
@@ -27,7 +27,7 @@ class NativeCuda:
             if 3 == generator.stencil.stencil.d():
                 generator.append_launcher_buffer("const auto thread_count = dim3{8u, 8u, 8u};")
 
-    def generate_block_count(self, generator: 'KernelGenerator'):
+    def generate_block_count(self, generator: 'Generator'):
         if not generator.registered('block_count'):
             generator.register('block_count')
 
@@ -48,7 +48,7 @@ class NativeCuda:
             generator.append_launcher_buffer(f"const auto block_count = dim3{{{dimensions}}};")
             generator.append_launcher_buffer('')
 
-    def generate_index(self, generator: 'KernelGenerator', d: int):
+    def generate_index(self, generator: 'Generator', d: int):
         if not generator.registered(f"index{d}"):
             generator.register(f"index{d}")
 
@@ -57,7 +57,7 @@ class NativeCuda:
 
             generator.append_index_buffer(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
 
-    def generate_dimension(self, generator: 'KernelGenerator', d: int, hook_into_kernel: bool):
+    def generate_dimension(self, generator: 'Generator', d: int, hook_into_kernel: bool):
         if not generator.registered(('dimension', d)):
             generator.register(('dimension', d))
 
@@ -66,7 +66,7 @@ class NativeCuda:
         if hook_into_kernel and not generator.kernel_hooked(('dimension', d)):
             generator.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
 
-    def generate_length(self, generator: 'KernelGenerator', d: int, hook_into_kernel: bool):
+    def generate_length(self, generator: 'Generator', d: int, hook_into_kernel: bool):
         if d == 0:  # length0 is an alias
 
             if not generator.registered(('length', 0, hook_into_kernel)):
@@ -96,7 +96,7 @@ class NativeCuda:
             if hook_into_kernel and not generator.kernel_hooked(('length', d)):
                 generator.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
 
-    def generate_offset(self, generator: 'KernelGenerator'):
+    def generate_offset(self, generator: 'Generator'):
         if not generator.registered('offset'):
             generator.register('offset')
 

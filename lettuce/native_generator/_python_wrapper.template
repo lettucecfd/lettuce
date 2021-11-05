@@ -1,6 +1,0 @@
-def {name}(simulation):
-    {python_wrapper_before_buffer}
-    # noinspection PyUnresolvedReferences
-    {module}.{name}({launcher_py_parameter_value})
-    torch.cuda.synchronize()
-    {python_wrapper_after_buffer}

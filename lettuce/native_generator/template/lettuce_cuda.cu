@@ -19,28 +19,28 @@ template<typename scalar_t>
 __global__ void
 lettuce_cuda_{name}_kernel({kernel_parameter})
 {{
-    {constexpr_buffer}
+  {constexpr_buffer}
 
-    {index_buffer}
-    {{
-        {node_buffer}
+  {index_buffer}
+  {{
+    {node_buffer}
 
 #pragma unroll
-        for (index_t i = 0; i < q; ++i)
-        {{
-            {distribution_buffer}
-        }}
+    for (index_t i = 0; i < q; ++i)
+    {{
+      {distribution_buffer}
     }}
-    {write_buffer}
+  }}
+  {write_buffer}
 }}
 
 void
-lettuce_cuda_{name}({launcher_parameter})
+lettuce_cuda_{name}({cuda_wrapper_parameter})
 {{
-    {launcher_buffer}
+  {cuda_wrapper_buffer}
 
-    AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{name}", [&]
-    {{
-        lettuce_cuda_{name}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
-    }});
+  AT_DISPATCH_FLOATING_TYPES(f.scalar_type(), "lettuce_cuda_{name}", [&]
+  {{
+    lettuce_cuda_{name}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
+  }});
 }}

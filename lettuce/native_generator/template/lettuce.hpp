@@ -1,3 +1,6 @@
+#ifndef {guard}
+#define {guard}
+
 #if _MSC_VER && !__INTEL_COMPILER
 #pragma warning ( push )
 #pragma warning ( disable : 4067 )
@@ -10,9 +13,10 @@
 #pragma warning ( pop )
 #endif
 
-{includes}
+void
+lettuce_cuda_{name}({cuda_wrapper_parameter});
 
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
-{{
-    {definitions}
-}}
+void
+lettuce_{name}({cpp_wrapper_parameter});
+
+#endif //{guard}

@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from . import *
-from .native_generator import NativeStencil
+from .native_generator import NativeStencil, Generator
 
 
 class Simulation:
@@ -81,14 +81,20 @@ class Simulation:
             native_streaming = self.streaming.create_native()
             native_collision = self.collision.create_native()
 
-            stream_and_collide_ = native.resolve(native_stencil, native_streaming, native_collision)
+            generator = Generator(native_stencil, native_streaming, native_collision)
 
-            if stream_and_collide_ is None:
-                print('combination not natively generated')
-                return
+            _stream_and_collide = generator.resolve()
+            if _stream_and_collide is None:
+                _val = generator.generate()
+                _dir = generator.format(_val)
+                generator.install(_dir)
 
-            self.stream_and_collide = stream_and_collide_
-            if 'noStreaming' in native_streaming.name:  # TODO find a better way of storing f_next
+                if _stream_and_collide is None:
+                    print('failed to install native extension!')
+                    return
+
+            self.stream_and_collide = _stream_and_collide
+            if 'noStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @staticmethod

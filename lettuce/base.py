@@ -1,6 +1,6 @@
 from typing import Optional
 
-from .native_generator.lattice_base import NativeLatticeBase
+from .native_generator import NativeLatticeBase
 
 
 class LatticeBase:

@@ -46,7 +46,7 @@ class NativeStreaming(NativeLatticeBase):
     def create(support_no_streaming_mask: bool):
         raise AbstractMethodInvokedError()
 
-    def generate_no_stream_mask(self, generator: 'KernelGenerator'):
+    def generate_no_stream_mask(self, generator: 'Generator'):
         if not generator.launcher_hooked('no_stream_mask'):
             generator.append_python_wrapper_before_buffer("assert hasattr(simulation.streaming, 'no_stream_mask')")
             generator.launcher_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
@@ -54,7 +54,7 @@ class NativeStreaming(NativeLatticeBase):
         if not generator.kernel_hooked('no_stream_mask'):
             generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
 
-    def generate_read_write(self, generator: 'KernelGenerator'):
+    def generate_read_write(self, generator: 'Generator'):
         raise AbstractMethodInvokedError()
 
 
@@ -68,7 +68,7 @@ class NativeNoStreaming(NativeStreaming):
     def create(support_no_streaming_mask: bool):
         return NativeNoStreaming()
 
-    def generate_read_write(self, generator: 'KernelGenerator'):
+    def generate_read_write(self, generator: 'Generator'):
         if not generator.registered('read_write()'):
             generator.register('read_write()')
 
@@ -99,7 +99,7 @@ class NativeStandardStreaming(NativeStreaming):
     def create(support_no_streaming_mask: bool):
         return NativeStandardStreaming(support_no_streaming_mask)
 
-    def generate_f_next(self, generator: 'KernelGenerator'):
+    def generate_f_next(self, generator: 'Generator'):
         if not generator.registered('f_next'):
             generator.register('f_next')
 
@@ -112,7 +112,7 @@ class NativeStandardStreaming(NativeStreaming):
             if not generator.kernel_hooked('f_next'):
                 generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
-    def generate_dim_offset(self, generator: 'KernelGenerator', d: int):
+    def generate_dim_offset(self, generator: 'Generator', d: int):
         if not generator.registered(f"dim{d}_offset"):
             generator.register(f"dim{d}_offset")
 
@@ -136,7 +136,7 @@ class NativeStandardStreaming(NativeStreaming):
                 generator.append_index_buffer(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
                 generator.append_index_buffer(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
-    def generate_read_write(self, generator: 'KernelGenerator'):
+    def generate_read_write(self, generator: 'Generator'):
         if not generator.registered('read_write()'):
             generator.register('read_write()')
 

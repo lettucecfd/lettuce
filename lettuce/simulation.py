@@ -83,17 +83,17 @@ class Simulation:
 
             generator = Generator(native_stencil, native_streaming, native_collision)
 
-            _stream_and_collide = generator.resolve()
-            if _stream_and_collide is None:
+            stream_and_collide = generator.resolve()
+            if stream_and_collide is None:
                 _val = generator.generate()
                 _dir = generator.format(_val)
                 generator.install(_dir)
 
-                if _stream_and_collide is None:
+                if stream_and_collide is None:
                     print('failed to install native extension!')
                     return
 
-            self.stream_and_collide = _stream_and_collide
+            self.stream_and_collide = stream_and_collide
             if 'noStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
                 self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 

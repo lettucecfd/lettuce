@@ -161,7 +161,8 @@ class Generator:
             input_sub_root = os.path.relpath(sub_root, input_root_dir)
             output_sub_root = os.path.relpath(fmt(sub_root), input_root_dir)
 
-            if '__pycache__' == output_sub_root:  # TODO prevent the installation from creating __pycache__
+            if '__pycache__' in output_sub_root:
+                # TODO prevent the installation from creating __pycache__, then this check is unnecessary
                 continue
 
             if os.path.isdir(os.path.join(output_root_dir, output_sub_root)):
@@ -184,8 +185,13 @@ class Generator:
         import importlib
         try:
             native = importlib.import_module(f"lettuce_native_{self.name}")
+            # noinspection PyUnresolvedReferences
             return native.stream_and_collide
         except ModuleNotFoundError:
+            # TODO log error? 'combination not yet generated!'
+            return None
+        except AttributeError:
+            # TODO log error? 'combination is not installed properly!'
             return None
 
     @staticmethod
@@ -194,8 +200,8 @@ class Generator:
         import subprocess
 
         setup_file = os.path.join(directory, 'setup.py')
-        print('>> python', setup_file, 'install')
-        assert not subprocess.call(['python', setup_file, 'install'], shell=True, cwd=directory)
+        subprocess.call(['python', setup_file, 'install'], shell=True, cwd=directory)
+        # TODO log error? 'failed to install combination. see log for more details!'
 
 
 if __name__ == '__main__':

@@ -22,11 +22,11 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming, use_native=True):
+    def __init__(self, flow, lattice, collision, streaming=None, use_native=True):
         self.flow = flow
         self.lattice: Lattice = lattice
         self.collision: Collision = collision
-        self.streaming: Streaming = streaming
+        self.streaming: Streaming = StandardStreaming(lattice) if streaming is None else streaming
         self.i = 0
 
         grid = flow.grid
@@ -47,8 +47,8 @@ class Simulation:
 
         # Define masks, where the collision or streaming are not applied
         x = flow.grid
-        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
-        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
+        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool)).to(dtype=torch.bool)
+        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool)).to(dtype=torch.bool)
 
         # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
@@ -59,9 +59,9 @@ class Simulation:
                 no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
 
         if no_stream_mask.any():
-            self.streaming.no_streaming_mask = no_stream_mask
+            self.streaming.no_streaming_mask = no_stream_mask.to(torch.uint8)
         if no_collision_mask.any():
-            self.collision.no_collision_mask = no_collision_mask
+            self.collision.no_collision_mask = no_collision_mask.to(torch.uint8)
 
         self.stream_and_collide = Simulation.stream_and_collide_
 

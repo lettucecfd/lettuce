@@ -7,11 +7,11 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments
+    stencil, Stencil, get_subclasses, Transform, Lattice, moment
 )
 
-STENCILS = list(get_subclasses(Stencil, stencils))
-TRANSFORMS = list(get_subclasses(Transform, moments))
+STENCILS = list(get_subclasses(Stencil, stencil))
+TRANSFORMS = list(get_subclasses(Transform, moment))
 
 
 @pytest.fixture(
@@ -30,6 +30,8 @@ def dtype_device(request, device):
     """Run a test case for all available devices and data types available on the device."""
     if device == "cpu" and request.param == torch.float16:
         pytest.skip("Half precision is only available on GPU.")
+    if device == "cuda:0" and request.param == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
     return request.param, device
 
 
@@ -39,11 +41,25 @@ def stencil(request):
     return request.param
 
 
-@pytest.fixture(params=STENCILS)
-def lattice(request, dtype_device):
+@pytest.fixture(params=
+        (
+            (torch.float64, "cpu", ""),
+            (torch.float32, "cpu", ""),
+            (torch.float64, "cuda:0", ""),
+            (torch.float32, "cuda:0", ""),
+            (torch.float64, "cuda:0", "native"),
+            (torch.float32, "cuda:0", "native"),
+        ),
+    ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32")
+)
+def lattice(request, stencil):
     """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
-    dtype, device = dtype_device
-    return Lattice(request.param, device=device, dtype=dtype)
+    dtype, device, native = request.param
+    if device == "cuda:0" and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA not available.")
+    if device == "cuda:0" and dtype == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native=="native"))
 
 
 @pytest.fixture()

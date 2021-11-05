@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 import torch
 
-from . import *
+from . import LatticeBase, Lattice, AbstractMethodInvokedError, native_generator
 from .native_generator import NativeNoStreaming, NativeStandardStreaming
 
 

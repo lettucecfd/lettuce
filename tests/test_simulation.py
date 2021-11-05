@@ -57,7 +57,7 @@ def test_initialize_fneq(Case, dtype_device):
     lattice = Lattice(D2Q9, device, dtype)
     if "3D" in Case.__name__:
         lattice = Lattice(D3Q27, dtype=dtype, device=device)
-    flow = Case(resolution=40, reynolds_number=1000, mach_number=0.1, lattice=lattice)
+    flow = Case(resolution=32, reynolds_number=1000, mach_number=0.1, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation_neq = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)

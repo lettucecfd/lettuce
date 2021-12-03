@@ -27,3 +27,6 @@ from lettuce.force import *
 from lettuce.observables import *
 
 from lettuce.flows import *
+
+from . import _version
+__version__ = _version.get_versions()['version']

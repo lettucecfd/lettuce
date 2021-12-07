@@ -18,7 +18,7 @@ class Guo:
         return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
     def u_eq(self, f):
-        index = [Ellipsis] + [None] * self.lattice.D
+        index = [Ellipsis] + [None] * self.lattice.D if len(self.acceleration) == 0 else [slice(None)]
         return self.ueq_scaling_factor * self.acceleration[index] / self.lattice.rho(f)
 
     @property

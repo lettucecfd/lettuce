@@ -58,10 +58,10 @@ class StandardStreaming(Streaming):
         return NativeStandardStreaming(self.no_streaming_mask is not None)
 
     def _stream(self, f, i):
-        return torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.d)))
+        return torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.D)))
 
     def __call__(self, f):
-        for i in range(1, self.lattice.q):
+        for i in range(1, self.lattice.Q):
             if self.no_streaming_mask is None:
                 f[i] = self._stream(f, i)
             else:

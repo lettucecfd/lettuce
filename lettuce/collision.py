@@ -100,11 +100,11 @@ class RegularizedCollision(Collision):
     def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
         self.tau = tau
-        self.Q_matrix = torch.zeros([lattice.q, lattice.d, lattice.d], device=lattice.device, dtype=lattice.dtype)
+        self.Q_matrix = torch.zeros([lattice.Q, lattice.D, lattice.D], device=lattice.device, dtype=lattice.dtype)
 
-        for a in range(lattice.q):
-            for b in range(lattice.d):
-                for c in range(lattice.d):
+        for a in range(lattice.Q):
+            for b in range(lattice.D):
+                for c in range(lattice.D):
                     self.Q_matrix[a, b, c] = lattice.e[a, b] * lattice.e[a, c]
                     if b == c:
                         self.Q_matrix[a, b, c] -= lattice.cs * lattice.cs
@@ -130,7 +130,7 @@ class KBCCollision2D(Collision):
 
     def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
-        assert lattice.q == 9, LettuceException("KBC2D only realized for D2Q9")
+        assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -208,7 +208,7 @@ class KBCCollision3D(Collision):
 
     def __init__(self, lattice: Lattice, tau, use_native=True):
         super().__init__(lattice, use_native)
-        assert lattice.q == 27, LettuceException("KBC only realized for D3Q27")
+        assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -336,7 +336,7 @@ class BGKInitialization(Collision):
         self.u = flow.units.convert_velocity_to_lu(lattice.convert_to_tensor(u))
         self.rho0 = flow.units.characteristic_density_lu
         self.equilibrium = QuadraticEquilibrium(self.lattice)
-        momentum_names = tuple([f"j{x}" for x in "xyz"[:self.lattice.d]])
+        momentum_names = tuple([f"j{x}" for x in "xyz"[:self.lattice.D]])
         self.momentum_indices = moment_transformation[momentum_names]
 
     def __call__(self, f):

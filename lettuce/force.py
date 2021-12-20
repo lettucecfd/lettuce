@@ -5,7 +5,7 @@ class Guo:
         self.acceleration = lattice.convert_to_tensor(acceleration)
 
     def source_term(self, u):
-        index = [Ellipsis] + [None] * self.lattice.d
+        index = [Ellipsis] + [None] * self.lattice.D
         emu = self.lattice.e[index] - u
         eu = self.lattice.einsum("ib,b->i", [self.lattice.e, u])
         eeu = self.lattice.einsum("ia,i->ia", [self.lattice.e, eu])
@@ -15,7 +15,7 @@ class Guo:
         return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
     def u_eq(self, f):
-        index = [Ellipsis] + [None] * self.lattice.d
+        index = [Ellipsis] + [None] * self.lattice.D
         return self.ueq_scaling_factor * self.acceleration[index] / self.lattice.rho(f)
 
     @property
@@ -33,7 +33,7 @@ class ShanChen:
         return 0
 
     def u_eq(self, f):
-        index = [Ellipsis] + [None] * self.lattice.d
+        index = [Ellipsis] + [None] * self.lattice.D
         return self.ueq_scaling_factor * self.acceleration[index] / self.lattice.rho(f)
 
     @property

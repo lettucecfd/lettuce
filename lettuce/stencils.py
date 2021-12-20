@@ -2,10 +2,10 @@ import numpy as np
 
 
 class Stencil:
-    e: np.ndarray
-    w: np.ndarray
-    cs: np.float
-    opposite: [int]
+    e: np.ndarray = np.array([])
+    w: np.ndarray = np.array([])
+    cs: np.float = 0.0
+    opposite: [int] = []
 
     @classmethod
     def d(cls):

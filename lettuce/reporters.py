@@ -51,13 +51,13 @@ class VTKReporter:
         if i % self.interval == 0:
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
-            if self.lattice.d == 2:
+            if self.lattice.D == 2:
                 self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
-                for d in range(self.lattice.d):
+                for d in range(self.lattice.D):
                     self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
             else:
                 self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ...])
-                for d in range(self.lattice.d):
+                for d in range(self.lattice.D):
                     self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ...])
             write_vtk(self.point_dict, i, self.filename_base)
 
@@ -65,7 +65,7 @@ class VTKReporter:
         """Outputs the no_collision_mask of the simulation object as VTK-file with range [0,1]
         Usage: vtk_reporter.output_mask(simulation.no_collision_mask)"""
         point_dict = dict()
-        if self.lattice.d == 2:
+        if self.lattice.D == 2:
             point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask)[..., None].astype(int)
         else:
             point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask).astype(int)
@@ -96,10 +96,10 @@ class ErrorReporter:
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
 
-            resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.d)
+            resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.D)
 
-            err_u = torch.norm(u - uref) / resolution ** (self.lattice.d / 2)
-            err_p = torch.norm(p - pref) / resolution ** (self.lattice.d / 2)
+            err_u = torch.norm(u - uref) / resolution ** (self.lattice.D / 2)
+            err_p = torch.norm(p - pref) / resolution ** (self.lattice.D / 2)
 
             if isinstance(self.out, list):
                 self.out.append([err_u.item(), err_p.item()])

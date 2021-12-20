@@ -42,11 +42,11 @@ class Lattice:
         return f"Lattice (stencil {self.stencil.__name__}; device {self.device}; dtype {self.dtype})"
 
     @property
-    def d(self):
+    def D(self):
         return self.stencil.d()
 
     @property
-    def q(self):
+    def Q(self):
         return self.stencil.q()
 
     def convert_to_tensor(self, array):
@@ -115,7 +115,7 @@ class Lattice:
         for i, inp in enumerate(inputs):
             if len(inp) == len(fields[i].shape):
                 pass
-            elif len(inp) == len(fields[i].shape) - self.d:
+            elif len(inp) == len(fields[i].shape) - self.D:
                 inputs[i] += "..."
                 if not output.endswith("..."):
                     output += "..."

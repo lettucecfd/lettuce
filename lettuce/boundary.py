@@ -154,7 +154,7 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
 
     def make_no_stream_mask(self, f_shape):
         no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool, device=self.lattice.device)
-        no_stream_mask[[np.setdiff1d(np.arange(self.lattice.q), self.velocities)] + self.index] = 1
+        no_stream_mask[[np.setdiff1d(np.arange(self.lattice.Q), self.velocities)] + self.index] = 1
         return no_stream_mask
 
     def make_no_collision_mask(self, f_shape):

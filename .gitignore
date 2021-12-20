@@ -4,11 +4,6 @@ Makefile
 .gitattributes
 .editorconfig
 
-# generated files
-scratch/
-lettuce_native/
-lettuce/native/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

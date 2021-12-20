@@ -17,6 +17,7 @@ import torch
 
 from lettuce import __version__ as lettuce_version
 from . import *
+from .flows import *
 
 
 @click.group()
@@ -111,7 +112,7 @@ def convergence(ctx, init_f_neq):
                                    lattice=lattice)
         collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
         streaming = StandardStreaming(lattice)
-        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=True)
+        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
         if init_f_neq:
             simulation.initialize_f_neq()
         error_reporter = ErrorReporter(lattice, flow, interval=1, out=None)

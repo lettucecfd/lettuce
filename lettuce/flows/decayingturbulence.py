@@ -8,7 +8,7 @@ energy_spectrum: returns a pair [spectrum, wavenumbers]
 """
 
 import numpy as np
-from .. import UnitConversion
+from lettuce.unit import UnitConversion
 
 
 class DecayingTurbulence:

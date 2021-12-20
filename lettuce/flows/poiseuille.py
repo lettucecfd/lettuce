@@ -4,7 +4,8 @@ Poiseuille Flow
 
 import numpy as np
 
-from .. import UnitConversion, BounceBackBoundary
+from lettuce.unit import UnitConversion
+from lettuce.boundary import BounceBackBoundary
 
 
 class PoiseuilleFlow2D(object):

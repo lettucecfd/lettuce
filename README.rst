@@ -25,8 +25,10 @@ It provides
 * Rapid Prototyping in 2D and 3D
 * Usage of neural networks and automatic differentiation within LBM
 
+
 Resources
 ---------
+
 - `Documentation`_
 - Presentation at CFDML2021 - `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
 

@@ -6,7 +6,7 @@ from lettuce import (
     BounceBackBoundary, EquilibriumBoundaryPU,
     UnitConversion, AntiBounceBackOutlet, D2Q9, Obstacle2D, Lattice,
     StandardStreaming, Simulation, EquilibriumOutletP,
-    RegularizedCollision
+    RegularizedCollision, BGKCollision
 )
 
 import pytest
@@ -129,8 +129,9 @@ def test_masks(dtype_device):
     flow = Obstacle2D(16, 16, 128, 0.1, lattice, 2)
     flow.mask[1, 1] = 1
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, None, streaming)
-    assert simulation.streaming.no_streaming_mask.any()
+    collision = BGKCollision(lattice, 1.0)
+    simulation = Simulation(flow, lattice, collision, streaming, use_native=False)
+    assert simulation.streaming.no_stream_mask.any()
     assert simulation.collision.no_collision_mask.any()
 
 
@@ -158,7 +159,7 @@ def test_equilibrium_pressure_outlet(dtype_device):
     mask[10:20, 10:20] = 1
     flow.mask = mask
     simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),
-                            StandardStreaming(lattice))
+                            StandardStreaming(lattice), use_native=False)
     simulation.step(30)
     rho = lattice.rho(simulation.f)
     u = lattice.u(simulation.f)

@@ -3,15 +3,17 @@ Input/output routines.
 TODO: Logging
 """
 
-import os
 import sys
 import warnings
-
+import os
 import numpy as np
-import pyevtk.hl as vtk
 import torch
+import pyevtk.hl as vtk
 
-from . import *
+__all__ = [
+    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter",
+    "MaxUReporter", "EnergyReporter", "EnstrophyReporter", "SpectrumReporter"
+]
 
 
 def write_image(filename, array2d):

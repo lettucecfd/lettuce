@@ -12,8 +12,8 @@ from lettuce import *
                                        SmagorinskyCollision])
 def test_collision_conserves_mass(Collision, f_all_lattices):
     f, lattice = f_all_lattices
-    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
-            (Collision == KBCCollision3D and lattice.stencil != D3Q27))):
+    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or
+            (Collision == KBCCollision3D and lattice.stencil != D3Q27)):
         pytest.skip()
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
@@ -21,8 +21,8 @@ def test_collision_conserves_mass(Collision, f_all_lattices):
     assert lattice.rho(f).cpu().numpy() == pytest.approx(lattice.rho(f_old).cpu().numpy())
 
 
-@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision2D, KBCCollision3D, TRTCollision, RegularizedCollision,
-                                       SmagorinskyCollision])
+@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision2D, KBCCollision3D,
+                                       TRTCollision, RegularizedCollision, SmagorinskyCollision])
 def test_collision_conserves_momentum(Collision, f_all_lattices):
     f, lattice = f_all_lattices
     if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (

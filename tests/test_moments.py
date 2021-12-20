@@ -96,4 +96,4 @@ def test_orthogonality(dtype_device, MomentSet):
         Md = np.round(M @ M.T, 4)
     else:
         Md = np.round(M @ np.diag(lattice.stencil.w) @ M.T, 4)
-    assert np.where(np.diag(np.ones(lattice.stencil.q())), Md != 0.0, Md == 0.0).all()
+    assert np.where(np.diag(np.ones(lattice.stencil.Q())), Md != 0.0, Md == 0.0).all()

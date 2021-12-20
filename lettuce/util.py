@@ -3,13 +3,23 @@ Utility functions.
 """
 
 import inspect
-
 import torch
+
+__all__ = [
+    "get_subclasses", 'all_stencils', "LettuceException", "LettuceWarning", "InefficientCodeWarning",
+    "ExperimentalWarning", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson"
+]
+
+
+def get_subclasses(classname, module):
+    for name, obj in inspect.getmembers(module):
+        if hasattr(obj, "__bases__") and classname in obj.__bases__:
+            yield obj
 
 
 def all_stencils():
-    import lettuce.stencil
-    return list(get_subclasses(lettuce.stencil.Stencil, module=lettuce.stencil))
+    import lettuce.stencils
+    return list(get_subclasses(lettuce.stencils.Stencil, module=lettuce.stencils))
 
 
 class LettuceException(Exception):
@@ -26,19 +36,6 @@ class InefficientCodeWarning(LettuceWarning):
 
 class ExperimentalWarning(LettuceWarning):
     pass
-
-
-class AbstractMethodInvokedError(NotImplementedError):
-    def __init__(self):
-        import inspect
-        method_name = inspect.getouterframes(inspect.currentframe())[1].function
-        super().__init__(f"Abstract method `{method_name}` can not be invoked")
-
-
-def get_subclasses(classname, module):
-    for name, obj in inspect.getmembers(module):
-        if hasattr(obj, "__bases__") and classname in obj.__bases__:
-            yield obj
 
 
 def torch_gradient(f, dx=1, order=2):

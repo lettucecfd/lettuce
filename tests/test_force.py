@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from lettuce import D2Q9
 from lettuce import Lattice, Simulation, BGKCollision, StandardStreaming
-from lettuce.flow.poiseuille import PoiseuilleFlow2D
+from lettuce.flows.poiseuille import PoiseuilleFlow2D
 from lettuce.force import Guo, ShanChen
 
 
@@ -17,7 +17,7 @@ def test_force(ForceType, device):
                       acceleration=flow.units.convert_acceleration_to_lu(flow.acceleration))
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu, force=force)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
     simulation.step(1000)
     # compare with reference solution
     u_sim = flow.units.convert_velocity_to_pu(lattice.convert_to_numpy(lattice.u(simulation.f)))

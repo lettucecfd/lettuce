@@ -30,7 +30,7 @@ write_frame = '''
 
 
 class NativeStreaming(NativeLatticeBase):
-    _name = 'invalidStreaming'
+    _name = 'invalid'
 
     support_no_streaming_mask: bool
 
@@ -39,30 +39,30 @@ class NativeStreaming(NativeLatticeBase):
 
     @property
     def name(self):
-        mask_name = 'Masked' if self.support_no_streaming_mask else ''
+        mask_name = 'M' if self.support_no_streaming_mask else ''
         return f"{self._name}{mask_name}"
 
     @staticmethod
     def create(support_no_streaming_mask: bool):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
     def generate_no_stream_mask(self, generator: 'Generator'):
         if not generator.launcher_hooked('no_stream_mask'):
             generator.append_python_wrapper_before_buffer("assert hasattr(simulation.streaming, 'no_stream_mask')")
             generator.launcher_hook('no_stream_mask', 'const at::Tensor no_stream_mask',
-                                   'no_stream_mask', 'simulation.streaming.no_stream_mask')
+                                    'no_stream_mask', 'simulation.streaming.no_stream_mask')
         if not generator.kernel_hooked('no_stream_mask'):
             generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
 
     def generate_read_write(self, generator: 'Generator'):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
 
 class NativeNoStreaming(NativeStreaming):
-    _name = 'noStreaming'
+    _name = 'no'
 
     def __init__(self):
-        super().__init__(False)
+        super().__init__()
 
     @staticmethod
     def create(support_no_streaming_mask: bool):
@@ -75,11 +75,11 @@ class NativeNoStreaming(NativeStreaming):
             # dependencies:
 
             generator.stencil.generate_q(generator)
-            generator.cuda.generate_length(generator, generator.stencil.stencil.d() - 1, hook_into_kernel=True)
+            generator.cuda.generate_length(generator, generator.stencil.stencil.D() - 1, hook_into_kernel=True)
             generator.cuda.generate_offset(generator)
 
             # read
-            length_index = generator.stencil.stencil.d() - 1
+            length_index = generator.stencil.stencil.D() - 1
 
             generator.append_index_buffer()
             generator.append_index_buffer('scalar_t f_reg[q];')
@@ -90,7 +90,7 @@ class NativeNoStreaming(NativeStreaming):
 
 
 class NativeStandardStreaming(NativeStreaming):
-    _name = 'standardStreaming'
+    _name = 'standard'
 
     def __init__(self, support_no_streaming_mask=False):
         super().__init__(support_no_streaming_mask)
@@ -127,9 +127,9 @@ class NativeStandardStreaming(NativeStreaming):
 
                 generator.append_index_buffer(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
                 generator.append_index_buffer(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
-                              f"? 0 : (index{d} + 1)) * length{d - 1};")
+                                              f"? 0 : (index{d} + 1)) * length{d - 1};")
                 generator.append_index_buffer(f"const index_t dim{d}_offset2 = ((index{d} == 0) "
-                              f"? dimension{d} - 1 : (index{d} - 1)) * length{d - 1};")
+                                              f"? dimension{d} - 1 : (index{d} - 1)) * length{d - 1};")
 
             else:
                 generator.append_index_buffer(f"const index_t &dim0_offset0 = index0;")
@@ -148,23 +148,23 @@ class NativeStandardStreaming(NativeStreaming):
             self.generate_f_next(generator)
             generator.stencil.generate_q(generator)
             generator.cuda.generate_offset(generator)
-            generator.cuda.generate_length(generator, d=generator.stencil.stencil.d() - 1, hook_into_kernel=True)
+            generator.cuda.generate_length(generator, d=generator.stencil.stencil.D() - 1, hook_into_kernel=True)
 
-            for d in range(generator.stencil.stencil.d()):
+            for d in range(generator.stencil.stencil.D()):
                 self.generate_dim_offset(generator, d)
 
             # read with stream
-            length_index = generator.stencil.stencil.d() - 1
+            length_index = generator.stencil.stencil.D() - 1
 
             direction_slot = {0: 0, -1: 1, 1: 2}
             offsets = []
-            for q in range(generator.stencil.stencil.q()):
+            for q in range(generator.stencil.stencil.Q()):
                 offset = []
                 all_zero = True
-                for d in range(generator.stencil.stencil.d()):
+                for d in range(generator.stencil.stencil.D()):
                     offset.append(
-                        f"dim{d}_offset{direction_slot[generator.stencil.stencil.e[q][generator.stencil.stencil.d() - 1 - d]]}")
-                    all_zero = all_zero and (generator.stencil.stencil.e[q][generator.stencil.stencil.d() - 1 - d] == 0)
+                        f"dim{d}_offset{direction_slot[generator.stencil.stencil.e[q][generator.stencil.stencil.D() - 1 - d]]}")
+                    all_zero = all_zero and (generator.stencil.stencil.e[q][generator.stencil.stencil.D() - 1 - d] == 0)
 
                 if all_zero:
                     offsets.append('offset')
@@ -194,7 +194,7 @@ class NativeStandardStreaming(NativeStreaming):
                     generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + offset];")
                 else:
                     generator.append_index_buffer(f"    {index_it} {{ const auto abs_index = index_it + offset; f_reg[1] = "
-                                  f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[1]}]; }}")
+                                                  f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[1]}]; }}")
             else:
                 generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + {offsets[1]}];")
 
@@ -202,14 +202,14 @@ class NativeStandardStreaming(NativeStreaming):
 
             index_it = f"index_it += length{length_index};"
 
-            for q in range(2, generator.stencil.stencil.q()):
+            for q in range(2, generator.stencil.stencil.Q()):
 
                 if self.support_no_streaming_mask:
                     if offsets[q] == 'offset':
                         generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + offset];")
                     else:
                         generator.append_index_buffer(f"    {index_it}     {{ const auto abs_index = index_it + offset; f_reg[{q}] = "
-                                      f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[q]}]; }}")
+                                                      f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[q]}]; }}")
                 else:
                     generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + {offsets[q]}];")
 

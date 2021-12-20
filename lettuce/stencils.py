@@ -1,5 +1,10 @@
 import numpy as np
 
+from typing import Optional
+from lettuce.native_generator import NativeStencil
+
+__all__ = ["Stencil", "D1Q3", "D2Q9", "D3Q27", "D3Q19"]
+
 
 class Stencil:
     e: np.ndarray = np.array([])
@@ -8,12 +13,16 @@ class Stencil:
     opposite: [int] = []
 
     @classmethod
-    def d(cls):
+    def D(cls):
         return cls.e.shape[1]
 
     @classmethod
-    def q(cls):
+    def Q(cls):
         return cls.e.shape[0]
+
+    @classmethod
+    def create_native(cls) -> Optional['NativeStencil']:
+        return NativeStencil(cls)
 
 
 class D1Q3(Stencil):

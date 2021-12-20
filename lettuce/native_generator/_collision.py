@@ -4,7 +4,7 @@ from . import *
 
 
 class NativeCollision(NativeLatticeBase):
-    _name = 'invalidCollision'
+    _name = 'invalid'
 
     equilibrium: Optional[NativeEquilibrium]
     support_no_collision_mask: bool
@@ -17,31 +17,31 @@ class NativeCollision(NativeLatticeBase):
     @property
     def name(self):
         equilibrium_name = self.equilibrium.name if self.equilibrium is not None else ''
-        mask_name = 'Masked' if self.support_no_collision_mask else ''
+        mask_name = 'M' if self.support_no_collision_mask else ''
         return f"{self._name}{equilibrium_name}{mask_name}"
 
     @staticmethod
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
     def generate_no_collision_mask(self, generator: 'Generator'):
         if not generator.launcher_hooked('no_collision_mask'):
             generator.append_python_wrapper_before_buffer("assert hasattr(simulation, 'no_collision_mask')")
             generator.launcher_hook('no_collision_mask', 'const at::Tensor no_collision_mask',
-                                   'no_collision_mask', 'simulation.no_collision_mask')
+                                    'no_collision_mask', 'simulation.no_collision_mask')
         if not generator.kernel_hooked('no_collision_mask'):
             generator.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask',
                                   'no_collision_mask.data<byte_t>()')
 
     def generate_collision(self, generator: 'Generator'):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
 
 class NativeNoCollision(NativeCollision):
-    _name = 'noCollision'
+    _name = 'no'
 
     def __init__(self):
-        super().__init__(None, False)
+        NativeCollision.__init__(self)
 
     @property
     def name(self):
@@ -57,10 +57,10 @@ class NativeNoCollision(NativeCollision):
 
 
 class NativeBGKCollision(NativeCollision):
-    _name = 'bgkCollision'
+    _name = 'bgk'
 
     def __init__(self, equilibrium: NativeEquilibrium = None, support_no_collision_mask=False):
-        super().__init__(equilibrium, support_no_collision_mask)
+        NativeCollision.__init__(self, equilibrium, support_no_collision_mask)
 
     @staticmethod
     def create(equilibrium: NativeEquilibrium, support_no_collision_mask: bool):

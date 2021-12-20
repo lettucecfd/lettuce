@@ -7,18 +7,17 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencil, Stencil, get_subclasses, Transform, Lattice, moment
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments
 )
 
-STENCILS = list(get_subclasses(Stencil, stencil))
-TRANSFORMS = list(get_subclasses(Transform, moment))
+STENCILS = list(get_subclasses(Stencil, stencils))
+TRANSFORMS = list(get_subclasses(Transform, moments))
 
 
 @pytest.fixture(
-    params=["cpu", pytest.param(
-        "cuda:0", marks=pytest.mark.skipif(
-            not torch.cuda.is_available(), reason="CUDA not available.")
-    )])
+    params=[
+        "cpu",
+        pytest.param("cuda:0", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
 def device(request):
     """Run a test case for all available devices."""
     return request.param
@@ -41,17 +40,14 @@ def stencil(request):
     return request.param
 
 
-@pytest.fixture(params=
-        (
-            (torch.float64, "cpu", ""),
+@pytest.fixture(
+    params=((torch.float64, "cpu", ""),
             (torch.float32, "cpu", ""),
             (torch.float64, "cuda:0", ""),
             (torch.float32, "cuda:0", ""),
             (torch.float64, "cuda:0", "native"),
-            (torch.float32, "cuda:0", "native"),
-        ),
-    ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32")
-)
+            (torch.float32, "cuda:0", "native")),
+    ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
 def lattice(request, stencil):
     """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
     dtype, device, native = request.param
@@ -77,7 +73,7 @@ def f_all_lattices(request, lattice):
     np.random.seed(1)
     f = np.random.random([lattice.Q] + [3] * lattice.D)
     Ltc = request.param
-    ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype)
+    ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype, use_native=False)
     return ltc.convert_to_tensor(f), ltc
 
 

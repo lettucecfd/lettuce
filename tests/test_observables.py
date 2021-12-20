@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 from lettuce import Lattice, D2Q9, D3Q27, BGKCollision, DecayingTurbulence, StandardStreaming, Simulation
-from lettuce.flow.taylorgreen import TaylorGreenVortex3D, TaylorGreenVortex2D
+from lettuce.flows.taylorgreen import TaylorGreenVortex3D, TaylorGreenVortex2D
 from lettuce.observables import EnergySpectrum, IncompressibleKineticEnergy
 
 
@@ -17,7 +17,7 @@ def test_energy_spectrum(tmpdir, Flow):
     flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
     spectrum = lattice.convert_to_numpy(EnergySpectrum(lattice, flow)(simulation.f))
     energy = IncompressibleKineticEnergy(lattice, flow)(simulation.f).item()
 

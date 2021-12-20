@@ -4,7 +4,8 @@ Couette Flow
 
 import numpy as np
 
-from .. import UnitConversion, BounceBackBoundary, EquilibriumBoundaryPU
+from lettuce.unit import UnitConversion
+from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
 
 
 class CouetteFlow2D(object):

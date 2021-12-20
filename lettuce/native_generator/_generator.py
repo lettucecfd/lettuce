@@ -1,5 +1,5 @@
 from . import *
-from .. import D2Q9, __version__
+from .. import __version__
 
 
 class Generator:
@@ -156,13 +156,12 @@ class Generator:
         input_root_dir = os.path.abspath(os.path.join(__file__, '..', 'template'))
         output_root_dir = tempfile.mkdtemp()
 
-        for (sub_root, sub_dirs, sub_files) in os.walk(input_root_dir, topdown=True):
+        for (sub_root, sub_dirs, sub_files) in os.walk(input_root_dir):
 
             input_sub_root = os.path.relpath(sub_root, input_root_dir)
             output_sub_root = os.path.relpath(fmt(sub_root), input_root_dir)
 
             if '__pycache__' in output_sub_root:
-                # TODO prevent the installation from creating __pycache__, then this check is unnecessary
                 continue
 
             if os.path.isdir(os.path.join(output_root_dir, output_sub_root)):
@@ -208,21 +207,3 @@ class Generator:
         import importlib
         import site
         importlib.reload(site)
-
-
-if __name__ == '__main__':
-    # create native components
-    native_stencil = NativeStencil(D2Q9)
-    native_streaming = NativeStandardStreaming.create(True)
-    native_equilibrium = NativeQuadraticEquilibrium()
-    native_collision = NativeBGKCollision.create(native_equilibrium, False)
-    # create generator
-    generator = Generator(native_stencil, native_streaming, native_collision)
-
-    if not generator.resolve():
-        # start generation and installation
-        values = generator.generate()
-        tmp_directory = Generator.format(values)
-        Generator.install(tmp_directory)
-    else:
-        print('already installed')

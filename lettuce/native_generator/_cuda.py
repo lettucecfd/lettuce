@@ -20,11 +20,11 @@ class NativeCuda:
             #    self.dimension(gen, d)
 
             # we target 512 threads at the moment
-            if 1 == generator.stencil.stencil.d():
+            if 1 == generator.stencil.stencil.D():
                 generator.append_launcher_buffer("const auto thread_count = dim3{16u};")
-            if 2 == generator.stencil.stencil.d():
+            if 2 == generator.stencil.stencil.D():
                 generator.append_launcher_buffer("const auto thread_count = dim3{16u, 16u};")
-            if 3 == generator.stencil.stencil.d():
+            if 3 == generator.stencil.stencil.D():
                 generator.append_launcher_buffer("const auto thread_count = dim3{8u, 8u, 8u};")
 
     def generate_block_count(self, generator: 'Generator'):
@@ -33,20 +33,20 @@ class NativeCuda:
 
             # dependencies
             self.generate_thread_count(generator)
-            for d in range(generator.stencil.stencil.d()):
+            for d in range(generator.stencil.stencil.D()):
                 self.generate_dimension(generator, d, hook_into_kernel=False)
 
             # generate
             coord = {0: 'x', 1: 'y', 2: 'z'}
 
-            generator.append_launcher_buffer('')
-            for d in range(generator.stencil.stencil.d()):
+            generator.append_launcher_buffer()
+            for d in range(generator.stencil.stencil.D()):
                 generator.append_launcher_buffer(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
 
-            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(generator.stencil.stencil.d())])
+            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(generator.stencil.stencil.D())])
 
             generator.append_launcher_buffer(f"const auto block_count = dim3{{{dimensions}}};")
-            generator.append_launcher_buffer('')
+            generator.append_launcher_buffer()
 
     def generate_index(self, generator: 'Generator', d: int):
         if not generator.registered(f"index{d}"):
@@ -102,13 +102,13 @@ class NativeCuda:
 
             # dependencies
             self.generate_index(generator, 0)
-            for d in range(1, generator.stencil.stencil.d()):
+            for d in range(1, generator.stencil.stencil.D()):
                 self.generate_index(generator, d)
                 self.generate_length(generator, d - 1, hook_into_kernel=True)
 
             # generate
             offsets = ['(index0)']
-            for d in range(1, generator.stencil.stencil.d()):
+            for d in range(1, generator.stencil.stencil.D()):
                 offsets.append(f"(index{d} * length{d - 1})")
 
             generator.append_index_buffer(f"const index_t offset = {' + '.join(offsets)};")

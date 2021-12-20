@@ -2,14 +2,13 @@ import json
 from typing import Type
 
 from . import *
-from .. import Stencil
 
 
 class NativeStencil(NativeLatticeBase):
     _name: str
-    _stencil: Type[Stencil]
+    _stencil: Type['Stencil']
 
-    def __init__(self, stencil: Type[Stencil]):
+    def __init__(self, stencil: Type['Stencil']):
         self._name = stencil.__name__.lower()
         self.stencil = stencil
 
@@ -22,14 +21,14 @@ class NativeStencil(NativeLatticeBase):
             generator.register('d')
 
             # generate
-            generator.append_constexpr_buffer(f"constexpr index_t d = {self.stencil.d()};")
+            generator.append_constexpr_buffer(f"constexpr index_t d = {self.stencil.D()};")
 
     def generate_q(self, generator: 'Generator'):
         if not generator.registered('q'):
             generator.register('q')
 
             # generate
-            generator.append_constexpr_buffer(f"constexpr index_t q = {self.stencil.q()};")
+            generator.append_constexpr_buffer(f"constexpr index_t q = {self.stencil.Q()};")
 
     def generate_e(self, generator: 'Generator'):
         if not generator.registered('e'):

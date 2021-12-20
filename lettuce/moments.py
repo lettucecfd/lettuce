@@ -3,11 +3,18 @@ Moments and cumulants of the distribution function.
 """
 
 import warnings
-
-import numpy as np
 import torch
+import lettuce
+from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses, ExperimentalWarning
+from lettuce.stencils import Stencil, D1Q3, D2Q9, D3Q27
+import numpy as np
 
-from . import *
+__all__ = [
+    "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
+    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
+]
+
+_ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
 
 
 def moment_tensor(e, multiindex):
@@ -414,6 +421,7 @@ class D3Q27Hermite(Transform):
         return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
+        warnings.warn("A second proof is requiered for this equilibrium @A.K. or @D.W..", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]

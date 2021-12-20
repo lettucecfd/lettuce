@@ -3,11 +3,11 @@ from . import *
 
 class NativeEquilibrium(NativeLatticeBase):
     def generate_f_eq(self, generator: 'Generator'):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
 
 class NativeQuadraticEquilibrium(NativeEquilibrium):
-    _name = 'Quadratic'
+    _name = 'Quad'
 
     def __init__(self):
         super().__init__()
@@ -21,7 +21,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             # generate
             summands = []
-            for d in range(generator.stencil.stencil.d()):
+            for d in range(generator.stencil.stencil.D()):
                 summands.append(f"u[{d}] * u[{d}]")
 
             generator.append_node_buffer(f"const auto uxu = {' + '.join(summands)};")
@@ -36,7 +36,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             # generate
             summands = []
-            for d in range(generator.stencil.stencil.d()):
+            for d in range(generator.stencil.stencil.D()):
                 summands.append(f"e[i][{d}] * u[{d}]")
 
             generator.append_distribution_buffer(f"const auto exu = {' + '.join(summands)};")
@@ -86,4 +86,4 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
 
             # generate
             generator.append_distribution_buffer('const auto f_eq = '
-                          'rho * (((exu + exu - uxu) / two_cs_pow_two) + (0.5 * (f_eq_tmp * f_eq_tmp)) + 1.0) * w[i];')
+                                                 'rho * (((exu + exu - uxu) / two_cs_pow_two) + (0.5 * (f_eq_tmp * f_eq_tmp)) + 1.0) * w[i];')

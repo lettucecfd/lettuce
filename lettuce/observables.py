@@ -4,11 +4,12 @@ Each observable is defined as a callable class.
 The `__call__` function takes f as an argument and returns a torch tensor.
 """
 
-import numpy as np
 import torch
+import numpy as np
+from lettuce.util import torch_gradient
 from packaging import version
 
-from . import *
+__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
 
 
 class Observable:

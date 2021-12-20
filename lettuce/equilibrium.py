@@ -1,22 +1,23 @@
 import torch
 
-from . import *
-from .native_generator import NativeQuadraticEquilibrium
+from lettuce.base import LatticeBase
+from lettuce.native_generator import NativeQuadraticEquilibrium
+
+__all__ = ["Equilibrium", "QuadraticEquilibrium", "IncompressibleQuadraticEquilibrium",
+           "QuadraticEquilibrium_LessMemory"]
 
 
 class Equilibrium(LatticeBase):
     def __call__(self, rho, u):
-        raise AbstractMethodInvokedError()
+        raise NotImplementedError()
 
 
 class QuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice, use_native=True):
-        super().__init__(lattice, use_native)
 
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> NativeQuadraticEquilibrium:
+    def create_native(self) -> 'NativeQuadraticEquilibrium':
         return NativeQuadraticEquilibrium()
 
     def __call__(self, rho, u, *args):
@@ -30,7 +31,7 @@ class QuadraticEquilibrium(Equilibrium):
         return feq
 
 
-class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
+class QuadraticEquilibrium_LessMemory(Equilibrium):
     """does the same as the normal equilibrium, how ever it uses somewhere around 20% less RAM,
     but runs about 2% slower on GPU and 11% on CPU
 
@@ -38,6 +39,12 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     lattice.equilibrium = QuadraticEquilibrium_LessMemory(lattice)
     before starting your simulation
     """
+
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> 'NativeQuadraticEquilibrium':
+        return NativeQuadraticEquilibrium()
 
     def __call__(self, rho, u, *args):
         return self.lattice.einsum(
@@ -50,8 +57,8 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
 
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice, rho0=1.0, use_native=True):
-        super().__init__(lattice, use_native)
+    def __init__(self, lattice, rho0=1.0, use_native: bool = True):
+        Equilibrium.__init__(self, lattice, use_native)
         self.lattice = lattice
         self.rho0 = rho0
 

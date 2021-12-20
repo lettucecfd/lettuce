@@ -1,5 +1,3 @@
-from ..util import AbstractMethodInvokedError
-
 from ._cuda import NativeCuda
 from ._lattice import NativeLattice
 

@@ -60,6 +60,7 @@ class Lattice:
 
     def rho(self, f):
         """density"""
+        return f[None, ...].sum(dim=0)
         return torch.sum(f, dim=0)[None, ...]
 
     def j(self, f):

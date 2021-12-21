@@ -14,6 +14,14 @@ import numpy as np
 __all__ = ["Simulation"]
 
 
+class DomainSimulation:
+    def __init__(self, flow, domain, collision, streaming):
+        self.f = flow.compute_initial_f()
+
+
+
+
+
 class Simulation:
     """High-level API for simulations.
 
@@ -31,36 +39,12 @@ class Simulation:
         self.streaming = streaming
         self.i = 0
 
-        grid = flow.grid
-        p, u = flow.initial_solution(grid)
-        assert list(p.shape) == [1] + list(grid[0].shape), \
-            LettuceException(f"Wrong dimension of initial pressure field. "
-                             f"Expected {[1] + list(grid[0].shape)}, "
-                             f"but got {list(p.shape)}.")
-        assert list(u.shape) == [lattice.D] + list(grid[0].shape), \
-            LettuceException("Wrong dimension of initial velocity field."
-                             f"Expected {[lattice.D] + list(grid[0].shape)}, "
-                             f"but got {list(u.shape)}.")
-        u = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-        rho = lattice.convert_to_tensor(flow.units.convert_pressure_pu_to_density_lu(p))
-        self.f = lattice.equilibrium(rho, lattice.convert_to_tensor(u))
-
         self.reporters = []
 
         # Define masks, where the collision or streaming are not applied
-        x = flow.grid
-        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
-        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
-
-        # Apply boundaries
-        self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
-        for boundary in self._boundaries:
-            if hasattr(boundary, "make_no_collision_mask"):
-                self.no_collision_mask = self.no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
-            if hasattr(boundary, "make_no_stream_mask"):
-                no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
-        if no_stream_mask.any():
-            self.streaming.no_stream_mask = no_stream_mask
+        self.f = flow.compute_initial_f(self.lattice)
+        no_stream_mask, self.no_collision_mask = flow.compute_masks(self.lattice)
+        self.streaming.no_stream_mask = no_stream_mask if no_stream_mask.any() else None
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
@@ -69,11 +53,13 @@ class Simulation:
             self._report()
         for _ in range(num_steps):
             self.i += 1
-            self.f = self.streaming(self.f)
-            # Perform the collision routine everywhere, expect where the no_collision_mask is true
-            self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
-            for boundary in self._boundaries:
-                self.f = boundary(self.f)
+            for local_domains:
+                self.f = self.streaming(self.f)
+                # Perform the collision routine everywhere, expect where the no_collision_mask is true
+                self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
+                for boundary in self._boundaries:
+                    self.f = boundary(self.f)
+            self.communicate()
             self._report()
         end = timer()
         seconds = end - start

@@ -15,15 +15,63 @@ The no-collision mask has the same dimensions as the grid (x, y, (z)).
 
 """
 
+import warnings
+from typing import Callable
 import torch
 import numpy as np
-from lettuce import (LettuceException)
+from numpy import typing as npt
+from .util import LettuceException, LettuceWarning
+from .lattices import Lattice
+
 
 __all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
 
 
+class Boundary:
+    """Base class for boundary conditions
+
+    Parameters
+    ----------
+    mask_function : Callable
+        A function that takes the grid as a sequence of `dim` numpy arrays and returns a boolean mask as a numpy array.
+
+    Examples
+    --------
+
+    >>> Boundary(lambda x,y : x>=0.5)
+    """
+    def __init__(self, mask_function: Callable = None):
+        self.mask_function = mask_function
+        self._mask = None
+
+    def update_mask(self, lattice, grid):
+        if self.mask_function is not None:
+            self._mask = lattice.self.mask_function(grid)
+
+    def make_no_stream_mask(self, mask) -> Union[bool, torch.Tensor]:
+        return False
+
+    def make_no_collision_mask(self, mask):
+        return False
+
+    @property
+    def mask(self):
+        if self._mask is None:
+            raise LettuceException(f"Call `update_mask` before accessing <self>.mask")
+        return self._mask
+
+    @mask.setter
+    def mask(self, mask: npt.NDArray[bool]):
+        warnings.warn(
+            "Setting the boundary mask manually is deprecated as it does "
+            "not support grid refinement and MPI parallelization. "
+            "Instead, the boundary constructor should receive a mask-generating function. "
+        )
+        self._mask = mask
+
+
 class BounceBackBoundary:
-    """Fullway Bounce-Back Boundary"""
+    """Full-way Bounce-Back Boundary"""
 
     def __init__(self, mask, lattice):
         self.mask = lattice.convert_to_tensor(mask)

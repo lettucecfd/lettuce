@@ -57,9 +57,8 @@ class QuadraticEquilibrium_LessMemory(Equilibrium):
 
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice, rho0=1.0, use_native: bool = True):
-        Equilibrium.__init__(self, lattice, use_native)
-        self.lattice = lattice
+    def __init__(self, lattice, rho0=1.0):
+        Equilibrium.__init__(self, lattice)
         self.rho0 = rho0
 
     def __call__(self, rho, u, *args):

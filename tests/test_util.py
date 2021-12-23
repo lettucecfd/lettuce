@@ -51,12 +51,12 @@ def test_grid_fine_to_coarse_2d():
     flow_f = TaylorGreenVortex2D(40, 1600, 0.15, lattice)
     collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
     streaming_f = StandardStreaming(lattice)
-    sim_f = Simulation(flow_f, lattice, collision_f, streaming_f, use_native=False)
+    sim_f = Simulation(flow_f, lattice, collision_f, streaming_f)
 
     flow_c = TaylorGreenVortex2D(20, 1600, 0.15, lattice)
     collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
     streaming_c = StandardStreaming(lattice)
-    sim_c = Simulation(flow_c, lattice, collision_c, streaming_c, use_native=False)
+    sim_c = Simulation(flow_c, lattice, collision_c, streaming_c)
 
     f_c = grid_fine_to_coarse(lattice, sim_f.f, flow_f.units.relaxation_parameter_lu,
                               flow_c.units.relaxation_parameter_lu)
@@ -78,11 +78,11 @@ def test_grid_fine_to_coarse_3d():
 
     flow_f = TaylorGreenVortex3D(40, 1600, 0.15, lattice)
     collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
-    sim_f = Simulation(flow_f, lattice, collision_f, streaming=None, use_native=False)
+    sim_f = Simulation(flow_f, lattice, collision_f)
 
     flow_c = TaylorGreenVortex3D(20, 1600, 0.15, lattice)
     collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
-    sim_c = Simulation(flow_c, lattice, collision_c, streaming=None, use_native=False)
+    sim_c = Simulation(flow_c, lattice, collision_c)
 
     f_c = grid_fine_to_coarse(
         lattice,

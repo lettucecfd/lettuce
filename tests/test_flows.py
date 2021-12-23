@@ -15,11 +15,11 @@ INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
 def test_flow_2d(IncompressibleFlow, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device)
+    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)  # TODO use_native Fails here
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1)
 
 
@@ -30,7 +30,7 @@ def test_flow_3d(IncompressibleFlow, dtype_device):
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1)
 
 
@@ -41,7 +41,7 @@ def test_divergence(stencil, dtype_device):
     flow = DecayingTurbulence(50, 1, 0.05, lattice=lattice, ic_energy=0.5)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     ekin = flow.units.convert_incompressible_energy_to_pu(
         torch.sum(lattice.incompressible_energy(simulation.f))) * flow.units.convert_length_to_pu(1.0) ** lattice.D
 
@@ -80,5 +80,5 @@ def test_obstacle(stencil, dtype_device):
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming, use_native=False)
+    simulation = Simulation(flow, lattice, collision, streaming)
     simulation.step(2)

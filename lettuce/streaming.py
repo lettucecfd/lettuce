@@ -15,8 +15,8 @@ __all__ = ["StandardStreaming", "NoStreaming"]
 class Streaming(LatticeBase):
     no_streaming_mask: Optional[torch.Tensor]
 
-    def __init__(self, lattice: 'Lattice', use_native=True):
-        LatticeBase.__init__(self, lattice, use_native)
+    def __init__(self, lattice: 'Lattice'):
+        LatticeBase.__init__(self, lattice)
         self.no_streaming_mask = None
 
     def __call__(self, f):
@@ -34,8 +34,8 @@ class Streaming(LatticeBase):
 
 
 class NoStreaming(Streaming):
-    def __init__(self, lattice: 'Lattice', use_native=True):
-        Streaming.__init__(self, lattice, use_native)
+    def __init__(self, lattice: 'Lattice'):
+        Streaming.__init__(self, lattice)
 
     def native_available(self) -> bool:
         return True
@@ -75,6 +75,6 @@ class SLStreaming(Streaming):
     TODO (is there a good python package for octrees or do we have to write this ourselves?)
     """
 
-    def __init__(self, lattice: 'Lattice', grid, use_native=True):
-        Streaming.__init__(self, lattice, use_native)
+    def __init__(self, lattice: 'Lattice', grid):
+        Streaming.__init__(self, lattice)
         raise NotImplementedError()

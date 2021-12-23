@@ -14,9 +14,8 @@ class LatticeBase:
     """
 
     lattice: 'Lattice'
-    use_native: bool
 
-    def __init__(self, lattice, use_native=True):
+    def __init__(self, lattice):
         """Trivial Constructor for Class LatticeBase
 
         Parameters
@@ -24,13 +23,9 @@ class LatticeBase:
         lattice: Lattice
             The associated lattice object.
             Used for configuration and to access other lattice components.
-        use_native: bool
-            Whether to use native implementation or not.
-            (Only if cuda is available and implementation is given)
         """
 
         self.lattice = lattice
-        self.use_native = use_native
 
     def native_available(self) -> bool:
         """native_available

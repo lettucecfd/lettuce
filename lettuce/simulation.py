@@ -1,16 +1,19 @@
 """Lattice Boltzmann Solver"""
 
+import torch
+import numpy as np
+
+import pickle
+import logging
+import warnings
+
 from timeit import default_timer as timer
 
 from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient, StandardStreaming
 from lettuce.util import pressure_poisson
 from lettuce.native_generator import Generator
 
-import pickle
 from copy import deepcopy
-import warnings
-import torch
-import numpy as np
 
 __all__ = ["Simulation"]
 
@@ -29,14 +32,11 @@ class Simulation:
     collision: 'Collision'
     streaming: 'Streaming'
 
-    use_native: bool
-
-    def __init__(self, flow, lattice, collision, streaming=None, use_native: bool = True):
+    def __init__(self, flow, lattice, collision, streaming=None):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
         self.streaming = streaming if streaming is not None else StandardStreaming(lattice)
-        self.use_native = use_native
 
         self.i = 0
 
@@ -75,11 +75,16 @@ class Simulation:
         self.stream_and_collide = Simulation.stream_and_collide_
 
         # check if native is possible, available and wanted
-        if (not use_native) or (str(lattice.device) == 'cpu'):
+        if not lattice.use_native:
             return
-        if not (self.streaming.native_available() and self.streaming.use_native):
+        if str(lattice.device) == 'cpu':
+            logging.warning('use_native was requested but no cuda device was selected!')
             return
-        if not (self.collision.native_available() and self.collision.use_native):
+        if not self.streaming.native_available():
+            logging.warning('use_native was requested but streaming does not support native yet!')
+            return
+        if not self.collision.native_available():
+            logging.warning('use_native was requested but collision does not support native yet!')
             return
 
         native_stencil = self.lattice.stencil.create_native()

@@ -130,7 +130,7 @@ def test_masks(dtype_device):
     flow.mask[1, 1] = 1
     streaming = StandardStreaming(lattice)
     collision = BGKCollision(lattice, 1.0)
-    simulation = Simulation(flow, lattice, collision, streaming, use_native=False)
+    simulation = Simulation(flow, lattice, collision, streaming)
     assert simulation.streaming.no_stream_mask.any()
     assert simulation.collision.no_collision_mask.any()
 
@@ -159,7 +159,7 @@ def test_equilibrium_pressure_outlet(dtype_device):
     mask[10:20, 10:20] = 1
     flow.mask = mask
     simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),
-                            StandardStreaming(lattice), use_native=False)
+                            StandardStreaming(lattice))
     simulation.step(30)
     rho = lattice.rho(simulation.f)
     u = lattice.u(simulation.f)

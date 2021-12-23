@@ -15,9 +15,8 @@ TRANSFORMS = list(get_subclasses(Transform, moments))
 
 
 @pytest.fixture(
-    params=[
-        "cpu",
-        pytest.param("cuda:0", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
+    params=["cpu",
+            pytest.param("cuda:0", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
 def device(request):
     """Run a test case for all available devices."""
     return request.param
@@ -55,7 +54,7 @@ def lattice(request, stencil):
         pytest.skip(reason="CUDA not available.")
     if device == "cuda:0" and dtype == torch.float32:
         pytest.skip("TODO: loosen tolerances")
-    return Lattice(stencil, device=device, dtype=dtype, use_native=(native=="native"))
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native"))
 
 
 @pytest.fixture()
@@ -73,7 +72,7 @@ def f_all_lattices(request, lattice):
     np.random.seed(1)
     f = np.random.random([lattice.Q] + [3] * lattice.D)
     Ltc = request.param
-    ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype, use_native=False)
+    ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype)
     return ltc.convert_to_tensor(f), ltc
 
 

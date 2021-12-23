@@ -27,8 +27,8 @@ class Collision(LatticeBase):
 
     no_collision_mask: Optional[torch.Tensor]
 
-    def __init__(self, lattice: 'Lattice', use_native: bool = True):
-        LatticeBase.__init__(self, lattice, use_native)
+    def __init__(self, lattice: 'Lattice'):
+        LatticeBase.__init__(self, lattice)
         self.no_collision_mask = None
 
     def __call__(self, f: torch.Tensor) -> torch.Tensor:
@@ -67,8 +67,8 @@ class NoCollision(Collision):
 
 
 class BGKCollision(Collision):
-    def __init__(self, lattice, tau, force=None, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau, force=None):
+        Collision.__init__(self, lattice)
         self.force = force
         self.lattice = lattice
         self.tau = tau
@@ -97,8 +97,8 @@ class MRTCollision(Collision):
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
 
-    def __init__(self, lattice, transform, relaxation_parameters, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, transform, relaxation_parameters):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.transform = transform
         self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
@@ -115,8 +115,8 @@ class TRTCollision:
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
 
-    def __init__(self, lattice, tau, tau_minus=1.0, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau, tau_minus=1.0):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau_plus = tau
         self.tau_minus = tau_minus
@@ -136,8 +136,8 @@ class TRTCollision:
 class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
 
-    def __init__(self, lattice, tau, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau = tau
         self.Q_matrix = torch.zeros([lattice.Q, lattice.D, lattice.D], device=lattice.device, dtype=lattice.dtype)
@@ -168,8 +168,8 @@ class RegularizedCollision(Collision):
 class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
 
-    def __init__(self, lattice, tau, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
@@ -247,8 +247,8 @@ class KBCCollision2D(Collision):
 class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
 
-    def __init__(self, lattice, tau, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
@@ -339,8 +339,8 @@ class KBCCollision3D(Collision):
 class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
-    def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
+        Collision.__init__(self, lattice)
         self.force = force
         self.lattice = lattice
         self.tau = tau
@@ -371,8 +371,8 @@ class SmagorinskyCollision(Collision):
 class BGKInitialization(Collision):
     """Keep velocity constant."""
 
-    def __init__(self, lattice, flow, moment_transformation, use_native=True):
-        Collision.__init__(self, lattice, use_native)
+    def __init__(self, lattice, flow, moment_transformation):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation

@@ -1,8 +1,18 @@
+import logging
+
 from . import *
 from .. import __version__
 
 
 class Generator:
+    """Class Generator
+
+    The generator is one big formatter tool and build tool in one.
+    It first uses a configuration of lattice components to generate
+    a big dictionary which is then filled into a template directory.
+    This directory will then be installed.
+    """
+
     cuda: 'NativeCuda' = NativeCuda()
     lattice: 'NativeLattice' = NativeLattice()
     stencil: 'NativeStencil'
@@ -166,7 +176,7 @@ class Generator:
 
             if os.path.isdir(os.path.join(output_root_dir, output_sub_root)):
                 shutil.rmtree(os.path.join(output_root_dir, output_sub_root), ignore_errors=True)
-            os.makedirs(os.path.join(output_root_dir, output_sub_root), exist_ok=False)
+            os.makedirs(os.path.join(output_root_dir, output_sub_root))
 
             for sub_file in sub_files:
                 input_sub_file = os.path.join(input_root_dir, input_sub_root, sub_file)
@@ -187,10 +197,10 @@ class Generator:
             # noinspection PyUnresolvedReferences
             return native.stream_and_collide
         except ModuleNotFoundError:
-            # TODO log error? 'combination not yet generated!'
+            logging.info('Could not find the native module. Maybe it is not installed yet.')
             return None
         except AttributeError:
-            # TODO log error? 'combination is not installed properly!'
+            logging.error('Native module found but it is not working as expected.')
             return None
 
     @staticmethod

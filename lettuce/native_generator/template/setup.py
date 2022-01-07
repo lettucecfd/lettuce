@@ -9,8 +9,8 @@ install_requires = ['torch>=1.2']
 setup_requires = []
 
 native_sources = [
-    os.path.join(__file__, '..', 'lettuce.cpp'),
-    os.path.join(__file__, '..', 'lettuce_cuda.cu')]
+    os.path.join(os.path.dirname(__file__), 'lettuce.cpp'),
+    os.path.join(os.path.dirname(__file__), 'lettuce_cuda.cu')]
 
 setup(
     author='Andreas Kraemer',

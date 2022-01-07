@@ -163,7 +163,7 @@ class Generator:
         def fmt(text):
             return text.format(**val)
 
-        input_root_dir = os.path.abspath(os.path.join(__file__, '..', 'template'))
+        input_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),'template'))
         output_root_dir = tempfile.mkdtemp()
 
         for (sub_root, sub_dirs, sub_files) in os.walk(input_root_dir):
@@ -176,7 +176,7 @@ class Generator:
 
             if os.path.isdir(os.path.join(output_root_dir, output_sub_root)):
                 shutil.rmtree(os.path.join(output_root_dir, output_sub_root), ignore_errors=True)
-            os.makedirs(os.path.join(output_root_dir, output_sub_root))
+            os.makedirs(os.path.join(output_root_dir, output_sub_root), exist_ok=True)
 
             for sub_file in sub_files:
                 input_sub_file = os.path.join(input_root_dir, input_sub_root, sub_file)
@@ -209,8 +209,11 @@ class Generator:
         import subprocess
 
         setup_file = os.path.join(directory, 'setup.py')
-        subprocess.call(['python', setup_file, 'install'], shell=True, cwd=directory)
-        # TODO log error? 'failed to install combination. see log for more details!'
+        cmd = ['python', 'setup.py', 'install']
+        p = subprocess.run(cmd, shell=False, cwd=directory)
+
+        if p.returncode != 0:
+            raise subprocess.CalledProcessError(p.returncode, cmd)
 
         # after install the module is not registered
         # so we need to reload the register

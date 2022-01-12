@@ -1,0 +1,4 @@
+exclude_patterns:
+    - "versioneer.py"
+    - "lettuce/_version.py"
+

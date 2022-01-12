@@ -7,12 +7,37 @@ import numpy as np
 import torch
 
 from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments
+    stencils, Stencil, get_subclasses, Transform, Lattice, moments, collision, Collision,
+    SymmetryGroup
 )
 
 STENCILS = list(get_subclasses(Stencil, stencils))
 TRANSFORMS = list(get_subclasses(Transform, moments))
+COLLISION_MODELS = list(get_subclasses(Collision, collision))
 
+
+# == slow tests
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="run slow tests"
+    )
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: mark test as slow to run")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--runslow"):
+        # --runslow given in cli: do not skip slow tests
+        return
+    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
+
+
+# === fixtures
 
 @pytest.fixture(
     params=["cpu", pytest.param(
@@ -73,3 +98,16 @@ def f_transform(request, f_all_lattices):
         return f, Transform(lattice)
     else:
         pytest.skip("Stencil not supported for this transform.")
+
+
+@pytest.fixture(params=COLLISION_MODELS)
+def Collision(request):
+    """Run a test for all stencils."""
+    return request.param
+
+
+@pytest.fixture(params=STENCILS, scope="session", autouse=True)
+def symmetry_group(request):
+    group = SymmetryGroup(request.param)
+    return group
+

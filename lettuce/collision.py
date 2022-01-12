@@ -3,17 +3,26 @@ Collision models
 """
 
 import torch
+import numpy as np
 
 from lettuce.equilibrium import QuadraticEquilibrium
-from lettuce.util import LettuceException
+from lettuce.moments import DEFAULT_TRANSFORM
+from lettuce.util import LettuceCollisionNotDefined
+from lettuce.stencils import D2Q9, D3Q27
 
 __all__ = [
-    "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision", "RegularizedCollision",
-    "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
+    "Collision",
+    "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision",
+    "RegularizedCollision", "SmagorinskyCollision", "TRTCollision", "BGKInitialization",
 ]
 
 
-class BGKCollision:
+class Collision:
+    def __call__(self, f):
+        return NotImplemented
+
+
+class BGKCollision(Collision):
     def __init__(self, lattice, tau, force=None):
         self.force = force
         self.lattice = lattice
@@ -28,17 +37,27 @@ class BGKCollision:
         return f - 1.0 / self.tau * (f - feq) + Si
 
 
-class MRTCollision:
+class MRTCollision(Collision):
     """Multiple relaxation time collision operator
 
     This is an MRT operator in the most general sense of the word.
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
 
-    def __init__(self, lattice, transform, relaxation_parameters):
+    def __init__(self, lattice, relaxation_parameters, transform=None):
         self.lattice = lattice
-        self.transform = transform
-        self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
+        if transform is None:
+            try:
+                self.transform = DEFAULT_TRANSFORM[lattice.stencil](lattice)
+            except KeyError:
+                raise LettuceCollisionNotDefined("No entry for stencil {lattice.stencil} in moments.DEFAULT_TRANSFORM")
+        else:
+            self.transform = transform
+        if isinstance(relaxation_parameters, float):
+            tau = relaxation_parameters
+            self.relaxation_parameters = lattice.convert_to_tensor(tau * np.ones(lattice.stencil.Q()))
+        else:
+            self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
 
     def __call__(self, f):
         m = self.transform.transform(f)
@@ -48,7 +67,7 @@ class MRTCollision:
         return f
 
 
-class TRTCollision:
+class TRTCollision(Collision):
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
 
@@ -62,14 +81,14 @@ class TRTCollision:
         u = self.lattice.u(f)
         feq = self.lattice.equilibrium(rho, u)
         f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
-                2.0 * self.tau_plus)
+            2.0 * self.tau_plus)
         f_diff_neq += ((f - f[self.lattice.stencil.opposite]) - (feq - feq[self.lattice.stencil.opposite])) / (
-                2.0 * self.tau_minus)
+            2.0 * self.tau_minus)
         f = f - f_diff_neq
         return f
 
 
-class RegularizedCollision:
+class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
 
     def __init__(self, lattice, tau):
@@ -100,12 +119,13 @@ class RegularizedCollision:
         return f
 
 
-class KBCCollision2D:
+class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
 
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
+        if not lattice.stencil == D2Q9:
+            raise LettuceCollisionNotDefined("This implementation only works for the D2Q9 stencil.")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -178,12 +198,13 @@ class KBCCollision2D:
         return f
 
 
-class KBCCollision3D:
+class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
 
     def __init__(self, lattice, tau):
         self.lattice = lattice
-        assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
+        if not lattice.stencil == D3Q27:
+            raise LettuceCollisionNotDefined("This implementation only works for the D3Q27 stencil.")
         self.tau = tau
         self.beta = 1. / (2 * tau)
 
@@ -269,7 +290,7 @@ class KBCCollision3D:
         return f
 
 
-class SmagorinskyCollision:
+class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
     def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
@@ -324,3 +345,4 @@ class BGKInitialization:
         mnew[self.momentum_indices] = rho * self.u
         f = self.moment_transformation.inverse_transform(mnew)
         return f
+

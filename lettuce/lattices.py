@@ -8,6 +8,7 @@ In contrast, the Lattice lives on the Device (usually a GPU) and its vectors are
 Its stencil is still accessible trough Lattice.stencil.
 """
 
+import copy
 import warnings
 import numpy as np
 import torch
@@ -102,15 +103,16 @@ class Lattice:
     def einsum(self, equation, fields, **kwargs):
         """Einstein summation on local fields."""
         input, output = equation.split("->")
+        out = copy.copy(output)
         inputs = input.split(",")
+        xyz = "xyz"[:self.D]
         for i, inp in enumerate(inputs):
-            if len(inp) == len(fields[i].shape):
+            if "..." in inp:
+                raise LettuceException("... not allowed in lattice.einsum")
+            elif len(inp) == len(fields[i].shape):
                 pass
-            elif len(inp) == len(fields[i].shape) - self.D:
-                inputs[i] += "..."
-                if not output.endswith("..."):
-                    output += "..."
             else:
-                raise LettuceException("Bad dimension.")
-        equation = ",".join(inputs) + "->" + output
+                inputs[i] = f"...{inp}{xyz}"
+                out = f"...{output}{xyz}"
+        equation = ",".join(inputs) + "->" + out
         return torch.einsum(equation, fields, **kwargs)

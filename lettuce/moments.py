@@ -11,7 +11,7 @@ import numpy as np
 
 __all__ = [
     "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
-    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
+    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite", "DEFAULT_TRANSFORM"
 ]
 
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
@@ -22,15 +22,6 @@ def moment_tensor(e, multiindex):
         return torch.prod(torch.pow(e, multiindex[..., None, :]), dim=-1)
     else:
         return np.prod(np.power(e, multiindex[..., None, :]), axis=-1)
-
-
-def get_default_moment_transform(lattice):
-    if lattice.stencil == D1Q3:
-        return D1Q3Transform(lattice)
-    if lattice.stencil == D2Q9:
-        return D2Q9Lallemand(lattice)
-    else:
-        raise LettuceException(f"No default moment transform for lattice {lattice}.")
 
 
 class Moments:
@@ -54,10 +45,10 @@ class Transform:
         return [self.names.index(name) for name in moment_names]
 
     def transform(self, f):
-        return f
+        return self.lattice.einsum("ij,j->i", (self.matrix, f))
 
     def inverse_transform(self, m):
-        return m
+        return self.lattice.einsum("ij,j->i", (self.inverse, m))
 
     def equilibrium(self, m):
         """A very inefficient and basic implementation of the equilibrium moments.
@@ -83,19 +74,13 @@ class D1Q3Transform(Transform):
         [0, 1 / 2, 1 / 2],
         [0, -1 / 2, 1 / 2]
     ])
-    names = ["rho", "j", "e"]
+    names = ["rho", "j_x", "e_xx"]
     supported_stencils = [D1Q3]
 
     def __init__(self, lattice):
         super(D1Q3Transform, self).__init__(lattice, self.names)
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     # def equilibrium(self, m):
     #    # TODO
@@ -125,7 +110,7 @@ class D2Q9Dellar(Transform):
          [1 / 36, -1 / 12, -1 / 12, 1 / 54, 1 / 36, 1 / 54, 1 / 36, -1 / 24, -1 / 24],
          [1 / 36, 1 / 12, -1 / 12, 1 / 54, -1 / 36, 1 / 54, 1 / 36, 1 / 24, -1 / 24]]
     )
-    names = ['rho', 'jx', 'jy', 'Pi_xx', 'Pi_xy', 'PI_yy', 'N', 'Jx', 'Jy']
+    names = ['rho', 'jx', 'jy', 'Pi_xx', 'Pi_xy', 'PI_yy', 'N_xxyy', 'J_xxy', 'J_xyy']
     supported_stencils = [D2Q9]
 
     def __init__(self, lattice):
@@ -135,14 +120,7 @@ class D2Q9Dellar(Transform):
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
 
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
-
     def equilibrium(self, m):
-        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]
@@ -191,12 +169,6 @@ class D2Q9Lallemand(Transform):
         )
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
-
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
         """From Lallemand and Luo"""
@@ -414,12 +386,6 @@ class D3Q27Hermite(Transform):
         self.matrix = self.lattice.convert_to_tensor(self.matrix)
         self.inverse = self.lattice.convert_to_tensor(self.inverse)
 
-    def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
-
-    def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
-
     def equilibrium(self, m):
         meq = torch.zeros_like(m)
         rho = m[0]
@@ -454,3 +420,18 @@ class D3Q27Hermite(Transform):
         meq[25] = jx * jy * jy * jz * jz / rho ** 4
         meq[26] = jx * jy * jx * jz * jy * jz / rho ** 5
         return meq
+
+
+DEFAULT_TRANSFORM = {
+    D1Q3: D1Q3Transform,
+    D2Q9: D2Q9Dellar,
+    D3Q27: D3Q27Hermite
+}
+
+
+def get_default_moment_transform(lattice):
+    try:
+        transform_class = DEFAULT_TRANSFORM[lattice.stencil]
+    except KeyError:
+        raise LettuceException(f"No default moment transform for lattice {lattice}.")
+    return transform_class(lattice)

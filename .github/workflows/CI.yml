@@ -44,12 +44,10 @@ jobs:
       - name: Install package
         run: |
           python setup.py install
-      - name: Test with pytest
+      - name: Unit tests with pytest
         run: |
-          # run unit tests
           py.test
-          # run integration tests
+      - name: Integration tests
+        run: |
           lettuce --no-cuda convergence
           lettuce --no-cuda benchmark
-
-

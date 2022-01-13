@@ -68,12 +68,12 @@ class Simulation:
         if self.i == 0:
             self._report()
         for _ in range(num_steps):
-            self.i += 1
             # Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
             self.f = self.streaming(self.f)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
+            self.i += 1
             self._report()
         end = timer()
         seconds = end - start

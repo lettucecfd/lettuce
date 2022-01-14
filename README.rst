@@ -1,14 +1,16 @@
 .. image:: https://raw.githubusercontent.com/lettucecfd/lettuce/master/.source/img/logo_lettuce_typo.png
 
-.. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
-        :target: https://travis-ci.com/lettucecfd/lettuce
+.. image:: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml/badge.svg
+        :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
+        :alt: CI Status
 
 .. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
         :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
-        :target: https://doi.org/10.5281/zenodo.3757641
+..
+    .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
+            :target: https://doi.org/10.5281/zenodo.3757641
 
 .. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
         :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
@@ -27,14 +29,27 @@ It provides
 
 Resources
 ---------
-- `Documentation`_
-- Presentation at CFDML2021 - `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
 
+- `Documentation`_
+- Presentation at CFDML2021 - `Paper`_ | `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
+
+.. _Paper: https://www.springerprofessional.de/en/lettuce-pytorch-based-lattice-boltzmann-framework/19862378
 .. _Documentation: https://lettuceboltzmann.readthedocs.io
 .. _Preprint: https://arxiv.org/pdf/2106.12929.pdf
 .. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
 .. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
 .. _Code: https://github.com/lettucecfd/lettuce-paper
+
+When using lettuce please cite::
+
+    @inproceedings{bedrunka2021lettuce,
+      title={Lettuce: PyTorch-Based Lattice Boltzmann Framework},
+      author={Bedrunka, Mario Christopher and Wilde, Dominik and Kliemank, Martin and Reith, Dirk and Foysi, Holger and Kr{\"a}mer, Andreas},
+      booktitle={High Performance Computing: ISC High Performance Digital 2021 International Workshops, Frankfurt am Main, Germany, June 24--July 2, 2021, Revised Selected Papers},
+      pages={40},
+      organization={Springer Nature}
+    }
+
 
 Getting Started
 ---------------

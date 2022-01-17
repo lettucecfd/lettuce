@@ -142,7 +142,7 @@ class Simulation:
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 
         feq = self.lattice.equilibrium(rho, u)
-        self.f = feq + fneq
+        self.f = feq - fneq
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

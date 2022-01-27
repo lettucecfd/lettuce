@@ -30,6 +30,8 @@ def dtype_device(request, device):
     """Run a test case for all available devices and data types available on the device."""
     if device == "cpu" and request.param == torch.float16:
         pytest.skip("Half precision is only available on GPU.")
+    if device == "cuda:0" and request.param == torch.float32:
+        pytest.skip("Tolerances are not yet adapted to CUDA single precision.")
     return request.param, device
 
 

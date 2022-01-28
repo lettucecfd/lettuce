@@ -21,8 +21,7 @@ def test_force_guo(ForceType, device):
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1000)
     # compare with reference solution
-    u_correction = acceleration_lu[:, None, None] / (2 * lattice.rho(simulation.f))
-    u_sim = lattice.u(simulation.f) + u_correction
+    u_sim = lattice.u(simulation.f, acceleration=acceleration_lu)
     u_sim = flow.units.convert_velocity_to_pu(lattice.convert_to_numpy(u_sim))
     _, u_ref = flow.analytic_solution(flow.grid)
     fluidnodes = np.where(np.logical_not(flow.boundaries[0].mask.cpu()))

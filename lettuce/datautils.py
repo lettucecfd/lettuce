@@ -9,6 +9,8 @@ import pickle
 import io
 import numpy as np
 
+__all__ = ["HDF5Reporter", "LettuceDataset"]
+
 
 class HDF5Reporter:
     """ HDF5 reporter for distribution function f in lettuce containing

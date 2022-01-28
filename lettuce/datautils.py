@@ -62,9 +62,6 @@ class HDF5Reporter:
     def __call__(self, i, t, f):
         if i % self.interval == 0:
             with h5py.File(self.filebase + '.h5', 'r+') as fs:
-                # dset = fs.create_dataset(f"{i:06d}", self.shape)
-                # dset[:] = self.lattice.convert_to_numpy(f)
-                # self.dset = self.lattice.convert_to_numpy(f)
                 fs["f"].resize(fs["f"].shape[0]+1, axis=0)
                 fs["f"][-1, ...] = self.lattice.convert_to_numpy(f)
                 fs.attrs['data'] = str(fs["f"].shape[0])
@@ -144,8 +141,7 @@ class LettuceDataset(data.Dataset):
         self.fs.close()
 
     def get_data(self, idx):
-        # self.lattice.convert_to_tensor(self.fs[self.keys[idx]][:])
-        return self.lattice.convert_to_tensor(self.fs["f"][idx, :])
+        return self.lattice.convert_to_tensor(self.fs["f"][idx])
 
     def get_attr(self, attr):
         return self.fs.attrs[attr]

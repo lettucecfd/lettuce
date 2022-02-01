@@ -38,7 +38,7 @@ class NativeLattice:
             generator.append_node_buffer(f"const scalar_t u[d]{{")
             for d in range(generator.stencil.stencil.D()):
                 summands = []
-                for q in range(generator.stencil.stencil.D()):
+                for q in range(generator.stencil.stencil.Q()):
                     summands.append(f"e[{q}][{d}] * f_reg[{q}]")
                 generator.append_node_buffer(f"    ({' + '.join(summands)})" + div_rho + ',')
             generator.append_node_buffer('};')

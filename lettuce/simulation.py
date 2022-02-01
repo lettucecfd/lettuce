@@ -68,12 +68,12 @@ class Simulation:
         if self.i == 0:
             self._report()
         for _ in range(num_steps):
-            self.i += 1
-            self.f = self.streaming(self.f)
             # Perform the collision routine everywhere, expect where the no_collision_mask is true
             self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
+            self.f = self.streaming(self.f)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
+            self.i += 1
             self._report()
         end = timer()
         seconds = end - start
@@ -142,7 +142,7 @@ class Simulation:
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 
         feq = self.lattice.equilibrium(rho, u)
-        self.f = feq + fneq
+        self.f = feq - fneq
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

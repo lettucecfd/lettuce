@@ -132,6 +132,7 @@ We use the following third-party packages:
 * matplotlib_
 * versioneer_
 * pyevtk_
+* h5py_
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
@@ -146,6 +147,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _matplotlib: https://github.com/matplotlib/matplotlib
 .. _versioneer: https://github.com/python-versioneer/python-versioneer
 .. _pyevtk: https://github.com/pyscience-projects/pyevtk
+.. _h5py: https://github.com/h5py/h5py
 
 License
 -----------

@@ -11,8 +11,7 @@ import torch
 import pyevtk.hl as vtk
 
 __all__ = [
-    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter",
-    "MaxUReporter", "EnergyReporter", "EnstrophyReporter", "SpectrumReporter"
+    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter"
 ]
 
 
@@ -145,38 +144,3 @@ class ObservableReporter:
                 self.out.append(entry)
             else:
                 print(*entry, file=self.out)
-
-
-# ----------------------------------------
-# Deprecated classes
-# ----------------------------------------
-# These remainder of this file is only for backwards compatibility. It will eventually be deleted.
-
-
-class GenericStepReporter:
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError(f"{self.__class__.__name__} is deprecated. Use ObservableReporter instead.")
-
-
-def MaxUReporter(lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-    warnings.warn("MaxUReporter is deprecated. Use ObservableReporter(MaximumVelocity, ...) instead.")
-    from lettuce.observables import MaximumVelocity
-    return ObservableReporter(MaximumVelocity(lattice, flow), interval=interval, out=out)
-
-
-def EnergyReporter(lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-    warnings.warn("EnergyReporter is deprecated. Use ObservableReporter(IncompressibleKineticEnergy, ...) instead.")
-    from lettuce.observables import IncompressibleKineticEnergy
-    return ObservableReporter(IncompressibleKineticEnergy(lattice, flow), interval=interval, out=out)
-
-
-def EnstrophyReporter(lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-    warnings.warn("EnstrophyReporter is deprecated. Use ObservableReporter(Enstrophy, ...) instead.")
-    from lettuce.observables import Enstrophy
-    return ObservableReporter(Enstrophy(lattice, flow), interval=interval, out=out)
-
-
-def SpectrumReporter(lattice, flow, interval=1, starting_iteration=0, out=sys.stdout):
-    warnings.warn("SpectrumReporter is deprecated. Use ObservableReporter(EnergySpectrum, ...) instead.")
-    from lettuce.observables import EnergySpectrum
-    return ObservableReporter(EnergySpectrum(lattice, flow), interval=interval, out=out)

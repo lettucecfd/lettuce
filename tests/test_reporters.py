@@ -2,8 +2,7 @@ import pytest
 import os
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, PoiseuilleFlow2D, Lattice, D3Q27, D2Q9, write_image, \
     BGKCollision, StandardStreaming, Simulation, DecayingTurbulence
-from lettuce.reporters import write_vtk, VTKReporter, \
-    ObservableReporter  # ,EnstrophyReporter,EnergyReporter,MaxUReporter,SpectrumReporter
+from lettuce.reporters import write_vtk, VTKReporter, ObservableReporter
 from lettuce.datautils import HDF5Reporter, LettuceDataset
 from lettuce.observables import Enstrophy, EnergySpectrum, MaximumVelocity, IncompressibleKineticEnergy, Mass
 import numpy as np

@@ -8,7 +8,7 @@ from lettuce.force import Guo, ShanChen
 
 
 @pytest.mark.parametrize("ForceType", [Guo, ShanChen])
-def test_force_guo(ForceType, device):
+def test_force(ForceType, device):
     dtype = torch.double
     lattice = Lattice(D2Q9, dtype=dtype, device=device)
     flow = PoiseuilleFlow2D(resolution=10, reynolds_number=1, mach_number=0.02, lattice=lattice,
@@ -21,7 +21,7 @@ def test_force_guo(ForceType, device):
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1000)
     # compare with reference solution
-    u_sim = lattice.u(simulation.f, acceleration=acceleration_lu)
+    u_sim = lattice.u(simulation.f, acceleration=torch.as_tensor(acceleration_lu, device=device))
     u_sim = flow.units.convert_velocity_to_pu(lattice.convert_to_numpy(u_sim))
     _, u_ref = flow.analytic_solution(flow.grid)
     fluidnodes = np.where(np.logical_not(flow.boundaries[0].mask.cpu()))

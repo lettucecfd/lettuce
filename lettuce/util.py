@@ -7,7 +7,8 @@ import torch
 
 __all__ = [
     "LettuceException", "LettuceWarning", "InefficientCodeWarning", "ExperimentalWarning",
-    "get_subclasses", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson"
+    "get_subclasses", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson",
+    "append_axes"
 ]
 
 
@@ -194,3 +195,8 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
     )[None, ...]
 
     return units.convert_pressure_pu_to_density_lu(p_mod)
+
+
+def append_axes(array, n):
+    index = (Ellipsis, ) + (None, ) * n
+    return array[index]

@@ -1,4 +1,7 @@
+
 __all__ = ["Guo", "ShanChen"]
+
+from .util import append_axes
 
 
 class Guo:
@@ -8,18 +11,16 @@ class Guo:
         self.acceleration = lattice.convert_to_tensor(acceleration)
 
     def source_term(self, u):
-        index = [Ellipsis] + [None] * self.lattice.D
-        emu = self.lattice.e[index] - u
+        emu = append_axes(self.lattice.e, self.lattice.D) - u
         eu = self.lattice.einsum("ib,b->i", [self.lattice.e, u])
         eeu = self.lattice.einsum("ia,i->ia", [self.lattice.e, eu])
         emu_eeu = emu / (self.lattice.cs ** 2) + eeu / (self.lattice.cs ** 4)
         emu_eeuF = self.lattice.einsum("ia,a->i", [emu_eeu, self.acceleration])
-        weemu_eeuF = self.lattice.w[index] * emu_eeuF
+        weemu_eeuF = append_axes(self.lattice.w, self.lattice.D) * emu_eeuF
         return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
     def u_eq(self, f):
-        index = [Ellipsis] + [None] * self.lattice.D
-        return self.ueq_scaling_factor * self.acceleration[index] / self.lattice.rho(f)
+        return self.ueq_scaling_factor * append_axes(self.acceleration, self.lattice.D) / self.lattice.rho(f)
 
     @property
     def ueq_scaling_factor(self):
@@ -36,8 +37,7 @@ class ShanChen:
         return 0
 
     def u_eq(self, f):
-        index = [Ellipsis] + [None] * self.lattice.D
-        return self.ueq_scaling_factor * self.acceleration[index] / self.lattice.rho(f)
+        return self.ueq_scaling_factor * append_axes(self.acceleration, self.lattice.D) / self.lattice.rho(f)
 
     @property
     def ueq_scaling_factor(self):

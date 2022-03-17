@@ -47,3 +47,9 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     zip_safe=False,
 )
+
+setup(
+    name="torchdd",
+    version="0.0.1",
+    packages=find_packages('torchdd')
+)

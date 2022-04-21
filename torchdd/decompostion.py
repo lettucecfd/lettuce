@@ -266,7 +266,8 @@ class MPIObservableReporter:
         self.interval = interval
         self.out = [] if out is None else out
         self._parameter_name = observable.__class__.__name__
-        #print('steps    ', 'time    ', self._parameter_name)
+        if dist.get_rank() == 0:
+            print('steps    ', 'time    ', self._parameter_name)
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
@@ -279,13 +280,8 @@ class MPIObservableReporter:
             torch.distributed.gather_object(obj=f_send, object_gather_list=f_all, dst=0)
             if self.decomposition.mpi_rank == 0:
                 ff = torch.cat(f_all, dim=1).to(device=f.device)
-                # print("f_all0.shape ", f_all[0].shape)
-                # print(torch.all(f_all[0] == f_send))
-                # print("f_all1.shape ", f_all[1].shape)
-                # print("shape:", ff.shape)
-                # mass = self.observable.lattice.rho(ff)
-                # print("mass", torch.sum(mass,dim=(0,1,2,3)))
-                print(t)
+
+
                 observed = self.observable.lattice.convert_to_numpy(self.observable(ff))
                 assert len(observed.shape) < 2
                 if len(observed.shape) == 0:

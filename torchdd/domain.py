@@ -231,7 +231,7 @@ class BoxDomain(Domain):
             point_fraction = ((coordinate - self.lower[dim]) / self.lengths[dim]).item()
             float_index = self.resolution[dim] * point_fraction
             int_index = round(float_index)
-            if any(torch.isclose(self.grid()[0][((slice(None),) + (0,) * (self.dim-1))],torch.tensor(coordinate,dtype=bounds[0].dtype))) is not True:
+            if any(torch.isclose(self.grid()[0][((slice(None),) + (0,) * (self.dim-1))], torch.tensor(coordinate,dtype=bounds[0].dtype))) is not True:
                 raise ValueError(
                     f"Cannot split {self} at coordinate {coordinate} along dimension {dim}."
                     f"Coordinate not contained in box."

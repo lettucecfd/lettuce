@@ -128,11 +128,12 @@ def test_split(endpoint, ctx):
         endpoint=endpoint,
         cubic_cells=True
     )
-    # with pytest.raises(ValueError, match="Coordinate not contained in box."):
-    #     domain.split(2.9)
-    with pytest.raises(ValueError, match="too far from closest grid point"):
+
+    domains = domain.split(1.0, 1.6) if endpoint is True else domain.split(2*5/11, 2*8/11)
+    for i in domains:
+        assert i.resolution[0] in [5,3,2]
+
+    with pytest.raises(ValueError, match="Coordinate not contained in box."):
         domain.split(1.25)
-    # if endpoint == True:
-    domains = domain.split(1.0, 1.6)
-        # for i in domains:
-        #     assert i.resolution[0] in [5,5]
+
+

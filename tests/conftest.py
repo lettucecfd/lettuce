@@ -75,3 +75,7 @@ def f_transform(request, f_all_lattices):
         return f, Transform(lattice)
     else:
         pytest.skip("Stencil not supported for this transform.")
+
+@pytest.fixture()
+def ctx(dtype_device):
+    return {"dtype": dtype_device[0], "device": dtype_device[1]}

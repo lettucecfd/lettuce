@@ -224,26 +224,24 @@ class BoxDomain(Domain):
     def split(self, *coordinates: float, n_ghost: int = 1, dim: int = 0) -> Sequence["BoxDomain"]:
         grid_points = []
         bounds = [self.lower]
-        upper_virtual = self.upper.clone() - self.cell_lengths + self.cell_lengths * self.n_ghost[:, 1]
+        upper_virtual = self.upper.clone() + self.cell_lengths * self.n_ghost[:, 1]
+        if self.endpoint is False:
+            upper_virtual -= self.cell_lengths
         for coordinate in sorted(coordinates):
             point_fraction = ((coordinate - self.lower[dim]) / self.lengths[dim]).item()
             float_index = self.resolution[dim] * point_fraction
             int_index = round(float_index)
-            # if int_index < 1 or int_index >= self.resolution[dim]:
-            #     raise ValueError(
-            #         f"Cannot split {self} at coordinate {coordinate} along dimension {dim}."
-            #         f"Coordinate not contained in box."
-            #     )
-            bound = self.lower + int_index * self.cell_lengths
-            if abs(int_index - float_index) > 1e-5:
+            if any(torch.isclose(self.grid()[0][((slice(None),) + (0,) * (self.dim-1))],torch.tensor(coordinate,dtype=bounds[0].dtype))) is not True:
                 raise ValueError(
-                    f"Coordinate {coordinate:.8f} too far from closest grid point  "
-                    f"(at {bound[dim]:.8f}) to perform split."
+                    f"Cannot split {self} at coordinate {coordinate} along dimension {dim}."
+                    f"Coordinate not contained in box."
                 )
+            bound = self.lower + int_index * self.cell_lengths
             grid_points.append(int_index-sum(grid_points))
             bounds.append(bound)
         grid_points.append(self.resolution[dim] - sum(grid_points) + self.n_ghost[0, 1])
-        bounds.append(self.upper.clone() - self.cell_lengths + self.cell_lengths * self.n_ghost[:, 1])
+        bounds.append(upper_virtual)
+        # bounds[-1] -=
         domains = []
         for i in range(len(bounds) - 1):
             lower_point, upper_point = bounds[i], bounds[i+1]
@@ -269,5 +267,5 @@ class BoxDomain(Domain):
         bounds_string = [f'[{a:.1f},{b:.1f}]' for a, b in zip(self.lower, self.upper)]
         res_string = 'x'.join(str(r) for r in self.resolution)
         bounds_string = 'x'.join(bounds_string)
-        return f"BoxDomain(bounds={bounds_string}; res={res_string}; on rank {self.rank}; with coord {self.coord})"
+        return f"BoxDomain(bounds={bounds_string}; res={res_string}; endpoint={self.endpoint}; on rank {self.rank}; with coord {self.coord})"
 

@@ -4,7 +4,7 @@ import torch
 
 def _import_lettuce_native():
     import importlib
-    return importlib.import_module("lettuce_native_{name}.native")
+    return importlib.import_module("lettuce_native_{name}_{version}.native")
 
 
 def _ensure_cuda_path():

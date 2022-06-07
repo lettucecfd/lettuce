@@ -163,7 +163,7 @@ class Generator:
         def fmt(text):
             return text.format(**val)
 
-        input_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),'template'))
+        input_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'template'))
         output_root_dir = tempfile.mkdtemp()
 
         for (sub_root, sub_dirs, sub_files) in os.walk(input_root_dir):
@@ -193,7 +193,7 @@ class Generator:
     def resolve(self):
         try:
             import importlib
-            native = importlib.import_module(f"lettuce_native_{self.name}")
+            native = importlib.import_module(f"lettuce_native_{self.name}_{__version__}")
             # noinspection PyUnresolvedReferences
             return native.stream_and_collide
         except ModuleNotFoundError:
@@ -205,10 +205,8 @@ class Generator:
 
     @staticmethod
     def install(directory: str):
-        import os.path
         import subprocess
 
-        setup_file = os.path.join(directory, 'setup.py')
         cmd = ['python', 'setup.py', 'install']
         p = subprocess.run(cmd, shell=False, cwd=directory)
 

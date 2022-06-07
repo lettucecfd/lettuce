@@ -19,12 +19,16 @@ class NativeCuda:
             #    # dependencies
             #    self.dimension(gen, d)
 
+            d = generator.stencil.stencil.D()
+            assert d > 0, "Method is undefined fot this Parameter"
+            assert d <= 3, "Method is undefined fot this Parameter"
+
             # we target 512 threads at the moment
-            if 1 == generator.stencil.stencil.D():
+            if d == 1:
                 generator.append_launcher_buffer("const auto thread_count = dim3{16u};")
-            if 2 == generator.stencil.stencil.D():
+            if d == 2:
                 generator.append_launcher_buffer("const auto thread_count = dim3{16u, 16u};")
-            if 3 == generator.stencil.stencil.D():
+            if d == 3:
                 generator.append_launcher_buffer("const auto thread_count = dim3{8u, 8u, 8u};")
 
     def generate_block_count(self, generator: 'Generator'):
@@ -33,82 +37,87 @@ class NativeCuda:
 
             # dependencies
             self.generate_thread_count(generator)
-            for d in range(generator.stencil.stencil.D()):
-                self.generate_dimension(generator, d, hook_into_kernel=False)
+            self.generate_dimension(generator)
+
+            d = generator.stencil.stencil.D()
+            assert d > 0, "Method is undefined fot this Parameter"
+            assert d <= 3, "Method is undefined fot this Parameter"
 
             # generate
-            coord = {0: 'x', 1: 'y', 2: 'z'}
+            if d > 0:
+                generator.append_launcher_buffer(f"assert((dimension[0] % thread_count.x) == 0u);")
+            if d > 1:
+                generator.append_launcher_buffer(f"assert((dimension[1] % thread_count.y) == 0u);")
+            if d > 2:
+                generator.append_launcher_buffer(f"assert((dimension[2] % thread_count.z) == 0u);")
+            generator.append_launcher_buffer('const auto block_count = dim3{')
+            if d > 0:
+                generator.append_launcher_buffer('dimension[0] / thread_count.x,')
+            if d > 1:
+                generator.append_launcher_buffer('dimension[1] / thread_count.y,')
+            if d > 2:
+                generator.append_launcher_buffer('dimension[2] / thread_count.z,')
+            generator.append_launcher_buffer('};')
 
-            generator.append_launcher_buffer()
-            for d in range(generator.stencil.stencil.D()):
-                generator.append_launcher_buffer(f"assert((dimension{d} % thread_count.{coord[d]}) == 0u);")
+    def generate_index(self, generator: 'Generator'):
+        if not generator.registered('index'):
+            generator.register('index')
 
-            dimensions = ', '.join([f"dimension{d} / thread_count.{coord[d]}" for d in range(generator.stencil.stencil.D())])
+            # dependencies
+            generator.stencil.generate_d(generator)
 
-            generator.append_launcher_buffer(f"const auto block_count = dim3{{{dimensions}}};")
-            generator.append_launcher_buffer()
-
-    def generate_index(self, generator: 'Generator', d: int):
-        if not generator.registered(f"index{d}"):
-            generator.register(f"index{d}")
+            d = generator.stencil.stencil.D()
+            assert d > 0, "Method is undefined fot this Parameter"
+            assert d <= 3, "Method is undefined fot this Parameter"
 
             # generate
-            coord = {0: 'x', 1: 'y', 2: 'z'}
+            generator.append_index_buffer('const index_t index[d] = {')
+            if d > 0:
+                generator.append_index_buffer('blockIdx.x * blockDim.x + threadIdx.x,')
+            if d > 1:
+                generator.append_index_buffer('blockIdx.y * blockDim.y + threadIdx.y,')
+            if d > 2:
+                generator.append_index_buffer('blockIdx.z * blockDim.z + threadIdx.z,')
+            generator.append_index_buffer('};')
 
-            generator.append_index_buffer(f"const index_t index{d} = blockIdx.{coord[d]} * blockDim.{coord[d]} + threadIdx.{coord[d]};")
+    def generate_dimension(self, generator: 'Generator'):
+        if not generator.registered('dimension'):
+            generator.register('dimension')
 
-    def generate_dimension(self, generator: 'Generator', d: int, hook_into_kernel: bool):
-        if not generator.registered(('dimension', d)):
-            generator.register(('dimension', d))
+            # dependencies
+            generator.stencil.generate_d(generator)
 
-            generator.append_launcher_buffer(f"const auto dimension{d} = static_cast<index_t> (f.sizes()[{d + 1}]);")
+            d = generator.stencil.stencil.D()
+            assert d > 0, "Method is undefined fot this Parameter"
 
-        if hook_into_kernel and not generator.kernel_hooked(('dimension', d)):
-            generator.kernel_hook(('dimension', d), f"const index_t dimension{d}", f"dimension{d}")
+            # generate
+            generator.append_launcher_buffer('const index_t dimension[d] = {')
+            [generator.append_launcher_buffer(f"static_cast<index_t> (f.sizes()[{i}]),") for i in range(d)]
+            generator.append_launcher_buffer('}')
 
-    def generate_length(self, generator: 'Generator', d: int, hook_into_kernel: bool):
-        if d == 0:  # length0 is an alias
-
-            if not generator.registered(('length', 0, hook_into_kernel)):
-                generator.register(('length', 0, hook_into_kernel))
-
-                # dependencies
-                self.generate_dimension(generator, 0, hook_into_kernel=hook_into_kernel)
-
-                # generation
-                if hook_into_kernel:
-                    generator.append_index_buffer('const index_t &length0 = dimension0;')
-                else:
-                    generator.append_launcher_buffer('const index_t &length0 = dimension0;')
-
-        else:
-
-            if not generator.registered(('length', d)):
-                generator.register(('length', d))
-
-                # dependencies
-                self.generate_dimension(generator, d, hook_into_kernel=False)
-                self.generate_length(generator, d - 1, hook_into_kernel=False)
-
-                # generation
-                generator.append_launcher_buffer(f"const index_t length{d} = dimension{d} * length{d - 1};")
-
-            if hook_into_kernel and not generator.kernel_hooked(('length', d)):
-                generator.kernel_hook(('length', d), f"const index_t length{d}", f"length{d}")
+            # hook into kernel by default
+            generator.kernel_hook('dimension', f"index_t dimension[{d}]", 'dimension')
 
     def generate_offset(self, generator: 'Generator'):
+        """
+        offset describes the offset which needs to be multiplied with a coordinate
+        to get the total index in the data
+        """
         if not generator.registered('offset'):
             generator.register('offset')
 
             # dependencies
-            self.generate_index(generator, 0)
-            for d in range(1, generator.stencil.stencil.D()):
-                self.generate_index(generator, d)
-                self.generate_length(generator, d - 1, hook_into_kernel=True)
+            self.generate_dimension(generator)
+            generator.stencil.generate_d(generator)
+
+            d = generator.stencil.stencil.D()
+            assert d > 0, "Method is undefined fot this Parameter"
 
             # generate
-            offsets = ['(index0)']
-            for d in range(1, generator.stencil.stencil.D()):
-                offsets.append(f"(index{d} * length{d - 1})")
-
-            generator.append_index_buffer(f"const index_t offset = {' + '.join(offsets)};")
+            generator.append_index_buffer('index_t offset[d + 1] = {')
+            if d > 0:
+                generator.append_index_buffer('0,')
+            if d > 1:
+                generator.append_index_buffer('dimension[0],')
+            [generator.append_index_buffer(f"offset[{i - 1}] * dimension[{i - 1}],") for i in range(2, d)]
+            generator.append_index_buffer('}')

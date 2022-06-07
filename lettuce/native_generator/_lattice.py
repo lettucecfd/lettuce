@@ -6,8 +6,10 @@ class NativeLattice:
         if not generator.registered('rho'):
             generator.register('rho')
 
+            q = generator.stencil.stencil.Q()
+
             # generate
-            f_eq_sum = ' + '.join([f"f_reg[{q}]" for q in range(generator.stencil.stencil.Q())])
+            f_eq_sum = ' + '.join([f"f_reg[{i}]" for i in range(q)])
 
             generator.append_node_buffer(f"const auto rho = {f_eq_sum};")
 
@@ -35,11 +37,11 @@ class NativeLattice:
             # generate
             div_rho = ' * rho_inv' if generator.stencil.stencil.D() > 1 else ' / rho'
 
-            generator.append_node_buffer(f"const scalar_t u[d]{{")
-            for d in range(generator.stencil.stencil.D()):
+            generator.append_node_buffer('const scalar_t u[d] = {')
+            for i in range(generator.stencil.stencil.D()):
                 summands = []
-                for q in range(generator.stencil.stencil.Q()):
-                    summands.append(f"e[{q}][{d}] * f_reg[{q}]")
+                for j in range(generator.stencil.stencil.Q()):
+                    summands.append(f"e[{j}][{i}] * f_reg[{j}]")
                 generator.append_node_buffer(f"    ({' + '.join(summands)})" + div_rho + ',')
             generator.append_node_buffer('};')
             generator.append_node_buffer()

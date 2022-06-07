@@ -1,33 +1,5 @@
 from . import *
 
-read_frame = '''
-    {{
-        auto index_it = offset;
-        f_reg[0] = {source}[index_it];
-
-#pragma unroll
-        for(index_t i = 1; i < q; ++i)
-        {{
-            index_it += length{length_index};
-            f_reg[i] = {source}[index_it];
-        }}
-    }}
-'''
-
-write_frame = '''
-    {{
-        auto index_it = offset;
-        {target}[index_it] = f_reg[0];
-
-#pragma unroll
-        for(index_t i = 1; i < q; ++i)
-        {{
-            index_it += length{length_index};
-            {target}[index_it] = f_reg[i];
-        }}
-    }}
-'''
-
 
 class NativeStreaming(NativeLatticeBase):
     _name = 'invalid'
@@ -73,20 +45,38 @@ class NativeNoStreaming(NativeStreaming):
             generator.register('read_write()')
 
             # dependencies:
-
             generator.stencil.generate_q(generator)
-            generator.cuda.generate_length(generator, generator.stencil.stencil.D() - 1, hook_into_kernel=True)
             generator.cuda.generate_offset(generator)
 
             # read
-            length_index = generator.stencil.stencil.D() - 1
+            generator.append_index_buffer('                                         ')
+            generator.append_index_buffer('    scalar_t f_reg[q];                   ')
+            generator.append_index_buffer('                                         ')
+            generator.append_index_buffer('#pragma unroll                           ')
+            generator.append_index_buffer('    for (index_t i = 0; i < q; ++i) {    ')
+            generator.append_index_buffer('                                         ')
+            generator.append_index_buffer('      index_t x = 0;                     ')
+            generator.append_index_buffer('                                         ')
+            generator.append_index_buffer('#pragma unroll                           ')
+            generator.append_index_buffer('      for (index_t j = 0; j < d; ++j)    ')
+            generator.append_index_buffer('        x += offset[j] * index[j];       ')
+            generator.append_index_buffer('      f_reg[i] = f[x];                   ')
+            generator.append_index_buffer('    }                                    ')
+            generator.append_index_buffer('                                         ')
 
-            generator.append_index_buffer()
-            generator.append_index_buffer('scalar_t f_reg[q];')
-            generator.append_index_buffer(read_frame.format(source='f', length_index=length_index))
-
-            generator.append_write_buffer()
-            generator.append_write_buffer(write_frame.format(target='f', length_index=length_index))
+            # write
+            generator.append_write_buffer('                                         ')
+            generator.append_write_buffer('#pragma unroll                           ')
+            generator.append_write_buffer('    for (index_t i = 0; i < q; ++i) {    ')
+            generator.append_write_buffer('                                         ')
+            generator.append_write_buffer('      index_t x = 0;                     ')
+            generator.append_write_buffer('                                         ')
+            generator.append_write_buffer('#pragma unroll                           ')
+            generator.append_write_buffer('      for (index_t j = 0; j < d; ++j)    ')
+            generator.append_write_buffer('        x += offset[j] * index[j];       ')
+            generator.append_write_buffer('      f_next[x] = f[i];                  ')
+            generator.append_write_buffer('    }                                    ')
+            generator.append_write_buffer('                                         ')
 
 
 class NativeStandardStreaming(NativeStreaming):
@@ -103,7 +93,8 @@ class NativeStandardStreaming(NativeStreaming):
         if not generator.registered('f_next'):
             generator.register('f_next')
 
-            generator.append_python_wrapper_after_buffer('simulation.f, simulation.f_next = simulation.f_next, simulation.f')
+            generator.append_python_wrapper_after_buffer(
+                'simulation.f, simulation.f_next = simulation.f_next, simulation.f')
 
             # generate code
             if not generator.launcher_hooked('f_next'):
@@ -111,30 +102,6 @@ class NativeStandardStreaming(NativeStreaming):
                 generator.launcher_hook('f_next', 'at::Tensor f_next', 'f_next', 'simulation.f_next')
             if not generator.kernel_hooked('f_next'):
                 generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
-
-    def generate_dim_offset(self, generator: 'Generator', d: int):
-        if not generator.registered(f"dim{d}_offset"):
-            generator.register(f"dim{d}_offset")
-
-            # dependencies
-            generator.cuda.generate_index(generator, d)
-            generator.cuda.generate_dimension(generator, d, hook_into_kernel=True)
-
-            # generate
-
-            if d > 0:
-                generator.cuda.generate_length(generator, d - 1, hook_into_kernel=True)
-
-                generator.append_index_buffer(f"const index_t &dim{d}_offset0 = index{d} * length{d - 1};")
-                generator.append_index_buffer(f"const index_t dim{d}_offset1 = (((index{d} + 1) == dimension{d}) "
-                                              f"? 0 : (index{d} + 1)) * length{d - 1};")
-                generator.append_index_buffer(f"const index_t dim{d}_offset2 = ((index{d} == 0) "
-                                              f"? dimension{d} - 1 : (index{d} - 1)) * length{d - 1};")
-
-            else:
-                generator.append_index_buffer(f"const index_t &dim0_offset0 = index0;")
-                generator.append_index_buffer(f"const index_t dim0_offset1 = (((index0 + 1) == dimension0) ? 0 : (index0 + 1));")
-                generator.append_index_buffer(f"const index_t dim0_offset2 = ((index0 == 0) ? dimension0 - 1 : (index0 - 1));")
 
     def generate_read_write(self, generator: 'Generator'):
         if not generator.registered('read_write()'):
@@ -147,75 +114,46 @@ class NativeStandardStreaming(NativeStreaming):
 
             self.generate_f_next(generator)
             generator.stencil.generate_q(generator)
-            generator.cuda.generate_offset(generator)
-            generator.cuda.generate_length(generator, d=generator.stencil.stencil.D() - 1, hook_into_kernel=True)
-
-            for d in range(generator.stencil.stencil.D()):
-                self.generate_dim_offset(generator, d)
-
-            # read with stream
-            length_index = generator.stencil.stencil.D() - 1
-
-            direction_slot = {0: 0, -1: 1, 1: 2}
-            offsets = []
-            for q in range(generator.stencil.stencil.Q()):
-                offset = []
-                all_zero = True
-                for d in range(generator.stencil.stencil.D()):
-                    offset.append(
-                        f"dim{d}_offset{direction_slot[generator.stencil.stencil.e[q][generator.stencil.stencil.D() - 1 - d]]}")
-                    all_zero = all_zero and (generator.stencil.stencil.e[q][generator.stencil.stencil.D() - 1 - d] == 0)
-
-                if all_zero:
-                    offsets.append('offset')
-                else:
-                    offsets.append(' + '.join(offset))
 
             generator.append_index_buffer()
             generator.append_index_buffer('scalar_t f_reg[q];')
-            generator.append_index_buffer('{')
 
-            # stream index 0
+            # read
+            generator.append_write_buffer('                                          ')
+            generator.append_index_buffer('    scalar_t f_reg[q];                    ')
+            generator.append_write_buffer('                                          ')
+            generator.append_index_buffer('#pragma unroll                            ')
+            generator.append_index_buffer('    for (index_t i = 0; i < q; ++i) {     ')
+            generator.append_write_buffer('                                          ')
+            generator.append_index_buffer('      index_t x = 0;                      ')
+            generator.append_write_buffer('                                          ')
+            generator.append_index_buffer('#pragma unroll                            ')
+            generator.append_index_buffer('      for (index_t j = 0; j < d; ++j)     ')
+            generator.append_index_buffer('        x += offset[j] * index[j];        ')
+            generator.append_index_buffer('                                          ')
+            generator.append_index_buffer('      f_reg[i] = f[x];                    ')
+            generator.append_index_buffer('    }                                     ')
+            generator.append_write_buffer('                                          ')
 
-            if self.support_no_streaming_mask:
-                if offsets[0] == 'offset':
-                    generator.append_index_buffer(f'    f_reg[0] = f[offset];')
-                else:
-                    generator.append_index_buffer(f'    f_reg[0] = no_stream_mask[offset] ? f[offset] : f[{offsets[0]}];')
-            else:
-                generator.append_index_buffer(f"    f_reg[0] = f[{offsets[0]}];")
-
-            # stream index 1
-
-            index_it = f"auto index_it = length{length_index};"
-
-            if self.support_no_streaming_mask:
-                if offsets[1] == 'offset':
-                    generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + offset];")
-                else:
-                    generator.append_index_buffer(f"    {index_it} {{ const auto abs_index = index_it + offset; f_reg[1] = "
-                                                  f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[1]}]; }}")
-            else:
-                generator.append_index_buffer(f"    {index_it} f_reg[1] = f[index_it + {offsets[1]}];")
-
-            # stream index n
-
-            index_it = f"index_it += length{length_index};"
-
-            for q in range(2, generator.stencil.stencil.Q()):
-
-                if self.support_no_streaming_mask:
-                    if offsets[q] == 'offset':
-                        generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + offset];")
-                    else:
-                        generator.append_index_buffer(f"    {index_it}     {{ const auto abs_index = index_it + offset; f_reg[{q}] = "
-                                                      f"no_stream_mask[abs_index] ? f[abs_index] : f[index_it + {offsets[q]}]; }}")
-                else:
-                    generator.append_index_buffer(f"    {index_it}     f_reg[{q}] = f[index_it + {offsets[q]}];")
-
-            generator.append_index_buffer('}')
-            generator.append_index_buffer()
-
-            # write
-            generator.append_write_buffer()
-            generator.append_write_buffer(write_frame.format(target='f_next', length_index=length_index))
+            # write and stream
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('#pragma unroll                              ')
+            generator.append_write_buffer('    for (index_t i = 0; i < q; ++i) {       ')
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('      index_t x = 0;                        ')
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('#pragma unroll                              ')
+            generator.append_write_buffer('      for (index_t j = 0; j < d; ++j) {     ')
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('        // index with streaming             ')
+            generator.append_write_buffer('        index_t x_ = index[j] + e[i][j];    ')
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('        // correct streaming border         ')
+            generator.append_write_buffer('             if (x <  0   ) x += w[j];      ')
+            generator.append_write_buffer('        else if (x >= w[j]) x -= w[j];      ')
+            generator.append_write_buffer('                                            ')
+            generator.append_write_buffer('        x += offset[j] * x_;                ')
+            generator.append_write_buffer('      }                                     ')
+            generator.append_write_buffer('      f_next[x] = f[i];                     ')
+            generator.append_write_buffer('    }                                       ')
+            generator.append_write_buffer('                                            ')

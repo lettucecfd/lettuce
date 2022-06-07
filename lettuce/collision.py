@@ -84,7 +84,7 @@ class BGKCollision(Collision):
     def __call__(self, f):
         rho = self.lattice.rho(f)
         u_eq = 0 if self.force is None else self.force.u_eq(f)
-        u = self.lattice.u(f) + u_eq
+        u = self.lattice.u(f, rho=rho) + u_eq
         feq = self.lattice.equilibrium(rho, u)
         Si = 0 if self.force is None else self.force.source_term(u)
         return f - 1.0 / self.tau * (f - feq) + Si
@@ -123,7 +123,7 @@ class TRTCollision:
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
-        u = self.lattice.u(f)
+        u = self.lattice.u(f, rho=rho)
         feq = self.lattice.equilibrium(rho, u)
         f_diff_neq = ((f + f[self.lattice.stencil.opposite]) - (feq + feq[self.lattice.stencil.opposite])) / (
                 2.0 * self.tau_plus)
@@ -151,7 +151,7 @@ class RegularizedCollision(Collision):
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
-        u = self.lattice.u(f)
+        u = self.lattice.u(f, rho=rho)
         feq = self.lattice.equilibrium(rho, u)
         pi_neq = self.lattice.shear_tensor(f - feq)
         cs4 = self.lattice.cs ** 4
@@ -212,7 +212,9 @@ class KBCCollision2D(Collision):
 
     def __call__(self, f):
         # the deletes are not part of the algorithm, they just keep the memory usage lower
-        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
+        rho = self.lattice.rho(f)
+        u = self.lattice.u(f, rho=rho)
+        feq = self.lattice.equilibrium(rho, u)
         # k = torch.zeros_like(f)
 
         m = self.kbc_moment_transform(f)

@@ -79,9 +79,19 @@ class Lattice:
         """momentum"""
         return self.einsum("qd,q->d", [self.e, f])
 
-    def u(self, f):
-        """velocity"""
-        return self.j(f) / self.rho(f)
+    def u(self, f, rho=None, acceleration=None):
+        """velocity; the `acceleration` is used to compute the correct velocity in the presence of a forcing scheme."""
+        if rho is None:
+            rho = self.rho(f)
+        v = self.j(f) / rho
+        # apply correction due to forcing, which effectively averages the pre- and post-collision velocity
+        correction = 0.0
+        if acceleration is not None:
+            if len(acceleration.shape) == 1:
+                index = [Ellipsis] + [None]*self.D
+                acceleration = acceleration[index]
+            correction = acceleration / (2 * rho)
+        return v + correction
 
     def incompressible_energy(self, f):
         """incompressible kinetic energy"""

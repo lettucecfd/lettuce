@@ -71,8 +71,8 @@ class Simulation:
         self.collision.no_collision_mask = no_collision_mask.to(torch.uint8)
         self.streaming.no_streaming_mask = no_streaming_mask.to(torch.uint8)
 
-        # default stream and collide
-        self.stream_and_collide = Simulation.stream_and_collide_
+        # default collide and stream
+        self.collide_and_stream = Simulation.collide_and_stream_
 
         # check if native is possible, available and wanted
         if not lattice.use_native:
@@ -92,18 +92,18 @@ class Simulation:
         native_collision = self.collision.create_native()
         native_generator = Generator(native_stencil, native_streaming, native_collision)
 
-        stream_and_collide = native_generator.resolve()
-        if stream_and_collide is None:
+        collide_and_stream = native_generator.resolve()
+        if collide_and_stream is None:
             buffer = native_generator.generate()
             directory = native_generator.format(buffer)
             native_generator.install(directory)
 
-            stream_and_collide = native_generator.resolve()
-            if stream_and_collide is None:
+            collide_and_stream = native_generator.resolve()
+            if collide_and_stream is None:
                 print('failed to install native extension!')
                 return
 
-        self.stream_and_collide = stream_and_collide
+        self.collide_and_stream = collide_and_stream
         if 'noStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
             self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
@@ -116,13 +116,13 @@ class Simulation:
         self.collision.no_collision_mask = no_collision_mask
 
     @staticmethod
-    def stream_and_collide_(self):
-        self.f = self.streaming(self.f)
+    def collide_and_stream_(self):
         # Perform the collision routine everywhere, expect where the no_collision_mask is true
         if self.collision.no_collision_mask is not None:
             self.f = torch.where(self.collision.no_collision_mask, self.f, self.collision(self.f))
         else:
             self.collision(self.f)
+        self.f = self.streaming(self.f)
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
@@ -130,10 +130,10 @@ class Simulation:
         if self.i == 0:
             self._report()
         for _ in range(num_steps):
-            self.i += 1
-            self.stream_and_collide(self)
+            self.collide_and_stream(self)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
+            self.i += 1
             self._report()
 
         end = timer()
@@ -203,7 +203,7 @@ class Simulation:
         fneq = self.lattice.einsum('i,i->i', [self.lattice.w, Pi_1_Q])
 
         feq = self.lattice.equilibrium(rho, u)
-        self.f = feq + fneq
+        self.f = feq - fneq
 
     def save_checkpoint(self, filename):
         """Write f as np.array using pickle module."""

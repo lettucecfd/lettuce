@@ -29,7 +29,7 @@ def dtype_device(request, device):
     if device == "cpu" and request.param == torch.float16:
         pytest.skip("Half precision is only available on GPU.")
     if device == "cuda:0" and request.param == torch.float32:
-        pytest.skip("TODO: loosen tolerances")
+        pytest.skip("Tolerances are not yet adapted to CUDA single precision.")
     return request.param, device
 
 

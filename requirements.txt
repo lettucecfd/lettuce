@@ -4,4 +4,4 @@ numpy
 matplotlib
 pyevtk
 pytest
-
+h5py>=3.2.1

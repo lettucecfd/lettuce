@@ -16,7 +16,8 @@ TRANSFORMS = list(get_subclasses(Transform, moments))
 
 @pytest.fixture(
     params=["cpu",
-            pytest.param("cuda:0", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
+            pytest.param("cuda:0",
+                         marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
 def device(request):
     """Run a test case for all available devices."""
     return request.param
@@ -55,6 +56,29 @@ def lattice(request, stencil):
     if device == "cuda:0" and dtype == torch.float32:
         pytest.skip("TODO: loosen tolerances")
     return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native"))
+
+
+@pytest.fixture(
+    params=((torch.float64, "cpu", "", "cuda:0", ""),
+            (torch.float32, "cpu", "", "cuda:0", ""),
+            (torch.float64, "cpu", "", "cuda:0", "native"),
+            (torch.float32, "cpu", "", "cuda:0", "native"),
+            (torch.float64, "cuda:0", "", "cuda:0", "native"),
+            (torch.float32, "cuda:0", "", "cuda:0", "native")),
+    ids=("cpu_cu_64", "cpu_cu_32", "cpu_native_64", "cpu_native_32", "cu_native_64", "cu_native_32"))
+def lattice2(request, stencil):
+    """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
+    dtype, device, native, device2, native2 = request.param
+    if device == "cuda:0" and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA not available.")
+    if device == "cuda:0" and dtype == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
+    if device2 == "cuda:0" and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA not available.")
+    if device2 == "cuda:0" and dtype == torch.float32:
+        pytest.skip("TODO: loosen tolerances")
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native")), \
+           Lattice(stencil, device=device2, dtype=dtype, use_native=(native2 == "native"))
 
 
 @pytest.fixture()

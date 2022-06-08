@@ -15,7 +15,7 @@ INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
 def test_flow_2d(IncompressibleFlow, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)  # TODO use_native Fails here
+    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)

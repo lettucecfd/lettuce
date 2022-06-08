@@ -40,44 +40,50 @@ class NativeLattice:
 
     def generate_rho(self, generator: 'Generator'):
         if not generator.registered('rho'):
-            generator.register('rho')
+            return
 
-            q = generator.stencil.stencil.Q()
+        generator.register('rho')
 
-            # generate
-            f_eq_sum = ' + '.join([f"f_reg[{i}]" for i in range(q)])
+        q = generator.stencil.stencil.Q()
 
-            generator.append_node_buffer(f"const auto rho = {f_eq_sum};")
+        # generate
+        f_eq_sum = ' + '.join([f"f_reg[{i}]" for i in range(q)])
+
+        generator.append_node_buffer(f"const auto rho = {f_eq_sum};")
 
     def generate_rho_inv(self, generator: 'Generator'):
         if not generator.registered('rho_inv'):
-            generator.register('rho_inv')
+            return
 
-            # dependencies
-            self.generate_rho(generator)
+        generator.register('rho_inv')
 
-            # generate
-            generator.append_node_buffer('const auto rho_inv = 1.0 / rho;')
+        # dependencies
+        self.generate_rho(generator)
+
+        # generate
+        generator.append_node_buffer('const auto rho_inv = 1.0 / rho;')
 
     def generate_u(self, generator: 'Generator'):
         if not generator.registered('u'):
-            generator.register('u')
+            return
 
-            # dependencies
-            generator.stencil.generate_d(generator)
-            generator.stencil.generate_e(generator)
+        generator.register('u')
 
-            if generator.stencil.stencil.D() > 1:
-                self.generate_rho_inv(generator)
+        # dependencies
+        generator.stencil.generate_d(generator)
+        generator.stencil.generate_e(generator)
 
-            # generate
-            div_rho = ' * rho_inv' if generator.stencil.stencil.D() > 1 else ' / rho'
+        if generator.stencil.stencil.D() > 1:
+            self.generate_rho_inv(generator)
 
-            generator.append_node_buffer('const scalar_t u[d] = {')
-            for i in range(generator.stencil.stencil.D()):
-                summands = []
-                for j in range(generator.stencil.stencil.Q()):
-                    summands.append(f"e[{j}][{i}] * f_reg[{j}]")
-                generator.append_node_buffer(f"    ({' + '.join(summands)})" + div_rho + ',')
-            generator.append_node_buffer('};')
-            generator.append_node_buffer()
+        # generate
+        div_rho = ' * rho_inv' if generator.stencil.stencil.D() > 1 else ' / rho'
+
+        generator.append_node_buffer('const scalar_t u[d] = {')
+        for i in range(generator.stencil.stencil.D()):
+            summands = []
+            for j in range(generator.stencil.stencil.Q()):
+                summands.append(f"e[{j}][{i}] * f_reg[{j}]")
+            generator.append_node_buffer(f"    ({' + '.join(summands)})" + div_rho + ',')
+        generator.append_node_buffer('};')
+        generator.append_node_buffer()

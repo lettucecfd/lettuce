@@ -74,22 +74,24 @@ class NativeBGKCollision(NativeCollision):
             generator.kernel_hook('tau_inv', 'const scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 
     def generate_collision(self, generator: 'Generator'):
-        if not generator.registered('collide()'):
-            generator.register('collide()')
+        if generator.registered('collide()'):
+            return
 
-            # dependencies
+        generator.register('collide()')
 
-            if self.support_no_collision_mask:
-                self.generate_no_collision_mask(generator)
+        # dependencies
 
-            self.generate_tau_inv(generator)
-            self.equilibrium.generate_f_eq(generator)
+        if self.support_no_collision_mask:
+            self.generate_no_collision_mask(generator)
 
-            d = generator.stencil.stencil.D()
+        self.generate_tau_inv(generator)
+        self.equilibrium.generate_f_eq(generator)
 
-            # generate
-            if self.support_no_collision_mask:
-                coord = generator.lattice.get_mask_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
-                generator.append_index_buffer(f"if(!no_collision_mask[{coord}])")
+        d = generator.stencil.stencil.D()
 
-            generator.append_distribution_buffer('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')
+        # generate
+        if self.support_no_collision_mask:
+            coord = generator.lattice.get_mask_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
+            generator.append_index_buffer(f"if(!no_collision_mask[{coord}])")
+
+        generator.append_distribution_buffer('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')

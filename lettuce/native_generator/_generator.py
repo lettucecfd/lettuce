@@ -101,10 +101,18 @@ class Generator:
         self.buf['python_wrapper_after'].append(it)
 
     @property
+    def version(self):
+        return __version__
+
+    @property
     def name(self):
-        return f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}"
+        name = f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}_{self.version}"
+        name = hex(hash(name))[2:]
+        return name
 
     def generate(self):
+        import re
+
         # default parameter
         self.launcher_hook('f', 'at::Tensor f', 'f', 'simulation.f')
         self.kernel_hook('f', 'scalar_t *f', 'f.data<scalar_t>()')
@@ -124,7 +132,7 @@ class Generator:
 
         val['name'] = self.name
         val['guard'] = f"LETTUCE_{val['name'].upper()}_HPP"
-        val['version'] = __version__
+        val['version'] = self.version
 
         t1 = '\n    '
         t2 = '\n        '
@@ -193,9 +201,10 @@ class Generator:
     def resolve(self):
         try:
             import importlib
-            native = importlib.import_module(f"lettuce_native_{self.name}_{__version__}")
+            import re
+            native = importlib.import_module(f"lettuce_native_{self.name}")
             # noinspection PyUnresolvedReferences
-            return native.stream_and_collide
+            return native.collide_and_stream
         except ModuleNotFoundError:
             logging.info('Could not find the native module. Maybe it is not installed yet.')
             return None
@@ -206,8 +215,9 @@ class Generator:
     @staticmethod
     def install(directory: str):
         import subprocess
+        import sys
 
-        cmd = ['python', 'setup.py', 'install']
+        cmd = [sys.executable, 'setup.py', 'install']
         p = subprocess.run(cmd, shell=False, cwd=directory)
 
         if p.returncode != 0:

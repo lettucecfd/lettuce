@@ -4,7 +4,7 @@ import torch
 
 def _import_lettuce_native():
     import importlib
-    return importlib.import_module("lettuce_native_{name}_{version}.native")
+    return importlib.import_module("lettuce_native_{name}.native")
 
 
 def _ensure_cuda_path():
@@ -20,10 +20,9 @@ def _ensure_cuda_path():
 _ensure_cuda_path()
 native = _import_lettuce_native()
 
-
 # noinspection PyUnresolvedReferences,PyCallingNonCallable,PyStatementEffect
-def stream_and_collide(simulation):
+def collide_and_stream(simulation):
     {python_wrapper_before_buffer}
-    native.{name}({cpp_wrapper_parameter_value})
+    native.collide_and_stream_{name}({cpp_wrapper_parameter_value})
     torch.cuda.synchronize()
     {python_wrapper_after_buffer}

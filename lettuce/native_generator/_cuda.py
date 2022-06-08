@@ -73,11 +73,11 @@ class NativeCuda:
             # generate
             generator.append_index_buffer('const index_t index[d] = {')
             if d > 0:
-                generator.append_index_buffer('blockIdx.x * blockDim.x + threadIdx.x,')
+                generator.append_index_buffer('static_cast<index_t>(blockIdx.x * blockDim.x + threadIdx.x),')
             if d > 1:
-                generator.append_index_buffer('blockIdx.y * blockDim.y + threadIdx.y,')
+                generator.append_index_buffer('static_cast<index_t>(blockIdx.y * blockDim.y + threadIdx.y),')
             if d > 2:
-                generator.append_index_buffer('blockIdx.z * blockDim.z + threadIdx.z,')
+                generator.append_index_buffer('static_cast<index_t>(blockIdx.z * blockDim.z + threadIdx.z),')
             generator.append_index_buffer('};')
 
     def generate_dimension(self, generator: 'Generator'):
@@ -91,12 +91,16 @@ class NativeCuda:
             assert d > 0, "Method is undefined fot this Parameter"
 
             # generate
-            generator.append_launcher_buffer('const index_t dimension[d] = {')
-            [generator.append_launcher_buffer(f"static_cast<index_t> (f.sizes()[{i}]),") for i in range(d)]
-            generator.append_launcher_buffer('}')
+            generator.append_launcher_buffer(f"const index_t dimension[{d}] = {{")
+            [generator.append_launcher_buffer(f"static_cast<index_t> (f.sizes()[{i + 1}]),") for i in range(d)]
+            generator.append_launcher_buffer('};')
 
             # hook into kernel by default
-            generator.kernel_hook('dimension', f"index_t dimension[{d}]", 'dimension')
+            [generator.kernel_hook(f"dimension{i}", f"index_t dimension{i}", f"dimension[{i}]") for i in range(d)]
+
+            generator.append_index_buffer('const index_t dimension[d] = {')
+            [generator.append_index_buffer(f"dimension{i},") for i in range(d)]
+            generator.append_index_buffer('};')
 
     def generate_offset(self, generator: 'Generator'):
         """
@@ -114,10 +118,6 @@ class NativeCuda:
             assert d > 0, "Method is undefined fot this Parameter"
 
             # generate
-            generator.append_index_buffer('index_t offset[d + 1] = {')
-            if d > 0:
-                generator.append_index_buffer('0,')
-            if d > 1:
-                generator.append_index_buffer('dimension[0],')
-            [generator.append_index_buffer(f"offset[{i - 1}] * dimension[{i - 1}],") for i in range(2, d)]
-            generator.append_index_buffer('}')
+            generator.append_index_buffer('index_t offset[d + 1];')
+            generator.append_index_buffer('offset[d] = 1;')
+            [generator.append_index_buffer(f"offset[{i}] = offset[{i + 1}] * dimension[{i + 1}];") for i in range(d - 1, -1, -1)]

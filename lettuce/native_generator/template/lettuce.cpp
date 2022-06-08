@@ -12,5 +12,5 @@ lettuce_{name}({cpp_wrapper_parameter})
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {{
-    m.def("{name}", &lettuce_{name}, "{name}");
+    m.def("collide_and_stream_{name}", &lettuce_{name}, "collide_and_stream_{name}");
 }}

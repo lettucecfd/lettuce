@@ -12,8 +12,8 @@
 #pragma warning ( pop )
 #endif
 
-using index_t = unsigned int;
-using byte_t = unsigned char;
+using index_t = int;
+using byte_t = char;
 
 template<typename scalar_t>
 __global__ void

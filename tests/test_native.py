@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from lettuce import StandardStreaming, Lattice, Obstacle2D, D2Q9, NoCollision, BGKCollision, NoStreaming, Simulation
@@ -5,6 +6,9 @@ from lettuce import StandardStreaming, Lattice, Obstacle2D, D2Q9, NoCollision, B
 
 def test_native_no_streaming_mask():
     """test if """
+
+    if not torch.cuda.is_available():
+        pytest.skip("Native test skipped")
 
     dtype = torch.float32
     device = "cuda:0"
@@ -36,6 +40,9 @@ def test_native_no_streaming_mask():
 
 def test_native_no_collision_mask():
     """test if """
+
+    if not torch.cuda.is_available():
+        pytest.skip("Native test skipped")
 
     dtype = torch.float32
     device = "cuda:0"

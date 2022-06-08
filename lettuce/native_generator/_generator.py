@@ -76,29 +76,37 @@ class Generator:
         self.par['kernel_parameter_name'].append(name)
         self.par['kernel_parameter_value'].append(value)
 
-    def append_constexpr_buffer(self, it=''):
-        self.buf['constexpr'].append(it)
+    def append_constexpr_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['constexpr'].append(it)
 
-    def append_launcher_buffer(self, it=''):
-        self.buf['cuda_wrapper'].append(it)
+    def append_launcher_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['cuda_wrapper'].append(it)
 
-    def append_index_buffer(self, it=''):
-        self.buf['index'].append(it)
+    def append_index_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['index'].append(it)
 
-    def append_node_buffer(self, it=''):
-        self.buf['node'].append(it)
+    def append_node_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['node'].append(it)
 
-    def append_distribution_buffer(self, it=''):
-        self.buf['distribution'].append(it)
+    def append_distribution_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['distribution'].append(it)
 
-    def append_write_buffer(self, it=''):
-        self.buf['write'].append(it)
+    def append_write_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['write'].append(it)
 
-    def append_python_wrapper_before_buffer(self, it=''):
-        self.buf['python_wrapper_before'].append(it)
+    def append_python_wrapper_before_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['python_wrapper_before'].append(it)
 
-    def append_python_wrapper_after_buffer(self, it=''):
-        self.buf['python_wrapper_after'].append(it)
+    def append_python_wrapper_after_buffer(self, it='', cond=True):
+        if cond:
+            self.buf['python_wrapper_after'].append(it)
 
     @property
     def version(self):
@@ -109,8 +117,7 @@ class Generator:
         name = f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}_{self.version}"
         # we need to shorten the name of the module
         # as it can produce a unloadable dll file otherwise
-        name = hex(hash(name))[2:]
-        return name
+        return hex(abs(hash(name)))[2:]
 
     def generate(self):
         import re

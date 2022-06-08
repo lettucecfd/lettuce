@@ -2,6 +2,42 @@ from . import *
 
 
 class NativeLattice:
+    def get_lattice_coordinate(self, generator: 'Generator', coordinate):
+        generator.cuda.generate_index(generator)
+        generator.cuda.generate_dimension(generator)
+
+        if len(coordinate) < 2 or len(coordinate) > 4:
+            raise RuntimeError("Invalid coordinate passed! Faulty Generator implementation.")
+
+        q, x = coordinate[0], coordinate[1]
+        if len(coordinate) == 2:
+            return f"{q} * dimension[0] + {x}"
+
+        y = coordinate[2]
+        if len(coordinate) == 3:
+            return f"({q} * dimension[0] + {x}) * dimension[1]  + {y}"
+
+        z = coordinate[3]
+        return f"(({q} * dimension[0] + {x}) * dimension[1] + {y}) * dimension[2] + {z}"
+
+    def get_mask_coordinate(self, generator: 'Generator', coordinate):
+        generator.cuda.generate_index(generator)
+        generator.cuda.generate_dimension(generator)
+
+        if len(coordinate) < 1 or len(coordinate) > 3:
+            raise RuntimeError("Invalid coordinate passed! Faulty Generator implementation.")
+
+        x = coordinate[0]
+        if len(coordinate) == 2:
+            return f"{x}"
+
+        y = coordinate[1]
+        if len(coordinate) == 3:
+            return f"{x} * dimension[0]  + {y}"
+
+        z = coordinate[2]
+        return f"({x} * dimension[0] + {y}) * dimension[1] + {z}"
+
     def generate_rho(self, generator: 'Generator'):
         if not generator.registered('rho'):
             generator.register('rho')

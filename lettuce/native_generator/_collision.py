@@ -85,8 +85,11 @@ class NativeBGKCollision(NativeCollision):
             self.generate_tau_inv(generator)
             self.equilibrium.generate_f_eq(generator)
 
+            d = generator.stencil.stencil.D()
+
             # generate
             if self.support_no_collision_mask:
-                generator.append_index_buffer(f"if(!no_collision_mask[offset])")
+                coord = generator.lattice.get_mask_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
+                generator.append_index_buffer(f"if(!no_collision_mask[{coord}])")
 
             generator.append_distribution_buffer('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')

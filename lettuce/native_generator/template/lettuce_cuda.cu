@@ -13,7 +13,7 @@
 #endif
 
 using index_t = int;
-using byte_t = char;
+using byte_t = unsigned char;
 
 template<typename scalar_t>
 __global__ void

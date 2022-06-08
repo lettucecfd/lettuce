@@ -27,7 +27,7 @@ def test_native_no_streaming_mask():
     collision_n = NoCollision(lattice_n)
 
     simulation_n = Simulation(flow_n, lattice_n, collision_n, streaming_n)
-    assert not (simulation_n.stream_and_collide == simulation_n.stream_and_collide_)
+    assert not (simulation_n.collide_and_stream == simulation_n.collide_and_stream_)
     simulation_n.step(64)
 
     error = torch.abs(simulation.f - simulation_n.f).sum().data

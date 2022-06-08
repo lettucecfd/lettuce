@@ -107,6 +107,8 @@ class Generator:
     @property
     def name(self):
         name = f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}_{self.version}"
+        # we need to shorten the name of the module
+        # as it can produce a unloadable dll file otherwise
         name = hex(hash(name))[2:]
         return name
 

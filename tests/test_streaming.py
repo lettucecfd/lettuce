@@ -85,8 +85,8 @@ def test_standard_streaming_devices(lattice2):
         return simulation.f
 
     lattice0, lattice1 = lattice2
-    f0 = simulate(lattice0)
-    f1 = simulate(lattice1)
+    f0 = simulate(lattice0).to(torch.device("cpu"))
+    f1 = simulate(lattice1).to(torch.device("cpu"))
 
     error = torch.abs(f0 - f1).sum().data
-    assert error == 0.0
+    assert float(error) == 0.0

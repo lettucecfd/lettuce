@@ -110,7 +110,7 @@ def test_bgk_collision_devices(lattice2):
         return simulation.f
 
     lattice0, lattice1 = lattice2
-    f0 = simulate(lattice0)
-    f1 = simulate(lattice1)
+    f0 = simulate(lattice0).to(torch.device("cpu"))
+    f1 = simulate(lattice1).to(torch.device("cpu"))
     error = torch.abs(f0 - f1).sum().data
-    assert error < 1.0e-24
+    assert float(error) < 1.0e-8

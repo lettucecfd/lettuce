@@ -3,6 +3,7 @@ Test functions for collision models and related functions.
 """
 
 from copy import copy
+import torch
 import pytest
 import numpy as np
 from lettuce import *
@@ -92,3 +93,24 @@ def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     f = collision(collision(f))
     print(f.cpu().numpy(), f_old.cpu().numpy())
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
+
+def test_bgk_collision_devices(lattice2):
+    if lattice2[0].stencil.D() != 2 and lattice2[0].stencil.D() != 3:
+        pytest.skip("Test for 2D and 3D only!")
+
+    def simulate(lattice):
+        Flow = TaylorGreenVortex2D if lattice2[0].stencil.D() == 2 else TaylorGreenVortex3D
+        flow = Flow(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+
+        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+        streaming = NoStreaming(lattice)
+        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        simulation.step(4)
+
+        return simulation.f
+
+    lattice0, lattice1 = lattice2
+    f0 = simulate(lattice0)
+    f1 = simulate(lattice1)
+    error = torch.abs(f0 - f1).sum().data
+    assert error < 1.0e-24

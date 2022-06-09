@@ -4,7 +4,6 @@ import torch
 import numpy as np
 
 import pickle
-import logging
 import warnings
 
 from timeit import default_timer as timer
@@ -78,13 +77,13 @@ class Simulation:
         if not lattice.use_native:
             return
         if str(lattice.device) == 'cpu':
-            logging.warning('use_native was requested but no cuda device was selected!')
+            print('Native Implementation was requested but no CUDA Device was selected!')
             return
         if not self.streaming.native_available():
-            logging.warning('use_native was requested but streaming does not support native yet!')
+            print('Native Implementation requested but Streaming does not support Native yet!')
             return
         if not self.collision.native_available():
-            logging.warning('use_native was requested but collision does not support native yet!')
+            print('Native Implementation requested but Collision does not support Native yet!')
             return
 
         native_stencil = self.lattice.stencil.create_native()
@@ -94,17 +93,18 @@ class Simulation:
 
         collide_and_stream = native_generator.resolve()
         if collide_and_stream is None:
+
             buffer = native_generator.generate()
             directory = native_generator.format(buffer)
             native_generator.install(directory)
 
             collide_and_stream = native_generator.resolve()
             if collide_and_stream is None:
-                print('failed to install native extension!')
+                print('Failed to install native Extension!')
                 return
 
         self.collide_and_stream = collide_and_stream
-        if 'noStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
+        if 'NoStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
             self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @property

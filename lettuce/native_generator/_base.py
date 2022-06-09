@@ -1,9 +1,8 @@
-from typing import Optional
+from abc import ABC, abstractmethod
 
 
-class NativeLatticeBase:
-    _name: Optional[str] = None
-
+class NativeLatticeBase(ABC):
     @property
-    def name(self):
-        return self._name
+    @abstractmethod
+    def name(self) -> str:
+        ...

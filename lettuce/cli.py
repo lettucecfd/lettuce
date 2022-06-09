@@ -13,6 +13,7 @@ import pstats
 
 import click
 import torch
+import lettuce
 import numpy as np
 
 from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9

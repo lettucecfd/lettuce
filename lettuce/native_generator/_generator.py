@@ -1,5 +1,3 @@
-import logging
-
 from . import *
 from .. import __version__
 
@@ -61,20 +59,22 @@ class Generator:
     def launcher_hooked(self, obj: any):
         return self.reg['wrapper_parameter'].__contains__(obj)
 
-    def launcher_hook(self, obj: any, name: str, value: str, py_value: str):
-        self.reg['wrapper_parameter'].append(obj)
-        self.par['cuda_wrapper_parameter_name'].append(name)
-        self.par['cuda_wrapper_parameter_value'].append(value)
-        self.par['cpp_wrapper_parameter_name'].append(name)
-        self.par['cpp_wrapper_parameter_value'].append(py_value)
+    def launcher_hook(self, obj: any, name: str, value: str, py_value: str, cond=True):
+        if cond:
+            self.reg['wrapper_parameter'].append(obj)
+            self.par['cuda_wrapper_parameter_name'].append(name)
+            self.par['cuda_wrapper_parameter_value'].append(value)
+            self.par['cpp_wrapper_parameter_name'].append(name)
+            self.par['cpp_wrapper_parameter_value'].append(py_value)
 
     def kernel_hooked(self, obj: any):
         return self.reg['kernel_parameter'].__contains__(obj)
 
-    def kernel_hook(self, obj: any, name: str, value: str):
-        self.reg['kernel_parameter'].append(obj)
-        self.par['kernel_parameter_name'].append(name)
-        self.par['kernel_parameter_value'].append(value)
+    def kernel_hook(self, obj: any, name: str, value: str, cond=True):
+        if cond:
+            self.reg['kernel_parameter'].append(obj)
+            self.par['kernel_parameter_name'].append(name)
+            self.par['kernel_parameter_value'].append(value)
 
     def append_constexpr_buffer(self, it='', cond=True):
         if cond:
@@ -114,14 +114,19 @@ class Generator:
 
     @property
     def name(self):
+        # We need to shorten the Name of the Module
+        # as it can produce a non-loadable DLL-File otherwise.
+        # (We simply hash the Name)
+
+        # python's hash is not reproducible, so it can not be used.
+        # murmur3 is the current leading general purpose hash function for hash tables
+        # (fast, reproducible, non-cryptographic).
+        import mmh3
+
         name = f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}_{self.version}"
-        # we need to shorten the name of the module
-        # as it can produce a unloadable dll file otherwise
-        return hex(abs(hash(name)))[2:]
+        return mmh3.hash_bytes(name).hex()
 
     def generate(self):
-        import re
-
         # default parameter
         self.launcher_hook('f', 'at::Tensor f', 'f', 'simulation.f')
         self.kernel_hook('f', 'scalar_t *f', 'f.data<scalar_t>()')
@@ -210,15 +215,17 @@ class Generator:
     def resolve(self):
         try:
             import importlib
+            import site
             import re
+            importlib.reload(site)
             native = importlib.import_module(f"lettuce_native_{self.name}")
             # noinspection PyUnresolvedReferences
             return native.collide_and_stream
         except ModuleNotFoundError:
-            logging.info('Could not find the native module. Maybe it is not installed yet.')
+            print('Could not find the native module. Maybe it is not installed yet.')
             return None
         except AttributeError:
-            logging.error('Native module found but it is not working as expected.')
+            print('Native module found but it is not working as expected.')
             return None
 
     @staticmethod
@@ -227,6 +234,8 @@ class Generator:
         import os
         import sys
 
+        print(f"Installing Native module ({directory}) ...")
+
         cmd = [sys.executable, 'setup.py', 'install']
         install_log_path = os.path.join(directory, 'install.log')
 
@@ -234,7 +243,7 @@ class Generator:
             p = subprocess.run(cmd, shell=False, cwd=directory, stderr=install_log, stdout=install_log)
 
         if p.returncode != 0:
-            logging.error(f"Install failed! See log file ({install_log_path}) for more Info.")
+            print(f"Install failed! See log-File ({install_log_path}) for more Info.")
             raise subprocess.CalledProcessError(p.returncode, cmd)
 
         # after install the module is not registered

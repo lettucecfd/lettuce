@@ -13,8 +13,10 @@ native_sources = [
     os.path.join(os.path.dirname(__file__), 'lettuce_cuda.cu')]
 
 setup(
-    author='Andreas Kraemer',
-    author_email='kraemer.research@gmail.com',
+    author='Robert Andreas Fritsch',
+    author_email='info@robert-fritsch.de',
+    maintainer='Andreas Kraemer',
+    maintainer_email='kraemer.research@gmail.com',
     install_requires=install_requires,
     license='MIT license',
     keywords='lettuce',

@@ -224,12 +224,17 @@ class Generator:
     @staticmethod
     def install(directory: str):
         import subprocess
+        import os
         import sys
 
         cmd = [sys.executable, 'setup.py', 'install']
-        p = subprocess.run(cmd, shell=False, cwd=directory)
+        install_log_path = os.path.join(directory, 'install.log')
+
+        with open(install_log_path, 'wb') as install_log:
+            p = subprocess.run(cmd, shell=False, cwd=directory, stderr=install_log, stdout=install_log)
 
         if p.returncode != 0:
+            logging.error(f"Install failed! See log file ({install_log_path}) for more Info.")
             raise subprocess.CalledProcessError(p.returncode, cmd)
 
         # after install the module is not registered

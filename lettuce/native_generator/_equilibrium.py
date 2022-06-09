@@ -13,7 +13,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         super().__init__()
 
     def generate_uxu(self, generator: 'Generator'):
-        if not generator.registered('uxu'):
+        if generator.registered('uxu'):
             return
 
         generator.register('uxu')
@@ -29,7 +29,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         generator.append_node_buffer(f"const auto uxu = {' + '.join(summands)};")
 
     def generate_exu(self, generator: 'Generator'):
-        if not generator.registered('exu'):
+        if generator.registered('exu'):
             return
 
         generator.register('exu')
@@ -46,7 +46,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         generator.append_distribution_buffer(f"const auto exu = {' + '.join(summands)};")
 
     def generate_cs_pow_two(self, generator: 'Generator'):
-        if not generator.registered('cs_pow_two<scalar_t>'):
+        if generator.registered('cs_pow_two<scalar_t>'):
             return
 
         generator.register('cs_pow_two<scalar_t>')
@@ -58,7 +58,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         generator.append_node_buffer('constexpr auto cs_pow_two = cs * cs;')
 
     def generate_two_cs_pow_two(self, generator: 'Generator'):
-        if not generator.registered('two_cs_pow_two<scalar_t>'):
+        if generator.registered('two_cs_pow_two<scalar_t>'):
             return
 
         generator.register('two_cs_pow_two<scalar_t>')
@@ -70,7 +70,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         generator.append_node_buffer('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
     def generate_f_eq_tmp(self, generator: 'Generator'):
-        if not generator.registered('f_eq_tmp'):
+        if generator.registered('f_eq_tmp'):
             return
 
         generator.register('f_eq_tmp')
@@ -83,7 +83,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
         generator.append_distribution_buffer('const auto f_eq_tmp = exu / cs_pow_two;')
 
     def generate_f_eq(self, generator: 'Generator'):
-        if not generator.registered('f_eq'):
+        if generator.registered('f_eq'):
             return
 
         generator.register('f_eq')

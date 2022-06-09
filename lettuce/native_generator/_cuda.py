@@ -11,7 +11,7 @@ class NativeCuda:
     """
 
     def generate_thread_count(self, generator: 'Generator'):
-        if not generator.registered('thread_count'):
+        if generator.registered('thread_count'):
             return
 
         generator.register('thread_count')
@@ -34,7 +34,7 @@ class NativeCuda:
             generator.append_launcher_buffer("const auto thread_count = dim3{8u, 8u, 8u};")
 
     def generate_block_count(self, generator: 'Generator'):
-        if not generator.registered('block_count'):
+        if generator.registered('block_count'):
             return
 
         generator.register('block_count')
@@ -64,7 +64,7 @@ class NativeCuda:
         generator.append_launcher_buffer('};')
 
     def generate_index(self, generator: 'Generator'):
-        if not generator.registered('index'):
+        if generator.registered('index'):
             return
 
         generator.register('index')
@@ -87,7 +87,7 @@ class NativeCuda:
         generator.append_index_buffer('};')
 
     def generate_dimension(self, generator: 'Generator'):
-        if not generator.registered('dimension'):
+        if generator.registered('dimension'):
             return
 
         generator.register('dimension')
@@ -115,7 +115,7 @@ class NativeCuda:
         offset describes the offset which needs to be multiplied with a coordinate
         to get the total index in the data
         """
-        if not generator.registered('offset'):
+        if generator.registered('offset'):
             return
 
         generator.register('offset')

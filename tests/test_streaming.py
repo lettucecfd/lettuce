@@ -29,10 +29,10 @@ def test_standard_streaming_hardcoded_2D(lattice):
     simulation = Simulation(dummy_flow, lattice, collision, streaming)
 
     if hasattr(simulation, 'f_next'):
-        simulation.f_next = torch.zeros((lattice.stencil.Q(), 16, 16), dtype=lattice.dtype)
+        simulation.f_next = torch.zeros((lattice.stencil.Q(), 16, 16), dtype=lattice.dtype, device=lattice.device)
 
     assert hasattr(simulation, 'f')
-    f = torch.zeros((lattice.stencil.Q(), 16, 16), dtype=lattice.dtype)
+    f = torch.zeros((lattice.stencil.Q(), 16, 16), dtype=lattice.dtype, device=lattice.device)
     for q in range(lattice.stencil.Q()):
         f[q, 1, 1] = q + 1
     simulation.f = f
@@ -54,10 +54,10 @@ def test_standard_streaming_hardcoded_3D(lattice):
     simulation = Simulation(dummy_flow, lattice, collision, streaming)
 
     if hasattr(simulation, 'f_next'):
-        simulation.f_next = torch.zeros((lattice.stencil.Q(), 16, 16, 16), dtype=lattice.dtype)
+        simulation.f_next = torch.zeros((lattice.stencil.Q(), 16, 16, 16), dtype=lattice.dtype, device=lattice.device)
 
     assert hasattr(simulation, 'f')
-    f = torch.zeros((lattice.stencil.Q(), 16, 16, 16), dtype=lattice.dtype)
+    f = torch.zeros((lattice.stencil.Q(), 16, 16, 16), dtype=lattice.dtype, device=lattice.device)
     for q in range(lattice.stencil.Q()):
         f[q, 1, 1, 1] = q + 1
     simulation.f = f

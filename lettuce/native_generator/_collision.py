@@ -52,7 +52,7 @@ class NativeNoCollision(NativeCollision):
         return NativeBGKCollision()
 
     def generate_collision(self, generator: 'Generator'):
-        if not generator.registered('collision()'):
+        if generator.registered('collision()'):
             generator.register('collision()')
 
 

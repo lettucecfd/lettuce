@@ -39,7 +39,7 @@ class NativeLattice:
         return f"({x} * dimension[0] + {y}) * dimension[1] + {z}"
 
     def generate_rho(self, generator: 'Generator'):
-        if not generator.registered('rho'):
+        if generator.registered('rho'):
             return
 
         generator.register('rho')
@@ -52,7 +52,7 @@ class NativeLattice:
         generator.append_node_buffer(f"const auto rho = {f_eq_sum};")
 
     def generate_rho_inv(self, generator: 'Generator'):
-        if not generator.registered('rho_inv'):
+        if generator.registered('rho_inv'):
             return
 
         generator.register('rho_inv')
@@ -64,7 +64,7 @@ class NativeLattice:
         generator.append_node_buffer('const auto rho_inv = 1.0 / rho;')
 
     def generate_u(self, generator: 'Generator'):
-        if not generator.registered('u'):
+        if generator.registered('u'):
             return
 
         generator.register('u')

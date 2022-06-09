@@ -26,8 +26,15 @@ class NativeStreaming(NativeLatticeBase):
         if not generator.kernel_hooked('no_stream_mask'):
             generator.kernel_hook('no_stream_mask', 'const byte_t* no_stream_mask', 'no_stream_mask.data<byte_t>()')
 
-    def generate_read_write(self, generator: 'Generator'):
+    def generate_read(self, generator: 'Generator'):
         raise NotImplementedError()
+
+    def generate_write(self, generator: 'Generator'):
+        raise NotImplementedError()
+
+    def generate_read_write(self, generator: 'Generator'):
+        generator.streaming.generate_read(generator)
+        generator.streaming.generate_write(generator)
 
 
 class NativeNoStreaming(NativeStreaming):
@@ -40,16 +47,15 @@ class NativeNoStreaming(NativeStreaming):
     def create(support_no_streaming_mask: bool):
         return NativeNoStreaming()
 
-    def generate_read_write(self, generator: 'Generator'):
-        if not generator.registered('read_write()'):
+    def generate_read(self, generator: 'Generator'):
+        if generator.registered('read()'):
             return
 
-        generator.register('read_write()')
+        generator.register('read()')
 
         # dependencies:
         generator.stencil.generate_q(generator)
-        generator.stencil.generate_d(generator)
-        generator.cuda.generate_offset(generator)
+        generator.cuda.generate_index(generator)
 
         d = generator.stencil.stencil.D()
         coord = generator.lattice.get_lattice_coordinate(generator, ['q_', 'x_', 'y_', 'z_'][:d + 1])
@@ -69,6 +75,19 @@ class NativeNoStreaming(NativeStreaming):
         generator.append_index_buffer(f'    f_reg[i] = f[{coord}];            ')
         generator.append_index_buffer(f'  }}                                  ')
         generator.append_index_buffer(f'                                      ')
+
+    def generate_write(self, generator: 'Generator'):
+        if generator.registered('write()'):
+            return
+
+        generator.register('write()')
+
+        # dependencies:
+        generator.stencil.generate_q(generator)
+        generator.cuda.generate_index(generator)
+
+        d = generator.stencil.stencil.D()
+        coord = generator.lattice.get_lattice_coordinate(generator, ['q_', 'x_', 'y_', 'z_'][:d + 1])
 
         # write
         generator.append_write_buffer(f'                                      ')
@@ -96,7 +115,7 @@ class NativeStandardStreaming(NativeStreaming):
         return NativeStandardStreaming(support_no_streaming_mask)
 
     def generate_f_next(self, generator: 'Generator'):
-        if not generator.registered('f_next'):
+        if generator.registered('f_next'):
             return
 
         generator.register('f_next')
@@ -111,26 +130,17 @@ class NativeStandardStreaming(NativeStreaming):
         if not generator.kernel_hooked('f_next'):
             generator.kernel_hook('f_next', 'scalar_t *f_next', 'f_next.data<scalar_t>()')
 
-    def generate_read_write(self, generator: 'Generator'):
-        if not generator.registered('read_write()'):
+    def generate_read(self, generator: 'Generator'):
+        if generator.registered('read()'):
             return
-        generator.register('read_write()')
+        generator.register('read()')
 
         # dependencies:
-
-        if self.support_no_streaming_mask:
-            self.generate_no_stream_mask(generator)
-
-        self.generate_f_next(generator)
-        generator.cuda.generate_offset(generator)
         generator.cuda.generate_index(generator)
-        generator.cuda.generate_dimension(generator)
         generator.stencil.generate_q(generator)
-        generator.stencil.generate_e(generator)
 
         d = generator.stencil.stencil.D()
         coord = generator.lattice.get_lattice_coordinate(generator, ['q_', 'x_', 'y_', 'z_'][:d + 1])
-        mask_coord = generator.lattice.get_lattice_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
 
         # read
         generator.append_index_buffer(f'                                      ')
@@ -147,6 +157,25 @@ class NativeStandardStreaming(NativeStreaming):
         generator.append_index_buffer(f'    f_reg[i] = f[{coord}];            ')
         generator.append_index_buffer(f'  }}                                  ')
         generator.append_index_buffer(f'                                      ')
+
+    def generate_write(self, generator: 'Generator'):
+        if generator.registered('write()'):
+            return
+        generator.register('write()')
+
+        # dependencies:
+        if self.support_no_streaming_mask:
+            self.generate_no_stream_mask(generator)
+
+        generator.stencil.generate_q(generator)
+        generator.cuda.generate_index(generator)
+        generator.stencil.generate_e(generator)
+        generator.cuda.generate_dimension(generator)
+        self.generate_f_next(generator)
+
+        d = generator.stencil.stencil.D()
+        coord = generator.lattice.get_lattice_coordinate(generator, ['q_', 'x_', 'y_', 'z_'][:d + 1])
+        mask_coord = generator.lattice.get_lattice_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
 
         # write
         generator.append_write_buffer(f'                                                         ')

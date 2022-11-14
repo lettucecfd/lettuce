@@ -85,6 +85,10 @@ class Simulation:
         for reporter in self.reporters:
             reporter(self.i, self.flow.units.convert_time_to_pu(self.i), self.f)
 
+    def save_reporters(self):
+        for reporter in self.reporters:
+            reporter.save()
+
     def initialize(self, max_num_steps=500, tol_pressure=0.001):
         """Iterative initialization to get moments consistent with the initial velocity.
 

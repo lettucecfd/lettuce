@@ -9,6 +9,7 @@ import os
 import numpy as np
 import torch
 import pyevtk.hl as vtk
+from datetime import datetime
 
 __all__ = [
     "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter"
@@ -124,10 +125,16 @@ class ObservableReporter:
     >>> # simulation.reporters.append(reporter)
     """
 
-    def __init__(self, observable, interval=1, out=sys.stdout):
+    def __init__(self, observable, interval=1, out=[], print_to_screen=True, save_to_file=False, filename_base="./data/output"):
         self.observable = observable
         self.interval = interval
         self.out = [] if out is None else out
+        self.print_to_screen = print_to_screen
+        self.save_to_file = save_to_file
+        self.filename_base = filename_base
+        directory = os.path.dirname(filename_base)
+        if not os.path.isdir(directory):
+            os.mkdir(directory)
         self._parameter_name = observable.__class__.__name__
         print('steps    ', 'time    ', self._parameter_name)
 
@@ -140,7 +147,13 @@ class ObservableReporter:
             else:
                 observed = observed.tolist()
             entry = [i, t] + observed
-            if isinstance(self.out, list):
+            if self.save_to_file:
                 self.out.append(entry)
-            else:
-                print(*entry, file=self.out)
+            if self.print_to_screen:
+                print(*entry)  # , file=self.out)
+
+    def save(self):
+        if os.path.exists(self.filename_base):
+            self.filename_base += datetime.now().strftime('_%Y%m%d_%H%M%S')  # "_" + str(datetime.now()).replace(".", "").replace(":", "").replace(" ", "").replace("-", "")
+        data = np.array(self.out)
+        np.savetxt(self.filename_base + ".csv", data)  # , delimiter=",")

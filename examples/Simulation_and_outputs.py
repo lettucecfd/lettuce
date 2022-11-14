@@ -19,7 +19,8 @@ simulation.initialize_f_neq()  # initialize non-conserved moments
 
 # reporters will grab the results in between simulation steps (see io.py and simulation.py)
 # Output: Column 1: time in LU, Column 2: kinetic energy in PU
-kinE_reporter = lt.EnergyReporter(lattice, flow, interval=1, out=None)
+energy = lt.IncompressibleKineticEnergy(lattice, flow)
+kinE_reporter = lt.ObservableReporter(energy, interval=5, out=None)
 simulation.reporters.append(kinE_reporter)
 # Output: separate VTK-file with ux,uy,uz and p for every time step in ../data
 VTKreport = lt.VTKReporter(lattice, flow, interval=25)

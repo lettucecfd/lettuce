@@ -9,6 +9,24 @@ import numpy as np
 import torch
 
 
+def test_save_to_file(tmpdir):
+    lattice = Lattice(D2Q9, "cpu")
+    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    collision = BGKCollision(lattice=lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice=lattice)
+    simulation = Simulation(flow=flow,
+                            lattice=lattice,
+                            collision=collision,
+                            streaming=streaming)
+    energy = lt.IncompressibleKineticEnergy(lattice, flow)
+    reporter = lt.ObservableReporter(energy, interval=5, print_to_screen=True, save_to_file=True,
+                                     filename_base="./data/output")
+    simulation.reporters.append(reporter)
+    simulation.step(3)
+    simulation.save_reporters()
+    assert os.path.isfile(tmpdir / "output.csv")
+
+
 def test_write_image(tmpdir):
     pytest.skip("matplotlib not working")
     lattice = Lattice(D2Q9, "cpu")

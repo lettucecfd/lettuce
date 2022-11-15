@@ -129,7 +129,8 @@ class ObservableReporter:
         self.interval = interval
         self.out = [] if out is None else out
         self._parameter_name = observable.__class__.__name__
-        print('steps    ', 'time    ', self._parameter_name)
+        if out is not None:
+            print('steps    ', 'time    ', self._parameter_name)
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:

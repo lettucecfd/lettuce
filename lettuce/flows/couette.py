@@ -18,8 +18,8 @@ class CouetteFlow2D(object):
             characteristic_velocity_pu=1
         )
 
-    def analytic_solution(self, x, t=0):
-        # TODO
+    def analytic_solution(self, x):
+        u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2 * nu * t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2 * nu * t)])
         raise NotImplementedError
 
     def initial_solution(self, x):

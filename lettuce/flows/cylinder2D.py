@@ -34,6 +34,15 @@ class Cylinder2D:
         u_char = self.units.characteristic_velocity_pu * self._unit_vector()
         u_char = append_axes(u_char, self.units.lattice.D)
         u = (1 - self.mask) * u_char
+        # komisches Zeug von Mario: u[2] += np.sin(x[2] / x[2].shape[1] * 2 * np.pi) * np.sin(x[0]/x[0].shape[0]*np.pi) * self.units.characteristic_velocity_pu * 0.05
+
+        # Sinus-Störung in ux
+        ny = x[1].shape[1]
+        u[0][1] += np.sin(np.arange(0, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 0.3
+
+        # Block-Störung unten rechts
+        #u[0][3:25, 3:50] *= 1.3
+        #u[1][3:25, 3:50] *= 1.3
         return p, u
 
     @property
@@ -43,4 +52,21 @@ class Cylinder2D:
 
     @property
     def boundaries(self):
-        return []
+        x = self.grid[0]
+        outmask = np.zeros(self.grid[0].shape, dtype=bool)
+        outmask[[0, -1], :] = True
+        return [
+            EquilibriumBoundaryPU(
+                # np.abs(x) < 1e-6,
+                outmask,
+                self.units.lattice, self.units,
+                self.units.characteristic_velocity_pu * self._unit_vector()
+            ),
+            # AntiBounceBackOutlet(self.units.lattice, self._unit_vector().tolist()),
+            # EquilibriumOutletP(), # wird von PyCharm als "unknown reference" markiert?
+            # EquilibriumBoundaryPU(
+            BounceBackBoundary(self.mask, self.units.lattice)
+        ]
+
+    def _unit_vector(self, i=0):
+        return np.eye(self.units.lattice.D)[i]

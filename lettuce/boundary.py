@@ -57,6 +57,14 @@ class EquilibriumBoundaryPU:
         feq = self.lattice.equilibrium(rho, u)
         feq = self.lattice.einsum("q,q->q", [feq, torch.ones_like(f)])
         f = torch.where(self.mask, feq, f)
+
+      #  ny = f.shape[2]
+      #  u1 = (-1.0 * np.arange(0, ny) * (np.arange(0, ny) - ny) * self.units.characteristic_velocity_pu * 1/(ny/2)**2)[None,...]
+      #  u2 = np.zeros_like(u1)
+      #  u = np.stack([u1, u2], axis=0)
+      #  u = self.lattice.convert_to_tensor(u)
+      #  feq = self.lattice.equilibrium(rho, u)
+      #  f[:, 0, :] = feq[:, 0, :]
         return f
 
 

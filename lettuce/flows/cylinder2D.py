@@ -2,12 +2,12 @@ import warnings
 import numpy as np
 from lettuce.unit import UnitConversion
 from lettuce.util import append_axes
-from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
+from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, EquilibriumOutletP, AntiBounceBackOutlet
 
 
 class Cylinder2D:
 
-    def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1):
+    def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1, boundary=None):
         if len(shape) != lattice.D:
             raise ValueError(f"{lattice.D}-dimensional lattice requires {lattice.D}-dimensional `shape`")
         self.shape = shape
@@ -19,6 +19,7 @@ class Cylinder2D:
             characteristic_velocity_pu=char_velocity
         )
         self._mask = np.zeros(shape=self.shape, dtype=np.bool)
+        self._boundary = boundary
 
     @property
     def mask(self):
@@ -43,6 +44,7 @@ class Cylinder2D:
         # Block-Störung unten rechts
         #u[0][3:25, 3:50] *= 1.3
         #u[1][3:25, 3:50] *= 1.3
+
         return p, u
 
     @property
@@ -53,18 +55,24 @@ class Cylinder2D:
     @property
     def boundaries(self):
         x = self.grid[0]
-        outmask = np.zeros(self.grid[0].shape, dtype=bool)
-        outmask[[0, -1], :] = True
-        return [
-            EquilibriumBoundaryPU(
+        # INLET mask
+        inmask = np.zeros(self.grid[0].shape, dtype=bool)
+        inmask[0, 1:-1] = True  # inmask[[0, -1], :] = True // bzw. inmask [0,:] ABER DANN überlagern sich die Boundaries in den Ecken, bzw. auf jeden Ecke überlagern sich die Ränder mit den Wänden
+        # Wall added to BB-mask
+        self.mask[:, [0, -1]] = True
+        if self._boundary is None:
+            inlet_boundary = EquilibriumBoundaryPU(
                 # np.abs(x) < 1e-6,
-                outmask,
+                inmask,
                 self.units.lattice, self.units,
                 self.units.characteristic_velocity_pu * self._unit_vector()
-            ),
+            )
+        else:
+            inlet_boundary = self._boundary
+        return [
+            inlet_boundary,
             # AntiBounceBackOutlet(self.units.lattice, self._unit_vector().tolist()),
-            # EquilibriumOutletP(), # wird von PyCharm als "unknown reference" markiert?
-            # EquilibriumBoundaryPU(
+            EquilibriumOutletP(self.units.lattice, self._unit_vector().tolist()),  # wird von PyCharm als "unknown reference" markiert? -> LSG: stand oben im Import nicht drin (!)
             BounceBackBoundary(self.mask, self.units.lattice)
         ]
 

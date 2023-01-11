@@ -15,7 +15,7 @@ INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
 def test_flow_2d(IncompressibleFlow, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device)
+    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
@@ -65,16 +65,20 @@ def test_obstacle(stencil, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(stencil, dtype=dtype, device=device)
 
+    nx = 32
+    ny = 16
+    nz = 16
+
     if stencil is D2Q9:
-        mask = np.zeros([20, 10])
+        mask = np.zeros([nx, ny])
         mask[3:6, 3:6] = 1
-        flow = Obstacle2D(20, 10, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle2D(nx, ny, 100, 0.1, lattice=lattice, char_length_lu=3)
     if stencil is D3Q27:
-        mask = np.zeros([20, 10, 5])
+        mask = np.zeros([nx, ny, nz])
         mask[3:6, 3:6, :] = 1
-        flow = Obstacle3D(20, 10, 5, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle3D(nx, ny, nz, 100, 0.1, lattice=lattice, char_length_lu=3)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     simulation.step(2)

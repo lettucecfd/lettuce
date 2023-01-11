@@ -3,6 +3,7 @@ Test functions for collision models and related functions.
 """
 
 from copy import copy
+import torch
 import pytest
 import numpy as np
 from lettuce import *
@@ -12,8 +13,8 @@ from lettuce import *
                                        SmagorinskyCollision])
 def test_collision_conserves_mass(Collision, f_all_lattices):
     f, lattice = f_all_lattices
-    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
-            (Collision == KBCCollision3D and lattice.stencil != D3Q27))):
+    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or
+            (Collision == KBCCollision3D and lattice.stencil != D3Q27)):
         pytest.skip()
     f_old = copy(f)
     collision = Collision(lattice, 0.51)
@@ -21,8 +22,8 @@ def test_collision_conserves_mass(Collision, f_all_lattices):
     assert lattice.rho(f).cpu().numpy() == pytest.approx(lattice.rho(f_old).cpu().numpy())
 
 
-@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision2D, KBCCollision3D, TRTCollision, RegularizedCollision,
-                                       SmagorinskyCollision])
+@pytest.mark.parametrize("Collision", [BGKCollision, KBCCollision2D, KBCCollision3D,
+                                       TRTCollision, RegularizedCollision, SmagorinskyCollision])
 def test_collision_conserves_momentum(Collision, f_all_lattices):
     f, lattice = f_all_lattices
     if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
@@ -92,3 +93,24 @@ def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     f = collision(collision(f))
     print(f.cpu().numpy(), f_old.cpu().numpy())
     assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
+
+def test_bgk_collision_devices(lattice2):
+    if lattice2[0].stencil.D() != 2 and lattice2[0].stencil.D() != 3:
+        pytest.skip("Test for 2D and 3D only!")
+
+    def simulate(lattice):
+        Flow = TaylorGreenVortex2D if lattice2[0].stencil.D() == 2 else TaylorGreenVortex3D
+        flow = Flow(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+
+        collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+        streaming = NoStreaming(lattice)
+        simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+        simulation.step(4)
+
+        return simulation.f
+
+    lattice0, lattice1 = lattice2
+    f0 = simulate(lattice0).to(torch.device("cpu"))
+    f1 = simulate(lattice1).to(torch.device("cpu"))
+    error = torch.abs(f0 - f1).sum().data
+    assert float(error) < 1.0e-8

@@ -1,16 +1,24 @@
 import torch
 
+from lettuce.base import LatticeBase
+from lettuce.native_generator import NativeQuadraticEquilibrium
+
 __all__ = ["Equilibrium", "QuadraticEquilibrium", "IncompressibleQuadraticEquilibrium",
            "QuadraticEquilibrium_LessMemory"]
 
 
-class Equilibrium:
-    pass
+class Equilibrium(LatticeBase):
+    def __call__(self, rho, u):
+        raise NotImplementedError()
 
 
 class QuadraticEquilibrium(Equilibrium):
-    def __init__(self, lattice):
-        self.lattice = lattice
+
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> 'NativeQuadraticEquilibrium':
+        return NativeQuadraticEquilibrium()
 
     def __call__(self, rho, u, *args):
         exu = torch.tensordot(self.lattice.e, u, dims=1)
@@ -23,7 +31,7 @@ class QuadraticEquilibrium(Equilibrium):
         return feq
 
 
-class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
+class QuadraticEquilibrium_LessMemory(Equilibrium):
     """does the same as the normal equilibrium, how ever it uses somewhere around 20% less RAM,
     but runs about 2% slower on GPU and 11% on CPU
 
@@ -31,6 +39,12 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
     lattice.equilibrium = QuadraticEquilibrium_LessMemory(lattice)
     before starting your simulation
     """
+
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> 'NativeQuadraticEquilibrium':
+        return NativeQuadraticEquilibrium()
 
     def __call__(self, rho, u, *args):
         return self.lattice.einsum(
@@ -44,7 +58,7 @@ class QuadraticEquilibrium_LessMemory(QuadraticEquilibrium):
 
 class IncompressibleQuadraticEquilibrium(Equilibrium):
     def __init__(self, lattice, rho0=1.0):
-        self.lattice = lattice
+        Equilibrium.__init__(self, lattice)
         self.rho0 = rho0
 
     def __call__(self, rho, u, *args):

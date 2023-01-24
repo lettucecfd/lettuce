@@ -9,7 +9,7 @@ __all__ = ["Stencil", "D1Q3", "D2Q9", "D3Q15", "D3Q19", "D3Q27"]
 class Stencil:
     e: np.ndarray = np.array([])
     w: np.ndarray = np.array([])
-    cs: np.float = 0.0
+    cs: float = 0.0
     opposite: [int] = []
 
     @classmethod

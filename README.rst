@@ -8,13 +8,6 @@
         :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-..
-    .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
-            :target: https://doi.org/10.5281/zenodo.3757641
-
-.. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
-        :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
-
 
 GPU-accelerated Lattice Boltzmann Simulations in Python
 -------------------------------------------------------
@@ -26,6 +19,7 @@ It provides
 * GPU-accelerated computation based on PyTorch
 * Rapid Prototyping in 2D and 3D
 * Usage of neural networks and automatic differentiation within LBM
+* Custom PyTorch extensions for optimized native CUDA kernels
 
 Resources
 ---------
@@ -49,6 +43,9 @@ When using lettuce please cite::
       pages={40},
       organization={Springer Nature}
     }
+
+
+
 
 
 Getting Started
@@ -91,7 +88,7 @@ Installation
 * Create a new conda environment and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"
+         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"  mmh3
 
 
 * Activate the conda environment::

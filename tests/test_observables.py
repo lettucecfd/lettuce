@@ -17,7 +17,7 @@ def test_energy_spectrum(tmpdir, Flow):
     flow = Flow(resolution=20, reynolds_number=1600, mach_number=0.01, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     spectrum = lattice.convert_to_numpy(EnergySpectrum(lattice, flow)(simulation.f))
     energy = IncompressibleKineticEnergy(lattice, flow)(simulation.f).item()
 

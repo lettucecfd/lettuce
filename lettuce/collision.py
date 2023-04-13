@@ -4,20 +4,82 @@ Collision models
 
 import torch
 
+from typing import Optional
+
+from lettuce.base import LatticeBase
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.util import LettuceException
+from lettuce.native_generator import NativeNoCollision, NativeBGKCollision
 
 __all__ = [
     "BGKCollision", "KBCCollision2D", "KBCCollision3D", "MRTCollision", "RegularizedCollision",
-    "SmagorinskyCollision", "TRTCollision", "BGKInitialization"
+    "SmagorinskyCollision", "TRTCollision", "BGKInitialization", "NoCollision"
 ]
 
 
-class BGKCollision:
+class Collision(LatticeBase):
+    """Class Collision
+
+    Base class for all lattice collision components.
+    Ensures that all collision components share a
+    signature to rely on.
+    """
+
+    no_collision_mask: Optional[torch.Tensor]
+
+    def __init__(self, lattice: 'Lattice'):
+        LatticeBase.__init__(self, lattice)
+        self.no_collision_mask = None
+
+    def __call__(self, f: torch.Tensor) -> torch.Tensor:
+        """The heart of the collision operator
+
+        Applies the collision operator to the distribution function.
+
+        Parameters
+        ----------
+        f: torch.Tensor
+            The distribution function of the current timestamp.
+        Returns
+        -------
+        The distribution function of the current timestamp with
+        the collision operator applied.
+        """
+        raise NotImplementedError()
+
+
+class NoCollision(Collision):
+    """Class NoCollision
+
+    A collision operator that is equal to the identity function.
+    This method is mainly for debugging and should not be used
+    for serious simulations!
+    """
+
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> 'NativeNoCollision':
+        return NativeNoCollision()
+
+    def __call__(self, f: torch.Tensor) -> torch.Tensor:
+        return f
+
+
+class BGKCollision(Collision):
     def __init__(self, lattice, tau, force=None):
+        Collision.__init__(self, lattice)
         self.force = force
         self.lattice = lattice
         self.tau = tau
+
+    def native_available(self) -> bool:
+        return self.lattice.equilibrium.native_available()
+
+    def create_native(self) -> 'NativeBGKCollision':
+        native_equilibrium = self.lattice.equilibrium.create_native()
+        support_no_collision_mask = (self.no_collision_mask is not None) and self.no_collision_mask.any()
+        return NativeBGKCollision(native_equilibrium, support_no_collision_mask)
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
@@ -28,7 +90,7 @@ class BGKCollision:
         return f - 1.0 / self.tau * (f - feq) + Si
 
 
-class MRTCollision:
+class MRTCollision(Collision):
     """Multiple relaxation time collision operator
 
     This is an MRT operator in the most general sense of the word.
@@ -36,6 +98,7 @@ class MRTCollision:
     """
 
     def __init__(self, lattice, transform, relaxation_parameters):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.transform = transform
         self.relaxation_parameters = lattice.convert_to_tensor(relaxation_parameters)
@@ -53,6 +116,7 @@ class TRTCollision:
         """
 
     def __init__(self, lattice, tau, tau_minus=1.0):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau_plus = tau
         self.tau_minus = tau_minus
@@ -69,10 +133,11 @@ class TRTCollision:
         return f
 
 
-class RegularizedCollision:
+class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
 
     def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau = tau
         self.Q_matrix = torch.zeros([lattice.Q, lattice.D, lattice.D], device=lattice.device, dtype=lattice.dtype)
@@ -100,10 +165,11 @@ class RegularizedCollision:
         return f
 
 
-class KBCCollision2D:
+class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
 
     def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
         self.tau = tau
@@ -180,10 +246,11 @@ class KBCCollision2D:
         return f
 
 
-class KBCCollision3D:
+class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
 
     def __init__(self, lattice, tau):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         assert lattice.Q == 27, LettuceException("KBC only realized for D3Q27")
         self.tau = tau
@@ -271,10 +338,11 @@ class KBCCollision3D:
         return f
 
 
-class SmagorinskyCollision:
+class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
     def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
+        Collision.__init__(self, lattice)
         self.force = force
         self.lattice = lattice
         self.tau = tau
@@ -302,10 +370,11 @@ class SmagorinskyCollision:
         return f - 1.0 / self.tau_eff * (f - feq) + Si
 
 
-class BGKInitialization:
+class BGKInitialization(Collision):
     """Keep velocity constant."""
 
     def __init__(self, lattice, flow, moment_transformation):
+        Collision.__init__(self, lattice)
         self.lattice = lattice
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation

@@ -6,7 +6,7 @@ from lettuce import (
     BounceBackBoundary, EquilibriumBoundaryPU,
     UnitConversion, AntiBounceBackOutlet, D2Q9, Obstacle, Lattice,
     StandardStreaming, Simulation, EquilibriumOutletP,
-    RegularizedCollision
+    RegularizedCollision, BGKCollision
 )
 
 import pytest
@@ -126,12 +126,13 @@ def test_masks(dtype_device):
     """test if masks are applied from boundary conditions"""
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, dtype=dtype, device=device)
-    flow = Obstacle((10, 5), 100, 0.1, lattice, 2)
+    flow = Obstacle((16, 16), 100, 0.1, lattice, 2)
     flow.mask[1, 1] = 1
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, None, streaming)
+    collision = BGKCollision(lattice, 1.0)
+    simulation = Simulation(flow, lattice, collision, streaming)
     assert simulation.streaming.no_stream_mask.any()
-    assert simulation.no_collision_mask.any()
+    assert simulation.collision.no_collision_mask.any()
 
 
 def test_equilibrium_pressure_outlet(dtype_device):
@@ -153,13 +154,13 @@ def test_equilibrium_pressure_outlet(dtype_device):
                 BounceBackBoundary(self.mask, self.units.lattice)
             ]
 
-    flow = MyObstacle((30, 30), reynolds_number=10, mach_number=0.1, lattice=lattice, domain_length_x=3)
-    mask = np.zeros_like(flow.grid[0], dtype=np.bool)
+    flow = MyObstacle((32, 32), reynolds_number=10, mach_number=0.1, lattice=lattice, domain_length_x=3)
+    mask = np.zeros_like(flow.grid[0], dtype=bool)
     mask[10:20, 10:20] = 1
     flow.mask = mask
     simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),
                             StandardStreaming(lattice))
-    simulation.step(20)
+    simulation.step(30)
     rho = lattice.rho(simulation.f)
     u = lattice.u(simulation.f)
     feq = lattice.equilibrium(torch.ones_like(rho), u)

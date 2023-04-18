@@ -1,15 +1,18 @@
 """Lattice Boltzmann Solver"""
 
-from timeit import default_timer as timer
-from lettuce import (
-    LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient
-)
-from lettuce.util import pressure_poisson
-import pickle
-from copy import deepcopy
-import warnings
 import torch
 import numpy as np
+
+import pickle
+import warnings
+
+from timeit import default_timer as timer
+
+from lettuce import LettuceException, get_default_moment_transform, BGKInitialization, ExperimentalWarning, torch_gradient, StandardStreaming
+from lettuce.util import pressure_poisson
+from lettuce.native_generator import Generator
+
+from copy import deepcopy
 
 __all__ = ["Simulation"]
 
@@ -24,11 +27,16 @@ class Simulation:
 
     """
 
-    def __init__(self, flow, lattice, collision, streaming):
+    lattice: 'Lattice'
+    collision: 'Collision'
+    streaming: 'Streaming'
+
+    def __init__(self, flow, lattice, collision, streaming=None):
         self.flow = flow
         self.lattice = lattice
         self.collision = collision
-        self.streaming = streaming
+        self.streaming = streaming if streaming is not None else StandardStreaming(lattice)
+
         self.i = 0
 
         grid = flow.grid
@@ -48,19 +56,73 @@ class Simulation:
         self.reporters = []
 
         # Define masks, where the collision or streaming are not applied
-        x = flow.grid
-        self.no_collision_mask = lattice.convert_to_tensor(np.zeros_like(x[0], dtype=bool))
-        no_stream_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
+        no_collision_mask = lattice.convert_to_tensor(np.zeros_like(flow.grid[0], dtype=bool))
+        no_streaming_mask = lattice.convert_to_tensor(np.zeros(self.f.shape, dtype=bool))
 
         # Apply boundaries
         self._boundaries = deepcopy(self.flow.boundaries)  # store locally to keep the flow free from the boundary state
         for boundary in self._boundaries:
             if hasattr(boundary, "make_no_collision_mask"):
-                self.no_collision_mask = self.no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
+                no_collision_mask = no_collision_mask | boundary.make_no_collision_mask(self.f.shape)
             if hasattr(boundary, "make_no_stream_mask"):
-                no_stream_mask = no_stream_mask | boundary.make_no_stream_mask(self.f.shape)
-        if no_stream_mask.any():
-            self.streaming.no_stream_mask = no_stream_mask
+                no_streaming_mask = no_streaming_mask | boundary.make_no_stream_mask(self.f.shape)
+
+        self.collision.no_collision_mask = no_collision_mask.to(torch.uint8)
+        self.streaming.no_streaming_mask = no_streaming_mask.to(torch.uint8)
+
+        # default collide and stream
+        self.collide_and_stream = Simulation.collide_and_stream_
+
+        # check if native is possible, available and wanted
+        if not lattice.use_native:
+            return
+        if str(lattice.device) == 'cpu':
+            print('Native Implementation was requested but no CUDA Device was selected!')
+            return
+        if not self.streaming.native_available():
+            print('Native Implementation requested but Streaming does not support Native yet!')
+            return
+        if not self.collision.native_available():
+            print('Native Implementation requested but Collision does not support Native yet!')
+            return
+
+        native_stencil = self.lattice.stencil.create_native()
+        native_streaming = self.streaming.create_native()
+        native_collision = self.collision.create_native()
+        native_generator = Generator(native_stencil, native_streaming, native_collision)
+
+        collide_and_stream = native_generator.resolve()
+        if collide_and_stream is None:
+
+            buffer = native_generator.generate()
+            directory = native_generator.format(buffer)
+            native_generator.install(directory)
+
+            collide_and_stream = native_generator.resolve()
+            if collide_and_stream is None:
+                print('Failed to install native Extension!')
+                return
+
+        self.collide_and_stream = collide_and_stream
+        if 'NoStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
+            self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
+
+    @property
+    def no_collision_mask(self):
+        return self.collision.no_collision_mask
+
+    @no_collision_mask.setter
+    def no_collision_mask(self, no_collision_mask):
+        self.collision.no_collision_mask = no_collision_mask
+
+    @staticmethod
+    def collide_and_stream_(self):
+        # Perform the collision routine everywhere, expect where the no_collision_mask is true
+        if self.collision.no_collision_mask is not None:
+            self.f = torch.where(self.collision.no_collision_mask, self.f, self.collision(self.f))
+        else:
+            self.collision(self.f)
+        self.f = self.streaming(self.f)
 
     def step(self, num_steps):
         """Take num_steps stream-and-collision steps and return performance in MLUPS."""
@@ -68,13 +130,12 @@ class Simulation:
         if self.i == 0:
             self._report()
         for _ in range(num_steps):
-            # Perform the collision routine everywhere, expect where the no_collision_mask is true
-            self.f = torch.where(self.no_collision_mask, self.f, self.collision(self.f))
-            self.f = self.streaming(self.f)
+            self.collide_and_stream(self)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self.i += 1
             self._report()
+
         end = timer()
         seconds = end - start
         num_grid_points = self.lattice.rho(self.f).numel()
@@ -104,7 +165,7 @@ class Simulation:
             if (torch.max(torch.abs(p - p_old))) < tol_pressure:
                 break
             p_old = deepcopy(p)
-        return i
+        return max_num_steps - 1
 
     def initialize_pressure(self, max_num_steps=100000, tol_pressure=1e-6):
         """Reinitialize equilibrium distributions with pressure obtained by a Jacobi solver.

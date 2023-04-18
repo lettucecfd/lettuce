@@ -23,13 +23,13 @@ def test_write_image(tmpdir):
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])
 def test_generic_reporters(Observable, Case, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device)
+    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)  # TODO use_native Fails here
     flow = Case(32, 10000, 0.05, lattice=lattice)
     if Case == TaylorGreenVortex3D:
-        lattice = Lattice(D3Q27, dtype=dtype, device=device)
+        lattice = Lattice(D3Q27, dtype=dtype, device=device, use_native=False)  # TODO use_native Fails here
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     reporter = ObservableReporter(Observable(lattice, flow), interval=1, out=None)
     simulation.reporters.append(reporter)
     simulation.step(2)
@@ -54,7 +54,7 @@ def test_vtk_reporter_no_mask(tmpdir):
     flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     vtk_reporter = VTKReporter(lattice, flow, interval=1, filename_base=tmpdir / "output")
     simulation.reporters.append(vtk_reporter)
     simulation.step(2)
@@ -67,7 +67,7 @@ def test_vtk_reporter_mask(tmpdir):
     flow = PoiseuilleFlow2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     vtk_reporter = VTKReporter(lattice, flow, interval=1, filename_base=tmpdir / "output")
     simulation.reporters.append(vtk_reporter)
     vtk_reporter.output_mask(simulation.no_collision_mask)

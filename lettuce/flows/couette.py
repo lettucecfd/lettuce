@@ -13,7 +13,7 @@ class CouetteFlow2D(object):
         self.resolution = resolution
         self.shape = (resolution, resolution)
         self._mask = np.zeros(shape=self.shape, dtype=bool)
-        self.units = lt.UnitConversion(
+        self.units = UnitConversion(
             lattice,
             reynolds_number=reynolds_number, mach_number=mach_number,
             characteristic_length_lu=resolution, characteristic_length_pu=1,
@@ -41,9 +41,9 @@ class CouetteFlow2D(object):
     def boundaries(self):
         x, y = self.grid
         ktop = np.zeros(np.shape(y), dtype=bool)
-        ktop[:,-1] = True
+        ktop[:, -1] = True
         kbottom = np.zeros(np.shape(y), dtype=bool)
-        kbottom[:,1] = True
+        kbottom[:, 1] = True
         return [
             # moving bounce back top
             EquilibriumBoundaryPU(ktop, self.units.lattice, self.units, np.array([1.0, 0.0])),

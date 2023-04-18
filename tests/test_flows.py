@@ -3,24 +3,13 @@ import numpy as np
 import torch
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q9, D3Q27, DoublyPeriodicShear2D
 from lettuce import torch_gradient, DecayingTurbulence
-from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
-from lettuce import Obstacle2D, Obstacle3D
+from lettuce import Lattice, Simulation, BGKCollision, StandardStreaming
+from lettuce import Obstacle
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 # Flows to test
 INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence]
 INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
-
-
-@pytest.mark.parametrize("IncompressibleFlow", CouetteFlow2D)
-def test_couette_flow_2d(IncompressibleFlow, dtype_device):
-    dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device)
-    flow = CouetteFlow2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    simulation.step(100)
 
 
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
@@ -83,11 +72,13 @@ def test_obstacle(stencil, dtype_device):
     if stencil is D2Q9:
         mask = np.zeros([nx, ny])
         mask[3:6, 3:6] = 1
-        flow = Obstacle2D(nx, ny, 100, 0.1, lattice=lattice, char_length_lu=3)
-    if stencil is D3Q27:
+        flow = Obstacle((nx, ny), 100, 0.1, lattice=lattice, domain_length_x=3)
+    elif stencil is D3Q27:
         mask = np.zeros([nx, ny, nz])
         mask[3:6, 3:6, :] = 1
-        flow = Obstacle3D(nx, ny, nz, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle((nx, ny, nz), 100, 0.1, lattice=lattice, domain_length_x=3)
+    else:
+        return NotImplementedError
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0
     streaming = StandardStreaming(lattice)

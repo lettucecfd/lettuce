@@ -21,7 +21,7 @@ class Obstacle:
 
     Attributes
     ----------
-    mask : np.array with dtype = np.bool
+    mask : np.array with dtype = bool
         Boolean mask to define the obstacle. The shape of this object is the shape of the grid.
         Initially set to zero (no obstacle).
 
@@ -52,7 +52,7 @@ class Obstacle:
             characteristic_length_lu=char_length_lu, characteristic_length_pu=char_length,
             characteristic_velocity_pu=char_velocity
         )
-        self._mask = np.zeros(shape=self.shape, dtype=np.bool)
+        self._mask = np.zeros(shape=self.shape, dtype=bool)
 
     @property
     def mask(self):
@@ -61,7 +61,7 @@ class Obstacle:
     @mask.setter
     def mask(self, m):
         assert isinstance(m, np.ndarray) and m.shape == self.shape
-        self._mask = m.astype(np.bool)
+        self._mask = m.astype(bool)
 
     def initial_solution(self, x):
         p = np.zeros_like(x[0], dtype=float)[None, ...]

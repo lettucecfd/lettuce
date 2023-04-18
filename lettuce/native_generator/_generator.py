@@ -179,38 +179,25 @@ class Generator:
     @staticmethod
     def format(val) -> str:
         import os.path
-        import shutil
         import tempfile
+        from . import template
 
-        def fmt(text):
-            return text.format(**val)
+        temp_dir = tempfile.mkdtemp()
 
-        input_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'template'))
-        output_root_dir = tempfile.mkdtemp()
+        for input_path_template, input_text_template in template.items():
+            input_path = input_path_template.format(**val)
+            input_text = input_text_template.format(**val)
 
-        for (sub_root, sub_dirs, sub_files) in os.walk(input_root_dir):
+            input_dir, input_filename = os.path.split(input_path)
 
-            input_sub_root = os.path.relpath(sub_root, input_root_dir)
-            output_sub_root = os.path.relpath(fmt(sub_root), input_root_dir)
+            output_dir = os.path.join(temp_dir, input_dir)
+            os.makedirs(output_dir, exist_ok=True)
 
-            if '__pycache__' in output_sub_root:
-                continue
+            output_path = os.path.join(output_dir, input_filename)
+            with open(output_path, 'w') as output_file:
+                output_file.write(input_text)
 
-            if os.path.isdir(os.path.join(output_root_dir, output_sub_root)):
-                shutil.rmtree(os.path.join(output_root_dir, output_sub_root), ignore_errors=True)
-            os.makedirs(os.path.join(output_root_dir, output_sub_root), exist_ok=True)
-
-            for sub_file in sub_files:
-                input_sub_file = os.path.join(input_root_dir, input_sub_root, sub_file)
-                output_sub_file = os.path.join(output_root_dir, output_sub_root, fmt(sub_file))
-
-                with open(input_sub_file, 'r') as input_sub_file:
-                    with open(output_sub_file, 'w') as output_sub_file:
-                        tmp = input_sub_file.read()
-                        tmp = fmt(tmp)
-                        output_sub_file.write(tmp)
-
-        return output_root_dir
+        return temp_dir
 
     def resolve(self):
         try:

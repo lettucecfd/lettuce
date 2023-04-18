@@ -1,3 +1,5 @@
+from ._template import template
+
 from ._cuda import NativeCuda
 from ._lattice import NativeLattice
 

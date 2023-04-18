@@ -22,8 +22,12 @@ class CouetteFlow2D(object):
         self.velocities = np.array([v_top, v_bottom])
 
     def analytic_solution(self, x):
-        u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2 * nu * t), -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2 * nu * t)])
-        raise NotImplementedError
+        v1 = self.velocities[0]
+        v0 = self.velocities[1]
+        dvdy = (v1-v0)/self.resolution
+        x, y = self.grid
+        u = np.array([dvdy*y + v0], dtype=float)
+        return u
 
     def initial_solution(self, x):
         return np.array([0 * x[0]], dtype=float), np.array([0 * x[0], 0 * x[1]], dtype=float)

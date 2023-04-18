@@ -63,7 +63,7 @@ class NativeCuda:
             assert d <= 3, "Method is undefined fot this Parameter"
 
             # generate
-            index_buf = generator.append_index_buffer
+            index_buf = generator.append_global_buffer
             index_buf('  const index_t index[d] = {                                      ')
             index_buf('    static_cast<index_t>(blockIdx.x * blockDim.x + threadIdx.x),  ')
             index_buf('    static_cast<index_t>(blockIdx.y * blockDim.y + threadIdx.y),  ', cond=d > 1)
@@ -97,9 +97,9 @@ class NativeCuda:
             kernel_hook('dimension2', 'index_t dimension2', 'dimension[2]', cond=d > 2)
 
             # generate kernel
-            index_buf = generator.append_index_buffer
-            index_buf('  const index_t dimension[d] = {  ')
-            index_buf('    dimension0,                   ')
-            index_buf('    dimension1,                   ', cond=d > 1)
-            index_buf('    dimension2,                   ', cond=d > 2)
-            index_buf('  };                              ')
+            global_buf = generator.append_global_buffer
+            global_buf('  const index_t dimension[d] = {  ')
+            global_buf('    dimension0,                   ')
+            global_buf('    dimension1,                   ', cond=d > 1)
+            global_buf('    dimension2,                   ', cond=d > 2)
+            global_buf('  };                              ')

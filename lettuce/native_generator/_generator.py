@@ -14,16 +14,18 @@ class Generator:
     cuda: 'NativeCuda' = NativeCuda()
     lattice: 'NativeLattice' = NativeLattice()
     stencil: 'NativeStencil'
-    streaming: 'NativeStreaming'
+    read: 'NativeRead'
+    write: 'NativeWrite'
     collision: 'NativeCollision'
 
     reg: {str: [str]}
     par: {str: [str]}
     buf: {str: [str]}
 
-    def __init__(self, stencil, streaming, collision):
+    def __init__(self, stencil, read, write, collision):
         self.stencil = stencil
-        self.streaming = streaming
+        self.read = read
+        self.write = write
         self.collision = collision
         self.reset()
 
@@ -40,11 +42,8 @@ class Generator:
             'kernel_parameter_name': [],
             'kernel_parameter_value': []}
         self.buf = {
-            'constexpr': [],
-            'index': [],
-            'node': [],
-            'distribution': [],
-            'write': [],
+            'global': [],
+            'pipeline': [],
             'cuda_wrapper': [],
             'cpp_wrapper': [],
             'python_wrapper_before': [],
@@ -76,29 +75,17 @@ class Generator:
             self.par['kernel_parameter_name'].append(name)
             self.par['kernel_parameter_value'].append(value)
 
-    def append_constexpr_buffer(self, it='', cond=True):
+    def append_global_buffer(self, it='', cond=True):
         if cond:
-            self.buf['constexpr'].append(it)
+            self.buf['global'].append(it)
 
     def append_launcher_buffer(self, it='', cond=True):
         if cond:
             self.buf['cuda_wrapper'].append(it)
 
-    def append_index_buffer(self, it='', cond=True):
+    def append_pipeline_buffer(self, it='', cond=True):
         if cond:
-            self.buf['index'].append(it)
-
-    def append_node_buffer(self, it='', cond=True):
-        if cond:
-            self.buf['node'].append(it)
-
-    def append_distribution_buffer(self, it='', cond=True):
-        if cond:
-            self.buf['distribution'].append(it)
-
-    def append_write_buffer(self, it='', cond=True):
-        if cond:
-            self.buf['write'].append(it)
+            self.buf['pipeline'].append(it)
 
     def append_python_wrapper_before_buffer(self, it='', cond=True):
         if cond:
@@ -123,7 +110,7 @@ class Generator:
         # (fast, reproducible, non-cryptographic).
         import mmh3
 
-        name = f"{self.stencil.name}_{self.streaming.name}_{self.collision.name}_{self.version}"
+        name = f"{self.stencil.name}_{self.read.name}_{self.collision.name}_{self.write.name}_{self.version}"
         return mmh3.hash_bytes(name).hex()
 
     def generate(self):
@@ -137,8 +124,9 @@ class Generator:
         self.stencil.generate_q(self)
 
         # generate
-        self.streaming.generate_read_write(self)
+        self.read.generate_read(self)
         self.collision.generate_collision(self)
+        self.write.generate_write(self)
 
         # convert result
         # noinspection PyDictCreation
@@ -153,11 +141,8 @@ class Generator:
         t3 = '\n            '
         c1 = ', '
 
-        val['constexpr_buffer'] = t1.join(self.buf['constexpr'])
-        val['index_buffer'] = t1.join(self.buf['index'])
-        val['node_buffer'] = t2.join(self.buf['node'])
-        val['distribution_buffer'] = t3.join(self.buf['distribution'])
-        val['write_buffer'] = t1.join(self.buf['write'])
+        val['global_buffer'] = t1.join(self.buf['global'])
+        val['pipeline_buffer'] = t3.join(self.buf['pipeline'])
         val['cuda_wrapper_buffer'] = t1.join(self.buf['cuda_wrapper'])
         val['cpp_wrapper_buffer'] = t1.join(self.buf['cpp_wrapper'])
         val['python_wrapper_before_buffer'] = t1.join(self.buf['python_wrapper_before'])
@@ -233,7 +218,7 @@ class Generator:
             print(f"Install failed! See log-File ({install_log_path}) for more Info.")
             raise subprocess.CalledProcessError(p.returncode, cmd)
 
-        # after install the module is not registered
+        # after install the module is not registered,
         # so we need to reload the register
         import importlib
         import site

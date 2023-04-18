@@ -1,6 +1,7 @@
 """
 Collision models
 """
+from abc import ABC
 
 import torch
 
@@ -17,7 +18,7 @@ __all__ = [
 ]
 
 
-class Collision(LatticeBase):
+class Collision(LatticeBase, ABC):
     """Class Collision
 
     Base class for all lattice collision components.
@@ -59,8 +60,8 @@ class NoCollision(Collision):
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> 'NativeNoCollision':
-        return NativeNoCollision()
+    def create_native(self) -> ['NativeNoCollision']:
+        return [NativeNoCollision()]
 
     def __call__(self, f: torch.Tensor) -> torch.Tensor:
         return f
@@ -76,10 +77,10 @@ class BGKCollision(Collision):
     def native_available(self) -> bool:
         return self.lattice.equilibrium.native_available()
 
-    def create_native(self) -> 'NativeBGKCollision':
+    def create_native(self) -> ['NativeBGKCollision']:
         native_equilibrium = self.lattice.equilibrium.create_native()
         support_no_collision_mask = (self.no_collision_mask is not None) and self.no_collision_mask.any()
-        return NativeBGKCollision(native_equilibrium, support_no_collision_mask)
+        return [NativeBGKCollision(native_equilibrium, support_no_collision_mask)]
 
     def __call__(self, f):
         rho = self.lattice.rho(f)
@@ -111,7 +112,7 @@ class MRTCollision(Collision):
         return f
 
 
-class TRTCollision:
+class TRTCollision(Collision):
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
 

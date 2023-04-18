@@ -7,7 +7,7 @@ import numpy as np
 
 from typing import Optional
 from lettuce.base import LatticeBase
-from lettuce.native_generator import NativeNoStreaming, NativeStandardStreaming
+from lettuce.native_generator import NativeLatticeBase, NativeWrite, NativeRead, NativeStandardStreamingWrite, NativeStandardStreamingRead
 
 __all__ = ["StandardStreaming", "NoStreaming"]
 
@@ -40,8 +40,8 @@ class NoStreaming(Streaming):
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> 'NativeNoStreaming':
-        return NativeNoStreaming()
+    def create_native(self) -> ['NativeLatticeBase']:
+        return [NativeRead(), NativeWrite()]
 
     def __call__(self, f):
         return f
@@ -53,9 +53,10 @@ class StandardStreaming(Streaming):
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> 'NativeStandardStreaming':
+    def create_native(self) -> ['NativeLatticeBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
-        return NativeStandardStreaming(support_no_streaming_mask)
+        return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
+        # return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
 
     def __call__(self, f):
         for i in range(1, self.lattice.Q):
@@ -75,6 +76,15 @@ class SLStreaming(Streaming):
     TODO (is there a good python package for octrees or do we have to write this ourselves?)
     """
 
-    def __init__(self, lattice: 'Lattice', grid):
+    def __call__(self, f):
+        raise NotImplementedError()
+
+    def native_available(self) -> bool:
+        return False
+
+    def __init__(self, lattice: 'Lattice', *_):
         Streaming.__init__(self, lattice)
+        raise NotImplementedError()
+
+    def create_native(self) -> ['NativeLatticeBase']:
         raise NotImplementedError()

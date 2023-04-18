@@ -21,8 +21,8 @@ class Stencil:
         return cls.e.shape[0]
 
     @classmethod
-    def create_native(cls) -> Optional['NativeStencil']:
-        return NativeStencil(cls)
+    def create_native(cls) -> ['NativeStencil']:
+        return [NativeStencil(cls)]
 
 
 class D1Q3(Stencil):

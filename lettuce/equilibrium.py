@@ -46,7 +46,7 @@ class QuadraticEquilibrium_LessMemory(Equilibrium):
     def create_native(self) -> 'NativeQuadraticEquilibrium':
         return NativeQuadraticEquilibrium()
 
-    def __call__(self, rho, u, *args):
+    def __call__(self, rho, u):
         return self.lattice.einsum(
             "q,q->q",
             [self.lattice.w,
@@ -61,7 +61,7 @@ class IncompressibleQuadraticEquilibrium(Equilibrium):
         Equilibrium.__init__(self, lattice)
         self.rho0 = rho0
 
-    def __call__(self, rho, u, *args):
+    def __call__(self, rho, u):
         exu = self.lattice.einsum("qd,d->q", [self.lattice.e, u])
         uxu = self.lattice.einsum("d,d->", [u, u])
         feq = self.lattice.einsum(

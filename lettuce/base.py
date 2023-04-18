@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Optional
 
 
@@ -27,6 +28,7 @@ class LatticeBase:
 
         self.lattice = lattice
 
+    @abstractmethod
     def native_available(self) -> bool:
         """native_available
 
@@ -35,9 +37,10 @@ class LatticeBase:
         Whether a native generator is available.
         If so create native should return a valid native generator.
         """
-        return False
+        ...
 
-    def create_native(self) -> Optional['NativeLatticeBase']:
+    @abstractmethod
+    def create_native(self) -> ['NativeLatticeBase']:
         """create_native
 
         Returns
@@ -49,4 +52,4 @@ class LatticeBase:
         Check `native_available` before using this method as not every component
         is guaranteed to provide a native generator.
         """
-        return None
+        ...

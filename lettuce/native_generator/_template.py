@@ -28,7 +28,6 @@ def collide_and_stream(simulation):
     native.collide_and_stream_{name}({cpp_wrapper_parameter_value})
     torch.cuda.synchronize()
     {python_wrapper_after_buffer}
-
 """,
 
     "lettuce.cpp": """
@@ -48,7 +47,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
 {{
     m.def("collide_and_stream_{name}", &lettuce_{name}, "collide_and_stream_{name}");
 }}
-
 """,
 
     "lettuce.hpp": """
@@ -74,7 +72,6 @@ void
 lettuce_{name}({cpp_wrapper_parameter});
 
 #endif //{guard}
-
 """,
 
     "lettuce_cuda.cu": """
@@ -99,19 +96,8 @@ template<typename scalar_t>
 __global__ void
 lettuce_cuda_{name}_kernel({kernel_parameter})
 {{
-  {constexpr_buffer}
-
-  {index_buffer}
-  {{
-    {node_buffer}
-
-#pragma unroll
-    for (index_t i = 0; i < q; ++i)
-    {{
-      {distribution_buffer}
-    }}
-  }}
-  {write_buffer}
+  {global_buffer}
+  {pipeline_buffer}
 }}
 
 void
@@ -124,7 +110,6 @@ lettuce_cuda_{name}({cuda_wrapper_parameter})
     lettuce_cuda_{name}_kernel<scalar_t><<<block_count, thread_count>>>({kernel_parameter_values});
   }});
 }}
-
 """,
 
     "setup.py": """
@@ -164,7 +149,6 @@ setup(
     cmdclass={{'build_ext': BuildExtension}},
     zip_safe=False,
 )
-
 """,
 
 }

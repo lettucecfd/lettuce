@@ -45,11 +45,13 @@ class NativeLattice:
         if not generator.registered('rho'):
             generator.register('rho')
 
+            generator.read.generate_f_reg(generator)
+
             q = generator.stencil.stencil.Q()
 
             # generate
             f_reg_sum = ' + '.join([f"f_reg[{i}]" for i in range(q)])
-            generator.append_node_buffer(f"const auto rho = {f_reg_sum};")
+            generator.append_global_buffer(f"const auto rho = {f_reg_sum};")
 
     def generate_rho_inv(self, generator: 'Generator'):
         if not generator.registered('rho_inv'):
@@ -59,13 +61,14 @@ class NativeLattice:
             self.generate_rho(generator)
 
             # generate
-            generator.append_node_buffer('const auto rho_inv = 1.0 / rho;')
+            generator.append_global_buffer('const auto rho_inv = 1.0 / rho;')
 
     def generate_u(self, generator: 'Generator'):
         if not generator.registered('u'):
             generator.register('u')
 
             # dependencies
+            generator.read.generate_f_reg(generator)
             generator.stencil.generate_d(generator)
             generator.stencil.generate_e(generator)
 
@@ -78,14 +81,14 @@ class NativeLattice:
             # generate
             div_rho = ' * rho_inv' if d > 1 else ' / rho'
 
-            node_buf = generator.append_node_buffer
+            global_buf = generator.append_global_buffer
 
-            node_buf('                           ')
-            node_buf('  const scalar_t u[d] = {  ')
+            global_buf('                           ')
+            global_buf('  const scalar_t u[d] = {  ')
 
             for i in range(d):
                 summands = [f"e[{j}][{i}] * f_reg[{j}]" for j in range(q)]
-                node_buf(f"    ({' + '.join(summands)}) {div_rho},  ")
+                global_buf(f"    ({' + '.join(summands)}) {div_rho},  ")
 
-            node_buf('  };                       ')
-            node_buf('                           ')
+            global_buf('  };                       ')
+            global_buf('                           ')

@@ -70,21 +70,25 @@ class NativeBGKCollision(NativeCollision):
             generator.kernel_hook('tau_inv', 'scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 
     def generate_collision(self, generator: 'Generator'):
-        if not generator.registered('collide()'):
-            generator.register('collide()')
+        # dependencies
+        generator.read.generate_f_reg(generator)
 
-            # dependencies
-            if self.support_no_collision_mask:
-                generator.cuda.generate_index(generator)
-                self.generate_no_collision_mask(generator)
+        if self.support_no_collision_mask:
+            generator.cuda.generate_index(generator)
+            self.generate_no_collision_mask(generator)
 
-            self.generate_tau_inv(generator)
-            self.equilibrium.generate_f_eq(generator)
+        self.generate_tau_inv(generator)
+        self.equilibrium.generate_f_eq(generator)
 
-            # generate
-            if self.support_no_collision_mask:
-                d = generator.stencil.stencil.D()
-                coord = generator.lattice.get_mask_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
-                generator.append_index_buffer(f"if(!no_collision_mask[{coord}])")
+        # generate
+        if self.support_no_collision_mask:
+            d = generator.stencil.stencil.D()
+            coord = generator.lattice.get_mask_coordinate(generator, ['index[0]', 'index[1]', 'index[2]'][:d])
+            generator.append_global_buffer(f"if(!no_collision_mask[{coord}])")
 
-            generator.append_distribution_buffer('f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq));')
+        pipe_buf = generator.append_pipeline_buffer
+        pipe_buf('  # pragma unroll                                           ')
+        pipe_buf('  for (index_t i = 0; i < q; ++i)                           ')
+        pipe_buf('  {                                                         ')
+        pipe_buf('    f_reg[i] = f_reg[i] - (tau_inv * (f_reg[i] - f_eq[i])); ')
+        pipe_buf('  }                                                         ')

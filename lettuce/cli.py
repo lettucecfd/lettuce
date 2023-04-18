@@ -51,9 +51,11 @@ def main(ctx, cuda, gpu_id, precision):
 @main.command()
 @click.option("-s", "--steps", type=int, default=10, help="Number of time steps.")
 @click.option("-r", "--resolution", type=int, default=1024, help="Grid Resolution")
-@click.option("-o", "--profile-out", type=str, default="", help="File to write profiling information to (default=""; no profiling information gets written).")
+@click.option("-o", "--profile-out", type=str, default="",
+              help="File to write profiling information to (default=""; no profiling information gets written).")
 @click.option("-f", "--flow", type=click.Choice(flow_by_name.keys()), default="taylor2D")
-@click.option("-v", "--vtk-out", type=str, default="", help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
+@click.option("-v", "--vtk-out", type=str, default="",
+              help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
 @click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):

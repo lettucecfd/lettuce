@@ -86,10 +86,10 @@ class Simulation:
             print('Native Implementation requested but Collision does not support Native yet!')
             return
 
-        native_stencil = self.lattice.stencil.create_native()
-        native_streaming = self.streaming.create_native()
-        native_collision = self.collision.create_native()
-        native_generator = Generator(native_stencil, native_streaming, native_collision)
+        native_stencil = self.lattice.stencil.create_native()[0]
+        native_read, native_write = self.streaming.create_native()
+        native_collision = self.collision.create_native()[0]  # TODO
+        native_generator = Generator(native_stencil, native_read, native_write, native_collision)
 
         collide_and_stream = native_generator.resolve()
         if collide_and_stream is None:
@@ -104,7 +104,7 @@ class Simulation:
                 return
 
         self.collide_and_stream = collide_and_stream
-        if 'NoStreaming' not in native_streaming.name:  # TODO find a better way of storing f_next
+        if 'NoStreaming' not in native_read.name:  # TODO find a better way of storing f_next
             self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
     @property
@@ -206,11 +206,11 @@ class Simulation:
         self.f = feq - fneq
 
     def save_checkpoint(self, filename):
-        """Write f as np.array using pickle module."""
+        """Write f as np.ndarray using pickle module."""
         with open(filename, "wb") as fp:
             pickle.dump(self.f, fp)
 
     def load_checkpoint(self, filename):
-        """Load f as np.array using pickle module."""
+        """Load f as np.ndarray using pickle module."""
         with open(filename, "rb") as fp:
             self.f = pickle.load(fp)

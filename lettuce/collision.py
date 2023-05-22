@@ -1,13 +1,13 @@
 """
 Collision models
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import torch
 
 from typing import Optional
 
-from lettuce.base import LettuceBase
+from lettuce.base import PipelineStep
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.util import LettuceException
 from lettuce.native_generator import NativeNoCollision, NativeBGKCollision
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class Collision(LettuceBase, ABC):
+class Collision(PipelineStep, ABC):
     """Class Collision
 
     Base class for all lattice collision components.
@@ -29,9 +29,10 @@ class Collision(LettuceBase, ABC):
     no_collision_mask: Optional[torch.Tensor]
 
     def __init__(self, lattice: 'Lattice'):
-        LettuceBase.__init__(self, lattice)
+        PipelineStep.__init__(self, lattice)
         self.no_collision_mask = None
 
+    @abstractmethod
     def __call__(self, f: torch.Tensor) -> torch.Tensor:
         """The heart of the collision operator
 
@@ -46,7 +47,7 @@ class Collision(LettuceBase, ABC):
         The distribution function of the current timestamp with
         the collision operator applied.
         """
-        raise NotImplementedError()
+        ...
 
 
 class NoCollision(Collision):

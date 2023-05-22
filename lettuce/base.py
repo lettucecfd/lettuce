@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Optional
 
 
@@ -52,4 +52,9 @@ class LettuceBase:
         Check `native_available` before using this method as not every component
         is guaranteed to provide a native generator.
         """
+        ...
+
+
+class PipelineStep(LettuceBase, ABC):
+    def __call__(self, f):
         ...

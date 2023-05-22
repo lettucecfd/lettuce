@@ -34,8 +34,8 @@ class Streaming(LatticeBase):
 
 
 class NoStreaming(Streaming):
-    def __init__(self, lattice: 'Lattice'):
-        Streaming.__init__(self, lattice)
+    def __call__(self, f):
+        return f
 
     def native_available(self) -> bool:
         return True
@@ -43,8 +43,15 @@ class NoStreaming(Streaming):
     def create_native(self) -> ['NativeLatticeBase']:
         return [NativeRead(), NativeWrite()]
 
-    def __call__(self, f):
-        return f
+
+class Read(NoStreaming):
+    def create_native(self) -> ['NativeLatticeBase']:
+        return [NativeRead()]
+
+
+class Write(NoStreaming):
+    def create_native(self) -> ['NativeLatticeBase']:
+        return [NativeWrite()]
 
 
 class StandardStreaming(Streaming):
@@ -69,6 +76,18 @@ class StandardStreaming(Streaming):
 
     def _stream(self, f, i):
         return torch.roll(f[i], shifts=tuple(self.lattice.stencil.e[i]), dims=tuple(np.arange(self.lattice.D)))
+
+
+class StandardRead(StandardStreaming, Read):
+    def create_native(self) -> ['NativeLatticeBase']:
+        support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
+        return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
+
+
+class StandardWrite(StandardStreaming, Write):
+    def create_native(self) -> ['NativeLatticeBase']:
+        support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
+        return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
 
 
 class SLStreaming(Streaming):

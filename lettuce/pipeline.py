@@ -1,27 +1,32 @@
 from abc import abstractmethod
-from typing import Union
+from typing import Union, Callable
 import numpy as np
 
 from . import PipelineStep
 
 
-class Pipeline:
+class Pipeline(PipelineStep):
     """
     """
 
-    pipeline_steps: [PipelineStep]
+    def native_available(self) -> bool:
+        return True
 
-    def __init__(self, pipeline_steps: [(PipelineStep, int)]):
-        """Trivial Constructor for Class PipeBase
+    def create_native(self) -> ['NativeLatticeBase']:
+        return
 
-        Parameters
-        ----------
-        pipes: [Union[PipeBase, int]]
-            The Pipes that build up the Pipeline
-        """
+    pipeline_steps: [(PipelineStep, Union[int, Callable[[int], bool]])]
+
+    def __init__(self, lattice, pipeline_steps):
+        PipelineStep.__init__(self, lattice=lattice)
         self.pipeline_steps = pipeline_steps
 
-    def __call__(self, f: np.ndarray, till_step: int, step: int = 0):
-        while step < till_step:
-            for pipe in self.pipeline_steps:
-                pipe(f)
+    def __call__(self, f: np.ndarray, step=1):
+        pipeline_steps = []
+        for step, condition in self.pipeline_steps:
+            if condition is int and step % condition == 0:
+                pipeline_steps.append(step)
+            elif condition(step):
+                pipeline_steps.append(step)
+
+

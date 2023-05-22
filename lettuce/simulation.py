@@ -86,10 +86,10 @@ class Simulation:
             print('Native Implementation requested but Collision does not support Native yet!')
             return
 
-        native_stencil = self.lattice.stencil.create_native()[0]
+        native_stencil, = self.lattice.stencil.create_native()
         native_read, native_write = self.streaming.create_native()
-        native_collision = self.collision.create_native()[0]  # TODO
-        native_generator = Generator(native_stencil, native_read, native_write, native_collision)
+        native_pipeline_steps = self.collision.create_native()
+        native_generator = Generator(native_stencil, native_read, native_write, native_pipeline_steps)
 
         collide_and_stream = native_generator.resolve()
         if collide_and_stream is None:

@@ -6,3 +6,8 @@ class NativeLatticeBase(ABC):
     @abstractmethod
     def name(self) -> str:
         ...
+
+class NativePipelineStep(NativeLatticeBase):
+    @abstractmethod
+    def generate(self, generator: 'Generator'):
+        ...

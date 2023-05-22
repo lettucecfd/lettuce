@@ -1,9 +1,9 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from . import *
 
 
-class NativeCollision(NativeLatticeBase):
+class NativeCollision(NativePipelineStep, ABC):
 
     @staticmethod
     @abstractmethod
@@ -20,10 +20,6 @@ class NativeCollision(NativeLatticeBase):
             generator.kernel_hook('no_collision_mask', 'const byte_t* no_collision_mask',
                                   'no_collision_mask.data<byte_t>()')
 
-    @abstractmethod
-    def generate_collision(self, generator: 'Generator'):
-        ...
-
 
 class NativeNoCollision(NativeCollision):
     def __init__(self):
@@ -39,7 +35,7 @@ class NativeNoCollision(NativeCollision):
         assert not support_no_collision_mask, "NativeNoCollision does not support no_collision_mask"
         return NativeNoCollision()
 
-    def generate_collision(self, generator: 'Generator'):
+    def generate(self, generator: 'Generator'):
         if not generator.registered('collision()'):
             generator.register('collision()')
 
@@ -69,7 +65,7 @@ class NativeBGKCollision(NativeCollision):
         if not generator.kernel_hooked('tau_inv'):
             generator.kernel_hook('tau_inv', 'scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 
-    def generate_collision(self, generator: 'Generator'):
+    def generate(self, generator: 'Generator'):
         # dependencies
         generator.read.generate_f_reg(generator)
 

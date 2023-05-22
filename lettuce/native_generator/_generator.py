@@ -16,17 +16,17 @@ class Generator:
     stencil: 'NativeStencil'
     read: 'NativeRead'
     write: 'NativeWrite'
-    collision: 'NativeCollision'
+    pipeline_steps: ['NativeCollision']
 
     reg: {str: [str]}
     par: {str: [str]}
     buf: {str: [str]}
 
-    def __init__(self, stencil, read, write, collision):
+    def __init__(self, stencil, read, write, pipeline_steps):
         self.stencil = stencil
         self.read = read
         self.write = write
-        self.collision = collision
+        self.pipeline_steps = pipeline_steps
         self.reset()
 
     def reset(self):
@@ -110,7 +110,8 @@ class Generator:
         # (fast, reproducible, non-cryptographic).
         import mmh3
 
-        name = f"{self.stencil.name}_{self.read.name}_{self.collision.name}_{self.write.name}_{self.version}"
+        collision_name = '_'.join([pipeline_step.name for pipeline_step in self.pipeline_steps])
+        name = f"{self.stencil.name}_{self.read.name}_{collision_name}_{self.write.name}_{self.version}"
         return mmh3.hash_bytes(name).hex()
 
     def generate(self):
@@ -125,7 +126,8 @@ class Generator:
 
         # generate
         self.read.generate_read(self)
-        self.collision.generate_collision(self)
+        for pipeline_step in self.pipeline_steps:
+            pipeline_step.generate(self)
         self.write.generate_write(self)
 
         # convert result

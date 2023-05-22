@@ -86,24 +86,6 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             # generate
             generator.append_global_buffer('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
-    def generate_f_eq_tmp(self, generator: 'Generator'):
-        if not generator.registered('f_eq_tmp'):
-            generator.register('f_eq_tmp')
-
-            # dependencies
-            self.generate_exu(generator)
-            self.generate_cs_pow_two(generator)
-
-            # generate
-
-            global_buf = generator.append_global_buffer
-            global_buf('  scalar_t f_eq_tmp[q];                ')
-            global_buf('  # pragma unroll                      ')
-            global_buf('  for (index_t i = 0; i < q; ++i)      ')
-            global_buf('  {                                    ')
-            global_buf('    f_eq_tmp[i] = exu[i] / cs_pow_two; ')
-            global_buf('  }                                    ')
-
     def generate_f_eq(self, generator: 'Generator'):
         if not generator.registered('f_eq'):
             generator.register('f_eq')
@@ -112,16 +94,16 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             generator.lattice.generate_rho(generator)
             self.generate_exu(generator)
             self.generate_uxu(generator)
+            self.generate_cs_pow_two(generator)
             self.generate_two_cs_pow_two(generator)
-            self.generate_f_eq_tmp(generator)
             generator.stencil.generate_w(generator)
 
             # generate
-
             global_buf = generator.append_global_buffer
             global_buf('  scalar_t f_eq[q];                                                                                                  ')
             global_buf('  # pragma unroll                                                                                                    ')
             global_buf('  for (index_t i = 0; i < q; ++i)                                                                                    ')
             global_buf('  {                                                                                                                  ')
-            global_buf('    f_eq[i] = rho * (((exu[i] + exu[i] - uxu) / two_cs_pow_two) + (0.5 * (f_eq_tmp[i] * f_eq_tmp[i])) + 1.0) * w[i]; ')
+            global_buf('    scalar_t f_eq_tmp = exu[i] / cs_pow_two;                                                                         ')
+            global_buf('    f_eq[i] = rho * w[i] * ((exu[i] + exu[i] - uxu) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0); ')
             global_buf('  }                                                                                                                  ')

@@ -6,7 +6,6 @@ tox==3.14.0
 coverage==4.5.1
 Sphinx==1.8.1
 twine==1.12.1
-
 pytest==4.4.1
 pytest-runner==4.2
 pyevtk==1.1.1

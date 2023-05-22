@@ -99,11 +99,12 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):
 
 @main.command()
 @click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
+@click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
 @click.pass_context
-def convergence(ctx, init_f_neq):
+def convergence(ctx, init_f_neq, use_native):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype)
+    lattice = Lattice(D2Q9, device, dtype, use_native=use_native)
     error_u_old = None
     error_p_old = None
     print(("{:>15} " * 5).format("resolution", "error (u)", "order (u)", "error (p)", "order (p)"))

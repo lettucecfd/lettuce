@@ -1,11 +1,9 @@
+from abc import ABC
+
 from . import *
 
 
-class NativeStreaming(NativeLatticeBase):
-
-    def __init__(self):
-        NativeLatticeBase.__init__(self)
-
+class NativeStreaming(NativePipelineStep, ABC):
     # noinspection PyMethodMayBeStatic
     def generate_no_stream_mask(self, generator: 'Generator'):
         if not generator.launcher_hooked('no_stream_mask'):
@@ -31,10 +29,6 @@ class NativeStreaming(NativeLatticeBase):
 
 
 class NativeRead(NativeStreaming):
-
-    def __init__(self):
-        NativeStreaming.__init__(self)
-
     @property
     def name(self) -> str:
         return f"Read"
@@ -68,7 +62,7 @@ class NativeRead(NativeStreaming):
             global_buf(f'    f_reg[i] = f[{coord}];        ')
             global_buf(f'  }}                              ')
 
-    def generate_read(self, generator: 'Generator'):
+    def generate(self, generator: 'Generator'):
         self.generate_f_reg(generator)
 
 
@@ -88,7 +82,7 @@ class NativeWrite(NativeStreaming):
     def create(support_no_streaming_mask: bool, use_f_next: bool = True):
         return NativeWrite(use_f_next)
 
-    def generate_write(self, generator: 'Generator'):
+    def generate(self, generator: 'Generator'):
         # dependencies:
         generator.read.generate_f_reg(generator)
         generator.stencil.generate_q(generator)
@@ -131,11 +125,12 @@ class NativeStandardStreamingWrite(NativeWrite):
     def create(support_no_streaming_mask: bool, use_f_next: bool = True):
         return NativeStandardStreamingWrite(support_no_streaming_mask, use_f_next)
 
-    def generate_write(self, generator: 'Generator'):
+    def generate(self, generator: 'Generator'):
         # dependencies:
         if self.support_no_streaming_mask:
             self.generate_no_stream_mask(generator)
 
+        generator.read.generate_f_reg(generator)
         generator.stencil.generate_q(generator)
         generator.cuda.generate_index(generator)
         generator.cuda.generate_dimension(generator)

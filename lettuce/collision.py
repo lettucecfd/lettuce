@@ -7,7 +7,7 @@ import torch
 
 from typing import Optional
 
-from lettuce.base import LatticeBase
+from lettuce.base import LettuceBase
 from lettuce.equilibrium import QuadraticEquilibrium
 from lettuce.util import LettuceException
 from lettuce.native_generator import NativeNoCollision, NativeBGKCollision
@@ -18,7 +18,7 @@ __all__ = [
 ]
 
 
-class Collision(LatticeBase, ABC):
+class Collision(LettuceBase, ABC):
     """Class Collision
 
     Base class for all lattice collision components.
@@ -29,7 +29,7 @@ class Collision(LatticeBase, ABC):
     no_collision_mask: Optional[torch.Tensor]
 
     def __init__(self, lattice: 'Lattice'):
-        LatticeBase.__init__(self, lattice)
+        LettuceBase.__init__(self, lattice)
         self.no_collision_mask = None
 
     def __call__(self, f: torch.Tensor) -> torch.Tensor:

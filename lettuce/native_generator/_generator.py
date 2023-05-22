@@ -16,7 +16,7 @@ class Generator:
     stencil: 'NativeStencil'
     read: 'NativeRead'
     write: 'NativeWrite'
-    pipeline_steps: ['NativeCollision']
+    pipeline_steps: ['NativePipelineStep']
 
     reg: {str: [str]}
     par: {str: [str]}
@@ -125,10 +125,10 @@ class Generator:
         self.stencil.generate_q(self)
 
         # generate
-        self.read.generate_read(self)
+        self.read.generate(self)
         for pipeline_step in self.pipeline_steps:
             pipeline_step.generate(self)
-        self.write.generate_write(self)
+        self.write.generate(self)
 
         # convert result
         # noinspection PyDictCreation

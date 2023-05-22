@@ -2,7 +2,7 @@ from . import *
 from abc import abstractmethod
 
 
-class NativeEquilibrium(NativeLatticeBase):
+class NativeEquilibrium(NativeLettuceBase):
     @abstractmethod
     def generate_f_eq(self, generator: 'Generator'):
         ...

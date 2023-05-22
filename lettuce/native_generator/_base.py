@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 
 
-class NativeLatticeBase(ABC):
+class NativeLettuceBase(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
         ...
 
-class NativePipelineStep(NativeLatticeBase):
+
+class NativePipelineStep(NativeLettuceBase):
     @abstractmethod
     def generate(self, generator: 'Generator'):
         ...

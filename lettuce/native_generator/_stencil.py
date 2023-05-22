@@ -4,7 +4,7 @@ from typing import Type
 from . import *
 
 
-class NativeStencil(NativeLatticeBase):
+class NativeStencil(NativeLettuceBase):
     _stencil: Type['Stencil']
 
     def __init__(self, stencil: Type['Stencil']):

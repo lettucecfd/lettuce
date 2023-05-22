@@ -1,13 +1,13 @@
 import torch
 
-from lettuce.base import LatticeBase
+from lettuce.base import LettuceBase
 from lettuce.native_generator import NativeQuadraticEquilibrium
 
 __all__ = ["Equilibrium", "QuadraticEquilibrium", "IncompressibleQuadraticEquilibrium",
            "QuadraticEquilibrium_LessMemory"]
 
 
-class Equilibrium(LatticeBase):
+class Equilibrium(LettuceBase):
     def __call__(self, rho, u):
         raise NotImplementedError()
 

@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Optional
 
 
-class LatticeBase:
+class LettuceBase:
     """Class LatticeBase
 
     LatticeBase is the Base Class for all Lattice Components.

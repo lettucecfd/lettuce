@@ -6,17 +6,17 @@ import torch
 import numpy as np
 
 from typing import Optional
-from lettuce.base import LatticeBase
-from lettuce.native_generator import NativeLatticeBase, NativeWrite, NativeRead, NativeStandardStreamingWrite, NativeStandardStreamingRead
+from lettuce.base import LettuceBase
+from lettuce.native_generator import NativeLettuceBase, NativeWrite, NativeRead, NativeStandardStreamingWrite, NativeStandardStreamingRead
 
 __all__ = ["StandardStreaming", "NoStreaming"]
 
 
-class Streaming(LatticeBase):
+class Streaming(LettuceBase):
     no_streaming_mask: Optional[torch.Tensor]
 
     def __init__(self, lattice: 'Lattice'):
-        LatticeBase.__init__(self, lattice)
+        LettuceBase.__init__(self, lattice)
         self.no_streaming_mask = None
 
     def __call__(self, f):
@@ -40,17 +40,17 @@ class NoStreaming(Streaming):
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         return [NativeRead(), NativeWrite()]
 
 
 class Read(NoStreaming):
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         return [NativeRead()]
 
 
 class Write(NoStreaming):
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         return [NativeWrite()]
 
 
@@ -60,7 +60,7 @@ class StandardStreaming(Streaming):
     def native_available(self) -> bool:
         return True
 
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
         return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
         # return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
@@ -79,13 +79,13 @@ class StandardStreaming(Streaming):
 
 
 class StandardRead(StandardStreaming, Read):
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
         return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
 
 
 class StandardWrite(StandardStreaming, Write):
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
         return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
 
@@ -105,5 +105,5 @@ class SLStreaming(Streaming):
         Streaming.__init__(self, lattice)
         raise NotImplementedError()
 
-    def create_native(self) -> ['NativeLatticeBase']:
+    def create_native(self) -> ['NativeLettuceBase']:
         raise NotImplementedError()

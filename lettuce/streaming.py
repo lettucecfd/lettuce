@@ -9,7 +9,7 @@ from typing import Optional
 from lettuce.base import LettuceBase
 from lettuce.native_generator import NativeLettuceBase, NativeWrite, NativeRead, NativeStandardStreamingWrite, NativeStandardStreamingRead
 
-__all__ = ["StandardStreaming", "NoStreaming"]
+__all__ = ["StandardStreaming", "NoStreaming", "Read", "Write", "StandardRead", "StandardWrite"]
 
 
 class Streaming(LettuceBase):
@@ -63,7 +63,6 @@ class StandardStreaming(Streaming):
     def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
         return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
-        # return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
 
     def __call__(self, f):
         for i in range(1, self.lattice.Q):
@@ -79,15 +78,23 @@ class StandardStreaming(Streaming):
 
 
 class StandardRead(StandardStreaming, Read):
+    def __init__(self, lattice):
+        StandardStreaming.__init__(self, lattice)
+        Read.__init__(self, lattice)
+
     def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
-        return [NativeStandardStreamingRead(support_no_streaming_mask), NativeWrite()]
+        return [NativeStandardStreamingRead(support_no_streaming_mask)]
 
 
 class StandardWrite(StandardStreaming, Write):
+    def __init__(self, lattice):
+        StandardStreaming.__init__(self, lattice)
+        Write.__init__(self, lattice)
+
     def create_native(self) -> ['NativeLettuceBase']:
         support_no_streaming_mask = (self.no_streaming_mask is not None) and self.no_streaming_mask.any()
-        return [NativeRead(), NativeStandardStreamingWrite(support_no_streaming_mask)]
+        return [NativeStandardStreamingWrite(support_no_streaming_mask)]
 
 
 class SLStreaming(Streaming):

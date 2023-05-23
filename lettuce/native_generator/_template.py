@@ -23,11 +23,12 @@ _ensure_cuda_path()
 native = _import_lettuce_native()
 
 # noinspection PyUnresolvedReferences,PyCallingNonCallable,PyStatementEffect
-def collide_and_stream(simulation):
+def invoke(simulation):
     {python_wrapper_before_buffer}
     native.collide_and_stream_{name}({cpp_wrapper_parameter_value})
     torch.cuda.synchronize()
     {python_wrapper_after_buffer}
+
 """,
 
     "lettuce.cpp": """

@@ -37,7 +37,7 @@ def test_standard_streaming_hardcoded_2D(lattice):
         f[q, 1, 1] = q + 1
     simulation.f = f
 
-    simulation.collide_and_stream(simulation)
+    simulation.pipeline_steps(simulation)
     f = simulation.f
 
     for q in range(lattice.stencil.Q()):
@@ -62,7 +62,7 @@ def test_standard_streaming_hardcoded_3D(lattice):
         f[q, 1, 1, 1] = q + 1
     simulation.f = f
 
-    simulation.collide_and_stream(simulation)
+    simulation.pipeline_steps(simulation)
     f = simulation.f
 
     for q in range(lattice.stencil.Q()):

@@ -16,7 +16,7 @@ import torch
 import lettuce
 import numpy as np
 
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9
+from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, Pipeline, StandardRead, Write, TRTCollision
 from lettuce import __version__ as lettuce_version
 
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
@@ -140,6 +140,34 @@ def convergence(ctx, init_f_neq, use_native):
         sys.exit(1)
     else:
         return 0
+
+
+@main.command()
+@click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
+@click.pass_context
+def pipetest(ctx, use_native):
+    device, dtype = ctx.obj['device'], ctx.obj['dtype']
+    lattice = Lattice(D2Q9, device, dtype, use_native=use_native)
+
+    resolution = 1024
+    mach_number = 8 / resolution
+
+    # Simulation
+    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=10000, mach_number=mach_number, lattice=lattice)
+    collision1 = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    collision2 = TRTCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = StandardStreaming(lattice)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision1, streaming=streaming)
+
+    pipeline = Pipeline(lattice, [
+        (StandardRead(lattice), 1),
+        (collision1, lambda step: not (step % 2 == 0)),
+        (collision2, lambda step: (step % 2 == 0)),
+        (Write(lattice), 1)
+    ])
+
+    for i in range(1000):
+        pipeline(simulation)
 
 
 if __name__ == "__main__":

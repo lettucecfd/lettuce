@@ -71,7 +71,7 @@ class Simulation:
         self.streaming.no_streaming_mask = no_streaming_mask.to(torch.uint8)
 
         # default collide and stream
-        self.collide_and_stream = Simulation.collide_and_stream_
+        self.pipeline_steps = Simulation.pipeline_steps_
 
         # check if native is possible, available and wanted
         if not lattice.use_native:
@@ -91,19 +91,19 @@ class Simulation:
         native_pipeline_steps = self.collision.create_native()
         native_generator = Generator(native_stencil, native_read, native_write, native_pipeline_steps)
 
-        collide_and_stream = native_generator.resolve()
-        if collide_and_stream is None:
+        pipeline_steps = native_generator.resolve()
+        if pipeline_steps is None:
 
             buffer = native_generator.generate()
             directory = native_generator.format(buffer)
             native_generator.install(directory)
 
-            collide_and_stream = native_generator.resolve()
-            if collide_and_stream is None:
+            pipeline_steps = native_generator.resolve()
+            if pipeline_steps is None:
                 print('Failed to install native Extension!')
                 return
 
-        self.collide_and_stream = collide_and_stream
+        self.pipeline_steps = pipeline_steps
         if 'NoStreaming' not in native_read.name:  # TODO find a better way of storing f_next
             self.f_next = torch.empty(self.f.shape, dtype=self.lattice.dtype, device=self.f.get_device())
 
@@ -116,7 +116,7 @@ class Simulation:
         self.collision.no_collision_mask = no_collision_mask
 
     @staticmethod
-    def collide_and_stream_(self):
+    def pipeline_steps_(self):
         # Perform the collision routine everywhere, expect where the no_collision_mask is true
         if self.collision.no_collision_mask is not None:
             self.f = torch.where(self.collision.no_collision_mask, self.f, self.collision(self.f))
@@ -130,7 +130,7 @@ class Simulation:
         if self.i == 0:
             self._report()
         for _ in range(num_steps):
-            self.collide_and_stream(self)
+            self.pipeline_steps(self)
             for boundary in self._boundaries:
                 self.f = boundary(self.f)
             self.i += 1

@@ -194,7 +194,7 @@ class Generator:
             importlib.reload(site)
             native = importlib.import_module(f"lettuce_native_{self.name}")
             # noinspection PyUnresolvedReferences
-            return native.collide_and_stream
+            return native.invoke
         except ModuleNotFoundError:
             print('Could not find the native module. Maybe it is not installed yet.')
             return None

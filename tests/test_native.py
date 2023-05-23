@@ -31,7 +31,7 @@ def test_native_no_streaming_mask():
     collision_n = NoCollision(lattice_n)
 
     simulation_n = Simulation(flow_n, lattice_n, collision_n, streaming_n)
-    assert not (simulation_n.collide_and_stream == simulation_n.collide_and_stream_)
+    assert not (simulation_n.pipeline_steps == simulation_n.pipeline_steps_)
     simulation_n.step(64)
 
     error = torch.abs(simulation.f - simulation_n.f).sum().data
@@ -65,7 +65,7 @@ def test_native_no_collision_mask():
     collision_n = BGKCollision(lattice_n, 1.0)
 
     simulation_n = Simulation(flow_n, lattice_n, collision_n, streaming_n)
-    assert not (simulation_n.collide_and_stream == simulation_n.collide_and_stream_)
+    assert not (simulation_n.pipeline_steps == simulation_n.pipeline_steps_)
     simulation_n.step(64)
 
     error = torch.abs(simulation.f - simulation_n.f).sum().data

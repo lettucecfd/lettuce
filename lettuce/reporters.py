@@ -11,8 +11,18 @@ import torch
 import pyevtk.hl as vtk
 
 __all__ = [
-    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter"
+    "write_image", "write_vtk", "Reporter", "VTKReporter", "ObservableReporter", "ErrorReporter"
 ]
+
+from lettuce import LettuceBase
+
+
+class Reporter(LettuceBase):
+    def native_available(self) -> bool:
+        return False
+
+    def create_native(self) -> ['NativeLatticeBase']:
+        raise NotImplementedError("Native is generally not supported by Reporters")
 
 
 def write_image(filename, array2d):

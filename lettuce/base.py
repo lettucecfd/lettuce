@@ -56,5 +56,5 @@ class LettuceBase:
 
 
 class PipelineStep(LettuceBase, ABC):
-    def __call__(self, f):
+    def __call__(self, simulation):
         ...

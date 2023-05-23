@@ -22,7 +22,7 @@ __all__ = ["Lattice"]
 
 class Lattice:
 
-    stencil: Type['Stencil']
+    stencil: 'Stencil'
     device: torch.device
     dtype: torch.dtype
     e: torch.Tensor

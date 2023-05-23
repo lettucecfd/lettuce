@@ -45,10 +45,11 @@ def write_vtk(point_dict, id=0, filename_base="./data/output"):
                   pointData=point_dict)
 
 
-class VTKReporter:
+class VTKReporter(Reporter):
     """General VTK Reporter for velocity and pressure"""
 
     def __init__(self, lattice, flow, interval=50, filename_base="./data/output"):
+        Reporter.__init__(self, lattice)
         self.lattice = lattice
         self.flow = flow
         self.interval = interval
@@ -87,10 +88,11 @@ class VTKReporter:
                       pointData=point_dict)
 
 
-class ErrorReporter:
+class ErrorReporter(Reporter):
     """Reports numerical errors with respect to analytic solution."""
 
     def __init__(self, lattice, flow, interval=1, out=sys.stdout):
+        Reporter.__init__(self, lattice)
         assert hasattr(flow, "analytic_solution")
         self.lattice = lattice
         self.flow = flow
@@ -118,7 +120,7 @@ class ErrorReporter:
                 print(err_u.item(), err_p.item(), file=self.out)
 
 
-class ObservableReporter:
+class ObservableReporter(Reporter):
     """A reporter that prints an observable every few iterations.
 
     Examples
@@ -135,6 +137,7 @@ class ObservableReporter:
     """
 
     def __init__(self, observable, interval=1, out=sys.stdout):
+        Reporter.__init__(self, None)
         self.observable = observable
         self.interval = interval
         self.out = [] if out is None else out

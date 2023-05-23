@@ -15,8 +15,9 @@ import click
 import torch
 import lettuce
 import numpy as np
+from timeit import default_timer as timer
 
-from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, Pipeline, StandardRead, Write, TRTCollision
+from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, Pipeline, StandardRead, Write, TRTCollision, Read, StandardWrite
 from lettuce import __version__ as lettuce_version
 
 from lettuce import TaylorGreenVortex2D, Simulation, ErrorReporter, VTKReporter
@@ -147,27 +148,110 @@ def convergence(ctx, init_f_neq, use_native):
 @click.pass_context
 def pipetest(ctx, use_native):
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype, use_native=use_native)
+    lattice = Lattice(D2Q9, device, dtype, use_native=False)
 
     resolution = 1024
     mach_number = 8 / resolution
 
     # Simulation
-    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=10000, mach_number=mach_number, lattice=lattice)
+    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=800, mach_number=mach_number, lattice=lattice)
     collision1 = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    collision2 = TRTCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    # collision2 = TRTCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision1, streaming=streaming)
 
-    pipeline = Pipeline(lattice, [
-        (StandardRead(lattice), 1),
-        (collision1, lambda step: not (step % 2 == 0)),
-        (collision2, lambda step: (step % 2 == 0)),
-        (Write(lattice), 1)
+    observable1 = lettuce.IncompressibleKineticEnergy(lattice, flow)
+    reporter1 = lettuce.ObservableReporter(observable1)
+    simulation.reporters.append(reporter1)
+
+    observable2 = lettuce.Enstrophy(lattice, flow)
+    reporter2 = lettuce.ObservableReporter(observable2)
+    simulation.reporters.append(reporter2)
+
+    step0 = lambda step: step == 0
+    step19999 = lambda step: step == 19999
+    steps_inbetween = lambda step: not (step == 0) and not (step == 19999)
+
+    pipeline1 = Pipeline(lattice, [
+
+        # collide [step 0 from every 100 steps]
+        (Read(lattice), step0),
+        (collision1, step0),
+        (Write(lattice), step0),
+
+        # stream and collide
+        (StandardRead(lattice), steps_inbetween),
+        (collision1, steps_inbetween),
+        (Write(lattice), steps_inbetween),
+
+        # stream [step 99 from every 100 steps]
+        (StandardRead(lattice), step19999),
+        (Write(lattice), step19999),
+
+        # reporter [step 99 from every 100 steps]
+        # (reporter1, step99of100),
+        # (reporter2, step199of200),
     ])
 
-    for i in range(1000):
-        pipeline(simulation)
+    pipeline2 = Pipeline(lattice, [
+        (Read(lattice), 1),
+        (collision1, 1),
+        (StandardWrite(lattice), 1),
+    ])
+
+    pipeline3 = Pipeline(lattice, [
+        (StandardRead(lattice), 1),
+        (collision1, 1),
+        (Write(lattice), 1),
+    ])
+
+    step_count = 10
+
+    # dry run 1
+    print("starting dry run for pipeline 1 ...")
+    simulation.i = 0
+    for i in range(step_count):
+        pipeline1.dry(simulation)
+    simulation.i = 0
+
+    # benchmark 1
+    print("benchmark run for pipeline 1 ...")
+    start = timer()
+    for i in range(step_count):
+        pipeline1(simulation)
+    end = timer()
+    print(end - start)
+    print(resolution ** 2 * step_count / (end - start), "mlups (collide, stream&collide, stream)")
+
+    # dry run 2
+    print("starting dry run for pipeline 2 ...")
+    simulation.i = 0
+    for i in range(step_count):
+        pipeline2.dry(simulation)
+    simulation.i = 0
+
+    # benchmark 2
+    print("benchmark run for pipeline 2 ...")
+    start = timer()
+    for i in range(step_count):
+        pipeline2(simulation)
+    end = timer()
+    print(resolution ** 2 * step_count / (end - start), "mlups (collide&stream)")
+
+    # dry run 3
+    print("starting dry run for pipeline 3 ...")
+    simulation.i = 0
+    for i in range(step_count):
+        pipeline3.dry(simulation)
+    simulation.i = 0
+
+    # benchmark 3
+    print("benchmark run for pipeline 3 ...")
+    start = timer()
+    for i in range(step_count):
+        pipeline3(simulation)
+    end = timer()
+    print(resolution ** 2 * step_count / (end - start), "mlups (stream&collide)")
 
 
 if __name__ == "__main__":

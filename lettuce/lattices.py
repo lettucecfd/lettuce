@@ -44,7 +44,7 @@ class Lattice:
 
         def is_bool_array(it):
             return (isinstance(it, torch.BoolTensor) or
-                    (isinstance(it, np.ndarray) and it.dtype in [np.bool, np.uint8]))
+                    (isinstance(it, np.ndarray) and it.dtype in [bool, np.uint8]))
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

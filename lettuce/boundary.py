@@ -30,7 +30,7 @@ class BounceBackBoundary:
         self.lattice = lattice
 
     def __call__(self, f):
-        f = torch.where(self.mask, f[self.lattice.stencil.opposite], f)
+        f = torch.where(self.mask, f[self.lattice.stencil.opposite], f) "Punkte an denen self.mask, also randpunkte liegen, werden mit f[] bezogen und andere mit f"
         return f
 
     def make_no_collision_mask(self, f_shape):
@@ -162,3 +162,32 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
         no_collision_mask[self.index] = 1
         return no_collision_mask
+
+class NoSlipBoundary:
+    def __init__(self, mask, lattice):
+        self.mask = lattice.convert_to_tensor(mask)
+        self.lattice = lattice
+
+    def __call__(self, f):
+        self.max_col = self.mask.size(1)
+        self.max_row = self.mask.size(0)
+
+        self.opposite_x = [0, 1, 4, 3, 2, 8, 7, 6, 5]
+        self.opposite_y = [0, 3, 2, 1, 4, 6, 5, 8, 7]
+        self.opposite_xy = [0, 1, 2, 3, 4, 7, 8, 5, 6]
+
+        self.row_indices = torch.arange(self.max_row).unsqueeze(1)
+        self.col_indices = torch.arange(self.max_col).unsqueeze(0)
+
+        f = torch.where(self.mask & ((self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_y], f)
+        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)), f[self.opposite_x], f)
+        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)) & (
+                    (self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_xy], f)
+        "Punkte an denen self.mask, also randpunkte liegen, werden mit f[] bezogen und andere mit f"
+        return f
+
+    def make_no_collision_mask(self, f_shape):
+        assert self.mask.shape == f_shape[1:]
+        return self.mask
+
+

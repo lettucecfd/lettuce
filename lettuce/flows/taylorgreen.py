@@ -67,3 +67,40 @@ class TaylorGreenVortex3D:
     @property
     def boundaries(self):
         return []
+
+
+class ReducedTaylorGreenVortex2D:
+    def __init__(self, resolution, reynolds_number, mach_number, lattice):
+        self.resolution = resolution
+        self.units = UnitConversion(
+            lattice,
+            reynolds_number=reynolds_number, mach_number=mach_number,
+            characteristic_length_lu=resolution, characteristic_length_pu=np.pi,
+            characteristic_velocity_pu=1
+        )
+
+    def analytic_solution(self, x, t=0):
+        nu = self.units.viscosity_pu
+        u = np.array([np.cos(x[0]) * np.sin(x[1]) * np.exp(-2 * nu * t),
+                      -np.sin(x[0]) * np.cos(x[1]) * np.exp(-2 * nu * t)])
+        p = -np.array([0.25 * (np.cos(2 * x[0]) + np.cos(2 * x[1])) * np.exp(-4 * nu * t)])
+        return p, u
+
+    def initial_solution(self, x):
+        return self.analytic_solution(x, t=0)
+
+    @property
+    def grid(self):
+        x = np.linspace(0,np.pi, num=self.resolution, endpoint=False)
+        y = np.linspace(0,np.pi, num=self.resolution, endpoint=False)
+        return np.meshgrid(x, y, indexing='ij')
+
+    @property
+    def boundaries(self):
+        mask=np.zeros((self.resolution,self.resolution),dtype=bool)
+        mask[1:-1, 1:-1] = False
+        mask[[0, -1], :] = True
+        mask[:, [0, -1]] = True
+        boundary = NoSlipBoundary(mask=mask, lattice=self.units.lattice)
+        return [boundary]
+

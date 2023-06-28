@@ -93,12 +93,12 @@ class ReducedTaylorGreenVortex2D:
 
     @property
     def grid(self):
-        x, dx = np.linspace(0,np.pi, num=self.resolution, endpoint=False, retstep=True)
+        x, dx = np.linspace(0,np.pi, num=(self.resolution-2), endpoint=False, retstep=True)
         x = x + dx / 2
-        x=(-dx/2,x,np.pi+dx/2)
-        y, dy = np.linspace(0,np.pi, num=self.resolution, endpoint=False, retstep=True)
+        x = np.concatenate(([-dx / 2], x, [np.pi + dx / 2]))
+        y, dy = np.linspace(0,np.pi, num=(self.resolution-2), endpoint=False, retstep=True)
         y = y + dy / 2
-        y=(-dy/2,y,np.pi+dy/2)
+        x =np.concatenate(([-dy / 2], y, [np.pi + dy / 2]))
         return np.meshgrid(x, y, indexing='ij')
 
     @property

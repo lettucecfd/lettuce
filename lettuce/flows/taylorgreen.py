@@ -5,7 +5,7 @@ Taylor-Green vortex in 2D and 3D.
 import numpy as np
 
 from lettuce.unit import UnitConversion
-
+from lettuce.boundary import SlipBoundary
 
 class TaylorGreenVortex2D:
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
@@ -29,8 +29,10 @@ class TaylorGreenVortex2D:
 
     @property
     def grid(self):
-        x = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
-        y = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False)
+        x,dx = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False, retstep=True)
+        x=x+dx/2
+        y,dy = np.linspace(0, 2 * np.pi, num=self.resolution, endpoint=False, retstep=True)
+        y=y+dy/2
         return np.meshgrid(x, y, indexing='ij')
 
     @property
@@ -91,16 +93,20 @@ class ReducedTaylorGreenVortex2D:
 
     @property
     def grid(self):
-        x = np.linspace(0,np.pi, num=self.resolution, endpoint=False)
-        y = np.linspace(0,np.pi, num=self.resolution, endpoint=False)
+        x, dx = np.linspace(0,np.pi, num=self.resolution, endpoint=False, retstep=True)
+        x = x + dx / 2
+        x=(-dx/2,x,np.pi+dx/2)
+        y, dy = np.linspace(0,np.pi, num=self.resolution, endpoint=False, retstep=True)
+        y = y + dy / 2
+        y=(-dy/2,y,np.pi+dy/2)
         return np.meshgrid(x, y, indexing='ij')
 
     @property
     def boundaries(self):
-        mask=np.zeros((self.resolution,self.resolution),dtype=bool)
+        mask=np.zeros(((self.resolution+2),(self.resolution+2)),dtype=bool)
         mask[1:-1, 1:-1] = False
         mask[[0, -1], :] = True
         mask[:, [0, -1]] = True
-        boundary = NoSlipBoundary(mask=mask, lattice=self.units.lattice)
+        boundary = SlipBoundary(mask=mask, lattice=self.units.lattice)
         return [boundary]
 

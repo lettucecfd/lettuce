@@ -179,8 +179,8 @@ class SlipBoundary:
         self.row_indices = torch.arange(self.max_row).unsqueeze(0)#unsqueeze nachschlagen
         self.col_indices = torch.arange(self.max_col).unsqueeze(1)
 
-        f = torch.where(self.mask & ((self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_x], f)#richtungen x y überprüfen
-        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)), f[self.opposite_y], f)
+        f = torch.where(self.mask & ((self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_y], f)#richtungen x y überprüfen
+        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)), f[self.opposite_x], f)
         f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)) & (
                     (self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_xy], f)
         "Punkte an denen self.mask, also randpunkte liegen, werden mit f[] bezogen und andere mit f"

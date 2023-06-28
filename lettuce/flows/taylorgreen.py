@@ -103,7 +103,7 @@ class ReducedTaylorGreenVortex2D:
 
     @property
     def boundaries(self):
-        mask=np.zeros(((self.resolution+2),(self.resolution+2)),dtype=bool)
+        mask=np.zeros(((self.resolution),(self.resolution)),dtype=bool)
         mask[1:-1, 1:-1] = False
         mask[[0, -1], :] = True
         mask[:, [0, -1]] = True

@@ -74,6 +74,10 @@ class Lattice:
         """incompressible kinetic energy"""
         return 0.5 * self.einsum("d,d->", [self.u(f), self.u(f)])
 
+    def incompressbile_energy_wo_boundary(self, f):
+
+        f_wo_boundary=f[1:-1,1:-1]
+        return 0.5 * self.einsum("d,d->", [self.u(f_wo_boundary), self.u(f_wo_boundary)])
     def entropy(self, f):
         """entropy according to the H-theorem"""
         f_log = -torch.log(self.einsum("q,q->q", [f, 1 / self.w]))

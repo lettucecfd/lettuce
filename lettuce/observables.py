@@ -9,7 +9,8 @@ import numpy as np
 from lettuce.util import torch_gradient
 from packaging import version
 
-__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
+__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum",
+           "IncompressibleKineticEnergyBd"]
 
 
 class Observable:
@@ -33,8 +34,20 @@ class IncompressibleKineticEnergy(Observable):
     """Total kinetic energy of an incompressible flow."""
 
     def __call__(self, f):
+
         dx = self.flow.units.convert_length_to_pu(1.0)
         kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
+        kinE *= dx ** self.lattice.D
+        return kinE
+
+
+class IncompressibleKineticEnergyBd(Observable):
+    """Total kinetic energy of an incompressible flow."""
+
+    def __call__(self, f):
+
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)[1:-1,1:-1]))
         kinE *= dx ** self.lattice.D
         return kinE
 

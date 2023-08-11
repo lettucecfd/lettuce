@@ -19,7 +19,8 @@ import torch
 import numpy as np
 from lettuce import (LettuceException)
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP", "SlipBoundary"]
+__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP",
+           "FlippedBoundary", "TGV3D"]
 
 
 class BounceBackBoundary:
@@ -163,31 +164,69 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         no_collision_mask[self.index] = 1
         return no_collision_mask
 
-class SlipBoundary:
-    def __init__(self, mask, lattice):
-        self.mask = lattice.convert_to_tensor(mask)
-        self.lattice = lattice
+# class SlipBoundary:
+#     def __init__(self, mask, lattice):
+#         self.mask = lattice.convert_to_tensor(mask)
+#         self.lattice = lattice
+#
+#     def __call__(self, f):
+#         self.max_col = self.mask.shape[1]
+#         self.max_row = self.mask.shape[0]
+#         self.resolution=self.max_col
+#         self.opposite_x = [0, 1, 4, 3, 2, 8, 7, 6, 5]
+#         self.opposite_y = [0, 3, 2, 1, 4, 6, 5, 8, 7]
+#         self.opposite_xy = [0, 3, 4, 1, 2, 7, 8, 5, 6]
+#
+#         self.row_indices = torch.arange(self.max_row).unsqueeze(0)#unsqueeze nachschlagen
+#         self.col_indices = torch.arange(self.max_col).unsqueeze(1)
+#         "F-Bedingungen um 1 nach oben oder unten oder garnicht verschieben, damit die verschiebung der f-Werte einfacher wird"
+#
+#
+#         return f
+class FlippedBoundary:
+    #def __init__(self, lattice):
+        #self.mask = lattice.convert_to_tensor(mask)
+        #self.lattice = lattice
 
     def __call__(self, f):
-        self.max_col = self.mask.shape[1]
-        self.max_row = self.mask.shape[0]
 
-        self.opposite_x = [0, 1, 4, 3, 2, 8, 7, 6, 5]
-        self.opposite_y = [0, 3, 2, 1, 4, 6, 5, 8, 7]
-        self.opposite_xy = [0, 1, 2, 3, 4, 7, 8, 5, 6]
-
-        self.row_indices = torch.arange(self.max_row).unsqueeze(0)#unsqueeze nachschlagen
-        self.col_indices = torch.arange(self.max_col).unsqueeze(1)
-
-        f = torch.where(self.mask & ((self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_x], f)#richtungen x y überprüfen
-        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)), f[self.opposite_y], f)
-        f = torch.where(self.mask & ((self.col_indices == 0) | (self.col_indices == self.max_col - 1)) & (
-                    (self.row_indices == 0) | (self.row_indices == self.max_row - 1)), f[self.opposite_xy], f)
-        "Punkte an denen self.mask, also randpunkte liegen, werden mit f[] bezogen und andere mit f"
+        # self.saver=f[7,:,0].clone()
+        # f[7,:,0]=f[6,:,-1]
+        # f[6,:,-1]=self.saver
+        # self.saver=f[4,:,0].clone()
+        # f[4,:,0]=f[2,:,-1]
+        # f[2,:,-1]=self.saver
+        # self.saver=f[8,:,0].clone()
+        # f[8,:,0]=f[5,:,-1]
+        # f[5,:,-1]=self.saver
+        #
+        # self.saver=f[6,0,:].clone()
+        # f[6,0,:]=f[5,-1,:]
+        # f[5,-1,:]=self.saver
+        # self.saver=f[3,0,:].clone()
+        # f[3,0,:]=f[1,-1,:]
+        # f[1,-1,:]=self.saver
+        # self.saver=f[7,0,:].clone()
+        # f[7,0,:]=f[8,-1,:]
+        # f[8,-1,:]=self.saver
         return f
+class TGV3D():
+    def __call__(self, f):
 
-    def make_no_collision_mask(self, f_shape):
-        assert self.mask.shape == f_shape[1:]
-        return self.mask
+      for row in range(len(self.lattice.stencil.switch_xz)):
+        self.saver=f[self.lattice.stencil.switch_xz[row][0],:,0,:].clone()
+        f[self.lattice.stencil.switch_xz[row][0],:,0,:]=f[self.lattice.stencil.switch_xz[row][1],:,-1,:]
+        f[self.lattice.stencil.switch_xz[row][1],:,-1,:] = self.saver
 
 
+      for row in range(len(self.lattice.stencil.switch_yz)):
+        self.saver = f[self.lattice.stencil.switch_yz[row][0], 0, :, :].clone()
+        f[self.lattice.stencil.switch_yz[row][0], 0, :, :] = f[self.lattice.stencil.switch_yz[row][1], -1, :, :]
+        f[self.lattice.stencil.switch_yz[row][1], -1, :, :] = self.saver
+
+      for row in range(len(self.lattice.stencil.switch_xz)):
+        self.saver=torch.flip(f[self.lattice.stencil.switch_xz[row][0],:,:,0].clone(),[1])
+        f[self.lattice.stencil.switch_xz[row][0],:,:,0]=torch.flip(f[self.lattice.stencil.switch_xz[row][1],:,:,-1],[1])
+        f[self.lattice.stencil.switch_xz[row][1],:,:,-1] = self.saver
+
+      return f

@@ -24,6 +24,7 @@ from lettuce.reporters import *
 from lettuce.simulation import *
 from lettuce.force import *
 from lettuce.observables import *
+from lettuce.simulation_reducedTGV import *
 
 from lettuce.flows import *
 

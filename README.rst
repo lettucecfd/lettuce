@@ -88,7 +88,7 @@ Installation
 * Create a new conda environment and install all dependencies::
 
     conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"  mmh3 hdf5
+         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"  mmh3 h5py
 
 
 * Activate the conda environment::

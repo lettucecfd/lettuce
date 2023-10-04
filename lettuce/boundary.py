@@ -20,7 +20,7 @@ import numpy as np
 from lettuce import (LettuceException)
 
 __all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP",
-           "FlippedBoundary", "TGV3D"]
+           "FlippedBoundary", "TGV3D", "superTGV3D"]
 
 
 class BounceBackBoundary:
@@ -210,23 +210,90 @@ class FlippedBoundary:
         # f[7,0,:]=f[8,-1,:]
         # f[8,-1,:]=self.saver
         return f
-class TGV3D():
+class TGV3D:
+
+    def __init__(self, lattice):
+     self.lattice = lattice
     def __call__(self, f):
 
+
+
+       for row in range(len(self.lattice.stencil.switch_xz)):
+          self.saver=f[self.lattice.stencil.switch_xz[row][0],:,0,:].clone()
+          f[self.lattice.stencil.switch_xz[row][0],:,0,:]=f[self.lattice.stencil.switch_xz[row][1],:,-1,:].clone()
+          f[self.lattice.stencil.switch_xz[row][1],:,-1,:] = self.saver
+
+
+       for row in range(len(self.lattice.stencil.switch_yz)):
+          self.saver = f[self.lattice.stencil.switch_yz[row][0], 0, :, :].clone()
+          f[self.lattice.stencil.switch_yz[row][0], 0, :, :] = f[self.lattice.stencil.switch_yz[row][1], -1, :, :].clone()
+          f[self.lattice.stencil.switch_yz[row][1], -1, :, :] = self.saver
+
+
+
+
+       for row in range(len(self.lattice.stencil.switch_x)):
+           self.saver = torch.flip(f[self.lattice.stencil.switch_x[row][0],:,:,0].clone(),dims=[1])
+           f[self.lattice.stencil.switch_x[row][0],:,:,0]=torch.flip(f[self.lattice.stencil.switch_x[row][1],:,:,-1].clone(),dims=[1])
+           f[self.lattice.stencil.switch_x[row][1],:,:, -1]=self.saver
+
+
+
+       # f[5,:,:,-1]=torch.flip(f[5,:,:,-1].clone(),[1])
+       # f[11, :, :, -1] = torch.flip(f[11, :, :, -1].clone(), [1])
+       # f[14, :, :, -1] = torch.flip(f[14, :, :, -1].clone(), [1])
+       # self.saver=f[7,:,:,-1].clone()
+       # f[7,:,:,-1]=f[10,:,:,-1]
+       # f[10,:,:,-1]=self.saver
+       # f[6,:,:,0]=torch.flip(f[6,:,:,0].clone(),[1])
+       # f[12, :, :, 0] = torch.flip(f[12, :, :, 0].clone(), [1])
+       # f[13, :, :, 0] = torch.flip(f[13, :, :, 0].clone(), [1])
+       # self.saver=f[8,:,:,0].clone()
+       # f[8,:,:,0]=f[9,:,:,0]
+       # f[9,:,:,0]=self.saver
+
+       return f
+
+class superTGV3D:
+
+    def __init__(self, lattice):
+     self.lattice = lattice
+    def __call__(self, f):
+      self.fclone=f.clone()
+
+
+      for row in range(len(self.lattice.stencil.switch_rotyx)):
+          f[self.lattice.stencil.switch_rotyx[row][1],:,0,:]= self.fclone[self.lattice.stencil.switch_rotyx[row][0],-1,:,:]
+      for row in range(len(self.lattice.stencil.switch_rotxy)):
+          f[self.lattice.stencil.switch_rotxy[row][1],0,:,:]= self.fclone[self.lattice.stencil.switch_rotxy[row][0],:,-1,:]
+
       for row in range(len(self.lattice.stencil.switch_xz)):
-        self.saver=f[self.lattice.stencil.switch_xz[row][0],:,0,:].clone()
-        f[self.lattice.stencil.switch_xz[row][0],:,0,:]=f[self.lattice.stencil.switch_xz[row][1],:,-1,:]
-        f[self.lattice.stencil.switch_xz[row][1],:,-1,:] = self.saver
-
-
+          f[self.lattice.stencil.switch_xz[row][1],:,-1,:]=self.fclone[self.lattice.stencil.switch_xz[row][0],:,0,:]
       for row in range(len(self.lattice.stencil.switch_yz)):
-        self.saver = f[self.lattice.stencil.switch_yz[row][0], 0, :, :].clone()
-        f[self.lattice.stencil.switch_yz[row][0], 0, :, :] = f[self.lattice.stencil.switch_yz[row][1], -1, :, :]
-        f[self.lattice.stencil.switch_yz[row][1], -1, :, :] = self.saver
+          f[self.lattice.stencil.switch_yz[row][1], -1, :, :] = self.fclone[self.lattice.stencil.switch_yz[row][0], 0, :, :]
 
-      for row in range(len(self.lattice.stencil.switch_xz)):
-        self.saver=torch.flip(f[self.lattice.stencil.switch_xz[row][0],:,:,0].clone(),[1])
-        f[self.lattice.stencil.switch_xz[row][0],:,:,0]=torch.flip(f[self.lattice.stencil.switch_xz[row][1],:,:,-1],[1])
-        f[self.lattice.stencil.switch_xz[row][1],:,:,-1] = self.saver
 
+      for row in range(len(self.lattice.stencil.switch_xy)):
+          f[self.lattice.stencil.switch_xy[row][0], :,:,0] = self.fclone[self.lattice.stencil.switch_xy[row][1], :,:,-1]
+
+      for row in range(len(self.lattice.stencil.switch_diagonal2)):
+
+          f[self.lattice.stencil.switch_diagonal2[row][1],:,:,-1]=torch.transpose(self.fclone[self.lattice.stencil.switch_diagonal2[row][0],:,:,0], 0, 1)
+
+      f[18,0,-1,:]=self.fclone[18,0,-1,:]
+      f[17,-1,0,:]=self.fclone[17,-1,0,:]
+      f[16,0,0,:]=self.fclone[15,-1,-1,:]
+      f[15,-1,-1,:]=self.fclone[16,0,0,:]
+      #for row in range((len(self.lattice.stencil.switch_xy)))
+      f[9,:,-1,0]=self.fclone[10,:,0,-1]
+      f[13,-1,:,0]=self.fclone[14,0,:,-1]
+      f[12,0,:,0]=self.fclone[7,:,-1,-1]
+      f[8,:,0,0]=self.fclone[11,-1,:,-1]
+
+      f[10,:,0,-1]=self.fclone[9,:,-1,0]
+      f[7,:,-1,-1]=self.fclone[12,0,:,0]
+
+      f[11,-1,:,-1]=self.fclone[8,:,0,0]
+      f[14,0,:,-1]=self.fclone[13,-1,:,0]
+      #for
       return f

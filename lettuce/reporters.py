@@ -78,6 +78,7 @@ class VTKReporter:
                       pointData=point_dict)
 
 
+
 class ErrorReporter:
     """Reports numerical errors with respect to analytic solution."""
 

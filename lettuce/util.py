@@ -96,6 +96,7 @@ def torch_gradient(f, dx=1, order=2):
     return out
 
 
+
 def grid_fine_to_coarse(lattice, f_fine, tau_fine, tau_coarse):
     if f_fine.shape.__len__() == 3:
         f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2]))

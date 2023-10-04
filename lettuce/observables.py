@@ -10,7 +10,7 @@ from lettuce.util import torch_gradient
 from packaging import version
 
 __all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum",
-           "IncompressibleKineticEnergyBd"]
+           "IncompressibleKineticEnergyBd","Dissipation_sij","Dissipation_TGV"]
 
 
 class Observable:
@@ -50,6 +50,9 @@ class IncompressibleKineticEnergyBd(Observable):
         kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)[1:-1,1:-1]))
         kinE *= dx ** self.lattice.D
         return kinE
+
+
+
 
 
 class Enstrophy(Observable):
@@ -153,3 +156,63 @@ class Mass(Observable):
         if self.mask is not None:
             mass -= (f * self.mask.to(dtype=torch.float)).sum()
         return mass
+
+class Dissipation_sij(Observable):
+
+    def __init__(self, lattice, flow, no_grad=True):
+        super(Dissipation_sij, self).__init__(lattice, flow)
+
+    def __call__(self, f):
+        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        nu = self.flow.units.viscosity_pu
+
+        u_ij = torch.stack([torch_gradient(u[i], dx=dx, order=6) for i in range(self.lattice.D)])
+        s_ij = 0.5 * (u_ij + torch.transpose(u_ij, 0, 1))
+        dissipation = 2 * nu * torch.mean((s_ij ** 2).sum(0).sum(0))
+
+        #du_dx=torch.gradient(u[0], dx=dx, order=6)
+        #du_dy=torch.gradient(u[1], dx=dx, order=6)
+        #du_dz=torch.gradient(u[2], dx=dx, order=6)
+        #dissipation= 2*nu*(du_dx**2+du_dy**2+du_dz**2)
+        return dissipation
+
+class Dissipation_TGV(Observable):
+
+    def __init__(self, lattice, flow, no_grad=True):
+        super(Dissipation_TGV, self).__init__(lattice, flow)
+
+    def __call__(self, f):
+        
+
+        u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
+        dx = self.flow.units.convert_length_to_pu(1.0)
+        nu = self.flow.units.viscosity_pu
+        nges=u.size()[1]
+        x=torch.linspace(0,(nges-1)*dx,steps=nges)
+        y = torch.linspace(0,(nges - 1) * dx,steps=nges)
+        z = torch.linspace(0,(nges - 1) * dx,steps=nges)
+        grid=torch.meshgrid(x, y, z)
+        u=u.requires_grad_()
+        dux=torch.stack([torch.gradient(u[i],spacing=dx,dim=0) for i in range(3)])
+        duy = torch.stack([torch.gradient(u[i], spacing=dx,dim=1) for i in range(3)])
+        duz = torch.stack([torch.gradient(u[i], spacing=dx,dim=2) for i in range(3)])
+
+        u_ijx=torch.square(dux[0])+torch.square(dux[1])+torch.square(dux[2])
+        u_ijy = torch.square(duy[0]) + torch.square(duy[1]) + torch.square(duy[2])
+        u_ijz = torch.square(duz[0]) + torch.square(duz[1]) + torch.square(duz[2])
+
+        dissipation=nu/(u_ijx.size())**3*torch.sum(u_ijx+u_ijy+u_ijz)
+
+
+        #u_ij = torch.stack([torch_gradient(u[i], dx=dx, order=6) for i in range(self.lattice.D)])
+        #u_ijx=torch.square(u_ij[0,0])+torch.square(u_ij[0,1])+torch.square(u_ij[0,2])
+        #u_ijy=torch.square(u_ij[1,0])+torch.square(u_ij[1,1])+torch.square(u_ij[1,2])
+        #u_ijz=torch.square(u_ij[2,0])+torch.square(u_ij[2,1])+torch.square(u_ij[2,2])
+        #dissipation=nu/(u_ijx.size()[0])**3*torch.sum(u_ijx+u_ijy+u_ijz)
+
+        #du_dx=torch.gradient(u[0], dx=dx, order=6)
+        #du_dy=torch.gradient(u[1], dx=dx, order=6)
+        #du_dz=torch.gradient(u[2], dx=dx, order=6)
+        #dissipation= 2*nu*(du_dx**2+du_dy**2+du_dz**2)
+        return dissipation

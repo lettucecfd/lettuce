@@ -16,7 +16,6 @@ __all__ = ["SimulationReducedTGV"]
 
 class SimulationReducedTGV:
     """High-level API for simulations.
-
     Attributes
     ----------
     reporters : list

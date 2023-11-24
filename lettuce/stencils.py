@@ -125,6 +125,7 @@ class D3Q27(Stencil):
         0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13,
         16, 15, 18, 17, 20, 19, 22, 21, 24, 23, 26, 25
     ]
+
 class Symmetriesearch:
     def __init__(self, e):
         self.e = e

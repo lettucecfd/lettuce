@@ -148,9 +148,9 @@ def convergence(ctx, init_f_neq, use_native):
 @click.pass_context
 def pipetest(ctx, use_native):
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype, use_native=False)
+    lattice = Lattice(D2Q9, device, dtype, use_native=use_native)
 
-    resolution = 1024
+    resolution = 3072
     mach_number = 8 / resolution
 
     # Simulation
@@ -205,14 +205,14 @@ def pipetest(ctx, use_native):
         (Write(lattice), 1),
     ])
 
-    step_count = 10
+    step_count = 20000
 
     # dry run 1
-    print("starting dry run for pipeline 1 ...")
-    simulation.i = 0
-    for i in range(step_count):
-        pipeline1.dry(simulation)
-    simulation.i = 0
+    # print("starting dry run for pipeline 1 ...")
+    # simulation.i = 0
+    # for i in range(step_count):
+    #     pipeline1.dry(simulation)
+    # simulation.i = 0
 
     # benchmark 1
     print("benchmark run for pipeline 1 ...")
@@ -221,14 +221,14 @@ def pipetest(ctx, use_native):
         pipeline1(simulation)
     end = timer()
     print(end - start)
-    print(resolution ** 2 * step_count / (end - start), "mlups (collide, stream&collide, stream)")
+    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (collide, stream&collide, stream)")
 
     # dry run 2
-    print("starting dry run for pipeline 2 ...")
-    simulation.i = 0
-    for i in range(step_count):
-        pipeline2.dry(simulation)
-    simulation.i = 0
+    # print("starting dry run for pipeline 2 ...")
+    # simulation.i = 0
+    # for i in range(step_count):
+    #     pipeline2.dry(simulation)
+    # simulation.i = 0
 
     # benchmark 2
     print("benchmark run for pipeline 2 ...")
@@ -236,14 +236,14 @@ def pipetest(ctx, use_native):
     for i in range(step_count):
         pipeline2(simulation)
     end = timer()
-    print(resolution ** 2 * step_count / (end - start), "mlups (collide&stream)")
+    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (collide&stream)")
 
     # dry run 3
-    print("starting dry run for pipeline 3 ...")
-    simulation.i = 0
-    for i in range(step_count):
-        pipeline3.dry(simulation)
-    simulation.i = 0
+    # print("starting dry run for pipeline 3 ...")
+    # simulation.i = 0
+    # for i in range(step_count):
+    #     pipeline3.dry(simulation)
+    # simulation.i = 0
 
     # benchmark 3
     print("benchmark run for pipeline 3 ...")
@@ -251,7 +251,7 @@ def pipetest(ctx, use_native):
     for i in range(step_count):
         pipeline3(simulation)
     end = timer()
-    print(resolution ** 2 * step_count / (end - start), "mlups (stream&collide)")
+    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (stream&collide)")
 
 
 if __name__ == "__main__":

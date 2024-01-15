@@ -105,5 +105,5 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             global_buf('  for (index_t i = 0; i < q; ++i)                                                                                    ')
             global_buf('  {                                                                                                                  ')
             global_buf('    scalar_t f_eq_tmp = exu[i] / cs_pow_two;                                                                         ')
-            global_buf('    f_eq[i] = rho * w[i] * ((exu[i] + exu[i] - uxu) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0); ')
+            global_buf('    f_eq[i] = rho * w[i] * ((exu[i] + exu[i] - uxu) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0);             ')
             global_buf('  }                                                                                                                  ')

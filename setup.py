@@ -40,7 +40,7 @@ setup(
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.native_generator']),
+    packages=find_packages(include=['lettuce', 'lettuce.flows', 'lettuce.native_generator', 'lettuce.util']),
     setup_requires=setup_requirements,
     test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',

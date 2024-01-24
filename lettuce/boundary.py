@@ -17,9 +17,39 @@ The no-collision mask has the same dimensions as the grid (x, y, (z)).
 
 import torch
 import numpy as np
-from lettuce import (LettuceException)
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
+from typing import Optional
+
+from lettuce import LettuceException
+from lettuce.base import PipelineStep
+from abc import ABC, abstractmethod
+
+__all__ = ["Boundary", "BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
+
+
+class Boundary(PipelineStep, ABC):
+    no_boundary_mask: Optional[torch.Tensor]
+
+    def __init__(self, lattice: 'Lattice'):
+        PipelineStep.__init__(self, lattice)
+        self.no_boundary_mask = None
+
+    @abstractmethod
+    def __call__(self, f: torch.Tensor) -> torch.Tensor:
+        """The heart of the boundary condition
+
+        Applies the boundary condition to the distribution function.
+
+        Parameters
+        ----------
+        f: torch.Tensor
+            The distribution function of the current timestamp.
+        Returns
+        -------
+        The distribution function of the current timestamp with
+        the boundary condition applied.
+        """
+        ...
 
 
 class BounceBackBoundary:

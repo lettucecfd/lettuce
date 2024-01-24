@@ -7,6 +7,8 @@ To get help for terminal commands, open a console and type:
 
 """
 
+import matplotlib.pyplot as plt
+
 import sys
 import cProfile
 import pstats
@@ -143,116 +145,124 @@ def convergence(ctx, init_f_neq, use_native):
         return 0
 
 
+from lettuce import Boundary
+from lettuce import NativeBounceBackBoundary
+
+
+class BounceBackBoundary(Boundary):
+    """Fullway Bounce-Back Boundary"""
+
+    def native_available(self) -> bool:
+        return True
+
+    def create_native(self) -> ['NativeLatticeBase']:
+        return [NativeBounceBackBoundary.create()]
+
+    def __init__(self, mask, lattice):
+        Boundary.__init__(self, lattice)
+        self.no_boundary_mask = lattice.convert_to_tensor(mask)
+
+    def __call__(self, f):
+        f = torch.where(self.no_boundary_mask, f[self.lattice.stencil.opposite], f)
+        return f
+
+    def make_no_collision_mask(self, f_shape):
+        assert self.no_boundary_mask.shape == f_shape[1:]
+        return self.no_boundary_mask
+
+
+class Obstacle:
+    def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1):
+        self.shape = shape
+        char_length_lu = shape[0] / domain_length_x * char_length
+        self.units = lettuce.UnitConversion(
+            lattice,
+            reynolds_number=reynolds_number, mach_number=mach_number,
+            characteristic_length_lu=char_length_lu, characteristic_length_pu=char_length,
+            characteristic_velocity_pu=char_velocity
+        )
+        self._mask = np.zeros(shape=self.shape, dtype=bool)
+
+    @property
+    def mask(self):
+        return self._mask
+
+    @mask.setter
+    def mask(self, m):
+        assert isinstance(m, np.ndarray) and m.shape == self.shape
+        self._mask = m.astype(bool)
+
+    def initial_solution(self, x):
+        p = np.zeros_like(x[0], dtype=float)[None, ...]
+        u = np.array(2 * [(1 - self.mask) * self.units.characteristic_velocity_pu])
+        u[0, 2, 1:3] = u[0, 2, 1:3] * np.sin(x[1][2, 1:3]) / 2 + 1
+        u[1] *= 0
+        return p, u
+
+    @property
+    def grid(self):
+        xy = tuple(self.units.convert_length_to_pu(np.arange(n)) for n in self.shape)
+        return np.meshgrid(*xy, indexing='ij')
+
+    @property
+    def boundaries(self):
+        return [BounceBackBoundary(self.mask, self.units.lattice)]
+
+
 @main.command()
 @click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
 @click.pass_context
 def pipetest(ctx, use_native):
     device, dtype = ctx.obj['device'], ctx.obj['dtype']
-    lattice = Lattice(D2Q9, device, dtype, use_native=use_native)
 
-    resolution = 3072
-    mach_number = 8 / resolution
+    lattice = lettuce.Lattice(lettuce.D2Q9, device, dtype, use_native=use_native)
+    # flow = lettuce.TaylorGreenVortex3D(resolution=64, reynolds_number=10, mach_number=0.05, lattice=lattice)
 
-    # Simulation
-    flow = TaylorGreenVortex2D(resolution=resolution, reynolds_number=800, mach_number=mach_number, lattice=lattice)
-    collision1 = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    # collision2 = TRTCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision1, streaming=streaming)
+    shape = (128, 64)
+    resolution = shape[0] * shape[1]
+    flow = Obstacle(shape=(128, 64), reynolds_number=100, mach_number=0.1, lattice=lattice, domain_length_x=10.1)
+    x, y = flow.grid
+    condition = np.sqrt((x - 2.5) ** 2 + (y - 2.5) ** 2) < 0.25
+    flow.mask[np.where(condition)] = 1
 
-    observable1 = lettuce.IncompressibleKineticEnergy(lattice, flow)
-    reporter1 = lettuce.ObservableReporter(observable1)
-    simulation.reporters.append(reporter1)
+    boundaries = flow.boundaries
+    collision = lettuce.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = lettuce.StandardStreaming(lattice)
+    simulation = lettuce.Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
 
-    observable2 = lettuce.Enstrophy(lattice, flow)
-    reporter2 = lettuce.ObservableReporter(observable2)
-    simulation.reporters.append(reporter2)
+    step_count = 1000
+    first_step = lambda step: step == 0
+    last_step = lambda step: step == step_count - 1
+    inbetween_steps = lambda step: not first_step(step) and not last_step(step)
 
-    step0 = lambda step: step == 0
-    step19999 = lambda step: step == 19999
-    steps_inbetween = lambda step: not (step == 0) and not (step == 19999)
+    pipeline_steps = [
 
-    pipeline1 = Pipeline(lattice, [
+        (Read(lattice), first_step),
+        (collision, first_step),
+        *[(boundary, first_step) for boundary in boundaries],
+        (Write(lattice), first_step),
 
-        # collide [step 0 from every 100 steps]
-        (Read(lattice), step0),
-        (collision1, step0),
-        (Write(lattice), step0),
+        (StandardRead(lattice), inbetween_steps),
+        (collision, inbetween_steps),
+        *[(boundary, inbetween_steps) for boundary in boundaries],
+        (Write(lattice), inbetween_steps),
 
-        # stream and collide
-        (StandardRead(lattice), steps_inbetween),
-        (collision1, steps_inbetween),
-        (Write(lattice), steps_inbetween),
+        (StandardRead(lattice), last_step),
+        (Write(lattice), last_step)
+    ]
+    pipeline1 = Pipeline(lattice, pipeline_steps)
 
-        # stream [step 99 from every 100 steps]
-        (StandardRead(lattice), step19999),
-        (Write(lattice), step19999),
-
-        # reporter [step 99 from every 100 steps]
-        # (reporter1, step99of100),
-        # (reporter2, step199of200),
-    ])
-
-    pipeline2 = Pipeline(lattice, [
-        (Read(lattice), 1),
-        (collision1, 1),
-        (StandardWrite(lattice), 1),
-    ])
-
-    pipeline3 = Pipeline(lattice, [
-        (StandardRead(lattice), 1),
-        (collision1, 1),
-        (Write(lattice), 1),
-    ])
-
-    step_count = 20000
-
-    # dry run 1
-    # print("starting dry run for pipeline 1 ...")
-    # simulation.i = 0
-    # for i in range(step_count):
-    #     pipeline1.dry(simulation)
-    # simulation.i = 0
-
-    # benchmark 1
-    print("benchmark run for pipeline 1 ...")
     start = timer()
     for i in range(step_count):
         pipeline1(simulation)
     end = timer()
-    print(end - start)
-    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (collide, stream&collide, stream)")
 
-    # dry run 2
-    # print("starting dry run for pipeline 2 ...")
-    # simulation.i = 0
-    # for i in range(step_count):
-    #     pipeline2.dry(simulation)
-    # simulation.i = 0
+    u = lattice.u(simulation.f)
+    plt.imshow(lattice.convert_to_numpy(torch.norm(u, dim=0).cpu()))
+    plt.show()
 
-    # benchmark 2
-    print("benchmark run for pipeline 2 ...")
-    start = timer()
-    for i in range(step_count):
-        pipeline2(simulation)
-    end = timer()
-    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (collide&stream)")
-
-    # dry run 3
-    # print("starting dry run for pipeline 3 ...")
-    # simulation.i = 0
-    # for i in range(step_count):
-    #     pipeline3.dry(simulation)
-    # simulation.i = 0
-
-    # benchmark 3
-    print("benchmark run for pipeline 3 ...")
-    start = timer()
-    for i in range(step_count):
-        pipeline3(simulation)
-    end = timer()
-    print(((resolution ** 2) * step_count) / ((end - start) * 1000000), "mlups (stream&collide)")
+    print("Performance in MLUPS:", ((resolution ** 2) * step_count) / ((end - start) * 1000000))
 
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    sys.exit(main())

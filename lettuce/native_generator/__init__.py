@@ -9,5 +9,6 @@ from ._stencil import NativeStencil
 from ._streaming import NativeRead, NativeWrite, NativeStandardStreamingRead, NativeStandardStreamingWrite
 from ._equilibrium import NativeEquilibrium, NativeQuadraticEquilibrium
 from ._collision import NativeCollision, NativeBGKCollision, NativeNoCollision
+from ._boundary import NativeBounceBackBoundary, NativeNoBoundary
 
 from ._generator import Generator

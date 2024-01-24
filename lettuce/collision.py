@@ -2,10 +2,9 @@
 Collision models
 """
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import torch
-
-from typing import Optional
 
 from lettuce.base import PipelineStep
 from lettuce.equilibrium import QuadraticEquilibrium

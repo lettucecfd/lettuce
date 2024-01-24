@@ -1,20 +1,17 @@
+from .box import Box
+from .identifyable import Identifiable
+
 """
 Utility functions.
 """
 
-import inspect
-import torch
-
-__all__ = [
-    "get_subclasses", 'all_stencils',
-    "LettuceException", "LettuceWarning", "InefficientCodeWarning", "ExperimentalWarning",
-    "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson", "append_axes"
-]
+import inspect as _inspect
+import torch as _torch
 
 
-def get_subclasses(classname, module):
-    for name, obj in inspect.getmembers(module):
-        if hasattr(obj, "__bases__") and classname in obj.__bases__:
+def get_subclasses(cls, module):
+    for name, obj in _inspect.getmembers(module):
+        if hasattr(obj, "__bases__") and cls in obj.__bases__:
             yield obj
 
 
@@ -74,7 +71,7 @@ def torch_gradient(f, dx=1, order=2):
                 [[0, 3], [0, 2], [0, 1], [0, -1], [0, -2], [0, -3]]],
         }
         shift = stencil.get(order)
-    if dim == 3:
+    elif dim == 3:
         dims = (0, 1, 2)
         stencil = {
             2: [[[1, 0, 0], [-1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
@@ -88,8 +85,10 @@ def torch_gradient(f, dx=1, order=2):
                 [[0, 0, 3], [0, 0, 2], [0, 0, 1], [0, 0, -1], [0, 0, -2], [0, 0, -3]]]
         }
         shift = stencil.get(order)
-    with torch.no_grad():
-        out = torch.cat(dim * [f[None, ...]])
+    else:
+        raise LettuceException("Invalid dimension!")
+    with _torch.no_grad():
+        out = _torch.cat(dim * [f[None, ...]])
         for i in range(dim):
             out[i, ...] = (
                                   weight[0] * f.roll(shifts=shift[i][0], dims=dims) +
@@ -98,7 +97,7 @@ def torch_gradient(f, dx=1, order=2):
                                   weight[3] * f.roll(shifts=shift[i][3], dims=dims) +
                                   weight[4] * f.roll(shifts=shift[i][4], dims=dims) +
                                   weight[5] * f.roll(shifts=shift[i][5], dims=dims)
-                          ) * torch.tensor(1.0 / dx, dtype=f.dtype, device=f.device)
+                          ) * _torch.tensor(1.0 / dx, dtype=f.dtype, device=f.device)
     return out
 
 
@@ -149,7 +148,7 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
                             + p.roll(shifts=-1, dims=2)
                             - 6 * p) / (dx ** 2)
         # Error is defined as the mean value of the residuum
-        error = torch.mean(residuum ** 2)
+        error = _torch.mean(residuum ** 2)
     return p
 
 
@@ -180,8 +179,8 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
     p = units.convert_density_lu_to_pressure_pu(rho0)
 
     # compute laplacian
-    with torch.no_grad():
-        u_mod = torch.zeros_like(u[0])
+    with _torch.no_grad():
+        u_mod = _torch.zeros_like(u[0])
         dim = u.shape[0]
         for i in range(dim):
             for j in range(dim):
@@ -203,5 +202,5 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
 
 
 def append_axes(array, n):
-    index = (Ellipsis, ) + (None, ) * n
+    index = (Ellipsis,) + (None,) * n
     return array[index]

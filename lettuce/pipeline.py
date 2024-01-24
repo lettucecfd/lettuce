@@ -1,10 +1,8 @@
-from abc import abstractmethod
 from itertools import chain
 from typing import Union, Callable
-import numpy as np
 
-from . import PipelineStep, Reporter, NativeWrite, LettuceBase, Generator, Simulation, NativeLettuceBase, NativeStencil
-from .streaming import Read, Write, Streaming
+from . import PipelineStep, Reporter, LettuceBase, Generator, Simulation, NativeStencil
+from .streaming import Read, Write
 
 
 class Pipeline(PipelineStep):
@@ -17,7 +15,7 @@ class Pipeline(PipelineStep):
         return True
 
     def create_native(self) -> ['NativeLatticeBase']:
-        return [self]  # creative is redirected to "on time" (__call__)
+        return [self]  # create native is redirected to "on time" (__call__)
 
     def __init__(self, lattice, pipeline_steps):
         PipelineStep.__init__(self, lattice=lattice)

@@ -49,17 +49,13 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
     streaming = lt.StandardStreaming(lattice)
     simulation = lt.Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=1000)
-    print(mlups)
+    print("Performance in MLUPS:", mlups)
 
-More advanced examples_ are available as jupyter notebooks:
+More advanced examples_ are available as jupyter notebooks.
 
-* `A First Example`_
-* `Decaying Turbulence`_
+Please ensure you have Jupyter installed to run these notebooks.
 
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
-.. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
-.. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
-
 
 Installation
 ------------

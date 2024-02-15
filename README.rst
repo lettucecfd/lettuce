@@ -8,9 +8,13 @@
         :target: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml
         :alt: Codeql Status
 
-.. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
-        :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
+        :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
+        :target: https://doi.org/10.5281/zenodo.3757641
+
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python

@@ -4,19 +4,17 @@
         :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
         :alt: CI Status
 
-.. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
-    :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
+        :target: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml
+        :alt: Codeql Status
 
+.. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
+        :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
+        :alt: Documentation Status
+        
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
         :target: https://doi.org/10.5281/zenodo.3757641
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
-        :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
-
-.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
-        :target:https://github.com/McBs/lettuce/actions/workflows/codeql.yml
-        :alt: Codeql Status
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python

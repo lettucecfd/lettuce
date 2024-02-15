@@ -4,7 +4,7 @@
         :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
         :alt: CI Status
 
-.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
+.. image:: https://github.com/mcbs/mcbs/actions/workflows/codeql.yml/badge.svg
         :target: https://github.com/lettucecfd/lettuce/actions/workflows/codeql.yml
         :alt: Codeql Status
 

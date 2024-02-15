@@ -15,7 +15,8 @@
         :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
 
 .. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
-        :target: codeql Status
+        :target:https://github.com/McBs/lettuce/actions/workflows/codeql.yml
+        :alt: Codeql Status
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python

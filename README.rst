@@ -14,6 +14,9 @@
 .. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
         :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
 
+.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
+        :target: codeql Status
+
 
 GPU-accelerated Lattice Boltzmann Simulations in Python
 -------------------------------------------------------

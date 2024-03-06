@@ -31,7 +31,7 @@ class CouetteFlow2D(object):
 
     @property
     def mask(self):
-        return self._mask\
+        return self._mask
 
     @property
     def grid(self):

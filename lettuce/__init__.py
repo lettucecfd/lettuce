@@ -5,8 +5,8 @@
 __author__ = 'Andreas Kraemer'
 __email__ = 'kraemer.research@gmail.com'
 
-
 from . import _version
+
 __version__ = _version.get_versions()['version']
 
 from lettuce.base import *

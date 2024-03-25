@@ -5,6 +5,8 @@ Streaming Step
 import torch
 import numpy as np
 
+from abc import ABC, abstractmethod
+
 from typing import Optional
 from lettuce.base import LettuceBase
 from lettuce.native_generator import NativeLettuceBase, NativeWrite, NativeRead, NativeStandardStreamingWrite, NativeStandardStreamingRead
@@ -12,15 +14,16 @@ from lettuce.native_generator import NativeLettuceBase, NativeWrite, NativeRead,
 __all__ = ["StandardStreaming", "NoStreaming", "Read", "Write", "StandardRead", "StandardWrite"]
 
 
-class Streaming(LettuceBase):
+class Streaming(LettuceBase, ABC):
     no_streaming_mask: Optional[torch.Tensor]
 
     def __init__(self, lattice: 'Lattice'):
         LettuceBase.__init__(self, lattice)
         self.no_streaming_mask = None
 
+    @abstractmethod
     def __call__(self, f):
-        raise NotImplementedError()
+        ...
 
     # attributes for backwards compatibility
 
@@ -110,7 +113,4 @@ class SLStreaming(Streaming):
 
     def __init__(self, lattice: 'Lattice', *_):
         Streaming.__init__(self, lattice)
-        raise NotImplementedError()
-
-    def create_native(self) -> ['NativeLettuceBase']:
         raise NotImplementedError()

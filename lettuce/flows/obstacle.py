@@ -1,4 +1,3 @@
-
 import warnings
 import numpy as np
 from lettuce.unit import UnitConversion
@@ -41,6 +40,7 @@ class Obstacle:
     >>> condition = np.sqrt((x-2.5)**2+(y-2.5)**2) < 1.
     >>> flow.mask[np.where(condition)] = 1
    """
+
     def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1):
         if len(shape) != lattice.D:
             raise ValueError(f"{lattice.D}-dimensional lattice requires {lattice.D}-dimensional `shape`")

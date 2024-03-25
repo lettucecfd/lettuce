@@ -64,7 +64,7 @@ class HDF5Reporter:
     def __call__(self, i, t, f):
         if i % self.interval == 0:
             with h5py.File(self.filebase + '.h5', 'r+') as fs:
-                fs["f"].resize(fs["f"].shape[0]+1, axis=0)
+                fs["f"].resize(fs["f"].shape[0] + 1, axis=0)
                 fs["f"][-1, ...] = self.lattice.convert_to_numpy(f)
                 fs.attrs['data'] = str(fs["f"].shape[0])
                 fs.attrs['steps'] = str(i)

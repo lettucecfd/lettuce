@@ -1,8 +1,7 @@
 from abc import abstractmethod, ABC
-from typing import Optional
 
 
-class LettuceBase:
+class LettuceBase(ABC):
     """Class LatticeBase
 
     LatticeBase is the Base Class for all Lattice Components.
@@ -39,7 +38,6 @@ class LettuceBase:
         """
         ...
 
-    @abstractmethod
     def create_native(self) -> ['NativeLatticeBase']:
         """create_native
 

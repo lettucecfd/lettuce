@@ -4,11 +4,12 @@ TODO: Logging
 """
 
 import sys
-import warnings
 import os
 import numpy as np
 import torch
 import pyevtk.hl as vtk
+
+from abc import abstractmethod, ABC
 
 __all__ = [
     "write_image", "write_vtk", "Reporter", "VTKReporter", "ObservableReporter", "ErrorReporter"
@@ -17,12 +18,13 @@ __all__ = [
 from lettuce import LettuceBase
 
 
-class Reporter(LettuceBase):
+class Reporter(LettuceBase, ABC):
     def native_available(self) -> bool:
         return False
 
-    def create_native(self) -> ['NativeLatticeBase']:
-        raise NotImplementedError("Native is generally not supported by Reporters")
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        ...
 
 
 def write_image(filename, array2d):

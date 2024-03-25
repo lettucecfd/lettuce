@@ -21,7 +21,6 @@ __all__ = ["Lattice"]
 
 
 class Lattice:
-
     stencil: 'Stencil'
     device: torch.device
     dtype: torch.dtype
@@ -88,7 +87,7 @@ class Lattice:
         correction = 0.0
         if acceleration is not None:
             if len(acceleration.shape) == 1:
-                index = [Ellipsis] + [None]*self.D
+                index = [Ellipsis] + [None] * self.D
                 acceleration = acceleration[index]
             correction = acceleration / (2 * rho)
         return v + correction

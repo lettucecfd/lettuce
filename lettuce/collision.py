@@ -98,6 +98,9 @@ class MRTCollision(Collision):
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
     """
 
+    def native_available(self) -> bool:
+        return False
+
     def __init__(self, lattice, transform, relaxation_parameters):
         Collision.__init__(self, lattice)
         self.lattice = lattice
@@ -115,6 +118,9 @@ class MRTCollision(Collision):
 class TRTCollision(Collision):
     """Two relaxation time collision model - standard implementation (cf. Krüger 2017)
         """
+
+    def native_available(self) -> bool:
+        return False
 
     def __init__(self, lattice, tau, tau_minus=1.0):
         Collision.__init__(self, lattice)
@@ -136,6 +142,9 @@ class TRTCollision(Collision):
 
 class RegularizedCollision(Collision):
     """Regularized LBM according to Jonas Latt and Bastien Chopard (2006)"""
+
+    def native_available(self) -> bool:
+        return False
 
     def __init__(self, lattice, tau):
         Collision.__init__(self, lattice)
@@ -168,6 +177,9 @@ class RegularizedCollision(Collision):
 
 class KBCCollision2D(Collision):
     """Entropic multi-relaxation time model according to Karlin et al. in two dimensions"""
+
+    def native_available(self) -> bool:
+        return False
 
     def __init__(self, lattice, tau):
         Collision.__init__(self, lattice)
@@ -249,6 +261,9 @@ class KBCCollision2D(Collision):
 
 class KBCCollision3D(Collision):
     """Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions"""
+
+    def native_available(self) -> bool:
+        return False
 
     def __init__(self, lattice, tau):
         Collision.__init__(self, lattice)
@@ -342,6 +357,9 @@ class KBCCollision3D(Collision):
 class SmagorinskyCollision(Collision):
     """Smagorinsky large eddy simulation (LES) collision model with BGK operator."""
 
+    def native_available(self) -> bool:
+        return False
+
     def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):
         Collision.__init__(self, lattice)
         self.force = force
@@ -373,6 +391,9 @@ class SmagorinskyCollision(Collision):
 
 class BGKInitialization(Collision):
     """Keep velocity constant."""
+
+    def native_available(self) -> bool:
+        return False
 
     def __init__(self, lattice, flow, moment_transformation):
         Collision.__init__(self, lattice)

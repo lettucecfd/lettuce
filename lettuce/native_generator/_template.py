@@ -140,7 +140,8 @@ setup(
     ext_modules=[
         CUDAExtension(
             name='lettuce_native_{name}.native',
-            sources=native_sources
+            sources=native_sources,
+            extra_compile_args={{'cxx': [], 'nvcc': ['--maxrregcount=31']}}
         )
     ],
     packages=find_packages(include=['lettuce_native_{name}']),

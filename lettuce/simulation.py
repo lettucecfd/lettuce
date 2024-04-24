@@ -67,8 +67,8 @@ class Simulation:
             if hasattr(boundary, "make_no_stream_mask"):
                 no_streaming_mask = no_streaming_mask | boundary.make_no_stream_mask(self.f.shape)
 
-        self.collision.no_collision_mask = no_collision_mask.to(torch.uint8)
-        self.streaming.no_streaming_mask = no_streaming_mask.to(torch.uint8)
+        self.collision.no_collision_mask = no_collision_mask.to(torch.bool)
+        self.streaming.no_streaming_mask = no_streaming_mask.to(torch.bool)
 
         # default collide and stream
         self.collide_and_stream = Simulation.collide_and_stream_

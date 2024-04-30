@@ -17,7 +17,7 @@ The no-collision mask has the same dimensions as the grid (x, y, (z)).
 
 import torch
 import numpy as np
-from lettuce import (LettuceException)
+from lettuce import LettuceException, Lattice
 
 __all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP", "PartiallySaturatedBC"]
 
@@ -167,10 +167,11 @@ class PartiallySaturatedBC:
     """
     Partially saturated boundary condition using a partial combination of standard full-way bounce back and
     BGK-Collision, first presented by Noble and Torczynski (1998), see Krüger et al., pp. 448.
+    This may be just as efficient as a compact version, because the boundary is actually used on all nodes even within
+    the object.
     """
-    # this may be just as efficient as a compact version, b/c the boundary is actually used on all nodes even within the object
     def __init__(self, mask, lattice: Lattice, tau, saturation):
-        self.mask = mask
+        self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
         self.tau = tau
         self.B = saturation * (tau - 0.5) / ((1 - saturation) + (tau - 0.5)) # B(epsilon, theta), Krüger p. 448ff

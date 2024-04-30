@@ -19,7 +19,8 @@ import torch
 import numpy as np
 from lettuce import LettuceException, Lattice
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP", "PartiallySaturatedBC"]
+__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP",
+           "PartiallySaturatedBC"]
 
 
 class BounceBackBoundary:
@@ -163,6 +164,7 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         no_collision_mask[self.index] = 1
         return no_collision_mask
 
+
 class PartiallySaturatedBC:
     """
     Partially saturated boundary condition using a partial combination of standard full-way bounce back and
@@ -174,7 +176,7 @@ class PartiallySaturatedBC:
         self.mask = lattice.convert_to_tensor(mask)
         self.lattice = lattice
         self.tau = tau
-        self.B = saturation * (tau - 0.5) / ((1 - saturation) + (tau - 0.5)) # B(epsilon, theta), Krüger p. 448ff
+        self.B = saturation * (tau - 0.5) / ((1 - saturation) + (tau - 0.5))  # B(epsilon, theta), Krüger p. 448ff
         return
 
     def __call__(self, f):

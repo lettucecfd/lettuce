@@ -19,7 +19,7 @@ import torch
 import numpy as np
 from lettuce import (LettuceException)
 
-__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP"]
+__all__ = ["BounceBackBoundary", "AntiBounceBackOutlet", "EquilibriumBoundaryPU", "EquilibriumOutletP", "PartiallySaturatedBC"]
 
 
 class BounceBackBoundary:
@@ -162,3 +162,31 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
         no_collision_mask[self.index] = 1
         return no_collision_mask
+
+class PartiallySaturatedBC:
+    """
+    Partially saturated boundary condition using a partial combination of standard full-way bounce back and
+    BGK-Collision, first presented by Noble and Torczynski (1998), see Krüger et al., pp. 448.
+    """
+    # this may be just as efficient as a compact version, b/c the boundary is actually used on all nodes even within the object
+    def __init__(self, mask, lattice: Lattice, tau, saturation):
+        self.mask = mask
+        self.lattice = lattice
+        self.tau = tau
+        self.B = saturation * (tau - 0.5) / ((1 - saturation) + (tau - 0.5)) # B(epsilon, theta), Krüger p. 448ff
+        return
+
+    def __call__(self, f):
+        rho = self.lattice.rho(f)
+        u = self.lattice.u(f, rho=rho)
+        feq = self.lattice.equilibrium(rho, u)
+        # TODO: benchmark and possibly use indices (like _compact)
+        #  and/or calculate feq twice within torch.where (like _less_memory)
+        f = torch.where(self.mask, f - (1.0 - self.B) / self.tau * (f - feq)
+                        + self.B * ((f[self.lattice.stencil.opposite] - feq[self.lattice.stencil.opposite])
+                                    - (f - self.lattice.equilibrium(rho, torch.zeros_like(u)))), f)
+        return f
+
+    def make_no_collision_mask(self, f_shape):
+        assert self.mask.shape == f_shape[1:]
+        return self.mask

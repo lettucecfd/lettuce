@@ -1,6 +1,3 @@
-from .box import Box
-from .identifyable import Identifiable
-
 """
 Utility functions.
 """
@@ -13,11 +10,6 @@ def get_subclasses(cls, module):
     for name, obj in _inspect.getmembers(module):
         if hasattr(obj, "__bases__") and cls in obj.__bases__:
             yield obj
-
-
-def all_stencils():
-    import lettuce.stencils
-    return list(get_subclasses(lettuce.stencils.Stencil, module=lettuce.stencils))
 
 
 class LettuceException(Exception):

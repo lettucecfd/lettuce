@@ -17,7 +17,7 @@ streaming = lt.StandardStreaming(lattice)
 simulation = lt.Simulation(flow, lattice, collision, streaming)
 simulation.initialize_f_neq()  # initialize non-conserved moments
 
-# reporters will grab the results in between simulation steps (see io.py and simulation.py)
+# reporters will grab the results in between simulation steps (see io.py and _simulation.py)
 # Output: Column 1: time in LU, Column 2: kinetic energy in PU
 kinE_reporter = lt.EnergyReporter(lattice, flow, interval=1, out=None)
 simulation.reporters.append(kinE_reporter)

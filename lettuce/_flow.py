@@ -106,6 +106,10 @@ class Flow(ABC):
             correction = acceleration / (2 * rho)
         return v + correction
 
+    @property
+    def velocity(self):
+        return self.j() / self.rho()
+
     def incompressible_energy(self) -> torch.Tensor:
         """incompressible kinetic energy"""
         return 0.5 * self.einsum("d,d->", [self.u(self.f), self.u(self.f)])

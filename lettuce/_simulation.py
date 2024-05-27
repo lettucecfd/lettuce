@@ -71,7 +71,7 @@ class Simulation:
         self.flow = flow
         self.context = flow.context
         self.collision = collision
-        self.boundaries = sorted(boundaries, key=lambda b: str(b))
+        self.boundaries = [None]+sorted(boundaries, key=lambda b: str(b)) #Prefix [None] to ensure that Boundary.index (i.e., mask index) matches self.boundaries index
         self.reporter = reporter
 
         # ==================================== #
@@ -85,12 +85,12 @@ class Simulation:
 
         # else initialise the masks
         # based on the boundaries masks
-        if len(self.boundaries) > 0:
+        if len(self.boundaries) > 1:
 
             self.no_collision_mask = self.context.zero_tensor(flow.resolution, dtype=torch.uint8)
             self.no_streaming_mask = self.context.zero_tensor([flow.stencil.q, *flow.resolution], dtype=torch.uint8)
 
-            for i, boundary in enumerate(self.boundaries, start=1):
+            for i, boundary in enumerate(self.boundaries[1:], start=1):
                 ncm = boundary.make_no_collision_mask([it for it in self.flow.f.shape[1:]], context=self.context)
                 if ncm is not None:
                     self.no_collision_mask[ncm] = i
@@ -118,7 +118,7 @@ class Simulation:
             if not self.collision.native_available():
                 name = self.collision.__class__.__name__
                 print(f"native was requested, but collision '{name}' does not support native.")
-            for boundary in self.boundaries:
+            for boundary in self.boundaries[1:]:
                 if not boundary.native_available():
                     name = boundary.__class__.__name__
                     print(f"native was requested, but boundary '{name}' does not support native.")
@@ -132,7 +132,7 @@ class Simulation:
             native_collision = self.collision.native_generator()
 
             native_boundaries = []
-            for i, boundary in enumerate(self.boundaries, start=1):
+            for i, boundary in enumerate(self.boundaries[1:], start=1):
                 native_boundaries.append(boundary.native_generator(i))
 
             # begin generating native module from native components
@@ -171,11 +171,11 @@ class Simulation:
     def _collide(self):
         if self.no_collision_mask is None:
             self.flow.f = self.collision(self.flow)
-            for i, boundary in enumerate(self.boundaries, start=1):
+            for i, boundary in enumerate(self.boundaries[1:], start=1):
                 self.flow.f = boundary(self.flow)
         else:
             torch.where(torch.eq(self.no_collision_mask, 0), self.collision(self.flow), self.flow.f, out=self.flow.f)
-            for i, boundary in enumerate(self.boundaries, start=1):
+            for i, boundary in enumerate(self.boundaries[1:], start=1):
                 torch.where(torch.eq(self.no_collision_mask, i), boundary(self.flow), self.flow.f, out=self.flow.f)
         return self.flow.f
 

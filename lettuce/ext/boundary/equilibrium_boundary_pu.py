@@ -1,11 +1,14 @@
+from abc import ABC
+
 import torch
 
 from ... import Boundary, Flow, Context
+from ... native.ext import NativeEquilibriumBoundaryPu
 
 __all__ = ['EquilibriumBoundaryPU']
 
 
-class EquilibriumBoundaryPU(Boundary):
+class EquilibriumBoundaryPU(Boundary, ABC):
     """Sets distributions on this boundary to equilibrium with predefined velocity and pressure.
     Note that this behavior is generally not compatible with the Navier-Stokes equations.
     This boundary condition should only be used if no better options are available.
@@ -21,3 +24,9 @@ class EquilibriumBoundaryPU(Boundary):
         feq = flow.equilibrium(flow, rho, u)
         feq = flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
         return feq
+
+    def native_available(self) -> bool:
+        return True
+
+    def native_generator(self, index: int) -> 'NativeBoundary':
+        return NativeEquilibriumBoundaryPu(index)

@@ -5,6 +5,7 @@ __all__ = [
 template = {
 
     "lettuce_native_{name}/__init__.py": """
+import numpy as np
 import torch
 
 
@@ -150,9 +151,9 @@ using byte_t = unsigned char;
 #endif
 
 #if d == 1
-#define node_coord(x_) (x_)
+#define node_coord(x_, y_, z_) (x_)
 #elif d == 2
-#define node_coord(x_, y_) (x_ * dimension[1] + y_)
+#define node_coord(x_, y_, z_) (x_ * dimension[1] + y_)
 #elif d == 3
 #define node_coord(x_, y_, z_) ((x_ * dimension[1] + y_)  * dimension[2] + z_)
 #endif
@@ -388,7 +389,7 @@ setup(
         CUDAExtension(
             name='lettuce_native_{name}.native',
             sources=native_sources,
-            extra_compile_args={{'cxx': [], 'nvcc': ['--ptxas-options', '--warn-on-spills,--allow-expensive-optimizations=true,-O3', '--use_fast_math', '--optimize', '3', '--no-exceptions', '--maxrregcount', '128']}}
+            extra_compile_args={{'cxx': [], 'nvcc': ['--ptxas-options', '--warn-on-spills,--allow-expensive-optimizations=true,-O3', '--use_fast_math', '--optimize', '3', '--maxrregcount', '128']}}
         )
     ],
     packages=find_packages(include=['lettuce_native_{name}']),

@@ -25,7 +25,7 @@ class DummyFlow(ExtFlow):
         self.f[:, 2, 2] = 2.0
 
 
-def test_native_streaming():
+def test_native_bgk_collision():
     cpu_context = Context(torch.device('cpu'), use_native=False)
     cpu_flow = DummyFlow(cpu_context)
 

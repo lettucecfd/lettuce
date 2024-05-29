@@ -16,3 +16,6 @@ from ._simulation import *
 
 import lettuce.util
 import lettuce.ext
+
+from lettuce.util import *
+from lettuce.ext import *

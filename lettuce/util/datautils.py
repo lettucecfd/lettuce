@@ -9,7 +9,8 @@ import pickle
 import io
 import numpy as np
 
-__all__ = ["HDF5Reporter", "LettuceDataset"]
+__all__ = ["HDF5Reporter",
+           "LettuceDataset"]
 
 
 class HDF5Reporter:

@@ -14,32 +14,14 @@ import torch
 class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
-        a = context.zero_tensor(shape, dtype=bool)
-        a[:4,:4] = True
+        a = context.one_tensor(shape, dtype=bool)
+        # a[:4,:4] = True
         return a
         # return None
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         return context.one_tensor(shape, dtype=bool)
         # return None
-
-
-class DummyFlow(ExtFlow):
-    def __init__(self, context: Context):
-        ExtFlow.__init__(self, context, 16, 1.0, 1.0)
-
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
-        return [resolution, resolution] if isinstance(resolution, int) else resolution
-
-    def make_units(self, reynolds_number, mach_number, _: List[int]) -> 'UnitConversion':
-        return UnitConversion(reynolds_number=reynolds_number, mach_number=mach_number)
-
-    def initial_pu(self) -> (float, List[float]):
-        ...
-
-    def initialize(self):
-        self.f.zero_()
-        self.f[:, :, :] = 1.0
 
 class my_basic_flow(ExtFlow):
 
@@ -71,15 +53,25 @@ class my_basic_flow(ExtFlow):
 def test_equilibrium_boundary_pu():
     context = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
 
-    flow_1 = my_basic_flow(context, resolution=10, reynolds_number=1, mach_number=0.1)
-    flow_2 = my_basic_flow(context, resolution=10, reynolds_number=1, mach_number=0.1)
+    flow_1 = my_basic_flow(context, resolution=16, reynolds_number=1, mach_number=0.1)
+    flow_2 = my_basic_flow(context, resolution=16, reynolds_number=1, mach_number=0.1)
+
     boundary = my_equilibrium_boundary_mask(context, [0.1, 0.1], 0)
+
+    u = context.one_tensor([2,1,1])*0.1
+    p = context.zero_tensor([1,1,1])
+    boundary = my_equilibrium_boundary_mask(context, u, p)
 
     simulation = Simulation(flow=flow_1, collision=NoCollision(), boundaries=[boundary], reporter=[])
     simulation(num_steps=1)
 
     pressure = 0
     velocity = 0.1 * np.ones(flow_2.stencil.d)
+    # stencil = D2Q9()
+    # u_slice = [stencil.d, *flow_2.resolution[:stencil.d-1],1]
+    # p_slice = [1,*flow_2.resolution[:stencil.d-1],1]
+    # u = flow_2.units.convert_velocity_to_lu(context.one_tensor(u_slice))
+    # p = context.one_tensor(p_slice) * 1.2
 
     feq = flow_2.equilibrium(
         flow_2,
@@ -89,29 +81,3 @@ def test_equilibrium_boundary_pu():
     flow_2.f = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
-
-def test_equilibrium_boundary_pu_native():
-    context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
-    context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
-
-    flow_native = my_basic_flow(context_native, resolution=16, reynolds_number=1, mach_number=0.1)
-    flow_cpu = my_basic_flow(context_cpu, resolution=16, reynolds_number=1, mach_number=0.1)
-
-    # flow_native = DummyFlow(context_native)
-    # flow_cpu = DummyFlow(context_cpu)
-    u = np.ones([2,16,16])
-
-    boundary_native = my_equilibrium_boundary_mask(context_native, u[:,:4,:4], u[0,:4,:4])
-    boundary_cpu = my_equilibrium_boundary_mask(context_cpu, u[:,:4,:4], u[0,:4,:4])
-
-
-    simulation_native = Simulation(flow=flow_native, collision=NoCollision(), boundaries=[boundary_native], reporter=[])
-    simulation_cpu = Simulation(flow=flow_cpu, collision=NoCollision(), boundaries=[boundary_cpu], reporter=[])
-
-    simulation_native(num_steps=1)
-    simulation_cpu(num_steps=1)
-    print()
-    print(flow_native.velocity[:,:4,:4])
-    print(flow_cpu.velocity[:,:4,:4])
-
-    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-4)

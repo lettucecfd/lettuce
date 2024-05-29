@@ -46,7 +46,7 @@ class my_basic_flow(ExtFlow):
         t = 0
         nu = self.units.viscosity_pu
         u = np.array([np.cos(grid[0]) * np.sin(grid[1]) * np.exp(-2 * nu * t),
-                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])*0
+                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])*0+1
         p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)])*0
         return p, u
 

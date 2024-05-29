@@ -11,8 +11,14 @@ from lettuce._stencil import Stencil
 import numpy as np
 
 __all__ = [
-    "moment_tensor", "get_default_moment_transform", "Moments", "Transform", "D1Q3Transform",
-    "D2Q9Lallemand", "D2Q9Dellar", "D3Q27Hermite"
+    "moment_tensor",
+    "get_default_moment_transform",
+    "Moments",
+    "Transform",
+    "D1Q3Transform",
+    "D2Q9Lallemand",
+    "D2Q9Dellar",
+    "D3Q27Hermite"
 ]
 
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)

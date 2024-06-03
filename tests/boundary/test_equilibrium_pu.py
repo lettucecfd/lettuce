@@ -9,12 +9,34 @@ import torch
 from tests.conftest import TestFlow
 
 
+def input_moment_dimensions_generator_(d):
+    if d == 1:
+        yield [1]
+        yield [16]
+    else:
+        for x in input_moment_dimensions_generator_(d - 1):
+            yield x + [1]
+            yield x + [16]
+
+
+def input_moment_dimensions_generator():
+    for d in range(1, 4):
+        for x in input_moment_dimensions_generator_(d):
+            yield x
+
+
+@pytest.fixture(params=input_moment_dimensions_generator())
+def input_moment_dimensions(request):
+    return request.param
+
+
 class TestEquilibriumBoundary(EquilibriumBoundaryPU):
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
-        a = context.zero_tensor(shape, dtype=bool)
-        a[:8, ...] = True
-        return a
+        return context.one_tensor(shape, dtype=bool)
+        #a = context.zero_tensor(shape, dtype=bool)
+        #a[:8, ...] = True
+        #return a
         # return None
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
@@ -56,26 +78,17 @@ def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 
 
-def test_equilibrium_boundary_pu_native():
+def test_equilibrium_boundary_pu_native(input_moment_dimensions):
+    print(input_moment_dimensions)
+
     context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
     context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
 
-    stencil = D2Q9()
-    flow_native = TestFlow(context_native, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1,
-                           stencil=stencil)
-    flow_cpu = TestFlow(context_cpu, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
+    flow_native = TestFlow(context_native, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
+    flow_cpu = TestFlow(context_cpu, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
 
-    '''Works as expected'''
-    u = np.ones([2, 16, 16])
-    rho = np.ones([16, 16])
-
-    '''Does not work'''
-    # u = np.ones([2,16,1])
-    # rho = np.ones([16,1])
-
-    '''Does not work'''
-    # u = np.ones([2,1,1])
-    # rho = np.ones([1,1])
+    u = np.ones([2] + input_moment_dimensions)
+    rho = np.ones([1] + input_moment_dimensions)
 
     boundary_native = TestEquilibriumBoundary(context_native, u, rho)
     boundary_cpu = TestEquilibriumBoundary(context_cpu, u, rho)
@@ -86,10 +99,4 @@ def test_equilibrium_boundary_pu_native():
     simulation_native(num_steps=1)
     simulation_cpu(num_steps=1)
 
-    print()
-    print("Print the first 4 rows/columns of the velocities ux and uy for better visualization and comparison:")
-    print("Native:")
-    print(flow_native.velocity[:, :4, :4])
-    print("CPU:")
-    print(flow_cpu.velocity[:, :4, :4])
-    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-6)
+    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-3)

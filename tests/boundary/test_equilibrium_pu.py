@@ -59,24 +59,22 @@ def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
     flow_1 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
     flow_2 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
 
-    u_slice = [stencil.d, *flow_2.resolution[:stencil.d - 1], 1]
-    p_slice = [1, *flow_2.resolution[:stencil.d - 1], 1]
-    u = context.one_tensor(u_slice) * 0.1
-    p = context.zero_tensor(p_slice)
+    velocity = 0.2 * np.ones(flow_2.stencil.d)
+    pressure = 0.01
 
-    boundary = TestEquilibriumBoundary(context, u, p)
+    boundary = TestEquilibriumBoundary(context, velocity, pressure)
     simulation = Simulation(flow=flow_1, collision=NoCollision(), boundaries=[boundary], reporter=[])
     simulation(num_steps=1)
 
-    pressure = 0
-    velocity = 0.1 * np.ones(flow_2.stencil.d)
+    # manually calculate the forced feq
 
-    feq = flow_2.equilibrium(
-        flow_2,
-        context.convert_to_tensor(flow_2.units.convert_pressure_pu_to_density_lu(pressure)),
-        context.convert_to_tensor(flow_2.units.convert_velocity_to_lu(velocity))
-    )
-    flow_2.f[:, :1, ...] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[:, :8, ...]
+    rho = flow_2.units.convert_pressure_pu_to_density_lu(context.convert_to_tensor(pressure))
+    u = flow_2.units.convert_velocity_to_lu(context.convert_to_tensor(velocity))
+
+    feq = flow_2.equilibrium(flow_2, rho, u)
+
+    # apply manually calculated feq to f
+    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[..., :1]
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 
@@ -88,11 +86,11 @@ def test_equilibrium_boundary_pu_native(input_moment_dimensions):
     flow_native = TestFlow(context_native, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
     flow_cpu = TestFlow(context_cpu, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
 
-    u = np.ones([2] + input_moment_dimensions)
-    rho = np.ones([1] + input_moment_dimensions)
+    velocity = 0.0 * np.ones([flow_cpu.stencil.d] + input_moment_dimensions)
+    pressure = 0.01 * np.ones(input_moment_dimensions)
 
-    boundary_native = TestEquilibriumBoundary(context_native, u, rho)
-    boundary_cpu = TestEquilibriumBoundary(context_cpu, u, rho)
+    boundary_native = TestEquilibriumBoundary(context_native, velocity, pressure)
+    boundary_cpu = TestEquilibriumBoundary(context_cpu, velocity, pressure)
 
     simulation_native = Simulation(flow=flow_native, collision=NoCollision(), boundaries=[boundary_native], reporter=[])
     simulation_cpu = Simulation(flow=flow_cpu, collision=NoCollision(), boundaries=[boundary_cpu], reporter=[])
@@ -100,4 +98,4 @@ def test_equilibrium_boundary_pu_native(input_moment_dimensions):
     simulation_native(num_steps=1)
     simulation_cpu(num_steps=1)
 
-    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-3)
+    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy())

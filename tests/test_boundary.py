@@ -23,6 +23,7 @@ class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
         return context.one_tensor(shape, dtype=bool)
         # return None
 
+
 class my_basic_flow(ExtFlow):
 
     def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
@@ -45,8 +46,8 @@ class my_basic_flow(ExtFlow):
         t = 0
         nu = self.units.viscosity_pu
         u = np.array([np.cos(grid[0]) * np.sin(grid[1]) * np.exp(-2 * nu * t),
-                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])*0
-        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)])*0
+                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)]) * 0
+        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)]) * 0
         return p, u
 
 
@@ -58,8 +59,8 @@ def test_equilibrium_boundary_pu():
 
     boundary = my_equilibrium_boundary_mask(context, [0.1, 0.1], 0)
 
-    u = context.one_tensor([2,1,1])*0.1
-    p = context.zero_tensor([1,1,1])
+    u = context.one_tensor([2, 1, 1]) * 0.1
+    p = context.zero_tensor([1, 1, 1])
     boundary = my_equilibrium_boundary_mask(context, u, p)
 
     simulation = Simulation(flow=flow_1, collision=NoCollision(), boundaries=[boundary], reporter=[])

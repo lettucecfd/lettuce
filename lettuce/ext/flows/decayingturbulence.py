@@ -12,6 +12,7 @@ from lettuce._unit import UnitConversion
 
 __all__ = ['DecayingTurbulence']
 
+
 class DecayingTurbulence:
 
     def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):

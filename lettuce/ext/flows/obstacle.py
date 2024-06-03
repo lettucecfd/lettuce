@@ -4,7 +4,6 @@ from ... import UnitConversion
 from ...util import append_axes
 from .. import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
 
-
 __all__ = ['Obstacle']
 
 

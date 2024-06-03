@@ -25,7 +25,12 @@ def input_moment_dimensions_generator():
             yield x
 
 
-@pytest.fixture(params=input_moment_dimensions_generator())
+def input_moment_dimension_ids():
+    return ['x'.join([str(k) for k in it]) for it in input_moment_dimensions_generator()]
+
+
+@pytest.fixture(params=input_moment_dimensions_generator(),
+                ids=input_moment_dimension_ids())
 def input_moment_dimensions(request):
     return request.param
 
@@ -33,22 +38,20 @@ def input_moment_dimensions(request):
 class TestEquilibriumBoundary(EquilibriumBoundaryPU):
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
-        return context.one_tensor(shape, dtype=bool)
-        #a = context.zero_tensor(shape, dtype=bool)
-        #a[:8, ...] = True
-        #return a
-        # return None
+        m = context.zero_tensor(shape, dtype=bool)
+        m[..., :1] = True
+        return m
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         return context.one_tensor(shape, dtype=bool)
-        # return None
 
 
 def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
-    '''
+    """
     Test for the equilibrium boundary algorithm. This test verifies that the algorithm correctly computes the
     equilibrium outlet pressure by comparing its output to manually calculated equilibrium values.
-    '''
+    """
+
     dtype, device, native = configurations
     context = Context(device=torch.device(device), dtype=dtype, use_native=(native == "native"))
 
@@ -73,14 +76,12 @@ def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
         context.convert_to_tensor(flow_2.units.convert_pressure_pu_to_density_lu(pressure)),
         context.convert_to_tensor(flow_2.units.convert_velocity_to_lu(velocity))
     )
-    flow_2.f[:, :8, ...] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[:, :8, ...]
+    flow_2.f[:, :1, ...] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[:, :8, ...]
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 
 
 def test_equilibrium_boundary_pu_native(input_moment_dimensions):
-    print(input_moment_dimensions)
-
     context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
     context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
 

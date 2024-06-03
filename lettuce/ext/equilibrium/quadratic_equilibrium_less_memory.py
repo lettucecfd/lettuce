@@ -19,4 +19,4 @@ class QuadraticEquilibriumLessMemory(Equilibrium):
         return flow.einsum("q,q->q",
                            [flow.torch_stencil.w,
                             rho * ((2 * torch.tensordot(flow.torch_stencil.e, u, dims=1) - flow.einsum("d,d->", [u, u])) / (2 * flow.torch_stencil.cs ** 2) + 0.5 * (
-                            torch.tensordot(flow.torch_stencil.e, u, dims=1) / (flow.torch_stencil.cs ** 2)) ** 2 + 1)])
+                                    torch.tensordot(flow.torch_stencil.e, u, dims=1) / (flow.torch_stencil.cs ** 2)) ** 2 + 1)])

@@ -7,7 +7,6 @@ import numpy as np
 from lettuce._unit import UnitConversion
 from lettuce.ext.boundary import BounceBackBoundary
 
-
 __all__ = ['PoiseuilleFlow2D']
 
 

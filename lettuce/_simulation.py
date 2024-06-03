@@ -71,7 +71,7 @@ class Simulation:
         self.flow = flow
         self.context = flow.context
         self.collision = collision
-        self.boundaries = [None]+sorted(boundaries, key=lambda b: str(b)) #Prefix [None] to ensure that Boundary.index (i.e., mask index) matches self.boundaries index
+        self.boundaries = [None] + sorted(boundaries, key=lambda b: str(b))  # Prefix [None] to ensure that Boundary.index (i.e., mask index) matches self.boundaries index
         self.reporter = reporter
 
         # ==================================== #

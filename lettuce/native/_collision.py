@@ -11,7 +11,7 @@ __all__ = [
 
 class NativeEquilibrium(ABC):
     @abstractmethod
-    def generate_f_eq(self, generator: 'Generator', rho: str=None, u: str=None):
+    def generate_f_eq(self, generator: 'Generator', rho: str = None, u: str = None):
         ...
 
 

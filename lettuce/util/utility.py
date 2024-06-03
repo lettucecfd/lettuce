@@ -6,11 +6,13 @@ __all__ = ['get_subclasses',
            'LettuceWarning',
            'InefficientCodeWarning',
            'ExperimentalWarning'
-           , 'torch_gradient',
+    , 'torch_gradient',
            'grid_fine_to_coarse',
            'torch_jacobi',
            'pressure_poisson',
            'append_axes']
+
+
 def get_subclasses(cls, module):
     for name, obj in _inspect.getmembers(module):
         if hasattr(obj, "__bases__") and cls in obj.__bases__:

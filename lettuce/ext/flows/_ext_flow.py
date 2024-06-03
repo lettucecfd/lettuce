@@ -12,7 +12,8 @@ class ExtFlow(Flow, ABC):
     subclasses to only implement the creation of the unit conversion and resolution.
     """
 
-    def __init__(self, context: 'Context', resolution: Union[int, List[int]], reynolds_number, mach_number, stencil: Optional['Stencil'] = None, equilibrium: Optional['Equilibrium'] = None):
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]], reynolds_number, mach_number, stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None):
         # set stencil or default stencil based on dimension
         resolution = self.make_resolution(resolution)
         assert len(resolution) in [1, 2, 3], f"flow supports dimensions 1, 2 and 3 but {len(resolution)} dimensions where requested."

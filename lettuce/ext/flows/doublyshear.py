@@ -8,6 +8,7 @@ from lettuce._unit import UnitConversion
 
 __all__ = ['DoublyPeriodicShear2D']
 
+
 class DoublyPeriodicShear2D:
     def __init__(self, resolution, reynolds_number, mach_number, lattice, shear_layer_width=80,
                  initial_perturbation_magnitude=0.05):

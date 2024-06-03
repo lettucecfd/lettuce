@@ -7,9 +7,12 @@ import numpy as np
 import torch
 
 from lettuce import *
+
 # from lettuce.util import moments
 
 STENCILS = list(get_subclasses(Stencil, stencil))
+
+
 # TRANSFORMS = list(get_subclasses(Transform, moments))
 
 @pytest.fixture(
@@ -19,7 +22,6 @@ STENCILS = list(get_subclasses(Stencil, stencil))
             (torch.float32, "cuda:0", "no_native"),
             (torch.float64, "cuda:0", "native")),
     ids=("cpu64", "cpu32", "cu64", "cu32", "native64"))
-
 def configurations(request):
     dtype, device, native = request.param
     if device == "cuda:0" and not torch.cuda.is_available():
@@ -28,14 +30,16 @@ def configurations(request):
     #     pytest.skip("TODO: loosen tolerances")
     return dtype, device, native
 
+
 @pytest.fixture(params=STENCILS)
 def stencils(request):
     """Run a test for all stencil."""
     return request.param
 
+
 class TestFlow(ExtFlow):
 
-    def make_resolution(self, resolution:List[int]) -> List[int]:
+    def make_resolution(self, resolution: List[int]) -> List[int]:
         if isinstance(resolution, int):
             return [resolution]
         else:

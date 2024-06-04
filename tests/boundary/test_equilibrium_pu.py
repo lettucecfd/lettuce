@@ -1,84 +1,82 @@
-from lettuce import *
-from lettuce.ext import *
+from tests.common import *
 
-import pytest
 
-import numpy as np
-import torch
+def moment_dims_params():
+    from itertools import product
+    for stencil in stencil_params():
+        for p in product([1, 16], repeat=stencil.d):
+            yield stencil, list(p)
 
-from tests.conftest import TestFlow
+
+def moment_dims_ids():
+    buffer = []
+    for stencil, dims in moment_dims_params():
+        buffer.append(f"{stencil.__class__.__name__}-MomentDims{'x'.join([str(d) for d in dims])}")
+    return buffer
+
+
+@pytest.fixture(params=moment_dims_params(), ids=moment_dims_ids())
+def fix_stencil_x_moment_dims(request):
+    return request.param
 
 
 class TestEquilibriumBoundary(EquilibriumBoundaryPU):
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
-        a = context.zero_tensor(shape, dtype=bool)
-        a[:8, ...] = True
-        return a
-        # return None
+        m = context.zero_tensor(shape, dtype=bool)
+        m[..., :1] = True
+        return m
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         return context.one_tensor(shape, dtype=bool)
-        # return None
 
 
-def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
-    '''
-    Test for the equilibrium boundary algorithm. This test verifies that the algorithm correctly computes the
-    equilibrium outlet pressure by comparing its output to manually calculated equilibrium values.
-    '''
-    dtype, device, native = configurations
-    context = Context(device=torch.device(device), dtype=dtype, use_native=(native == "native"))
+def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
+    """
+    Test for the _equilibrium _boundary algorithm. This test verifies that the algorithm correctly computes the
+    _equilibrium outlet pressure by comparing its output to manually calculated _equilibrium values.
+    """
 
-    stencil = stencils()
-    flow_1 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
-    flow_2 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
+    device, dtype, native = fix_configuration
+    context = Context(device=device, dtype=dtype, use_native=native)
 
-    u_slice = [stencil.d, *flow_2.resolution[:stencil.d - 1], 1]
-    p_slice = [1, *flow_2.resolution[:stencil.d - 1], 1]
-    u = context.one_tensor(u_slice) * 0.1
-    p = context.zero_tensor(p_slice)
+    flow_1 = TestFlow(context, resolution=fix_stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+    flow_2 = TestFlow(context, resolution=fix_stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
 
-    boundary = TestEquilibriumBoundary(context, u, p)
+    velocity = 0.2 * np.ones(flow_2.stencil.d)
+    pressure = 0.01
+
+    boundary = TestEquilibriumBoundary(context, velocity, pressure)
     simulation = Simulation(flow=flow_1, collision=NoCollision(), boundaries=[boundary], reporter=[])
     simulation(num_steps=1)
 
-    pressure = 0
-    velocity = 0.1 * np.ones(flow_2.stencil.d)
+    # manually calculate the forced feq
 
-    feq = flow_2.equilibrium(
-        flow_2,
-        context.convert_to_tensor(flow_2.units.convert_pressure_pu_to_density_lu(pressure)),
-        context.convert_to_tensor(flow_2.units.convert_velocity_to_lu(velocity))
-    )
-    flow_2.f[:, :8, ...] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[:, :8, ...]
+    rho = flow_2.units.convert_pressure_pu_to_density_lu(context.convert_to_tensor(pressure))
+    u = flow_2.units.convert_velocity_to_lu(context.convert_to_tensor(velocity))
+
+    feq = flow_2.equilibrium(flow_2, rho, u)
+
+    # apply manually calculated feq to f
+    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[..., :1]
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 
 
-def test_equilibrium_boundary_pu_native():
-    context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
-    context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
+def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
+    stencil, moment_dims = fix_stencil_x_moment_dims
 
-    stencil = D2Q9()
-    flow_native = TestFlow(context_native, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1,
-                           stencil=stencil)
-    flow_cpu = TestFlow(context_cpu, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
+    context_native = Context(device=torch.device('cuda'), dtype=fix_dtype, use_native=True)
+    context_cpu = Context(device=torch.device('cpu'), dtype=fix_dtype, use_native=False)
 
-    '''Works as expected'''
-    u = np.ones([2, 16, 16])
-    rho = np.ones([16, 16])
+    flow_native = TestFlow(context_native, stencil=stencil, resolution=16, reynolds_number=1, mach_number=0.1)
+    flow_cpu = TestFlow(context_cpu, stencil=stencil, resolution=16, reynolds_number=1, mach_number=0.1)
 
-    '''Does not work'''
-    # u = np.ones([2,16,1])
-    # rho = np.ones([16,1])
+    velocity = 0.2 * np.ones([flow_cpu.stencil.d] + moment_dims)
+    pressure = 0.02 * np.ones([1] + moment_dims)
 
-    '''Does not work'''
-    # u = np.ones([2,1,1])
-    # rho = np.ones([1,1])
-
-    boundary_native = TestEquilibriumBoundary(context_native, u, rho)
-    boundary_cpu = TestEquilibriumBoundary(context_cpu, u, rho)
+    boundary_native = TestEquilibriumBoundary(context_native, velocity, pressure)
+    boundary_cpu = TestEquilibriumBoundary(context_cpu, velocity, pressure)
 
     simulation_native = Simulation(flow=flow_native, collision=NoCollision(), boundaries=[boundary_native], reporter=[])
     simulation_cpu = Simulation(flow=flow_cpu, collision=NoCollision(), boundaries=[boundary_cpu], reporter=[])
@@ -86,10 +84,4 @@ def test_equilibrium_boundary_pu_native():
     simulation_native(num_steps=1)
     simulation_cpu(num_steps=1)
 
-    print()
-    print("Print the first 4 rows/columns of the velocities ux and uy for better visualization and comparison:")
-    print("Native:")
-    print(flow_native.velocity[:, :4, :4])
-    print("CPU:")
-    print(flow_cpu.velocity[:, :4, :4])
-    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-6)
+    assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy())

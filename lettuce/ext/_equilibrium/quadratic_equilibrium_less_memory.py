@@ -7,7 +7,7 @@ __all__ = ['QuadraticEquilibriumLessMemory']
 
 class QuadraticEquilibriumLessMemory(Equilibrium):
     """
-    does the same as the normal equilibrium, however it uses somewhere around 20% less RAM, but runs about 2% slower on GPU and 11% on CPU
+    does the same as the normal _equilibrium, however it uses somewhere around 20% less RAM, but runs about 2% slower on GPU and 11% on CPU
     """
 
     def __call__(self, flow: 'Flow', rho=None, u=None):
@@ -19,4 +19,4 @@ class QuadraticEquilibriumLessMemory(Equilibrium):
         return flow.einsum("q,q->q",
                            [flow.torch_stencil.w,
                             rho * ((2 * torch.tensordot(flow.torch_stencil.e, u, dims=1) - flow.einsum("d,d->", [u, u])) / (2 * flow.torch_stencil.cs ** 2) + 0.5 * (
-                            torch.tensordot(flow.torch_stencil.e, u, dims=1) / (flow.torch_stencil.cs ** 2)) ** 2 + 1)])
+                                    torch.tensordot(flow.torch_stencil.e, u, dims=1) / (flow.torch_stencil.cs ** 2)) ** 2 + 1)])

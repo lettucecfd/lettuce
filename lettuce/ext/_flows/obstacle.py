@@ -4,15 +4,14 @@ from ... import UnitConversion
 from ...util import append_axes
 from .. import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
 
-
 __all__ = ['Obstacle']
 
 
 class Obstacle:
     """
     Flow class to simulate the flow around an object (mask).
-    It consists of one inflow (equilibrium boundary)
-    and one outflow (anti-bounce-back-boundary), leading to a flow in positive x direction.
+    It consists of one inflow (_equilibrium _boundary)
+    and one outflow (anti-bounce-back-_boundary), leading to a flow in positive x direction.
 
     Parameters
     ----------

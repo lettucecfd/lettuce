@@ -1,5 +1,5 @@
 """
-Test boundary conditions.
+Test _boundary conditions.
 """
 
 from lettuce import *
@@ -23,9 +23,10 @@ class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
         return context.one_tensor(shape, dtype=bool)
         # return None
 
+
 class my_basic_flow(ExtFlow):
 
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * 2
         else:
@@ -45,8 +46,8 @@ class my_basic_flow(ExtFlow):
         t = 0
         nu = self.units.viscosity_pu
         u = np.array([np.cos(grid[0]) * np.sin(grid[1]) * np.exp(-2 * nu * t),
-                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])*0
-        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)])*0
+                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)]) * 0
+        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)]) * 0
         return p, u
 
 
@@ -58,8 +59,8 @@ def test_equilibrium_boundary_pu():
 
     boundary = my_equilibrium_boundary_mask(context, [0.1, 0.1], 0)
 
-    u = context.one_tensor([2,1,1])*0.1
-    p = context.zero_tensor([1,1,1])
+    u = context.one_tensor([2, 1, 1]) * 0.1
+    p = context.zero_tensor([1, 1, 1])
     boundary = my_equilibrium_boundary_mask(context, u, p)
 
     simulation = Simulation(flow=flow_1, collision=NoCollision(), boundaries=[boundary], reporter=[])
@@ -67,9 +68,9 @@ def test_equilibrium_boundary_pu():
 
     pressure = 0
     velocity = 0.1 * np.ones(flow_2.stencil.d)
-    # stencil = D2Q9()
-    # u_slice = [stencil.d, *flow_2.resolution[:stencil.d-1],1]
-    # p_slice = [1,*flow_2.resolution[:stencil.d-1],1]
+    # _stencil = D2Q9()
+    # u_slice = [_stencil.d, *flow_2.resolution[:_stencil.d-1],1]
+    # p_slice = [1,*flow_2.resolution[:_stencil.d-1],1]
     # u = flow_2.units.convert_velocity_to_lu(context.one_tensor(u_slice))
     # p = context.one_tensor(p_slice) * 1.2
 

@@ -6,7 +6,7 @@ __all__ = ['NativeQuadraticEquilibrium']
 class NativeQuadraticEquilibrium(NativeEquilibrium):
 
     # noinspection PyMethodMayBeStatic
-    def generate_uxu(self, generator: 'Generator', u: str=None):
+    def generate_uxu(self, generator: 'Generator', u: str = None):
         if u is None or u == 'u':
             name = 'uxu'
             u = 'u'
@@ -25,7 +25,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             global_buf('                        ')
 
     # noinspection PyMethodMayBeStatic
-    def generate_exu(self, generator: 'Generator', u: str=None):
+    def generate_exu(self, generator: 'Generator', u: str = None):
         if u is None or u == 'u':
             name = 'exu'
             u = 'u'
@@ -63,8 +63,8 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             # generate
             generator.append_global_buffer('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
 
-    def generate_f_eq(self, generator: 'Generator', rho: str=None, u: str=None):
-        if (rho is None or rho=='rho') and (u is None or u=='u'):
+    def generate_f_eq(self, generator: 'Generator', rho: str = None, u: str = None):
+        if (rho is None or rho == 'rho') and (u is None or u == 'u'):
             rho = 'rho'
             u = 'u'
             name = 'f_eq'
@@ -74,7 +74,7 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             rho = rho or "rho"
             u = u or "u"
             name = f"f_eq_{rho}_{u}"
-            if u=='u':
+            if u == 'u':
                 uxu = 'uxu'
                 exu = 'exu'
             else:
@@ -90,10 +90,10 @@ class NativeQuadraticEquilibrium(NativeEquilibrium):
             self.generate_two_cs_pow_two(generator)
 
             # generate
-            generator.append_global_buffer(f"  scalar_t {name}[q];                                                                                     ")
-            generator.append_global_buffer('# pragma unroll                                                                                            ')
-            generator.append_global_buffer('  for (index_t i = 0; i < q; ++i)                                                                          ')
-            generator.append_global_buffer('  {                                                                                                        ')
-            generator.append_global_buffer(f"    scalar_t f_eq_tmp = {exu}[i] / cs_pow_two;                                                               ")
-            generator.append_global_buffer(f"    {name}[i] = {rho} * w[i] * (({exu}[i] + {exu}[i] - {uxu}) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0);")
-            generator.append_global_buffer('  }                                                                                                        ')
+            generator.append_global_buffer(f"  scalar_t {name}[q];                                                                                               ")
+            generator.append_global_buffer('# pragma unroll                                                                                                      ')
+            generator.append_global_buffer('  for (index_t i = 0; i < q; ++i)                                                                                    ')
+            generator.append_global_buffer('  {                                                                                                                  ')
+            generator.append_global_buffer(f"    scalar_t f_eq_tmp = {exu}[i] / cs_pow_two;                                                                      ")
+            generator.append_global_buffer(f"    {name}[i] = {rho} * w[i] * (({exu}[i] + {exu}[i] - {uxu}) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0);  ")
+            generator.append_global_buffer('  }                                                                                                                  ')

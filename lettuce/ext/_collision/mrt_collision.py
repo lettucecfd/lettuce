@@ -6,7 +6,7 @@ __all__ = ['MRTCollision']
 
 class MRTCollision(Collision):
     """
-    Multiple relaxation time collision operator
+    Multiple relaxation time _collision operator
 
     This is an MRT operator in the most general sense of the word.
     The transform does not have to be linear and can, e.g., be any moment or cumulant transform.

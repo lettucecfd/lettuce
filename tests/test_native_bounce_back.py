@@ -21,7 +21,7 @@ class DummyFlow(ExtFlow):
     def __init__(self, context: Context):
         ExtFlow.__init__(self, context, 16, 1.0, 1.0)
 
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         return [resolution, resolution] if isinstance(resolution, int) else resolution
 
     def make_units(self, reynolds_number, mach_number, _: List[int]) -> 'UnitConversion':

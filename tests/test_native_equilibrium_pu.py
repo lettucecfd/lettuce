@@ -1,5 +1,5 @@
 """
-Test boundary conditions.
+Test _boundary conditions.
 """
 
 from lettuce import *
@@ -15,7 +15,7 @@ class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         a = context.zero_tensor(shape, dtype=bool)
-        a[:,1] = True
+        a[:, 1] = True
         return a
         # return None
 
@@ -26,7 +26,7 @@ class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
 
 class my_basic_flow(ExtFlow):
 
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * 2
         else:
@@ -46,9 +46,10 @@ class my_basic_flow(ExtFlow):
         t = 0
         nu = self.units.viscosity_pu
         u = np.array([np.cos(grid[0]) * np.sin(grid[1]) * np.exp(-2 * nu * t),
-                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])*0+1
-        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)])*0
+                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)]) * 0 + 1
+        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)]) * 0
         return p, u
+
 
 def test_equilibrium_boundary_pu_native():
     context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
@@ -58,8 +59,8 @@ def test_equilibrium_boundary_pu_native():
     flow_cpu = my_basic_flow(context_cpu, resolution=16, reynolds_number=1, mach_number=0.1)
 
     '''Works as expected'''
-    u = np.ones([2,16,16])
-    rho = np.ones([16,16])
+    u = np.ones([2, 16, 16])
+    rho = np.ones([16, 16])
 
     '''Does not work'''
     # u = np.ones([2,16,1])
@@ -81,7 +82,7 @@ def test_equilibrium_boundary_pu_native():
     print()
     print("Print the first 4 rows/columns of the velocities ux and uy for better visualization and comparison:")
     print("Native:")
-    print(flow_native.velocity[:,:4,:4])
+    print(flow_native.velocity[:, :4, :4])
     print("CPU:")
-    print(flow_cpu.velocity[:,:4,:4])
+    print(flow_cpu.velocity[:, :4, :4])
     assert flow_cpu.f.cpu().numpy() == pytest.approx(flow_native.f.cpu().numpy(), rel=1e-6)

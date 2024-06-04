@@ -6,7 +6,7 @@ __all__ = ['TRTCollision']
 
 class TRTCollision(Collision):
     """
-    Two relaxation time collision model - standard implementation (cf. Krüger 2017)
+    Two relaxation time _collision model - standard implementation (cf. Krüger 2017)
     """
 
     def __init__(self, lattice, tau, tau_minus=1.0):

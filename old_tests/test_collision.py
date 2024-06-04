@@ -1,5 +1,5 @@
 """
-Test functions for collision models and related functions.
+Test functions for _collision models and related functions.
 """
 
 from copy import copy
@@ -47,7 +47,7 @@ def test_collision_fixpoint_2x(Collision, f_all_lattices):
 @pytest.mark.parametrize("Collision",
                          [BGKCollision, TRTCollision, KBCCollision2D, KBCCollision3D, RegularizedCollision])
 def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
-    """checks whether the collision models relax the shear moments according to the prescribed relaxation time"""
+    """checks whether the _collision models relax the shear moments according to the prescribed relaxation time"""
     f, lattice = f_all_lattices
     if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
             (Collision == KBCCollision3D and lattice.stencil != D3Q27))):
@@ -67,7 +67,7 @@ def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
 
 @pytest.mark.parametrize("Collision", [KBCCollision2D, KBCCollision3D])
 def test_collision_optimizes_pseudo_entropy(Collision, f_all_lattices):
-    "checks if the pseudo-entropy of the KBC collision model is at least higher than the BGK pseudo-entropy"
+    "checks if the pseudo-entropy of the KBC _collision model is at least higher than the BGK pseudo-entropy"
     f, lattice = f_all_lattices
     if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
             (Collision == KBCCollision3D and lattice.stencil != D3Q27))):

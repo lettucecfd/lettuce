@@ -97,7 +97,7 @@ class Flow(ABC):
         if rho is None:
             rho = self.rho()
         v = self.j() / rho
-        # apply correction due to forcing, which effectively averages the pre- and post-collision velocity
+        # apply correction due to forcing, which effectively averages the pre- and post-_collision velocity
         correction = 0.0
         if acceleration is not None:
             if len(acceleration.shape) == 1:
@@ -125,7 +125,7 @@ class Flow(ABC):
         return self.rho() - self.einsum("q,q->", [self.f, f_w])
 
     def pseudo_entropy_local(self) -> torch.Tensor:
-        """pseudo_entropy derived by a Taylor expansion around the local equilibrium"""
+        """pseudo_entropy derived by a Taylor expansion around the local _equilibrium"""
         f_feq = self.f / self.equilibrium(self)
         return self.rho() - self.einsum("q,q->", [self.f, f_feq])
 

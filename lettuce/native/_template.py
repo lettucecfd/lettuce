@@ -31,7 +31,7 @@ native = _import_lettuce_native()
 def invoke(simulation):
     {python_wrapper_before_buffer}
 
-    if simulation.flow.stencil.d == 3:
+    if simulation.flow._stencil.d == 3:
         assert all(l % 8 == 0 for l in simulation.flow.f.shape[1:]), f"native requires all dimension of f to be a multiple of 8 (in 3d)"
     else:
         assert all(l % 16 == 0 for l in simulation.flow.f.shape[1:]), f"native requires all dimension of f to be a multiple of 16 (in 1d and 2d)"

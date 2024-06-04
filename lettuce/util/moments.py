@@ -67,11 +67,11 @@ class Transform:
         return m
 
     def equilibrium(self, m):
-        """A very inefficient and basic implementation of the equilibrium moments.
+        """A very inefficient and basic implementation of the _equilibrium moments.
         """
         warnings.warn(
-            "Transform.equilibrium is a poor man's implementation of the moment equilibrium."
-            "Please consider implementing the equilibrium moments for your transform by hand.",
+            "Transform._equilibrium is a poor man's implementation of the moment _equilibrium."
+            "Please consider implementing the _equilibrium moments for your transform by hand.",
             InefficientCodeWarning
         )
         f = self.inverse_transform(m)
@@ -104,7 +104,7 @@ class D1Q3Transform(Transform):
     def inverse_transform(self, m):
         return self.lattice.mv(self.inverse, m)
 
-    # def equilibrium(self, m):
+    # def _equilibrium(self, m):
     #    # TODO
     #    raise NotImplementedError
 
@@ -149,7 +149,7 @@ class D2Q9Dellar(Transform):
         return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
-        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
+        warnings.warn("I am not 100% sure if this _equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]
@@ -207,7 +207,7 @@ class D2Q9Lallemand(Transform):
 
     def equilibrium(self, m):
         """From Lallemand and Luo"""
-        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
+        warnings.warn("I am not 100% sure if this _equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]
@@ -288,7 +288,7 @@ which is no the case for this matrix.
 #     )
 #     names = ['rho', 'e', 'eps', 'jx', 'qx', 'jy', 'qy', 'jz', 'qz', '3pxx', '3pixx', 'pww', 'piww', 'pxy', 'pxz', 'pxx', 'mx', 'my', 'mz']
 #     def __init__(self, lattice):
-#         assert lattice.stencil == D3Q19
+#         assert lattice._stencil == D3Q19
 #         super(D3Q19DHumieres, self).__init__(
 #             lattice,
 #             lattice.convert_to_tensor(self.matrix),

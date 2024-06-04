@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q9, D3Q27, DoublyPeriodicShear2D
 from lettuce import torch_gradient, DecayingTurbulence
-from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
-from lettuce import Obstacle2D, Obstacle3D
+from lettuce import Lattice, Simulation, BGKCollision, StandardStreaming
+from lettuce import Obstacle
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 # Flows to test
@@ -72,11 +72,13 @@ def test_obstacle(stencil, dtype_device):
     if stencil is D2Q9:
         mask = np.zeros([nx, ny])
         mask[3:6, 3:6] = 1
-        flow = Obstacle2D(nx, ny, 100, 0.1, lattice=lattice, char_length_lu=3)
-    if stencil is D3Q27:
+        flow = Obstacle((nx, ny), 100, 0.1, lattice=lattice, domain_length_x=3)
+    elif stencil is D3Q27:
         mask = np.zeros([nx, ny, nz])
         mask[3:6, 3:6, :] = 1
-        flow = Obstacle3D(nx, ny, nz, 100, 0.1, lattice=lattice, char_length_lu=3)
+        flow = Obstacle((nx, ny, nz), 100, 0.1, lattice=lattice, domain_length_x=3)
+    else:
+        return NotImplementedError
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     flow.mask = mask != 0
     streaming = StandardStreaming(lattice)

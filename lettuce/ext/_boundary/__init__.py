@@ -7,5 +7,5 @@ __all__ = [
     'AntiBounceBackOutlet',
     'BounceBackBoundary',
     'EquilibriumBoundaryPU',
-    'EquilibriumOutletP',
+    'EquilibriumOutletP'
 ]

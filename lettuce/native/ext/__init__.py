@@ -1,3 +1,3 @@
-from .boundary import *
-from .collision import *
-from .equilibrium import *
+from ._boundary import *
+from ._collision import *
+from ._equilibrium import *

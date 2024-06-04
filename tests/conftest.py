@@ -7,33 +7,29 @@ import numpy as np
 import torch
 
 from lettuce import *
+from lettuce.ext import _stencil
 
-# from lettuce.util import moments
+STENCILS = list(get_subclasses(Stencil, _stencil))
 
-STENCILS = list(get_subclasses(Stencil, stencil))
-
-
-# TRANSFORMS = list(get_subclasses(Transform, moments))
 
 @pytest.fixture(
     params=((torch.float64, "cpu", "no_native"),
             (torch.float32, "cpu", "no_native"),
-            (torch.float64, "cuda:0", "no_native"),
-            (torch.float32, "cuda:0", "no_native"),
-            (torch.float64, "cuda:0", "native")),
-    ids=("cpu64", "cpu32", "cu64", "cu32", "native64"))
+            (torch.float64, "cuda", "no_native"),
+            (torch.float32, "cuda", "no_native"),
+            (torch.float64, "cuda", "native"),
+            (torch.float32, "cuda", "native")),
+    ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
 def configurations(request):
     dtype, device, native = request.param
     if device == "cuda:0" and not torch.cuda.is_available():
         pytest.skip(reason="CUDA not available.")
-    # if device == "cuda:0" and dtype == torch.float32:
-    #     pytest.skip("TODO: loosen tolerances")
     return dtype, device, native
 
 
 @pytest.fixture(params=STENCILS)
 def stencils(request):
-    """Run a test for all stencil."""
+    """Run a test for all _stencil."""
     return request.param
 
 
@@ -49,6 +45,6 @@ class TestFlow(ExtFlow):
         return UnitConversion(reynolds_number, mach_number, characteristic_length_lu=resolution[0])
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
-        u = np.ones([self.stencil.d] + self.resolution) * 1
-        p = np.zeros([1] + self.resolution)
+        u = 1.0 * np.ones([self.stencil.d] + self.resolution)
+        p = 0.0 * np.ones([1] + self.resolution)
         return p, u

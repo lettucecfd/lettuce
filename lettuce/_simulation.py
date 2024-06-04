@@ -117,11 +117,11 @@ class Simulation:
                 print(f"native was requested, but equilibrium '{name}' does not support native.")
             if not self.collision.native_available():
                 name = self.collision.__class__.__name__
-                print(f"native was requested, but collision '{name}' does not support native.")
+                print(f"native was requested, but _collision '{name}' does not support native.")
             for boundary in self.boundaries[1:]:
                 if not boundary.native_available():
                     name = boundary.__class__.__name__
-                    print(f"native was requested, but boundary '{name}' does not support native.")
+                    print(f"native was requested, but _boundary '{name}' does not support native.")
 
             # create native equivalents
 

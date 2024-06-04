@@ -1,5 +1,5 @@
 """
-Test boundary conditions.
+Test _boundary conditions.
 """
 
 from lettuce import *
@@ -50,7 +50,7 @@ def test_equilibrium_boundary_pu(f_lattice):
 
 
 def test_anti_bounce_back_outlet(f_lattice):
-    """Compares the result of the application of the boundary to f to the result using the formula taken from page 195
+    """Compares the result of the application of the _boundary to f to the result using the formula taken from page 195
     of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are similar it is assumed to be working fine."""
     f, lattice = f_lattice
     # generates reference value of f using non-dynamic formula
@@ -112,14 +112,14 @@ def test_anti_bounce_back_outlet(f_lattice):
                     * (2 + torch.einsum('c, x -> x', stencil_e_tensor, u_w) ** 2
                        / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
 
-    # generates value from actual boundary implementation
+    # generates value from actual _boundary implementation
     abb_outlet = AntiBounceBackOutlet(lattice, direction)
     f = abb_outlet(f)
     assert f.cpu().numpy() == pytest.approx(f_ref.cpu().numpy())
 
 
 def test_masks(dtype_device):
-    """test if masks are applied from boundary conditions"""
+    """test if masks are applied from _boundary conditions"""
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, dtype=dtype, device=device)
     flow = Obstacle((16, 16), 100, 0.1, lattice, 2)

@@ -1,5 +1,5 @@
 """
-Test boundary conditions.
+Test _boundary conditions.
 """
 
 from lettuce import *
@@ -26,7 +26,7 @@ class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
 
 class my_basic_flow(ExtFlow):
 
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * 2
         else:

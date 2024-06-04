@@ -34,7 +34,7 @@ def test_flow_3d(IncompressibleFlow, dtype_device):
     simulation.step(1)
 
 
-@pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
+@pytest.mark.parametrize("_stencil", [D2Q9, D3Q27])
 def test_divergence(stencil, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(stencil, dtype=dtype, device=device)
@@ -60,7 +60,7 @@ def test_divergence(stencil, dtype_device):
     assert (0 == pytest.approx(divergence, abs=2e-3))
 
 
-@pytest.mark.parametrize("stencil", [D2Q9, D3Q27])
+@pytest.mark.parametrize("_stencil", [D2Q9, D3Q27])
 def test_obstacle(stencil, dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(stencil, dtype=dtype, device=device)

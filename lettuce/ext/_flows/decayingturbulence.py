@@ -1,5 +1,5 @@
 """
-DecayingTurbulence vortex in 2D and 3D. Dimension is set by the stencil.
+DecayingTurbulence vortex in 2D and 3D. Dimension is set by the _stencil.
 Special Inputs & standard value: wavenumber_energy-peak = 20, initial_energy = 0.5
 
 Additional attributes / properties

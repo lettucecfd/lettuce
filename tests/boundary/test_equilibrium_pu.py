@@ -1,37 +1,22 @@
-from lettuce import *
-from lettuce.ext import *
-
-import pytest
-
-import numpy as np
-import torch
-
-from tests.conftest import TestFlow
+from tests.common import *
 
 
-def input_moment_dimensions_generator_(d):
-    if d == 1:
-        yield [1]
-        yield [16]
-    else:
-        for x in input_moment_dimensions_generator_(d - 1):
-            yield x + [1]
-            yield x + [16]
+def moment_dims_params():
+    from itertools import product
+    for stencil in stencil_params():
+        for p in product([1, 16], repeat=stencil.d):
+            yield stencil, list(p)
 
 
-def input_moment_dimensions_generator():
-    for d in range(1, 4):
-        for x in input_moment_dimensions_generator_(d):
-            yield x
+def moment_dims_ids():
+    buffer = []
+    for stencil, dims in moment_dims_params():
+        buffer.append(f"{stencil.__class__.__name__}-MomentDims{'x'.join([str(d) for d in dims])}")
+    return buffer
 
 
-def input_moment_dimension_ids():
-    return ['x'.join([str(k) for k in it]) for it in input_moment_dimensions_generator()]
-
-
-@pytest.fixture(params=input_moment_dimensions_generator(),
-                ids=input_moment_dimension_ids())
-def input_moment_dimensions(request):
+@pytest.fixture(params=moment_dims_params(), ids=moment_dims_ids())
+def fix_stencil_x_moment_dims(request):
     return request.param
 
 
@@ -46,18 +31,17 @@ class TestEquilibriumBoundary(EquilibriumBoundaryPU):
         return context.one_tensor(shape, dtype=bool)
 
 
-def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
+def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     """
-    Test for the equilibrium boundary algorithm. This test verifies that the algorithm correctly computes the
-    equilibrium outlet pressure by comparing its output to manually calculated equilibrium values.
+    Test for the _equilibrium _boundary algorithm. This test verifies that the algorithm correctly computes the
+    _equilibrium outlet pressure by comparing its output to manually calculated _equilibrium values.
     """
 
-    dtype, device, native = configurations
-    context = Context(device=torch.device(device), dtype=dtype, use_native=(native == "native"))
+    device, dtype, native = fix_configuration
+    context = Context(device=device, dtype=dtype, use_native=native)
 
-    stencil = stencils()
-    flow_1 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
-    flow_2 = TestFlow(context, resolution=stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=stencil)
+    flow_1 = TestFlow(context, resolution=fix_stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+    flow_2 = TestFlow(context, resolution=fix_stencil.d * [16], reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
 
     velocity = 0.2 * np.ones(flow_2.stencil.d)
     pressure = 0.01
@@ -79,15 +63,17 @@ def test_equilibrium_boundary_pu_algorithm(stencils, configurations):
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 
 
-def test_equilibrium_boundary_pu_native(input_moment_dimensions):
-    context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
-    context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
+def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
+    stencil, moment_dims = fix_stencil_x_moment_dims
 
-    flow_native = TestFlow(context_native, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
-    flow_cpu = TestFlow(context_cpu, resolution=[16] * len(input_moment_dimensions), reynolds_number=1, mach_number=0.1)
+    context_native = Context(device=torch.device('cuda'), dtype=fix_dtype, use_native=True)
+    context_cpu = Context(device=torch.device('cpu'), dtype=fix_dtype, use_native=False)
 
-    velocity = 0.0 * np.ones([flow_cpu.stencil.d] + input_moment_dimensions)
-    pressure = 0.01 * np.ones(input_moment_dimensions)
+    flow_native = TestFlow(context_native, stencil=stencil, resolution=16, reynolds_number=1, mach_number=0.1)
+    flow_cpu = TestFlow(context_cpu, stencil=stencil, resolution=16, reynolds_number=1, mach_number=0.1)
+
+    velocity = 0.2 * np.ones([flow_cpu.stencil.d] + moment_dims)
+    pressure = 0.02 * np.ones([1] + moment_dims)
 
     boundary_native = TestEquilibriumBoundary(context_native, velocity, pressure)
     boundary_cpu = TestEquilibriumBoundary(context_cpu, velocity, pressure)

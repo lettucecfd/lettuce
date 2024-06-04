@@ -123,7 +123,7 @@ class Mass(Observable):
     ----------
     no_mass_mask : torch.Tensor
         Boolean mask that defines grid points
-        which do not count into the total mass (e.g. bounce-back boundary).
+        which do not count into the total mass (e.g. bounce-back _boundary).
     """
 
     def __init__(self, lattice, flow, no_mass_mask=None):
@@ -138,19 +138,19 @@ class Mass(Observable):
 
 
 class ObservableReporter(Reporter):
-    """A reporter that prints an observable every few iterations.
+    """A _reporter that prints an observable every few iterations.
 
     Examples
     --------
-    Create an Enstrophy reporter.
+    Create an Enstrophy _reporter.
 
     >>> from lettuce.ext import TaylorGreenVortex3D, Enstrophy, D3Q27, Lattice
     >>> lattice = Lattice(D3Q27, device="cpu")
     >>> flow = TaylorGreenVortex(50, 300, 0.1, lattice)
     >>> enstrophy = Enstrophy(lattice, flow)
-    >>> reporter = ObservableReporter(enstrophy, interval=10)
+    >>> _reporter = ObservableReporter(enstrophy, interval=10)
     >>> # simulation = ...
-    >>> # simulation.reporters.append(reporter)
+    >>> # simulation.reporters.append(_reporter)
     """
 
     def __init__(self, observable, interval=1, out=sys.stdout):

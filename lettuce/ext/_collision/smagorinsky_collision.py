@@ -6,7 +6,7 @@ __all__ = ['SmagorinskyCollision']
 
 class SmagorinskyCollision(Collision):
     """
-    Smagorinsky large eddy simulation (LES) _collision model with BGK operator.
+    Smagorinsky large eddy simulation (LES) collision model with BGK operator.
     """
 
     def __init__(self, lattice, tau, smagorinsky_constant=0.17, force=None):

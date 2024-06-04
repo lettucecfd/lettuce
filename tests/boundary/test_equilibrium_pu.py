@@ -33,8 +33,8 @@ class TestEquilibriumBoundary(EquilibriumBoundaryPU):
 
 def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     """
-    Test for the _equilibrium _boundary algorithm. This test verifies that the algorithm correctly computes the
-    _equilibrium outlet pressure by comparing its output to manually calculated _equilibrium values.
+    Test for the equilibrium boundary algorithm. This test verifies that the algorithm correctly computes the
+    equilibrium outlet pressure by comparing its output to manually calculated equilibrium values.
     """
 
     device, dtype, native = fix_configuration

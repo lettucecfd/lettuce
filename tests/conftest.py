@@ -29,7 +29,7 @@ def configurations(request):
 
 @pytest.fixture(params=STENCILS)
 def stencils(request):
-    """Run a test for all _stencil."""
+    """Run a test for all stencil."""
     return request.param
 
 

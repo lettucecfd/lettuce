@@ -7,9 +7,9 @@ __all__ = ['AntiBounceBackOutlet']
 
 
 class AntiBounceBackOutlet(Boundary):
-    """Allows distributions to leave domain unobstructed through this _boundary.
+    """Allows distributions to leave domain unobstructed through this boundary.
         Based on equations from page 195 of "The lattice Boltzmann method" (2016 by Krüger et al.)
-        Give the side of the domain with the _boundary as list [x, y, z] with only one entry nonzero
+        Give the side of the domain with the boundary as list [x, y, z] with only one entry nonzero
         [1, 0, 0] for positive x-direction in 3D; [1, 0] for the same in 2D
         [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
         """
@@ -68,7 +68,7 @@ class AntiBounceBackOutlet(Boundary):
         no_stream_mask[[np.array(self.lattice.stencil.opposite)[self.velocities]] + self.index] = 1
         return no_stream_mask
 
-    # not 100% sure about this. But _collision seem to stabilize the _boundary.
+    # not 100% sure about this. But collision seem to stabilize the boundary.
     # def make_no_collision_mask(self, f_shape):
     #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
     #    no_collision_mask[self.index] = 1

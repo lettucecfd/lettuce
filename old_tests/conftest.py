@@ -35,7 +35,7 @@ def dtype_device(request, device):
 
 @pytest.fixture(params=STENCILS)
 def stencil(request):
-    """Run a test for all _stencil."""
+    """Run a test for all stencil."""
     return request.param
 
 
@@ -48,7 +48,7 @@ def stencil(request):
             (torch.float32, "cuda:0", "native")),
     ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
 def lattice(request, stencil):
-    """Run a test for all lattices (all _stencil, devices and data types available on the device.)"""
+    """Run a test for all lattices (all stencil, devices and data types available on the device.)"""
     dtype, device, native = request.param
     if device == "cuda:0" and not torch.cuda.is_available():
         pytest.skip(reason="CUDA not available.")
@@ -66,7 +66,7 @@ def lattice(request, stencil):
             (torch.float32, "cuda:0", "", "cuda:0", "native")),
     ids=("cpu_cu_64", "cpu_cu_32", "cpu_native_64", "cpu_native_32", "cu_native_64", "cu_native_32"))
 def lattice2(request, stencil):
-    """Run a test for all lattices (all _stencil, devices and data types available on the device.)"""
+    """Run a test for all lattices (all stencil, devices and data types available on the device.)"""
     dtype, device, native, device2, native2 = request.param
     if device == "cuda:0" and not torch.cuda.is_available():
         pytest.skip(reason="CUDA not available.")

@@ -14,7 +14,7 @@ __all__ = ["HDF5Reporter",
 
 
 class HDF5Reporter:
-    """ HDF5 _reporter for distribution function f in lettuce containing
+    """ HDF5 reporter for distribution function f in lettuce containing
         metadata of the simulation.
 
         Parameters
@@ -25,21 +25,21 @@ class HDF5Reporter:
                 Optional metadata can be saved. The passed values must be of type string.
                 >>> metadata = {"attr_1": "str_value_1", "attr_2": "str_value_2"}
             interval : integer
-                Define the step interval after the _reporter is applied.
-                The _reporter will save f every "interval" step.
+                Define the step interval after the reporter is applied.
+                The reporter will save f every "interval" step.
 
         Examples
         --------
-        Create a HDF5 _reporter.
+        Create a HDF5 reporter.
         >>> import lettuce as lt
         >>> lattice = lt.Lattice(lt.D3Q27, device="cpu")
         >>> flow = lt.TaylorGreenVortex3D(50, 300, 0.1, lattice)
-        >>> _collision = ...
+        >>> collision = ...
         >>> simulation = ...
         >>> hdf5_reporter = lt.HDF5Reporter(
         >>>     flow=flow,
         >>>     lattice=lattice,
-        >>>     _collision=_collision,
+        >>>     collision=collision,
         >>>     interval= 100,
         >>>     filebase="./h5_output")
         >>> simulation.reporters.append(hdf5_reporter)
@@ -52,7 +52,7 @@ class HDF5Reporter:
         fs = h5py.File(self.filebase + '.h5', 'w')
         fs.attrs['lettuce_version'] = get_versions()['version']
         fs.attrs["flow"] = self._pickle_to_h5(flow)
-        fs.attrs['_collision'] = self._pickle_to_h5(collision)
+        fs.attrs['collision'] = self._pickle_to_h5(collision)
         if metadata:
             for attr in metadata:
                 fs.attrs[attr] = metadata[attr]
@@ -120,7 +120,7 @@ class LettuceDataset(data.Dataset):
 
     def __str__(self):
         for attr, value in self.fs.attrs.items():
-            if attr in ('flow', '_collision'):
+            if attr in ('flow', 'collision'):
                 print(attr + ": " + str(self._unpickle_from_h5(self.fs.attrs[attr])))
             else:
                 print(attr + ": " + str(value))

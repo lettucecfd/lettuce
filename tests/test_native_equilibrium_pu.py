@@ -1,5 +1,5 @@
 """
-Test _boundary conditions.
+Test boundary conditions.
 """
 
 from lettuce import *

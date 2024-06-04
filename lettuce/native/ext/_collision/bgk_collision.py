@@ -18,8 +18,8 @@ class NativeBGKCollision(NativeCollision):
     # noinspection PyMethodMayBeStatic
     def generate_tau_inv(self, generator: 'Generator'):
         if not generator.launcher_hooked('tau_inv'):
-            generator.append_python_wrapper_before_buffer("assert hasattr(simulation._collision, 'tau')")
-            generator.launcher_hook('tau_inv', 'double tau_inv', 'tau_inv', '1./simulation._collision.tau')
+            generator.append_python_wrapper_before_buffer("assert hasattr(simulation.collision, 'tau')")
+            generator.launcher_hook('tau_inv', 'double tau_inv', 'tau_inv', '1./simulation.collision.tau')
         if not generator.kernel_hooked('tau_inv'):
             generator.kernel_hook('tau_inv', 'scalar_t tau_inv', 'static_cast<scalar_t>(tau_inv)')
 

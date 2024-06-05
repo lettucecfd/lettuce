@@ -17,7 +17,7 @@ class TaylorGreenVortex2D(ExtFlow):
                  equilibrium: Optional['Equilibrium'] = None):
         ExtFlow.__init__(self, context, resolution, reynolds_number, mach_number, stencil, equilibrium)
 
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * 2
         else:
@@ -51,7 +51,7 @@ class TaylorGreenVortex2D(ExtFlow):
 
 
 class TaylorGreenVortex3D(ExtFlow):
-    def make_resolution(self, resolution: Union[int, List[int]]) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * 3
         else:

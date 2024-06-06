@@ -8,8 +8,8 @@ __all__ = ['ObservableReporter', 'MaximumVelocity', 'IncompressibleKineticEnergy
 
 
 class Observable:
-    def __init__(self, lattice, flow):
-        self.lattice = lattice
+    def __init__(self, context, flow):
+        self.context = context
         self.flow = flow
 
     def __call__(self, f):
@@ -29,8 +29,8 @@ class IncompressibleKineticEnergy(Observable):
 
     def __call__(self, f):
         dx = self.flow.units.convert_length_to_pu(1.0)
-        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.lattice.incompressible_energy(f)))
-        kinE *= dx ** self.lattice.D
+        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.flow.incompressible_energy()))
+        kinE *= dx ** self.flow.stencil.d
         return kinE
 
 
@@ -161,15 +161,15 @@ class ObservableReporter(Reporter):
         self._parameter_name = observable.__class__.__name__
         print('steps    ', 'time    ', self._parameter_name)
 
-    def __call__(self, i, t, f):
-        if i % self.interval == 0:
-            observed = self.observable.lattice.convert_to_numpy(self.observable(f))
+    def __call__(self, flow):
+        if flow.i % self.interval == 0:
+            observed = self.observable.context.convert_to_ndarray(self.observable(flow.f))
             assert len(observed.shape) < 2
             if len(observed.shape) == 0:
                 observed = [observed.item()]
             else:
                 observed = observed.tolist()
-            entry = [i, t] + observed
+            entry = [flow.i, flow.units.convert_time_to_pu(flow.i)] + observed
             if isinstance(self.out, list):
                 self.out.append(entry)
             else:

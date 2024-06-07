@@ -4,7 +4,7 @@ import numpy as np
 
 from ... import Reporter
 
-__all__ = ['ObservableReporter', 'MaximumVelocity', 'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum', 'Mass']
+__all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity', 'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum', 'Mass']
 
 
 class Observable:

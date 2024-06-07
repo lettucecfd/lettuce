@@ -34,11 +34,11 @@ class VTKReporter(Reporter):
             if self.flow.stencil.d == 2:
                 self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ..., None])
                 for d in range(self.flow.stencil.d):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_numpy(u[d, ..., None])
+                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_ndarray(u[d, ..., None])
             else:
-                self.point_dict["p"] = self.flow.context.convert_to_numpy(p[0, ...])
+                self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ...])
                 for d in range(self.flow.stencil.d):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_numpy(u[d, ...])
+                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_ndarray(u[d, ...])
             write_vtk(self.point_dict, self.flow.i, self.filename_base)
 
     def output_mask(self, no_collision_mask):

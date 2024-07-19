@@ -6,10 +6,12 @@ import numpy as np
 
 from lettuce.unit import UnitConversion
 from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
+from lettuce.flows.flow import Flow
 
 
-class CouetteFlow2D(object):
+class CouetteFlow2D(Flow):
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
+        super().__init__()
         self.resolution = resolution
         self.shape = (resolution, resolution)
         self._mask = np.zeros(shape=self.shape, dtype=bool)

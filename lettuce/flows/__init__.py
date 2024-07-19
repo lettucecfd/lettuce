@@ -10,6 +10,7 @@ from lettuce.flows.decayingturbulence import DecayingTurbulence
 from lettuce.flows.obstacle import Obstacle, Obstacle2D, Obstacle3D
 from lettuce.stencils import D2Q9, D3Q19
 
+
 flow_by_name = {
     "taylor2D": [TaylorGreenVortex2D, D2Q9],
     "taylor3D": [TaylorGreenVortex3D, D3Q19],

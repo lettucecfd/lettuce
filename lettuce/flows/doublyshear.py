@@ -4,12 +4,15 @@ Special Inputs & standard value: shear_layer_width = 80, initial_perturbation_ma
 """
 
 import numpy as np
+
 from lettuce.unit import UnitConversion
+from lettuce.flows.flow import Flow
 
 
-class DoublyPeriodicShear2D:
-    def __init__(self, resolution, reynolds_number, mach_number, lattice, shear_layer_width=80,
-                 initial_perturbation_magnitude=0.05):
+class DoublyPeriodicShear2D(Flow):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice,
+                 shear_layer_width=80, initial_perturbation_magnitude=0.05):
+        super().__init__()
         self.initial_perturbation_magnitude = initial_perturbation_magnitude
         self.shear_layer_width = shear_layer_width
         self.resolution = resolution

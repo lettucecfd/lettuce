@@ -3,10 +3,12 @@ import warnings
 import numpy as np
 from lettuce.unit import UnitConversion
 from lettuce.util import append_axes
-from lettuce.boundary import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
+from lettuce.boundary import (EquilibriumBoundaryPU, BounceBackBoundary,
+                              AntiBounceBackOutlet)
+from lettuce.flows.flow import Flow
 
 
-class Obstacle:
+class Obstacle(Flow):
     """
     Flow class to simulate the flow around an object (mask).
     It consists of one inflow (equilibrium boundary)
@@ -41,7 +43,8 @@ class Obstacle:
     >>> condition = np.sqrt((x-2.5)**2+(y-2.5)**2) < 1.
     >>> flow.mask[np.where(condition)] = 1
    """
-    def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1):
+    def __init__(self, shape, reynolds_number, mach_number, lattice,
+                 domain_length_x, char_length=1, char_velocity=1):
         if len(shape) != lattice.D:
             raise ValueError(f"{lattice.D}-dimensional lattice requires {lattice.D}-dimensional `shape`")
         self.shape = shape

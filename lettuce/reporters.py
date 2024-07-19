@@ -143,7 +143,7 @@ class ObservableReporter:
     """
 
     def __init__(self, observable, interval=1, print_to_screen=True,
-                 save_to_file=False, filename_base="./data/output"):
+                 filename_base="./data/output"):
         self.observable = observable
         self.interval = interval
         self.out = []

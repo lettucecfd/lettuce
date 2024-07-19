@@ -6,8 +6,10 @@ from lettuce.flows.taylorgreen import TaylorGreenVortex3D, TaylorGreenVortex2D
 from lettuce.observables import EnergySpectrum, IncompressibleKineticEnergy
 
 
-@pytest.mark.parametrize("Flow",
-                         [TaylorGreenVortex2D, TaylorGreenVortex3D, 'DecayingTurbulence2D', 'DecayingTurbulence3D'])
+@pytest.mark.parametrize("LettuceFlow", [TaylorGreenVortex2D,
+                                         TaylorGreenVortex3D,
+                                         'DecayingTurbulence2D',
+                                         'DecayingTurbulence3D'])
 def test_energy_spectrum(tmpdir, Flow):
     lattice = Lattice(D2Q9, device='cpu')
     if Flow == TaylorGreenVortex3D or Flow == 'DecayingTurbulence3D':

@@ -4,12 +4,12 @@ Poiseuille Flow
 
 import numpy as np
 
-from lettuce.flows.flow import Flow
+from lettuce.flows.flow import LettuceFlow
 from lettuce.unit import UnitConversion
 from lettuce.boundary import BounceBackBoundary
 
 
-class PoiseuilleFlow2D(Flow):
+class PoiseuilleFlow2D(LettuceFlow):
     def __init__(self, resolution, reynolds_number, mach_number, lattice, initialize_with_zeros=True):
         self.resolution = resolution
         self.lattice = lattice

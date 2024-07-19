@@ -5,10 +5,10 @@ Taylor-Green vortex in 2D and 3D.
 import numpy as np
 
 from lettuce.unit import UnitConversion
-from lettuce.flows.flow import Flow
+from lettuce.flows.flow import LettuceFlow
 
 
-class TaylorGreenVortex2D(Flow):
+class TaylorGreenVortex2D(LettuceFlow):
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution
         self.units = UnitConversion(

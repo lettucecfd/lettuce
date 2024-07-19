@@ -10,10 +10,10 @@ energy_spectrum: returns a pair [spectrum, wavenumbers]
 import numpy as np
 
 from lettuce.unit import UnitConversion
-from lettuce.flows.flow import Flow
+from lettuce.flows.flow import LettuceFlow
 
 
-class DecayingTurbulence(Flow):
+class DecayingTurbulence(LettuceFlow):
 
     def __init__(self, resolution, reynolds_number, mach_number, lattice,
                  k0=20, ic_energy=0.5):

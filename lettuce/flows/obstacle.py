@@ -5,10 +5,10 @@ from lettuce.unit import UnitConversion
 from lettuce.util import append_axes
 from lettuce.boundary import (EquilibriumBoundaryPU, BounceBackBoundary,
                               AntiBounceBackOutlet)
-from lettuce.flows.flow import Flow
+from lettuce.flows.flow import LettuceFlow
 
 
-class Obstacle(Flow):
+class Obstacle(LettuceFlow):
     """
     Flow class to simulate the flow around an object (mask).
     It consists of one inflow (equilibrium boundary)

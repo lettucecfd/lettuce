@@ -5,7 +5,7 @@ import numpy as np
 from lettuce.unit import UnitConversion
 
 from lettuce.lattices import Lattice
-from lettuce.boundary import Boundary
+from lettuce.boundary import LettuceBoundary
 
 
 class Grid(np.ndarray):
@@ -14,13 +14,13 @@ class Grid(np.ndarray):
         return
 
 
-class Flow:
+class LettuceFlow:
     D: int
     lattice: Lattice
     shape: Tuple[int, int] or Tuple[int, int, int]
     units: UnitConversion
     grid: Grid
-    boundaries: list[Boundary, ...]
+    boundaries: list[LettuceBoundary, ...]
 
     def __init__(self):
         return

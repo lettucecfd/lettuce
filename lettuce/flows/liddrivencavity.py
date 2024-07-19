@@ -6,10 +6,10 @@ import numpy as np
 
 from lettuce.unit import UnitConversion
 from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
-from lettuce.flows.flow import Flow
+from lettuce.flows.flow import LettuceFlow
 
 
-class Cavity2D(Flow):
+class Cavity2D(LettuceFlow):
     def __init__(self, resolution, reynolds_number, mach_number, lattice):
         self.resolution = resolution
         self.shape = (resolution, resolution)

@@ -19,17 +19,17 @@ import torch
 import numpy as np
 from lettuce import (LettuceException, Lattice)
 
-__all__ = ["Boundary", "BounceBackBoundary", "AntiBounceBackOutlet",
+__all__ = ["LettuceBoundary", "BounceBackBoundary", "AntiBounceBackOutlet",
            "EquilibriumBoundaryPU", "EquilibriumOutletP"]
 
 
-class Boundary:
+class LettuceBoundary:
     mask: torch.Tensor
     lattice: Lattice
     # TODO: define __call__ to return a Population
 
 
-class BounceBackBoundary(Boundary):
+class BounceBackBoundary(LettuceBoundary):
     """Fullway Bounce-Back Boundary"""
 
     def __init__(self, mask, lattice):
@@ -45,7 +45,7 @@ class BounceBackBoundary(Boundary):
         return self.mask
 
 
-class EquilibriumBoundaryPU(Boundary):
+class EquilibriumBoundaryPU(LettuceBoundary):
     """Sets distributions on this boundary to equilibrium with predefined velocity and pressure.
     Note that this behavior is generally not compatible with the Navier-Stokes equations.
     This boundary condition should only be used if no better options are available.
@@ -67,7 +67,7 @@ class EquilibriumBoundaryPU(Boundary):
         return f
 
 
-class AntiBounceBackOutlet(Boundary):
+class AntiBounceBackOutlet(LettuceBoundary):
     """Allows distributions to leave domain unobstructed through this boundary.
         Based on equations from page 195 of "The lattice Boltzmann method" (2016 by Krüger et al.)
         Give the side of the domain with the boundary as list [x, y, z] with only one entry nonzero

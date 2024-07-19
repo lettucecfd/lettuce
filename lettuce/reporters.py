@@ -142,13 +142,12 @@ class ObservableReporter:
     >>> # simulation.reporters.append(reporter)
     """
 
-    def __init__(self, observable, interval=1, out=[], print_to_screen=True,
+    def __init__(self, observable, interval=1, print_to_screen=True,
                  save_to_file=False, filename_base="./data/output"):
         self.observable = observable
         self.interval = interval
-        self.out = [] if out is None else out
+        self.out = []
         self.print_to_screen = print_to_screen
-        self.save_to_file = save_to_file
         self.filename_base = filename_base
         directory = os.path.dirname(filename_base)
         if not os.path.isdir(directory):
@@ -167,8 +166,7 @@ class ObservableReporter:
             else:
                 observed = observed.tolist()
             entry = [i, t] + observed
-            if self.save_to_file:
-                self.out.append(entry)
+            self.out.append(entry)
             if self.print_to_screen:
                 print(*entry)
 

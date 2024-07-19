@@ -41,10 +41,14 @@ simulation.reporters.append(lt.ObservableReporter(energy, interval=1000, out=Non
 Now, we do not just run the whole simulation for 30,000 steps, but check the energy convergence every 2000 steps.
 The populations are kept on the GPU until evaluated by [...].cpu()
 """
-nmax = 30000; ntest = 2000
+nmax = 30000
+ntest = 2000
 simulation.initialize_f_neq()
-it = 0; i = 0; mlups = 0
-energy_old = 1; energy_new = 1
+it = 0
+i = 0
+mlups = 0
+energy_old = 1
+energy_new = 1
 while it <= nmax:
     i += 1
     it += ntest

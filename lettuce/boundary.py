@@ -1,16 +1,19 @@
 """
 Boundary Conditions.
 
-The `__call__` function of a boundary defines its application to the distribution functions.
+The `__call__` function of a boundary defines its application to the
+distribution functions.
 
 Boundary conditions can define a mask (a boolean numpy array)
 that specifies the grid points on which the boundary
 condition operates.
 
-Boundary classes can define two functions `make_no_stream_mask` and `make_no_collision_mask`
-that prevent streaming and collisions on the boundary nodes.
+Boundary classes can define two functions `make_no_stream_mask` and
+`make_no_collision_mask` that prevent streaming and collisions on the
+boundary nodes.
 
-The no-stream mask has the same dimensions as the distribution functions (Q, x, y, (z)) .
+The no-stream mask has the same dimensions as the distribution functions
+(Q, x, y, (z)) .
 The no-collision mask has the same dimensions as the grid (x, y, (z)).
 
 """
@@ -41,9 +44,12 @@ class BounceBackBoundary:
 
 
 class EquilibriumBoundaryPU:
-    """Sets distributions on this boundary to equilibrium with predefined velocity and pressure.
-    Note that this behavior is generally not compatible with the Navier-Stokes equations.
-    This boundary condition should only be used if no better options are available.
+    """Sets distributions on this boundary to equilibrium with predefined
+    velocity and pressure.
+    Note that this behavior is generally not compatible with the Navier-Stokes
+    equations.
+    This boundary condition should only be used if no better options are
+    available.
     """
 
     def __init__(self, mask, lattice, units, velocity, pressure=0):
@@ -63,28 +69,34 @@ class EquilibriumBoundaryPU:
 
 
 class AntiBounceBackOutlet:
-    """Allows distributions to leave domain unobstructed through this boundary.
-        Based on equations from page 195 of "The lattice Boltzmann method" (2016 by Krüger et al.)
-        Give the side of the domain with the boundary as list [x, y, z] with only one entry nonzero
-        [1, 0, 0] for positive x-direction in 3D; [1, 0] for the same in 2D
-        [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
-        """
+    """
+    Allows distributions to leave domain unobstructed through this boundary.
+    Based on equations from page 195 of "The lattice Boltzmann method"
+    (2016 by Krüger et al.)
+    Give the side of the domain with the boundary as list [x, y, z] with
+    only one entry nonzero
+    [1, 0, 0] for positive x-direction in 3D; [1, 0] for the same in 2D
+    [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
+    """
 
     def __init__(self, lattice, direction):
 
         assert isinstance(direction, list), \
             LettuceException(
-                f"Invalid direction parameter. Expected direction of type list but got {type(direction)}.")
+                f"Invalid direction parameter. Expected direction of type "
+                f"list but got {type(direction)}.")
 
         assert len(direction) in [1, 2, 3], \
             LettuceException(
-                f"Invalid direction parameter. Expected direction of of length 1, 2 or 3 but got {len(direction)}.")
+                f"Invalid direction parameter. Expected direction of of "
+                f"length 1, 2 or 3 but got {len(direction)}.")
 
         assert (direction.count(0) == (len(direction) - 1)) and (
-                    (1 in direction) ^ (-1 in direction)), \
+                (1 in direction) ^ (-1 in direction)), \
             LettuceException(
                 "Invalid direction parameter. "
-                f"Expected direction with all entries 0 except one 1 or -1 but got {direction}.")
+                f"Expected direction with all entries 0 except one 1 or -1 "
+                f"but got {direction}.")
 
         direction = np.array(direction)
         self.lattice = lattice
@@ -106,7 +118,8 @@ class AntiBounceBackOutlet:
             if i == -1:
                 self.index.append(0)
                 self.neighbor.append(1)
-        # construct indices for einsum and get w in proper shape for the calculation in each dimension
+        # construct indices for einsum and get w in proper shape for the
+        # calculation in each dimension
         if len(direction) == 3:
             self.dims = 'dc, cxy -> dxy'
             self.w = self.lattice.w[self.velocities].view(1, -1).t().unsqueeze(
@@ -121,15 +134,17 @@ class AntiBounceBackOutlet:
     def __call__(self, f):
         u = self.lattice.u(f)
         u_w = u[[slice(None)] + self.index] + 0.5 * (
-                    u[[slice(None)] + self.index] - u[
-                [slice(None)] + self.neighbor])
+                u[[slice(None)] + self.index]
+                - u[[slice(None)] + self.neighbor]
+        )
         f[[np.array(self.lattice.stencil.opposite)[
                self.velocities]] + self.index] = (
-                - f[[self.velocities] + self.index] + self.w *
-                self.lattice.rho(f)[[slice(None)] + self.index] *
-                (2 + torch.einsum(self.dims, self.lattice.e[self.velocities],
-                                  u_w) ** 2 / self.lattice.cs ** 4
-                 - (torch.norm(u_w, dim=0) / self.lattice.cs) ** 2)
+                - f[[self.velocities] + self.index]
+                + self.w * self.lattice.rho(f)[[slice(None)] + self.index]
+                * (2 + torch.einsum(self.dims,
+                                    self.lattice.e[self.velocities],
+                                    u_w) ** 2 / self.lattice.cs ** 4
+                   - (torch.norm(u_w, dim=0) / self.lattice.cs) ** 2)
         )
         return f
 
@@ -142,7 +157,8 @@ class AntiBounceBackOutlet:
 
     # not 100% sure about this. But collisions seem to stabilize the boundary.
     # def make_no_collision_mask(self, f_shape):
-    #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
+    #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool,
+    #                                    device=self.lattice.device)
     #    no_collision_mask[self.index] = 1
     #    return no_collision_mask
 
@@ -202,14 +218,16 @@ class PartiallySaturatedBC:
         u = self.lattice.u(f, rho=rho)
         feq = self.lattice.equilibrium(rho, u)
         # TODO: benchmark and possibly use indices (like _compact)
-        #  and/or calculate feq twice within torch.where (like _less_memory)
-        f = torch.where(self.mask, f - (1.0 - self.B) / self.tau * (f - feq)
-                        + self.B *
-                        ((f[self.lattice.stencil.opposite] -
-                          feq[self.lattice.stencil.opposite])
-                         - (f - self.lattice.equilibrium(rho,
-                                                         torch.zeros_like(u))))
-                        , f)
+        # and/or calculate feq twice within torch.where (like _less_memory)
+        f = torch.where(
+            self.mask,
+            f - (1.0 - self.B) / self.tau * (f - feq)
+            + self.B * ((f[self.lattice.stencil.opposite]
+                         - feq[self.lattice.stencil.opposite])
+                        - (f - self.lattice.equilibrium(rho,
+                                                        torch.zeros_like(u)))
+                        ),
+            f)
         return f
 
     def make_no_collision_mask(self, f_shape):

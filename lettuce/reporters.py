@@ -1,6 +1,5 @@
 """
 Input/output routines.
-TODO: Logging
 """
 
 import sys
@@ -9,7 +8,6 @@ import os
 import numpy as np
 import torch
 import pyevtk.hl as vtk
-from datetime import datetime
 
 __all__ = [
     "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter"
@@ -150,10 +148,8 @@ class ObservableReporter:
             if self.save_to_file:
                 self.out.append(entry)
             if self.print_to_screen:
-                print(*entry)  # , file=self.out)
+                print(*entry)
 
     def save(self):
-        if os.path.exists(self.filename_base):
-            self.filename_base += datetime.now().strftime('_%Y%m%d_%H%M%S')  # "_" + str(datetime.now()).replace(".", "").replace(":", "").replace(" ", "").replace("-", "")
         data = np.array(self.out)
-        np.savetxt(self.filename_base + ".csv", data)  # , delimiter=",")
+        np.savetxt(self.filename_base + ".csv", data)

@@ -9,7 +9,8 @@ from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
 
 
 class CouetteFlow2D(object):
-    def __init__(self, resolution, reynolds_number, mach_number, lattice, u0):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice,
+                 u0=0):
         self.resolution = resolution
         self.shape = (resolution, resolution)
         self._mask = np.zeros(shape=self.shape, dtype=bool)

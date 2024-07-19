@@ -24,7 +24,6 @@ def test_save_to_file(tmpdir):
                             streaming=streaming)
     energy = IncompressibleKineticEnergy(lattice, flow)
     reporter = ObservableReporter(energy, interval=2, print_to_screen=True,
-                                  save_to_file=True,
                                   filename_base=tmpdir / "output")
     simulation.reporters.append(reporter)
     simulation.step(4)

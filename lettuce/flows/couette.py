@@ -9,7 +9,7 @@ from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
 
 
 class CouetteFlow2D(object):
-    def __init__(self, resolution, reynolds_number, mach_number, lattice):
+    def __init__(self, resolution, reynolds_number, mach_number, lattice, u0):
         self.resolution = resolution
         self.shape = (resolution, resolution)
         self._mask = np.zeros(shape=self.shape, dtype=bool)
@@ -19,15 +19,17 @@ class CouetteFlow2D(object):
             characteristic_length_lu=resolution, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
+        self.u0 = u0  # background velocity
 
     def analytic_solution(self, x):
         dvdy = 1/self.resolution
         x, y = self.grid
-        u = np.array([dvdy*y + v0], dtype=float)
+        u = np.array([dvdy*y + self.u0], dtype=float)
         return u
 
     def initial_solution(self, x):
-        return np.array([0 * x[0]], dtype=float), np.array([0 * x[0], 0 * x[1]], dtype=float)
+        return (np.array([0 * x[0]], dtype=float),
+                np.array([0 * x[0], 0 * x[1]], dtype=float))
 
     @property
     def mask(self):
@@ -48,7 +50,8 @@ class CouetteFlow2D(object):
         kbottom[:, 1] = True
         return [
             # moving bounce back top
-            EquilibriumBoundaryPU(ktop, self.units.lattice, self.units, np.array([1.0, 0.0])),
+            EquilibriumBoundaryPU(ktop, self.units.lattice, self.units,
+                                  np.array([1.0, 0.0])),
             # bounce back bottom
             BounceBackBoundary(kbottom, self.units.lattice)
         ]

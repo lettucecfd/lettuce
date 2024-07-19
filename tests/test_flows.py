@@ -1,14 +1,16 @@
 import pytest
 import numpy as np
 import torch
-from lettuce import TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D, D2Q9, D3Q27, DoublyPeriodicShear2D
+from lettuce import (TaylorGreenVortex2D, TaylorGreenVortex3D, CouetteFlow2D,
+                     D2Q9, D3Q27, DoublyPeriodicShear2D)
 from lettuce import torch_gradient, DecayingTurbulence
 from lettuce import Lattice, Simulation, BGKCollision, StandardStreaming
 from lettuce import Obstacle
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
 
 # Flows to test
-INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence]
+INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D,
+                     DoublyPeriodicShear2D, DecayingTurbulence]
 INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 
 
@@ -19,7 +21,8 @@ def test_flow_2d(IncompressibleFlow, dtype_device):
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision,
+                            streaming=streaming)
     simulation.step(1)
 
 
@@ -30,7 +33,8 @@ def test_flow_3d(IncompressibleFlow, dtype_device):
     flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision,
+                            streaming=streaming)
     simulation.step(1)
 
 
@@ -41,9 +45,11 @@ def test_divergence(stencil, dtype_device):
     flow = DecayingTurbulence(50, 1, 0.05, lattice=lattice, ic_energy=0.5)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    ekin = flow.units.convert_incompressible_energy_to_pu(
-        torch.sum(lattice.incompressible_energy(simulation.f))) * flow.units.convert_length_to_pu(1.0) ** lattice.D
+    simulation = Simulation(flow=flow, lattice=lattice, collision=collision,
+                            streaming=streaming)
+    ekin = (flow.units.convert_incompressible_energy_to_pu(
+            torch.sum(lattice.incompressible_energy(simulation.f)))
+            * flow.units.convert_length_to_pu(1.0) ** lattice.D)
 
     u0 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[0])
     u1 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[1])
@@ -56,7 +62,8 @@ def test_divergence(stencil, dtype_device):
         u2 = flow.units.convert_velocity_to_pu(lattice.u(simulation.f)[2])
         grad_u2 = torch_gradient(u2, dx=dx, order=6).cpu().numpy()
         divergence += np.sum(grad_u2[2])
-    assert (flow.ic_energy == pytest.approx(lattice.convert_to_numpy(ekin), rel=1))
+    assert (flow.ic_energy == pytest.approx(lattice.convert_to_numpy(ekin),
+                                            rel=1))
     assert (0 == pytest.approx(divergence, abs=2e-3))
 
 
@@ -76,7 +83,8 @@ def test_obstacle(stencil, dtype_device):
     elif stencil is D3Q27:
         mask = np.zeros([nx, ny, nz])
         mask[3:6, 3:6, :] = 1
-        flow = Obstacle((nx, ny, nz), 100, 0.1, lattice=lattice, domain_length_x=3)
+        flow = Obstacle((nx, ny, nz), 100, 0.1, lattice=lattice,
+                        domain_length_x=3)
     else:
         return NotImplementedError
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)

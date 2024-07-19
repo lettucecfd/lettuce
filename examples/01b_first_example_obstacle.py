@@ -59,7 +59,7 @@ Collision definition.
 
 The collision is usually BGK (low dissipation, but may be unstable) or KBC
 (higher dissipation, but generally stable). BGK is preferred for converging
-flows, KBC is preferred for driven flows in smaller domains (where energy 
+flows, KBC is preferred for driven flows in smaller domains (where energy
 conversation plays a smaller role, but gradients may be higher).
 """
 collision = lt.KBCCollision2D(lattice, tau=flow.units.relaxation_parameter_lu)

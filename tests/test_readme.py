@@ -13,7 +13,7 @@ def test_readme():
     flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
+    simulation = Simulation(flow, lattice, collision, streaming)
     mlups = simulation.step(num_steps=1)
 
     print("Performance in MLUPS:", mlups)

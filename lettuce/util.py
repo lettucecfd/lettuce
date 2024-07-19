@@ -6,10 +6,21 @@ import inspect
 import torch
 
 __all__ = [
+    "get_subclasses", 'all_stencils',
     "LettuceException", "LettuceWarning", "InefficientCodeWarning", "ExperimentalWarning",
-    "get_subclasses", "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson",
-    "append_axes"
+    "torch_gradient", "torch_jacobi", "grid_fine_to_coarse", "pressure_poisson", "append_axes"
 ]
+
+
+def get_subclasses(classname, module):
+    for name, obj in inspect.getmembers(module):
+        if hasattr(obj, "__bases__") and classname in obj.__bases__:
+            yield obj
+
+
+def all_stencils():
+    import lettuce.stencils
+    return list(get_subclasses(lettuce.stencils.Stencil, module=lettuce.stencils))
 
 
 class LettuceException(Exception):
@@ -26,12 +37,6 @@ class InefficientCodeWarning(LettuceWarning):
 
 class ExperimentalWarning(LettuceWarning):
     pass
-
-
-def get_subclasses(classname, module):
-    for name, obj in inspect.getmembers(module):
-        if hasattr(obj, "__bases__") and classname in obj.__bases__:
-            yield obj
 
 
 def torch_gradient(f, dx=1, order=2):

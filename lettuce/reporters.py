@@ -10,7 +10,8 @@ import torch
 import pyevtk.hl as vtk
 
 __all__ = [
-    "write_image", "write_vtk", "VTKReporter", "ObservableReporter", "ErrorReporter"
+    "write_image", "write_vtk", "VTKReporter", "ObservableReporter",
+    "ErrorReporter"
 ]
 
 
@@ -37,7 +38,8 @@ def write_vtk(point_dict, id=0, filename_base="./data/output"):
 class VTKReporter:
     """General VTK Reporter for velocity and pressure"""
 
-    def __init__(self, lattice, flow, interval=50, filename_base="./data/output"):
+    def __init__(self, lattice, flow, interval=50,
+                 filename_base="./data/output"):
         self.lattice = lattice
         self.flow = flow
         self.interval = interval
@@ -50,25 +52,38 @@ class VTKReporter:
     def __call__(self, i, t, f):
         if i % self.interval == 0:
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
-            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+            p = self.flow.units.convert_density_lu_to_pressure_pu(
+                    self.lattice.rho(f)
+                )
             if self.lattice.D == 2:
-                self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ..., None])
+                self.point_dict["p"] = self.lattice.convert_to_numpy(
+                        p[0, ..., None]
+                    )
                 for d in range(self.lattice.D):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ..., None])
+                    self.point_dict[f"u{'xyz'[d]}"] = (
+                        self.lattice.convert_to_numpy(u[d, ..., None])
+                    )
             else:
                 self.point_dict["p"] = self.lattice.convert_to_numpy(p[0, ...])
                 for d in range(self.lattice.D):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.lattice.convert_to_numpy(u[d, ...])
+                    self.point_dict[f"u{'xyz'[d]}"] = (
+                        self.lattice.convert_to_numpy(u[d, ...])
+                    )
             write_vtk(self.point_dict, i, self.filename_base)
 
     def output_mask(self, no_collision_mask):
-        """Outputs the no_collision_mask of the simulation object as VTK-file with range [0,1]
+        """Outputs the no_collision_mask of the simulation object as VTK-file
+        with range [0,1].
         Usage: vtk_reporter.output_mask(simulation.no_collision_mask)"""
         point_dict = dict()
         if self.lattice.D == 2:
-            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask)[..., None].astype(int)
+            point_dict["mask"] = self.lattice.convert_to_numpy(
+                    no_collision_mask
+                )[..., None].astype(int)
         else:
-            point_dict["mask"] = self.lattice.convert_to_numpy(no_collision_mask).astype(int)
+            point_dict["mask"] = self.lattice.convert_to_numpy(
+                    no_collision_mask
+                ).astype(int)
         vtk.gridToVTK(self.filename_base + "_mask",
                       np.arange(0, point_dict["mask"].shape[0]),
                       np.arange(0, point_dict["mask"].shape[1]),
@@ -94,9 +109,13 @@ class ErrorReporter:
             pref = self.lattice.convert_to_tensor(pref)
             uref = self.lattice.convert_to_tensor(uref)
             u = self.flow.units.convert_velocity_to_pu(self.lattice.u(f))
-            p = self.flow.units.convert_density_lu_to_pressure_pu(self.lattice.rho(f))
+            p = self.flow.units.convert_density_lu_to_pressure_pu(
+                    self.lattice.rho(f)
+                )
 
-            resolution = torch.pow(torch.prod(self.lattice.convert_to_tensor(p.size())), 1 / self.lattice.D)
+            resolution = torch.pow(torch.prod(
+                    self.lattice.convert_to_tensor(p.size())
+                ), 1 / self.lattice.D)
 
             err_u = torch.norm(u - uref) / resolution ** (self.lattice.D / 2)
             err_p = torch.norm(p - pref) / resolution ** (self.lattice.D / 2)
@@ -123,7 +142,8 @@ class ObservableReporter:
     >>> # simulation.reporters.append(reporter)
     """
 
-    def __init__(self, observable, interval=1, out=[], print_to_screen=True, save_to_file=False, filename_base="./data/output"):
+    def __init__(self, observable, interval=1, out=[], print_to_screen=True,
+                 save_to_file=False, filename_base="./data/output"):
         self.observable = observable
         self.interval = interval
         self.out = [] if out is None else out
@@ -138,7 +158,9 @@ class ObservableReporter:
 
     def __call__(self, i, t, f):
         if i % self.interval == 0:
-            observed = self.observable.lattice.convert_to_numpy(self.observable(f))
+            observed = self.observable.lattice.convert_to_numpy(
+                    self.observable(f)
+                )
             assert len(observed.shape) < 2
             if len(observed.shape) == 0:
                 observed = [observed.item()]

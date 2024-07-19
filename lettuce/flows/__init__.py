@@ -8,6 +8,7 @@ from lettuce.flows.poiseuille import PoiseuilleFlow2D
 from lettuce.flows.doublyshear import DoublyPeriodicShear2D
 from lettuce.flows.decayingturbulence import DecayingTurbulence
 from lettuce.flows.obstacle import Obstacle, Obstacle2D, Obstacle3D
+from lettuce.flows.liddrivencavity import Cavity2D
 from lettuce.stencils import D2Q9, D3Q19
 
 
@@ -17,5 +18,6 @@ flow_by_name = {
     "poiseuille2D": [PoiseuilleFlow2D, D2Q9],
     "shear2D": [DoublyPeriodicShear2D, D2Q9],
     "couette2D": [CouetteFlow2D, D2Q9],
-    "decay": [DecayingTurbulence, D2Q9]
+    "decay": [DecayingTurbulence, D2Q9],
+    "cavity": [Cavity2D, D2Q9]
 }

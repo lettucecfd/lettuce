@@ -19,10 +19,10 @@ def test_save_to_file(tmpdir):
                             collision=collision,
                             streaming=streaming)
     energy = lt.IncompressibleKineticEnergy(lattice, flow)
-    reporter = lt.ObservableReporter(energy, interval=5, print_to_screen=True, save_to_file=True,
+    reporter = lt.ObservableReporter(energy, interval=2, print_to_screen=True, save_to_file=True,
                                      filename_base="./data/output")
     simulation.reporters.append(reporter)
-    simulation.step(3)
+    simulation.step(4)
     simulation.save_reporters()
     assert os.path.isfile(tmpdir / "output.csv")
 

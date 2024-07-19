@@ -13,7 +13,7 @@ lattice = lt.Lattice(lt.D2Q9, device="cuda")
 """
 Flow definitions.
 
-We need 
+We need
 1. the resolution in x and y direction
 2. the Reynolds number (i.e., how fast the flow behaves compared to the object's length and fluid's viscosity)
 3. the Mach number (i.e., how fast the flow is compared to speed of sound; Ma=0.3 is stable, above is discouraged)

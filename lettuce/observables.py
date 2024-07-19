@@ -9,7 +9,8 @@ import numpy as np
 from lettuce.util import torch_gradient
 from packaging import version
 
-__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy", "Enstrophy", "EnergySpectrum"]
+__all__ = ["Observable", "MaximumVelocity", "IncompressibleKineticEnergy",
+           "Enstrophy", "EnergySpectrum", "Mass"]
 
 
 class Observable:
@@ -53,7 +54,8 @@ class Enstrophy(Observable):
         dx = self.flow.units.convert_length_to_pu(1.0)
         grad_u0 = torch_gradient(u0, dx=dx, order=6)
         grad_u1 = torch_gradient(u1, dx=dx, order=6)
-        vorticity = torch.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
+        vorticity = torch.sum((grad_u0[1] - grad_u1[0])
+                              * (grad_u0[1] - grad_u1[0]))
         if self.lattice.D == 3:
             u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
             grad_u2 = torch_gradient(u2, dx=dx, order=6)

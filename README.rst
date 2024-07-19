@@ -69,23 +69,34 @@ Installation
 ------------
 
 * Install the anaconda package manager from www.anaconda.org
-* Create a new conda environment and install PyTorch::
+* Create a new conda environment and activate it::
 
-    conda create -n lettuce -c pytorch -c nvidia pytorch pytorch-cuda=12.1
-
-* Activate the conda environment::
-
+    conda create -n lettuce
     conda activate lettuce
 
-* Install all requirements::
+* Follow the recommendations at https://pytorch.org/get-started/locally/ to install pytorch based on your GPU's CUDA version. To get your CUDA version, do::
 
-    conda install -c conda-forge -c anaconda matplotlib pytest click pyevtk h5py mmh3
+    nvcc --version
+
+* You may need to install the nvidia toolkit. You may follow the instructions at: https://developer.nvidia.com/cuda-downloads. You may need to check the compatibility of your NVIDIA driver with the desired CUDA version: https://docs.nvidia.com/deploy/cuda-compatibility/.
+For the latest versions (if supported by your GPU) use::
+
+    conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia
+
+* Install the remaining dependencies::
+
+    conda activate lettuce4ad
+    conda install -c pytorch -c conda-forge matplotlib pytest click pyevtk  mmh3 h5py scipy pandas numpy
 
 * Clone this repository from github
 * Change into the cloned directory
-* Run the install script::
+* If you want to only USE lettuce, run the install script::
 
     python setup.py install
+
+* If you are a developer, do::
+
+    python setup.py develop
 
 * Run the test cases::
 

@@ -4,9 +4,17 @@
         :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
         :alt: CI Status
 
-.. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
-        :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
+        :target: https://github.com/lettucecfd/lettuce/actions/workflows/codeql.yml
+        :alt: Codeql Status
+
+.. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
+        :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
+        :target: https://doi.org/10.5281/zenodo.3757641
+
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python
@@ -14,12 +22,10 @@ GPU-accelerated Lattice Boltzmann Simulations in Python
 
 Lettuce is a Computational Fluid Dynamics framework based on the lattice Boltzmann method (LBM).
 
-It provides
-
-* GPU-accelerated computation based on PyTorch
-* Rapid Prototyping in 2D and 3D
-* Usage of neural networks and automatic differentiation within LBM
-* Custom PyTorch extensions for optimized native CUDA kernels
+- **GPU-Accelerated Computation**: Utilizes PyTorch for high performance and efficient GPU utilization.
+- **Rapid Prototyping**: Supports both 2D and 3D simulations for quick and reliable analysis.
+- **Advanced Techniques**: Integrates neural networks and automatic differentiation to enhance LBM.
+- **Optimized Performance**: Includes custom PyTorch extensions for native CUDA kernels.
 
 Resources
 ---------
@@ -34,19 +40,6 @@ Resources
 .. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
 .. _Code: https://github.com/lettucecfd/lettuce-paper
 
-When using lettuce please cite::
-
-    @inproceedings{bedrunka2021lettuce,
-      title={Lettuce: PyTorch-Based Lattice Boltzmann Framework},
-      author={Bedrunka, Mario Christopher and Wilde, Dominik and Kliemank, Martin and Reith, Dirk and Foysi, Holger and Kr{\"a}mer, Andreas},
-      booktitle={High Performance Computing: ISC High Performance Digital 2021 International Workshops, Frankfurt am Main, Germany, June 24--July 2, 2021, Revised Selected Papers},
-      pages={40},
-      organization={Springer Nature}
-    }
-
-
-
-
 
 Getting Started
 ---------------
@@ -56,44 +49,37 @@ The following Python code will run a two-dimensional Taylor-Green vortex on a GP
 .. code:: python
 
     import torch
-    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
+    import lettuce as lt
 
-    device = "cuda:0"   # for running on cpu: device = "cpu"
-    dtype = torch.float32
-
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
+    lattice = lt.Lattice(lt.D2Q9, device='cuda', dtype=torch.float64, use_native=False)  # for running on cpu: device='cpu'
+    flow = lt.TaylorGreenVortex2D(resolution=128, reynolds_number=100, mach_number=0.05, lattice=lattice)
+    collision = lt.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    streaming = lt.StandardStreaming(lattice)
+    simulation = lt.Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     mlups = simulation.step(num_steps=1000)
-
     print("Performance in MLUPS:", mlups)
 
+More advanced examples_ are available as jupyter notebooks.
 
-More advanced examples_ are available as jupyter notebooks:
-
-* `A First Example`_
-* `Decaying Turbulence`_
+Please ensure you have Jupyter installed to run these notebooks.
 
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
-.. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
-.. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
-
 
 Installation
 ------------
 
 * Install the anaconda package manager from www.anaconda.org
-* Create a new conda environment and install all dependencies::
+* Create a new conda environment and install PyTorch::
 
-    conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"  mmh3
-
+    conda create -n lettuce -c pytorch -c nvidia pytorch pytorch-cuda=12.1
 
 * Activate the conda environment::
 
     conda activate lettuce
+
+* Install all requirements::
+
+    conda install -c conda-forge -c anaconda matplotlib pytest click pyevtk h5py mmh3
 
 * Clone this repository from github
 * Change into the cloned directory
@@ -118,6 +104,19 @@ Installation
     lettuce benchmark
 
 
+Citation
+--------
+If you use Lettuce in your research, please cite the following paper::
+
+    @inproceedings{bedrunka2021lettuce,
+      title={Lettuce: PyTorch-Based Lattice Boltzmann Framework},
+      author={Bedrunka, Mario Christopher and Wilde, Dominik and Kliemank, Martin and Reith, Dirk and Foysi, Holger and Kr{\"a}mer, Andreas},
+      booktitle={High Performance Computing: ISC High Performance Digital 2021 International Workshops, Frankfurt am Main, Germany, June 24--July 2, 2021, Revised Selected Papers},
+      pages={40},
+      organization={Springer Nature}
+    }
+
+
 Credits
 -------
 We use the following third-party packages:
@@ -130,6 +129,7 @@ We use the following third-party packages:
 * versioneer_
 * pyevtk_
 * h5py_
+* mmh3_
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
@@ -145,6 +145,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _versioneer: https://github.com/python-versioneer/python-versioneer
 .. _pyevtk: https://github.com/pyscience-projects/pyevtk
 .. _h5py: https://github.com/h5py/h5py
+.. _mmh3: https://github.com/hajimes/mmh3
 
 License
 -----------

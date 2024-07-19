@@ -41,7 +41,7 @@ y_c = 0.5   # center along y
 flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
 
 """
-To show 2D images, you need to rotate the outputs. This is because in lettuce, the first axis is downstream, while for 
+To show 2D images, you need to rotate the outputs. This is because in lettuce, the first axis is downstream, while for
 imshow it is vertical.
 """
 plt.imshow(flow.mask)

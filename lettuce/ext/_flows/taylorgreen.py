@@ -13,7 +13,9 @@ __all__ = ['TaylorGreenVortex2D', 'TaylorGreenVortex3D']
 
 
 class TaylorGreenVortex2D(ExtFlow):
-    def __init__(self, context: 'Context', resolution: Union[int, List[int]], reynolds_number, mach_number, stencil: Optional['Stencil'] = None,
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
                  equilibrium: Optional['Equilibrium'] = None):
         ExtFlow.__init__(self, context, resolution, reynolds_number, mach_number, stencil, equilibrium)
 

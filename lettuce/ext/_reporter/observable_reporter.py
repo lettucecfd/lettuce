@@ -2,7 +2,7 @@ import sys
 import torch
 import numpy as np
 
-from ... import Reporter, Context, Flow
+from ... import Reporter, Flow
 
 __all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity',
            'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum',
@@ -45,20 +45,20 @@ class Enstrophy(Observable):
     """
 
     def __call__(self, f):
-        u0 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[0])
-        u1 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[1])
+        u0 = self.flow.units.convert_velocity_to_pu(self.flow.u()[0])
+        u1 = self.flow.units.convert_velocity_to_pu(self.flow.u()[1])
         dx = self.flow.units.convert_length_to_pu(1.0)
         grad_u0 = torch_gradient(u0, dx=dx, order=6)
         grad_u1 = torch_gradient(u1, dx=dx, order=6)
         vorticity = torch.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
-        if self.lattice.D == 3:
-            u2 = self.flow.units.convert_velocity_to_pu(self.lattice.u(f)[2])
+        if self.flow.stencil.d == 3:
+            u2 = self.flow.units.convert_velocity_to_pu(self.flow.u()[2])
             grad_u2 = torch_gradient(u2, dx=dx, order=6)
             vorticity += torch.sum(
                 (grad_u2[1] - grad_u1[2]) * (grad_u2[1] - grad_u1[2])
                 + ((grad_u0[2] - grad_u2[0]) * (grad_u0[2] - grad_u2[0]))
             )
-        return vorticity * dx ** self.lattice.D
+        return vorticity * dx ** self.flow.stencil.d
 
 
 class EnergySpectrum(Observable):
@@ -68,30 +68,33 @@ class EnergySpectrum(Observable):
         super(EnergySpectrum, self).__init__(flow)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
         self.dimensions = self.flow.grid[0].shape
-        frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
+        frequencies = [self.context.convert_to_tensor(np.fft.fftfreq(dim,
+                                                               d=1 / dim)) for dim in self.dimensions]
         wavenumbers = torch.stack(torch.meshgrid(*frequencies))
         wavenorms = torch.norm(wavenumbers, dim=0)
 
-        if self.lattice.D == 3:
+        if self.flow.stencil.d == 3:
             self.norm = self.dimensions[0] * np.sqrt(2 * np.pi) / self.dx ** 2
         else:
             self.norm = self.dimensions[0] / self.dx
 
         self.wavenumbers = torch.arange(int(torch.max(wavenorms)))
         self.wavemask = (
-                (wavenorms[..., None] > self.wavenumbers.to(dtype=lattice.dtype, device=lattice.device) - 0.5) &
-                (wavenorms[..., None] <= self.wavenumbers.to(dtype=lattice.dtype, device=lattice.device) + 0.5)
+                (wavenorms[..., None] > self.wavenumbers.to(
+                    dtype=self.context.dtype,
+                                                            device=self.context.device) - 0.5) &
+                (wavenorms[..., None] <= self.wavenumbers.to(dtype=self.context.dtype, device=self.context.device) + 0.5)
         )
 
     def __call__(self, f):
-        u = self.lattice.u(f)
+        u = self.flow.u()
         return self.spectrum_from_u(u)
 
     def spectrum_from_u(self, u):
         u = self.flow.units.convert_velocity_to_pu(u)
         ekin = self._ekin_spectrum(u)
-        ek = ekin[..., None] * self.wavemask.to(dtype=self.lattice.dtype)
-        ek = ek.sum(torch.arange(self.lattice.D).tolist())
+        ek = ekin[..., None] * self.wavemask.to(dtype=self.context.dtype)
+        ek = ek.sum(torch.arange(self.flow.stencil.d).tolist())
         return ek
 
     def _ekin_spectrum(self, u):
@@ -105,8 +108,9 @@ class EnergySpectrum(Observable):
     def _ekin_spectrum_torch_lt_18(self, u):
         zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
         uh = (torch.stack([
-            torch.fft(torch.cat((u[i][..., None], zeros), self.lattice.D),
-                      signal_ndim=self.lattice.D) for i in range(self.lattice.D)]) / self.norm)
+            torch.fft(torch.cat((u[i][..., None], zeros),
+                                self.flow.stencil.d),
+                      signal_ndim=self.flow.stencil.d) for i in range(self.flow.stencil.d)]) / self.norm)
         ekin = torch.sum(0.5 * (uh[..., 0] ** 2 + uh[..., 1] ** 2), dim=0)
         return ekin
 

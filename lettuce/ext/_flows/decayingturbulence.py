@@ -6,27 +6,44 @@ Additional attributes / properties
 __________
 energy_spectrum: returns a pair [spectrum, wavenumbers]
 """
+from typing import Union, List, Optional
 
 import numpy as np
 from lettuce._unit import UnitConversion
 
+from ... import UnitConversion
+from . import ExtFlow
+
 __all__ = ['DecayingTurbulence']
 
 
-class DecayingTurbulence:
+class DecayingTurbulence(ExtFlow):
 
-    def __init__(self, resolution, reynolds_number, mach_number, lattice, k0=20, ic_energy=0.5):
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number, k0=20, ic_energy=0.5,
+                 stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None):
+        ExtFlow.__init__(self, context, resolution, reynolds_number,
+                         mach_number, stencil, equilibrium)
         self.k0 = k0
         self.ic_energy = ic_energy
-        self.resolution = resolution
-        self.units = UnitConversion(
-            lattice,
-            reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=2 * np.pi,
-            characteristic_velocity_pu=None
-        )
         self.wavenumbers = []
         self.spectrum = []
+
+    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution] * 2
+        else:
+            assert len(resolution) == 2, 'the resolution of a 2d taylor green vortex must obviously be 2!'
+            return resolution
+
+    def make_units(self, reynolds_number, mach_number, resolution) -> 'UnitConversion':
+        return UnitConversion(
+            reynolds_number=reynolds_number,
+            mach_number=mach_number,
+            characteristic_length_lu=resolution[0],
+            characteristic_length_pu=2 * np.pi,
+            characteristic_velocity_pu=1)
 
     def analytic_solution(self, x, t=0):
         return

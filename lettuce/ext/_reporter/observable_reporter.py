@@ -2,14 +2,16 @@ import sys
 import torch
 import numpy as np
 
-from ... import Reporter
+from ... import Reporter, Context, Flow
 
-__all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity', 'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum', 'Mass']
+__all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity',
+           'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum',
+           'Mass']
 
 
 class Observable:
-    def __init__(self, context, flow):
-        self.context = context
+    def __init__(self, flow: Flow):
+        self.context = flow.context
         self.flow = flow
 
     def __call__(self, f):
@@ -62,8 +64,8 @@ class Enstrophy(Observable):
 class EnergySpectrum(Observable):
     """The kinetic energy spectrum"""
 
-    def __init__(self, lattice, flow):
-        super(EnergySpectrum, self).__init__(lattice, flow)
+    def __init__(self, flow: Flow):
+        super(EnergySpectrum, self).__init__(flow)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
         self.dimensions = self.flow.grid[0].shape
         frequencies = [self.lattice.convert_to_tensor(np.fft.fftfreq(dim, d=1 / dim)) for dim in self.dimensions]
@@ -126,8 +128,8 @@ class Mass(Observable):
         which do not count into the total mass (e.g. bounce-back boundary).
     """
 
-    def __init__(self, lattice, flow, no_mass_mask=None):
-        super(Mass, self).__init__(lattice, flow)
+    def __init__(self, flow: Flow, no_mass_mask=None):
+        super(Mass, self).__init__(flow)
         self.mask = no_mass_mask
 
     def __call__(self, f):

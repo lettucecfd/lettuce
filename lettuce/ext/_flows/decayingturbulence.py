@@ -34,7 +34,6 @@ class DecayingTurbulence(ExtFlow):
         if isinstance(resolution, int):
             return [resolution] * 2
         else:
-            assert len(resolution) == 2, 'the resolution of a 2d taylor green vortex must obviously be 2!'
             return resolution
 
     def make_units(self, reynolds_number, mach_number, resolution) -> 'UnitConversion':

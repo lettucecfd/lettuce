@@ -128,6 +128,8 @@ class DecayingTurbulence(ExtFlow):
         return u
 
     def _compute_initial_pressure(self):
+        # TODO: use pressure_poisson (@12b02686) to approximate rho from
+        #  u-field
         return np.zeros(self.dimensions)[None, ...]
 
     def initial_pu(self):

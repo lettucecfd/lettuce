@@ -3,6 +3,8 @@ import torch
 import numpy as np
 
 from ... import Reporter, Flow
+from ...util import torch_gradient
+from packaging import version
 
 __all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity',
            'IncompressibleKineticEnergy', 'Enstrophy', 'EnergySpectrum',
@@ -22,7 +24,7 @@ class MaximumVelocity(Observable):
     """Maximum velocitiy"""
 
     def __call__(self, f):
-        u = self.lattice.u(f)
+        u = self.flow.u()
         return self.flow.units.convert_velocity_to_pu(torch.norm(u, dim=0).max())
 
 
@@ -68,8 +70,9 @@ class EnergySpectrum(Observable):
         super(EnergySpectrum, self).__init__(flow)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
         self.dimensions = self.flow.grid[0].shape
-        frequencies = [self.context.convert_to_tensor(np.fft.fftfreq(dim,
-                                                               d=1 / dim)) for dim in self.dimensions]
+        frequencies = [self.context.convert_to_tensor(
+                np.fft.fftfreq(dim, d=1 / dim)
+            ) for dim in self.dimensions]
         wavenumbers = torch.stack(torch.meshgrid(*frequencies))
         wavenorms = torch.norm(wavenumbers, dim=0)
 
@@ -106,17 +109,21 @@ class EnergySpectrum(Observable):
             return self._ekin_spectrum_torch_lt_18(u)
 
     def _ekin_spectrum_torch_lt_18(self, u):
-        zeros = torch.zeros(self.dimensions, dtype=self.lattice.dtype, device=self.lattice.device)[..., None]
+        zeros = torch.zeros(self.dimensions, dtype=self.context.dtype,
+                            device=self.context.device)[..., None]
         uh = (torch.stack([
-            torch.fft(torch.cat((u[i][..., None], zeros),
-                                self.flow.stencil.d),
-                      signal_ndim=self.flow.stencil.d) for i in range(self.flow.stencil.d)]) / self.norm)
+                torch.fft(torch.cat((u[i][..., None], zeros),
+                          self.flow.stencil.d),
+                          signal_ndim=self.flow.stencil.d)
+                for i in range(self.flow.stencil.d)]) / self.norm
+            )
         ekin = torch.sum(0.5 * (uh[..., 0] ** 2 + uh[..., 1] ** 2), dim=0)
         return ekin
 
     def _ekin_spectrum_torch_ge_18(self, u):
         uh = (torch.stack([
-            torch.fft.fftn(u[i], dim=tuple(torch.arange(self.lattice.D))) for i in range(self.lattice.D)
+            torch.fft.fftn(u[i], dim=tuple(torch.arange(self.flow.stencil.d)))
+            for i in range(self.flow.stencil.d)
         ]) / self.norm)
         ekin = torch.sum(0.5 * (uh.imag ** 2 + uh.real ** 2), dim=0)
         return ekin
@@ -150,10 +157,10 @@ class ObservableReporter(Reporter):
     --------
     Create an Enstrophy reporter.
 
-    >>> from lettuce.ext import TaylorGreenVortex3D, Enstrophy, D3Q27, Lattice
-    >>> lattice = Lattice(D3Q27, device="cpu")
-    >>> flow = TaylorGreenVortex(50, 300, 0.1, lattice)
-    >>> enstrophy = Enstrophy(lattice, flow)
+    >>> from lettuce import TaylorGreenVortex3D, Enstrophy, D3Q27, Context
+    >>> context = Context(device=torch.device("cpu"))
+    >>> flow = TaylorGreenVortex3D(context, 50, 300, 0.1, D3Q27())
+    >>> enstrophy = Enstrophy(flow)
     >>> reporter = ObservableReporter(enstrophy, interval=10)
     >>> # simulation = ...
     >>> # simulation.reporters.append(reporter)

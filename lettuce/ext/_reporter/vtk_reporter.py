@@ -29,8 +29,8 @@ class VTKReporter(Reporter):
 
     def __call__(self, flow: 'Flow'):
         if self.flow.i % self.interval == 0:
-            u = self.flow.units.convert_velocity_to_pu(self.flow.u())
-            p = self.flow.units.convert_density_lu_to_pressure_pu(self.flow.rho())
+            u = self.flow.u_pu
+            p = self.flow.p_pu
             if self.flow.stencil.d == 2:
                 self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ..., None])
                 for d in range(self.flow.stencil.d):

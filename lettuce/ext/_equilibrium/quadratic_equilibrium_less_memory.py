@@ -11,10 +11,8 @@ class QuadraticEquilibriumLessMemory(Equilibrium):
     """
 
     def __call__(self, flow: 'Flow', rho=None, u=None):
-        if rho is None:
-            rho = flow.rho()
-        if u is None:
-            u = flow.u()
+        rho = flow.rho() if rho is None else rho
+        u = flow.u() if u is None else u
 
         return flow.einsum("q,q->q",
                            [flow.torch_stencil.w,

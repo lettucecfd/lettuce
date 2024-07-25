@@ -109,10 +109,10 @@ class Flow(ABC):
     def u(self, rho=None, acceleration=None) -> torch.Tensor:
         """velocity; the `acceleration` is used to compute the correct velocity
         in the presence of a forcing scheme."""
-        if rho is None:
-            rho = self.rho()
+        rho = self.rho() if rho is None else rho
         v = self.j() / rho
-        # apply correction due to forcing, which effectively averages the pre- and post-collision velocity
+        # apply correction due to forcing, which effectively averages the pre-
+        # and post-collision velocity
         correction = 0.0
         if acceleration is not None:
             if len(acceleration.shape) == 1:
@@ -145,12 +145,14 @@ class Flow(ABC):
         return self.rho() - self.einsum("q,q->", [self.f, f_w])
 
     def pseudo_entropy_local(self) -> torch.Tensor:
-        """pseudo_entropy derived by a Taylor expansion around the local equilibrium"""
+        """pseudo_entropy derived by a Taylor expansion around the local
+        equilibrium"""
         f_feq = self.f / self.equilibrium(self)
         return self.rho() - self.einsum("q,q->", [self.f, f_feq])
 
     def shear_tensor(self) -> torch.Tensor:
-        """computes the shear tensor of a given self.f in the sense Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
+        """computes the shear tensor of a given self.f in the sense
+        Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
         shear = self.einsum("qa,qb->qab",
                             [self.torch_stencil.e, self.torch_stencil.e])
         shear = self.einsum("q,qab->ab", [self.f, shear])

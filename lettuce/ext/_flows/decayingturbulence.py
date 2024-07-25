@@ -32,7 +32,7 @@ class DecayingTurbulence(ExtFlow):
 
     def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
-            return [resolution] * 2
+            return [resolution] * (stencil.d or self.stencil.d)
         else:
             return resolution
 
@@ -148,7 +148,3 @@ class DecayingTurbulence(ExtFlow):
         grid = [np.linspace(0, 2 * np.pi, num=self.resolution[0],
                             endpoint=False) for _ in range(self.stencil.d)]
         return np.meshgrid(*grid)
-
-    @property
-    def boundaries(self):
-        return []

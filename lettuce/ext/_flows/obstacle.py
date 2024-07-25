@@ -1,13 +1,19 @@
 import warnings
+from abc import ABC
+from typing import Union, List, Optional
+
 import numpy as np
-from ... import UnitConversion
+import torch
+
+from . import ExtFlow
+from ... import UnitConversion, Context, Stencil, Equilibrium
 from ...util import append_axes
 from .. import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
 
 __all__ = ['Obstacle']
 
 
-class Obstacle:
+class Obstacle(ExtFlow):
     """
     Flow class to simulate the flow around an object (mask).
     It consists of one inflow (equilibrium boundary)
@@ -30,7 +36,7 @@ class Obstacle:
     --------
     Initialization of flow around a cylinder:
 
-    >>> from lettuce import Lattice, D2Q9
+    >>> from lettuce import D2Q9
     >>> flow = Obstacle(
     >>>     shape=(101, 51),
     >>>     reynolds_number=100,
@@ -43,17 +49,34 @@ class Obstacle:
     >>> flow.mask[np.where(condition)] = 1
    """
 
-    def __init__(self, shape, reynolds_number, mach_number, lattice, domain_length_x, char_length=1, char_velocity=1):
-        if len(shape) != lattice.D:
-            raise ValueError(f"{lattice.D}-dimensional lattice requires {lattice.D}-dimensional `shape`")
-        self.shape = shape
-        char_length_lu = shape[0] / domain_length_x * char_length
-        self.units = UnitConversion(
+    def __init__(self, context: Context, resolution: Union[int, List[int]],
+                 reynolds_number, mach_number, domain_length_x,
+                 char_length=1, char_velocity=1,
+                 stencil:  Optional[Stencil] = None,
+                 equilibrium: Optional[Equilibrium] = None):
+        self.char_length_lu = resolution[0] / domain_length_x * char_length
+        self.char_length = char_length
+        self.char_velocity = char_velocity
+        self.resolution = self.make_resolution(resolution, stencil)
+        self._mask = torch.zeros(self.resolution, dtype=torch.bool)
+        ExtFlow.__init__(self, context, resolution, reynolds_number,
+                         mach_number, stencil, equilibrium)
+
+    def make_units(self, reynolds_number, mach_number, resolution: List[int]
+                   ) -> 'UnitConversion':
+        return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=char_length_lu, characteristic_length_pu=char_length,
-            characteristic_velocity_pu=char_velocity
+            characteristic_length_lu=self.char_length_lu,
+            characteristic_length_pu=self.char_length,
+            characteristic_velocity_pu=self.char_velocity
         )
-        self._mask = np.zeros(shape=self.shape, dtype=bool)
+
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution] * (stencil.d or self.stencil.d)
+        else:
+            return resolution
 
     @property
     def mask(self):
@@ -61,19 +84,22 @@ class Obstacle:
 
     @mask.setter
     def mask(self, m):
-        assert isinstance(m, np.ndarray) and m.shape == self.shape
+        assert ((isinstance(m, np.ndarray) or isinstance(m, torch.Tensor)) and
+                all(m.shape[dim] == self.resolution[dim] for dim in range(
+                    self.stencil.d)))
         self._mask = m.astype(bool)
 
-    def initial_solution(self, x):
-        p = np.zeros_like(x[0], dtype=float)[None, ...]
+    def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
+        p = np.zeros_like(self.grid[0], dtype=float)[None, ...]
         u_char = self.units.characteristic_velocity_pu * self._unit_vector()
-        u_char = append_axes(u_char, self.units.lattice.D)
-        u = (1 - self.mask) * u_char
+        u_char = append_axes(u_char, self.stencil.d)
+        u = ~self.mask * u_char
         return p, u
 
     @property
     def grid(self):
-        xyz = tuple(self.units.convert_length_to_pu(np.arange(n)) for n in self.shape)
+        xyz = tuple(self.units.convert_length_to_pu(np.arange(n)) for n in
+                    self.resolution)
         return np.meshgrid(*xyz, indexing='ij')
 
     @property
@@ -81,7 +107,7 @@ class Obstacle:
         x = self.grid[0]
         return [
             EquilibriumBoundaryPU(
-                np.abs(x) < 1e-6, self.units.lattice, self.units,
+                self.context, torch.abs(x) < 1e-6, self.units.lattice, self.units,
                 self.units.characteristic_velocity_pu * self._unit_vector()
             ),
             AntiBounceBackOutlet(self.units.lattice, self._unit_vector().tolist()),
@@ -89,18 +115,4 @@ class Obstacle:
         ]
 
     def _unit_vector(self, i=0):
-        return np.eye(self.units.lattice.D)[i]
-
-
-def Obstacle2D(resolution_x, resolution_y, reynolds_number, mach_number, lattice, char_length_lu):
-    warnings.warn("Obstacle2D is deprecated. Use Obstacle instead", DeprecationWarning)
-    shape = (resolution_x, resolution_y)
-    domain_length_x = resolution_x / char_length_lu
-    return Obstacle(shape, reynolds_number, mach_number, lattice, domain_length_x=domain_length_x)
-
-
-def Obstacle3D(resolution_x, resolution_y, resolution_z, reynolds_number, mach_number, lattice, char_length_lu):
-    warnings.warn("Obstacle3D is deprecated. Use Obstacle instead", DeprecationWarning)
-    shape = (resolution_x, resolution_y, resolution_z)
-    domain_length_x = resolution_x / char_length_lu
-    return Obstacle(shape, reynolds_number, mach_number, lattice, domain_length_x=domain_length_x)
+        return np.eye(self.stencil.d)[i]

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "master"
+      - "cuda-native-philipp"
   pull_request:
     branches:
       - "master"

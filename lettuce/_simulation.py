@@ -68,12 +68,13 @@ class Simulation:
     reporter: List['Reporter']
 
     def __init__(self, flow: 'Flow', collision: 'Collision',
-                 boundaries: List['Boundary'] = None,
-                 reporter: List['Reporter'] = None):
+                 boundaries: List['Boundary'] = [],
+                 reporter: List['Reporter'] = []):
         self.flow = flow
         self.context = flow.context
         self.collision = collision
-        self.boundaries = [None] + sorted(boundaries, key=lambda b: str(b))  # Prefix [None] to ensure that Boundary.index (i.e., mask index) matches self.boundaries index
+        self.boundaries = [None] + sorted(boundaries, key=lambda b: str(b))  #
+                           # Prefix [None] to ensure that Boundary.index (i.e., mask index) matches self.boundaries index
         self.reporter = reporter
 
         # ==================================== #

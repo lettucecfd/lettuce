@@ -17,7 +17,7 @@ flow = lt.TaylorGreenVortex3D(context=context, resolution=resolution,
 
 # select collision model - try also KBCCollision or RegularizedCollision
 collision = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
-simulation = lt.Simulation(flow, collision, boundaries=[], reporter=[])
+simulation = lt.Simulation(flow, collision)
 
 # reporters will grab the results in between simulation steps
 # (see io.py and _simulation.py)
@@ -25,7 +25,7 @@ simulation = lt.Simulation(flow, collision, boundaries=[], reporter=[])
 energy = lt.IncompressibleKineticEnergy(flow)
 kinE_reporter = lt.ObservableReporter(energy, out=None)  # output to list
 simulation.reporter.append(kinE_reporter)
-kinE_reporter2 = lt.ObservableReporter(energy)  # output to console
+kinE_reporter2 = lt.ObservableReporter(energy, interval=100)  # console output
 simulation.reporter.append(kinE_reporter2)
 
 # Output: separate VTK-file with ux,uy,uz and p for every time step in ../data

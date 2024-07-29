@@ -68,7 +68,8 @@ class Simulation:
     reporter: List['Reporter']
 
     def __init__(self, flow: 'Flow', collision: 'Collision',
-                 boundaries: List['Boundary'], reporter: List['Reporter']):
+                 boundaries: List['Boundary'] = None,
+                 reporter: List['Reporter'] = None):
         self.flow = flow
         self.context = flow.context
         self.collision = collision

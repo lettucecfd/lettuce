@@ -73,7 +73,7 @@ class EnergySpectrum(Observable):
         frequencies = [self.context.convert_to_tensor(
                 np.fft.fftfreq(dim, d=1 / dim)
             ) for dim in self.dimensions]
-        wavenumbers = torch.stack(torch.meshgrid(*frequencies))
+        wavenumbers = torch.stack(torch.meshgrid(*frequencies, indexing='ij'))
         wavenorms = torch.norm(wavenumbers, dim=0)
 
         if self.flow.stencil.d == 3:

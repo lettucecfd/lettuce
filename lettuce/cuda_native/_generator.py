@@ -134,9 +134,9 @@ class Generator:
         d = self.stencil.d
         q = self.stencil.q
 
-        val['debug'] = 0
-        val['support_no_collision_mask'] = int(self.support_no_collision_mask)
-        val['support_no_streaming_mask'] = int(self.support_no_streaming_mask)
+        val['debug'] = str(0)
+        val['support_no_collision_mask'] = str(int(self.support_no_collision_mask))
+        val['support_no_streaming_mask'] = str(int(self.support_no_streaming_mask))
 
         val['d'] = str(d)
         val['q'] = str(q)
@@ -187,12 +187,13 @@ class Generator:
         return val
 
     @staticmethod
-    def format(val) -> AnyStr:
+    def format(val, generate_dir: Optional[AnyStr] = None) -> AnyStr:
         import os.path
         import tempfile
         from . import template
 
-        temp_dir = tempfile.mkdtemp()
+        if generate_dir is None:
+            generate_dir = tempfile.mkdtemp()
 
         for input_path_template, input_text_template in template.items():
             input_path = input_path_template.format(**val)
@@ -200,14 +201,14 @@ class Generator:
 
             input_dir, input_filename = os.path.split(input_path)
 
-            output_dir = os.path.join(temp_dir, input_dir)
+            output_dir: AnyStr = os.path.join(generate_dir, input_dir)
             os.makedirs(output_dir, exist_ok=True)
 
             output_path = os.path.join(output_dir, input_filename)
             with open(output_path, 'w') as output_file:
                 output_file.write(input_text)
 
-        return temp_dir
+        return generate_dir
 
     def _resolve(self):
         try:
@@ -219,7 +220,7 @@ class Generator:
             # noinspection PyUnresolvedReferences
             return native.invoke
         except ModuleNotFoundError:
-            print('Could not resolve native extension.')
+            print('Could not resolve cuda_native extension.')
             return None
         except AttributeError:
             print('Native module found but it is not working as expected.')

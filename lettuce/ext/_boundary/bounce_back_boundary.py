@@ -3,7 +3,7 @@ import torch
 from typing import List, Optional
 from abc import ABC
 from ... import Boundary, Flow, Context
-from ...native.ext import NativeBounceBackBoundary
+from ...cuda_native.ext import NativeBounceBackBoundary
 
 __all__ = ['BounceBackBoundary']
 

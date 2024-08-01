@@ -53,7 +53,7 @@ def main(ctx, cuda, gpu_id, precision):
 @click.option("-f", "--flow", type=click.Choice(list(flow_by_name.keys())), default="taylor2D")
 @click.option("-v", "--vtk-out", type=str, default="",
               help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
-@click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
+@click.option("--use-cuda_native/--use-no-cuda_native", default=True, help="whether to use the cuda_native implementation or not.")
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):
     """Run a short simulation and print performance in MLUPS.
@@ -101,7 +101,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):
 
 @main.command()
 @click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
-@click.option("--use-native/--use-no-native", default=True, help="whether to use the native implementation or not.")
+@click.option("--use-cuda_native/--use-no-cuda_native", default=True, help="whether to use the cuda_native implementation or not.")
 @click.pass_context
 def convergence(ctx, init_f_neq, use_native):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
@@ -152,4 +152,4 @@ def convergence(ctx, init_f_neq, use_native):
 
 if __name__ == "__main__":
     # convergence([], use_native=False)
-    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '10000', '--resolution', '2048', '--use-native']))
+    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '10000', '--resolution', '2048', '--use-cuda_native']))

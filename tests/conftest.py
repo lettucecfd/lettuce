@@ -17,8 +17,8 @@ STENCILS = list(get_subclasses(Stencil, _stencil))
             (torch.float32, "cpu", "no_native"),
             (torch.float64, "cuda", "no_native"),
             (torch.float32, "cuda", "no_native"),
-            (torch.float64, "cuda", "native"),
-            (torch.float32, "cuda", "native")),
+            (torch.float64, "cuda", "cuda_native"),
+            (torch.float32, "cuda", "cuda_native")),
     ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
 def configurations(request):
     dtype, device, native = request.param

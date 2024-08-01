@@ -1,7 +1,7 @@
 import torch
 
 from ... import Flow, Collision
-from ...native.ext import NativeNoCollision
+from ...cuda_native.ext import NativeNoCollision
 
 __all__ = ['NoCollision']
 

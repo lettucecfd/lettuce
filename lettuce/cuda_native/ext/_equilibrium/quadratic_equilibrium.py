@@ -1,4 +1,4 @@
-from lettuce.native import NativeEquilibrium
+from lettuce.cuda_native import NativeEquilibrium
 
 __all__ = ['NativeQuadraticEquilibrium']
 

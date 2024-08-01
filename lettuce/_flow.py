@@ -7,7 +7,7 @@ from typing import Optional, List, Union, Callable, AnyStr
 from abc import ABC, abstractmethod
 
 from . import *
-from .native import NativeEquilibrium
+from .cuda_native import NativeEquilibrium
 
 __all__ = ['Equilibrium', 'Flow']
 

@@ -3,7 +3,7 @@ import torch
 from typing import Optional, AnyStr
 
 from ... import Flow, Collision
-from ...native.ext import NativeBGKCollision
+from ...cuda_native.ext import NativeBGKCollision
 from .. import Force
 
 __all__ = ['BGKCollision']

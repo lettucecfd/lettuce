@@ -12,7 +12,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=6.0', "torch>=1.2", "numpy", "matplotlib", "pyevtk"]
+requirements = ['Click>=6.0', "torch>=2.1", "numpy==1.26.4", "matplotlib", "pyevtk", "h5py>=3.2.1", "mmh3"]
 
 setup_requirements = ['pytest-runner', 'pytest']
 
@@ -36,6 +36,7 @@ setup(
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,
+    package_data={'lettuce.native_generator': ['lettuce/native_generator/template/setup.py']},
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',

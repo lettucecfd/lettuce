@@ -119,6 +119,8 @@ def fix_native(request):
 
 @pytest.fixture(params=configuration_params(), ids=configuration_ids())
 def fix_configuration(request):
+    if 'cuda' in request.param[0].type and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.")
     return request.param
 
 

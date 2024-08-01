@@ -2,7 +2,7 @@ import numpy as np
 import pyevtk.hl as vtk
 import os
 
-from ... import Reporter, Flow
+from ... import Reporter
 
 __all__ = ['VTKReporter']
 

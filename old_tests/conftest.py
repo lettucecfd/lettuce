@@ -44,8 +44,8 @@ def stencil(request):
             (torch.float32, "cpu", ""),
             (torch.float64, "cuda:0", ""),
             (torch.float32, "cuda:0", ""),
-            (torch.float64, "cuda:0", "native"),
-            (torch.float32, "cuda:0", "native")),
+            (torch.float64, "cuda:0", "cuda_native"),
+            (torch.float32, "cuda:0", "cuda_native")),
     ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
 def lattice(request, stencil):
     """Run a test for all lattices (all _stencil, devices and data types available on the device.)"""
@@ -54,16 +54,16 @@ def lattice(request, stencil):
         pytest.skip(reason="CUDA not available.")
     if device == "cuda:0" and dtype == torch.float32:
         pytest.skip("TODO: loosen tolerances")
-    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native"))
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "cuda_native"))
 
 
 @pytest.fixture(
     params=((torch.float64, "cpu", "", "cuda:0", ""),
             (torch.float32, "cpu", "", "cuda:0", ""),
-            (torch.float64, "cpu", "", "cuda:0", "native"),
-            (torch.float32, "cpu", "", "cuda:0", "native"),
-            (torch.float64, "cuda:0", "", "cuda:0", "native"),
-            (torch.float32, "cuda:0", "", "cuda:0", "native")),
+            (torch.float64, "cpu", "", "cuda:0", "cuda_native"),
+            (torch.float32, "cpu", "", "cuda:0", "cuda_native"),
+            (torch.float64, "cuda:0", "", "cuda:0", "cuda_native"),
+            (torch.float32, "cuda:0", "", "cuda:0", "cuda_native")),
     ids=("cpu_cu_64", "cpu_cu_32", "cpu_native_64", "cpu_native_32", "cu_native_64", "cu_native_32"))
 def lattice2(request, stencil):
     """Run a test for all lattices (all _stencil, devices and data types available on the device.)"""
@@ -76,8 +76,8 @@ def lattice2(request, stencil):
         pytest.skip(reason="CUDA not available.")
     if device2 == "cuda:0" and dtype == torch.float32:
         pytest.skip("TODO: loosen tolerances")
-    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native")), \
-           Lattice(stencil, device=device2, dtype=dtype, use_native=(native2 == "native"))
+    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "cuda_native")), \
+           Lattice(stencil, device=device2, dtype=dtype, use_native=(native2 == "cuda_native"))
 
 
 @pytest.fixture()

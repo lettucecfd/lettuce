@@ -65,4 +65,4 @@ def test_native_bgk_collision():
     #     cpu_index = int((cpu_flow.f.cpu()[i, :, :] == float(i + 1)).nonzero(as_tuple=True)[0])
     #     native_index = int((native_flow.f.cpu()[i, :, :] == float(i + 1)).nonzero(as_tuple=True)[0])
     #     print(f"cpu    distribution {i} row {cpu_index}: ", cpu_flow.f.cpu()[i, :, :][cpu_index])
-    #     print(f"native distribution {i} row {native_index}: ", native_flow.f.cpu()[i, :, :][native_index])
+    #     print(f"cuda_native distribution {i} row {native_index}: ", native_flow.f.cpu()[i, :, :][native_index])

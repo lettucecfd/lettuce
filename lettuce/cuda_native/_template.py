@@ -11,35 +11,35 @@ import torch
 
 def _import_lettuce_native():
     import importlib
-    return importlib.import_module("lettuce_native_{name}.native")
+    return importlib.import_module("lettuce_native_{name}.cuda_native")
 
 
 def _ensure_cuda_path():
     import os
 
     # on windows add cuda path for
-    # native module to find all dll's
+    # cuda_native module to find all dll's
     if os.name == 'nt':
         os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
 
 
 # do not expose the os and importlib package
 _ensure_cuda_path()
-native = _import_lettuce_native()
+cuda_native = _import_lettuce_native()
 
 # noinspection PyUnresolvedReferences,PyCallingNonCallable,PyStatementEffect
 def invoke(simulation):
     {python_wrapper_before_buffer}
 
-    if simulation.flow._stencil.d == 3:
-        assert all(l % 8 == 0 for l in simulation.flow.f.shape[1:]), f"native requires all dimension of f to be a multiple of 8 (in 3d)"
+    if simulation.flow.stencil.d == 3:
+        assert all(l % 8 == 0 for l in simulation.flow.f.shape[1:]), f"cuda_native requires all dimension of f to be a multiple of 8 (in 3d)"
     else:
-        assert all(l % 16 == 0 for l in simulation.flow.f.shape[1:]), f"native requires all dimension of f to be a multiple of 16 (in 1d and 2d)"
+        assert all(l % 16 == 0 for l in simulation.flow.f.shape[1:]), f"cuda_native requires all dimension of f to be a multiple of 16 (in 1d and 2d)"
 
     if simulation.no_collision_mask is not None:
-        native.collide_and_stream_{name}(simulation.flow.f, simulation.flow.f_next, simulation.no_collision_mask, simulation.no_streaming_mask {cpp_wrapper_parameter_value})
+        cuda_native.collide_and_stream_{name}(simulation.flow.f, simulation.flow.f_next, simulation.no_collision_mask, simulation.no_streaming_mask {cpp_wrapper_parameter_value})
     else:
-        native.collide_and_stream_{name}(simulation.flow.f, simulation.flow.f_next {cpp_wrapper_parameter_value})
+        cuda_native.collide_and_stream_{name}(simulation.flow.f, simulation.flow.f_next {cpp_wrapper_parameter_value})
     {python_wrapper_after_buffer}
     simulation.flow.f, simulation.flow.f_next = simulation.flow.f_next, simulation.flow.f
 
@@ -393,7 +393,7 @@ setup(
     name='lettuce_native_{name}',
     ext_modules=[
         CUDAExtension(
-            name='lettuce_native_{name}.native',
+            name='lettuce_native_{name}.cuda_native',
             sources=native_sources,
             extra_compile_args={{'cxx': [], 'nvcc': ['--ptxas-options', '--warn-on-spills,--allow-expensive-optimizations=true,-O3', '--use_fast_math', '--optimize', '3', '--maxrregcount', '128']}}
         )

@@ -3,4 +3,4 @@ from ._collision import *
 from ._boundary import *
 from ._generator import *
 
-import lettuce.native.ext
+import lettuce.cuda_native.ext

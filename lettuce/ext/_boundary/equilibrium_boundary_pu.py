@@ -3,7 +3,7 @@ from abc import ABC
 import torch
 
 from ... import Boundary, Flow, Context
-from ...native.ext import NativeEquilibriumBoundaryPu
+from ...cuda_native.ext import NativeEquilibriumBoundaryPu
 
 __all__ = ['EquilibriumBoundaryPU']
 

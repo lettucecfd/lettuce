@@ -1,7 +1,7 @@
 from tests.common import *
 
 
-# TODO: Implement native generator and test suite
+# TODO: Implement cuda_native generator and test suite
 
 def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
     """

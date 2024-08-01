@@ -4,7 +4,7 @@ from ... import Flow, Equilibrium
 
 __all__ = ['QuadraticEquilibrium']
 
-from ...native.ext import NativeQuadraticEquilibrium
+from ...cuda_native.ext import NativeQuadraticEquilibrium
 
 
 class QuadraticEquilibrium(Equilibrium):

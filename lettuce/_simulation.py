@@ -6,7 +6,7 @@ from typing import List, Optional
 from abc import ABC, abstractmethod
 
 from . import *
-from .native import NativeCollision, NativeBoundary, Generator
+from .cuda_native import NativeCollision, NativeBoundary, Generator
 
 __all__ = ['Collision', 'Boundary', 'Reporter', 'Simulation']
 
@@ -54,7 +54,7 @@ class Reporter(ABC):
         self.interval = interval
 
     @abstractmethod
-    def __call__(self, flow: 'Flow'):
+    def __call__(self, simulation: 'Simulation'):
         ...
 
 
@@ -99,7 +99,7 @@ class Simulation:
                     self.no_streaming_mask |= nsm
 
         # ============================== #
-        # generate native implementation #
+        # generate cuda_native implementation #
         # ============================== #
 
         def collide_and_stream(*_, **__):
@@ -110,20 +110,20 @@ class Simulation:
 
         if self.context.use_native:
 
-            # check for availability of native for all components
+            # check for availability of cuda_native for all components
 
             if self.flow.equilibrium is not None and not self.flow.equilibrium.native_available():
                 name = self.flow.equilibrium.__class__.__name__
-                print(f"native was requested, but equilibrium '{name}' does not support native.")
+                print(f"cuda_native was requested, but equilibrium '{name}' does not support cuda_native.")
             if not self.collision.native_available():
                 name = self.collision.__class__.__name__
-                print(f"native was requested, but _collision '{name}' does not support native.")
+                print(f"cuda_native was requested, but _collision '{name}' does not support cuda_native.")
             for boundary in self.boundaries[1:]:
                 if not boundary.native_available():
                     name = boundary.__class__.__name__
-                    print(f"native was requested, but _boundary '{name}' does not support native.")
+                    print(f"cuda_native was requested, but _boundary '{name}' does not support cuda_native.")
 
-            # create native equivalents
+            # create cuda_native equivalents
 
             native_equilibrium = None
             if self.flow.equilibrium is not None:
@@ -135,7 +135,7 @@ class Simulation:
             for i, boundary in enumerate(self.boundaries[1:], start=1):
                 native_boundaries.append(boundary.native_generator(i))
 
-            # begin generating native module from native components
+            # begin generating cuda_native module from cuda_native components
 
             generator = Generator(self.flow.stencil, native_collision, native_boundaries, native_equilibrium)
 
@@ -148,12 +148,16 @@ class Simulation:
 
                 native_kernel = generator.resolve()
                 if native_kernel is None:
-                    print('Failed to install native Extension!')
+                    print('Failed to install cuda_native Extension!')
                     return
 
-            # redirect collide and stream to native kernel
+            # redirect collide and stream to cuda_native kernel
 
             self._collide_and_stream = native_kernel
+
+    @property
+    def units(self):
+        return self.flow.units
 
     @staticmethod
     def __stream(f, i, e, d):

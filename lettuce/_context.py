@@ -54,18 +54,21 @@ class Context:
         return torch.ones(size, *args, **kwargs, device=self.device, dtype=(dtype or self.dtype))
 
     def convert_to_tensor(self, array, *args, dtype: Optional[torch.dtype] = None, **kwargs) -> torch.Tensor:
+
         if dtype is not None:
-            return torch.tensor(array, *args, **kwargs, device=self.device, dtype=dtype)
-
-        is_bool_tensor = isinstance(array, torch.Tensor) and array.dtype in [bool, torch.uint8]
-        is_bool_array = isinstance(array, np.ndarray) and array.dtype in [bool, np.uint8]
-
-        if is_bool_tensor or is_bool_array:
-            return torch.tensor(array, *args, **kwargs, device=self.device, dtype=torch.uint8)
-        elif isinstance(array, torch.Tensor):
-            return array.to(*args, **kwargs, device=self.device, dtype=self.dtype)
+            new_dype = dtype
+        elif array.dtype in [bool, torch.bool, np.bool]:
+            new_dtype = torch.bool
+        elif array.dtype in [bool, torch.uint8, np.uint8]:
+            new_dtype = torch.uint8
         else:
-            return torch.tensor(array, *args, **kwargs, device=self.device, dtype=self.dtype)
+            new_dtype = self.dtype
+            
+        is_tensor = isinstance(array, torch.Tensor)
+        if is_tensor:
+            return array.to(array, *args, **kwargs, device=self.device, dtype=new_dtype)
+        else:
+            return torch.tensor(array, *args, **kwargs, device=self.device, dtype=new_dtype)
 
     @staticmethod
     def convert_to_ndarray(tensor: torch.Tensor) -> np.ndarray:

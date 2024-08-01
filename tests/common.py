@@ -123,7 +123,8 @@ def fix_configuration(request):
 
 
 class TestFlow(ExtFlow):
-    def make_resolution(self, resolution: List[int], stencil: Optional['Stencil'] = None) -> List[int]:
+    def make_resolution(self, resolution: List[int],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             if stencil is None:
                 return [resolution]
@@ -132,8 +133,10 @@ class TestFlow(ExtFlow):
         else:
             return resolution
 
-    def make_units(self, reynolds_number, mach_number, resolution: List[int]) -> 'UnitConversion':
-        return UnitConversion(reynolds_number, mach_number, characteristic_length_lu=resolution[0])
+    def make_units(self, reynolds_number, mach_number,
+                   resolution: List[int]) -> 'UnitConversion':
+        return UnitConversion(reynolds_number, mach_number,
+                              characteristic_length_lu=resolution[0])
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
         print(self.resolution)

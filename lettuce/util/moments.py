@@ -5,8 +5,11 @@ Moments and cumulants of the distribution function.
 import warnings
 import torch
 import lettuce
-from lettuce.util import LettuceException, InefficientCodeWarning, get_subclasses, ExperimentalWarning
+from lettuce.util import (LettuceException, InefficientCodeWarning,
+                          get_subclasses, ExperimentalWarning)
 from lettuce._stencil import Stencil
+from lettuce.ext._stencil import *
+
 
 import numpy as np
 

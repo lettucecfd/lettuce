@@ -59,7 +59,7 @@ class Context:
         if dtype is not None:
             new_dype = dtype
         elif hasattr(array, 'dtype'):
-            if array.dtype in [bool, torch.bool, np.bool]:
+            if array.dtype in [bool, torch.bool]:
                 new_dtype = torch.bool
             elif array.dtype in [bool, torch.uint8, np.uint8]:
                 new_dtype = torch.uint8

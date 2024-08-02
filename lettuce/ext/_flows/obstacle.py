@@ -111,10 +111,10 @@ class Obstacle(ExtFlow):
                 velocity=self.units.characteristic_velocity_pu
                          * self._unit_vector()
             ),
-            AntiBounceBackOutlet(self._unit_vector().tolist(),
+            AntiBounceBackOutlet(self._unit_vector(),
                                  self.torch_stencil),
             BounceBackBoundary(self.mask)
         ]
 
     def _unit_vector(self, i=0):
-        return np.eye(self.stencil.d)[i]
+        return torch.eye(self.stencil.d)[i]

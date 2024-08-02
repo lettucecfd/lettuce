@@ -23,16 +23,21 @@ class AntiBounceBackOutlet(Boundary):
             (f"Invalid direction parameter. Expected direction of of length "
              f"1, 2 or 3 but got {len(direction)}.")
 
-        assert ((direction.count(0) == (len(direction) - 1))
+        assert ((direction.tolist().count(0) == (len(direction) - 1))
                 and ((1 in direction) ^ (-1 in direction))), \
             (f"Invalid direction parameter. Expected direction with all "
              f"entries 0 except one 1 or -1 but got {direction}.")
 
-        direction = torch.tensor(direction, device=stencil.e.device)
+        self.stencil = stencil
 
         # select velocities to be bounced (the ones pointing in "direction")
-        self.velocities = torch.argwhere(
-            torch.matmul(stencil.e, direction) > 1 - 1e-6)[None, :]
+        # self.velocities = torch.argwhere(
+        #     torch.eq(torch.matmul(stencil.e, direction), 1))[None, :]
+        self.velocities = np.concatenate(np.argwhere(
+            np.matmul(self.stencil.e.cpu().numpy(), direction.cpu().numpy()) >
+            1 - 1e-6),
+            axis=0)
+
         # build indices of u and f that determine the side of the domain
         self.index = []
         self.neighbor = []
@@ -50,10 +55,10 @@ class AntiBounceBackOutlet(Boundary):
         # calculation in each dimension
         if len(direction) == 3:
             self.dims = 'dc, cxy -> dxy'
-            self.w = stencil.w[self.velocities].view(1, -1).i().unsqueeze(1)
+            self.w = stencil.w[self.velocities].view(1, -1).t().unsqueeze(1)
         if len(direction) == 2:
             self.dims = 'dc, cx -> dx'
-            self.w = stencil.w[self.velocities].view(1, -1).i()
+            self.w = stencil.w[self.velocities].view(1, -1).t()
         if len(direction) == 1:
             self.dims = 'dc, c -> dc'
             self.w = stencil.w[self.velocities]
@@ -73,7 +78,8 @@ class AntiBounceBackOutlet(Boundary):
                 + self.w
                 * flow.rho()[[slice(None)] + self.index]
                 * (2
-                   + torch.einsum(self.dims, flow.stencil.e[self.velocities],
+                   + torch.einsum(self.dims,
+                                  flow.torch_stencil.e[self.velocities],
                                   u_w) ** 2 / flow.stencil.cs ** 4
                    - (torch.norm(u_w, dim=0) / flow.stencil.cs) ** 2)
         )
@@ -82,8 +88,11 @@ class AntiBounceBackOutlet(Boundary):
     def make_no_streaming_mask(self, f_shape, context: 'Context'):
         no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool,
                                      device=context.device)
-        no_stream_mask[[np.array(context.stencil.opposite)[self.velocities]]
-                       + self.index] = 1
+        no_stream_mask[[self.stencil.opposite.cpu().numpy()[
+                            self.velocities]] +
+                       self.index] = 1
+        # no_stream_mask[[self.stencil.opposite[self.velocities].to(
+        #     dtype=torch.uint8)] + self.index] = 1
         return no_stream_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):

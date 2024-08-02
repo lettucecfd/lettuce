@@ -8,8 +8,9 @@ Context definitions.
 
 The context defines the default device (cpu or cuda) and datatype (e.g., 
 float32 for single, float64 for double precision).
+Native CUDA is currently not supported for the anti-bounce-back outlet.
 """
-context = lt.Context(torch.device("cuda:0"))
+context = lt.Context(torch.device("cuda:0"), use_native=False)
 
 """
 Flow definitions.
@@ -24,14 +25,14 @@ We need
     scale to physical units)
 to initialize the Obstacle flow object.
 """
-nx = 100
+nx = 200
 ny = 100
 Re = 100
-Ma = 0.1
-ly = 1
+Ma = 0.01
+lx = 1
 
 flow = lt.Obstacle(context, [nx, ny], reynolds_number=Re, mach_number=Ma,
-                   domain_length_x=ly)
+                   domain_length_x=lx)
 
 """
 Per default, lt.Obstacle has no solid. It is stored in flow.mask as a fully
@@ -44,15 +45,15 @@ array indices.
 """
 x, y = flow.grid
 r = .05      # radius
-x_c = 0.3   # center along x
-y_c = 0.5   # center along y
+x_c = 0.3*x.max()   # center along x
+y_c = 0.5*y.max()   # center along y
 flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
 
 """
 To show 2D images, you need to rotate the outputs. This is because in lettuce,
 the first axis is downstream, while for imshow it is vertical.
 """
-plt.imshow(context.convert_to_ndarray(flow.mask))
+plt.imshow(context.convert_to_ndarray(flow.mask.t()))
 plt.show()
 
 """
@@ -80,14 +81,14 @@ Reporters.
 """
 
 energyreporter = lt.ObservableReporter(lt.IncompressibleKineticEnergy(flow),
-                                       interval=1000, out=None)
+                                       interval=50)
 simulation.reporter.append(energyreporter)
 
 """
 Initialize the equilibrium. Then run num_steps iterations of the simulation.
 This can be done repeatedly (see 02_converging_flows.py).
 """
-mlups = simulation(num_steps=10000)
+mlups = simulation(num_steps=1000)
 print("Performance in MLUPS:", mlups)
 
 """
@@ -101,4 +102,6 @@ u = flow.u_pu.cpu().numpy()
 u_norm = np.linalg.norm(u, axis=0).transpose()
 plt.imshow(u_norm)
 plt.title('Velocity after simulation')
+plt.colorbar()
+plt.tight_layout()
 plt.show()

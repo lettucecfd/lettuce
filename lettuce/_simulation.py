@@ -160,8 +160,8 @@ class Simulation:
             else:
                 new_fi = self.__stream(self.flow.f, i, self.flow.stencil.e,
                                        self.flow.stencil.d)
-                self.flow.f[i] = torch.where(self.no_streaming_mask[i],
-                                             self.flow.f[i], new_fi)
+                self.flow.f[i] = torch.where(torch.eq(
+                    self.no_streaming_mask[i], 1), self.flow.f[i], new_fi)
         return self.flow.f
 
     def _collide(self):

@@ -152,12 +152,12 @@ class Flow(ABC):
         f_feq = self.f / self.equilibrium(self)
         return self.rho() - self.einsum("q,q->", [self.f, f_feq])
 
-    def shear_tensor(self) -> torch.Tensor:
+    def shear_tensor(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """computes the shear tensor of a given self.f in the sense
         Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
         shear = self.einsum("qa,qb->qab",
                             [self.torch_stencil.e, self.torch_stencil.e])
-        shear = self.einsum("q,qab->ab", [self.f, shear])
+        shear = self.einsum("q,qab->ab", [self.f if f is None else f, shear])
         return shear
 
     def mv(self, m, v) -> torch.Tensor:

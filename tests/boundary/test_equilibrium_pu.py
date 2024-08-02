@@ -64,6 +64,8 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
 
 
 def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
+    if not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.")
     stencil, moment_dims = fix_stencil_x_moment_dims
 
     context_native = Context(device=torch.device('cuda'), dtype=fix_dtype, use_native=True)

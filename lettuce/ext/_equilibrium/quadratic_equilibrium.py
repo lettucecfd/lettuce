@@ -9,10 +9,8 @@ from ...cuda_native.ext import NativeQuadraticEquilibrium
 
 class QuadraticEquilibrium(Equilibrium):
     def __call__(self, flow: 'Flow', rho=None, u=None):
-        if rho is None:
-            rho = flow.rho()
-        if u is None:
-            u = flow.u()
+        rho = flow.rho() if rho is None else rho
+        u = flow.u() if u is None else u
 
         exu = torch.tensordot(flow.torch_stencil.e, u, dims=1)
         uxu = flow.einsum("d,d->", [u, u])

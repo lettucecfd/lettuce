@@ -1,5 +1,5 @@
 """
-Test _boundary conditions.
+Test boundary conditions.
 """
 
 from lettuce import *
@@ -68,9 +68,9 @@ def test_equilibrium_boundary_pu():
 
     pressure = 0
     velocity = 0.1 * np.ones(flow_2.stencil.d)
-    # _stencil = D2Q9()
-    # u_slice = [_stencil.d, *flow_2.resolution[:_stencil.d-1],1]
-    # p_slice = [1,*flow_2.resolution[:_stencil.d-1],1]
+    # stencil = D2Q9()
+    # u_slice = [stencil.d, *flow_2.resolution[:stencil.d-1],1]
+    # p_slice = [1,*flow_2.resolution[:stencil.d-1],1]
     # u = flow_2.units.convert_velocity_to_lu(context.one_tensor(u_slice))
     # p = context.one_tensor(p_slice) * 1.2
 

@@ -2,7 +2,7 @@ import numpy as np
 import pyevtk.hl as vtk
 import os
 
-from ... import Reporter, Flow
+from ... import Reporter
 
 __all__ = ['VTKReporter']
 
@@ -29,16 +29,16 @@ class VTKReporter(Reporter):
 
     def __call__(self, flow: 'Flow'):
         if self.flow.i % self.interval == 0:
-            u = self.flow.units.convert_velocity_to_pu(self.flow.u())
-            p = self.flow.units.convert_density_lu_to_pressure_pu(self.flow.rho())
+            u = self.flow.u_pu
+            p = self.flow.p_pu
             if self.flow.stencil.d == 2:
                 self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ..., None])
                 for d in range(self.flow.stencil.d):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_numpy(u[d, ..., None])
+                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_ndarray(u[d, ..., None])
             else:
-                self.point_dict["p"] = self.flow.context.convert_to_numpy(p[0, ...])
+                self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ...])
                 for d in range(self.flow.stencil.d):
-                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_numpy(u[d, ...])
+                    self.point_dict[f"u{'xyz'[d]}"] = self.flow.context.convert_to_ndarray(u[d, ...])
             write_vtk(self.point_dict, self.flow.i, self.filename_base)
 
     def output_mask(self, no_collision_mask):

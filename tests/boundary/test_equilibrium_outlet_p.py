@@ -5,8 +5,8 @@ from tests.common import *
 
 def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
     """
-    Test for the _equilibrium outlet p _boundary algorithm. This test verifies that the algorithm correctly computes the
-    _equilibrium outlet pressure by comparing its output to manually calculated _equilibrium values.
+    Test for the equilibrium outlet p boundary algorithm. This test verifies that the algorithm correctly computes the
+    equilibrium outlet pressure by comparing its output to manually calculated equilibrium values.
     """
 
     device, dtype, native = fix_configuration
@@ -23,4 +23,4 @@ def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
     u = flow.units.convert_velocity_to_lu(context.one_tensor(u_slice))
     rho = context.one_tensor(rho_slice) * 1.2
     reference = flow.equilibrium(flow, rho=rho, u=u)[..., 0]
-    assert reference.cpu().numpy() == pytest.approx(f_post_boundary.cpu().numpy(), rel=1e-2)  # TODO rel if too big!
+    assert reference.cpu().numpy() == pytest.approx(f_post_boundary.cpu().numpy())

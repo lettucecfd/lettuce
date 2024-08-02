@@ -14,14 +14,14 @@ class ExtFlow(Flow, ABC):
 
     def __init__(self, context: 'Context', resolution: Union[int, List[int]], reynolds_number, mach_number, stencil: Optional['Stencil'] = None,
                  equilibrium: Optional['Equilibrium'] = None):
-        # set _stencil or default _stencil based on dimension
+        # set stencil or default stencil based on dimension
         resolution = self.make_resolution(resolution, stencil)
         assert len(resolution) in [1, 2, 3], f"flow supports dimensions 1, 2 and 3 but {len(resolution)} dimensions where requested."
         default_stencils = [D1Q3(), D2Q9(), D3Q19()]
         stencil = stencil or default_stencils[len(resolution) - 1]
         stencil = stencil() if callable(stencil) else stencil
 
-        # set _equilibrium or quadratic _equilibrium
+        # set equilibrium or quadratic equilibrium
         equilibrium = equilibrium or QuadraticEquilibrium()
         Flow.__init__(self, context, resolution, self.make_units(reynolds_number, mach_number, resolution), stencil, equilibrium)
 

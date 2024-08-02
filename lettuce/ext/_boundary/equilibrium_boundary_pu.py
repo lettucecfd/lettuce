@@ -9,9 +9,11 @@ __all__ = ['EquilibriumBoundaryPU']
 
 
 class EquilibriumBoundaryPU(Boundary, ABC):
-    """Sets distributions on this _boundary to _equilibrium with predefined velocity and pressure.
-    Note that this behavior is generally not compatible with the Navier-Stokes equations.
-    This _boundary condition should only be used if no better options are available.
+    """Sets distributions on this boundary to equilibrium with predefined
+    velocity and pressure.
+    Note that this behavior is generally not compatible with the Navier-Stokes
+    equations. This boundary condition should only be used if no better
+    options are available.
     """
 
     def __init__(self, context: 'Context', velocity, pressure=0):

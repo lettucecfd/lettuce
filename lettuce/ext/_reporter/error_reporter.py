@@ -23,8 +23,8 @@ class ErrorReporter(Reporter):
             pref, uref = flow.analytic_solution(t=t)
             pref = flow.context.convert_to_tensor(pref)
             uref = flow.context.convert_to_tensor(uref)
-            u = flow.units.convert_velocity_to_pu(flow.u())
-            p = flow.units.convert_density_lu_to_pressure_pu(flow.rho())
+            u = flow.u_pu
+            p = flow.p_pu
 
             resolution = torch.pow(torch.prod(flow.context.convert_to_tensor(p.size())), 1 / flow.stencil.d)
 

@@ -103,10 +103,10 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_cuda_nativ
 @click.option("--init_f_neq/--no-initfneq", default=False, help="Initialize fNeq via finite differences")
 @click.option("--use-cuda_native/--use-no-cuda_native", default=True, help="whether to use the cuda_native implementation or not.")
 @click.pass_context
-def convergence(ctx, init_f_neq, use_native):
+def convergence(ctx, init_f_neq, use_cuda_native):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
 
-    context = Context(ctx.obj['device'], ctx.obj['dtype'], use_native)
+    context = Context(ctx.obj['device'], ctx.obj['dtype'], use_cuda_native)
 
     error_u_old = None
     error_p_old = None
@@ -152,4 +152,4 @@ def convergence(ctx, init_f_neq, use_native):
 
 if __name__ == "__main__":
     # convergence([], use_native=False)
-    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '10000', '--resolution', '2048', '--use-no-cuda_native']))
+    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '100', '--resolution', '2048', '--use-no-cuda_native']))

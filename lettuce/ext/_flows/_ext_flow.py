@@ -18,7 +18,7 @@ class ExtFlow(Flow, ABC):
         resolution = self.make_resolution(resolution, stencil)
         assert len(resolution) in [1, 2, 3], f"flow supports dimensions 1, 2 and 3 but {len(resolution)} dimensions where requested."
         default_stencils = [D1Q3(), D2Q9(), D3Q19()]
-        stencil = stencil or default_stencils[len(resolution) - 1]
+        stencil = stencil() if stencil else default_stencils[len(resolution) - 1]
 
         # set _equilibrium or quadratic _equilibrium
         equilibrium = equilibrium or QuadraticEquilibrium()

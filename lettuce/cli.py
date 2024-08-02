@@ -68,7 +68,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_cuda_nativ
     flow_class, stencil = flow_by_name[flow]
     context = Context(ctx.obj['device'], ctx.obj['dtype'], use_cuda_native)
 
-    flow = flow_class(context, stencil=stencil, resolution=resolution, reynolds_number=1, mach_number=0.05)
+    flow = flow_class(context, resolution=resolution, reynolds_number=1, mach_number=0.05)
 
     force = Guo(
         tau=flow.units.relaxation_parameter_lu,

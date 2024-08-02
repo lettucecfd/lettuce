@@ -5,25 +5,26 @@ import torch
 
 __all__ = ['EquilibriumOutletP']
 
-from ... import Flow, Context
+from ... import Flow, Context, Boundary
 
 
-class EquilibriumOutletP():
+class EquilibriumOutletP(Boundary):
     """Equilibrium outlet with constant pressure.
     """
 
-    def __init__(self, flow: 'Flow', context: 'Context', direction: List[int], rho_outlet: float = 1.0):
+    def __init__(self, flow: 'Flow', context: 'Context', direction: List[int],
+                 rho_outlet: float = 1.0):
         self.rho_outlet = context.convert_to_tensor(rho_outlet)
         self.context = context
 
-        assert isinstance(direction, list), \
-            f"Invalid direction parameter. Expected direction of type list but got {type(direction)}."
-
         assert len(direction) in [1, 2, 3], \
-            f"Invalid direction parameter. Expected direction of of length 1, 2 or 3 but got {len(direction)}."
+            (f"Invalid direction parameter. Expected direction of of length 1,"
+             f" 2 or 3 but got {len(direction)}.")
 
-        assert (direction.count(0) == (len(direction) - 1)) and ((1 in direction) ^ (-1 in direction)), \
-            f"Invalid direction parameter. Expected direction with all entries 0 except one 1 or -1 but got {direction}."
+        assert ((direction.count(0) == (len(direction) - 1))
+                and ((1 in direction) ^ (-1 in direction))), \
+            (f"Invalid direction parameter. Expected direction with all "
+             f"entries 0 except one 1 or -1 but got {direction}.")
 
         direction = np.array(direction)
 
@@ -58,17 +59,19 @@ class EquilibriumOutletP():
         outlet = [slice(None)] + self.index
         neighbor = [slice(None)] + self.neighbor
         rho_outlet = self.rho_outlet * torch.ones_like(flow.rho()[outlet])
-        feq = flow.equilibrium(flow, rho_outlet[..., None], flow.u()[neighbor][..., None])
+        feq = flow.equilibrium(flow, rho_outlet[..., None],
+                               flow.u()[neighbor][..., None])
         return flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
 
-    def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
+    def make_no_streaming_mask(self, shape: List[int], context: 'Context'
+                               ) -> Optional[torch.Tensor]:
         no_streaming_mask = context.zero_tensor(shape, dtype=bool)
-        no_streaming_mask[[np.setdiff1d(np.arange(shape[0]), self.velocities)] + self.index] = 1
+        no_streaming_mask[[np.setdiff1d(np.arange(shape[0]), self.velocities)]
+                          + self.index] = 1
         return no_streaming_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):
-        # no_collision_mask = torch.zeros(size=shape[1:], dtype=torch.bool, device=context.device)
-        no_collision_mask = context.zero_tensor(shape, dtype=bool)
+        no_collision_mask = context.zero_tensor(shape, dtype=torch.bool)
         no_collision_mask[self.index] = 1
         return no_collision_mask
 

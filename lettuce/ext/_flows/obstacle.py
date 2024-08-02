@@ -87,7 +87,7 @@ class Obstacle(ExtFlow):
         assert ((isinstance(m, np.ndarray) or isinstance(m, torch.Tensor)) and
                 all(m.shape[dim] == self.resolution[dim] for dim in range(
                     self.stencil.d)))
-        self._mask = m.astype(bool)
+        self._mask = self.context.convert_to_tensor(m, dtype=torch.bool)
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
         p = np.zeros_like(self.grid[0], dtype=float)[None, ...]
@@ -98,20 +98,22 @@ class Obstacle(ExtFlow):
 
     @property
     def grid(self):
-        xyz = tuple(self.units.convert_length_to_pu(np.arange(n)) for n in
+        xyz = tuple(self.units.convert_length_to_pu(torch.arange(n)) for n in
                     self.resolution)
-        return np.meshgrid(*xyz, indexing='ij')
+        return torch.meshgrid(*xyz, indexing='ij')
 
     @property
     def boundaries(self):
         x = self.grid[0]
         return [
             EquilibriumBoundaryPU(
-                self.context, torch.abs(x) < 1e-6, self.units.lattice, self.units,
-                self.units.characteristic_velocity_pu * self._unit_vector()
+                mask=torch.abs(x) < 1e-6, context=self.context,
+                velocity=self.units.characteristic_velocity_pu
+                         * self._unit_vector()
             ),
-            AntiBounceBackOutlet(self.units.lattice, self._unit_vector().tolist()),
-            BounceBackBoundary(self.mask, self.units.lattice)
+            AntiBounceBackOutlet(self._unit_vector().tolist(),
+                                 self.torch_stencil),
+            BounceBackBoundary(self.mask)
         ]
 
     def _unit_vector(self, i=0):

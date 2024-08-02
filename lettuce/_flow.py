@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from . import *
 from .cuda_native import NativeEquilibrium
 
-__all__ = ['Equilibrium', 'Flow']
+__all__ = ['Equilibrium', 'Flow', 'Boundary']
 
 
 class Equilibrium(ABC):
@@ -23,6 +23,30 @@ class Equilibrium(ABC):
 
     @abstractmethod
     def native_generator(self) -> 'NativeEquilibrium':
+        ...
+
+
+class Boundary(ABC):
+    @abstractmethod
+    def __call__(self, flow: 'Flow'):
+        ...
+
+    @abstractmethod
+    def make_no_collision_mask(self, shape: List[int], context: 'Context'
+                               ) -> Optional[torch.Tensor]:
+        ...
+
+    @abstractmethod
+    def make_no_streaming_mask(self, shape: List[int], context: 'Context'
+                               ) -> Optional[torch.Tensor]:
+        ...
+
+    @abstractmethod
+    def native_available(self) -> bool:
+        ...
+
+    @abstractmethod
+    def native_generator(self, index: int) -> 'NativeBoundary':
         ...
 
 
@@ -42,6 +66,7 @@ class Flow(ABC):
     stencil: 'Stencil'
     torch_stencil: 'TorchStencil'
     equilibrium: 'Equilibrium'
+    boundaries: List['Boundary']
 
     # current physical state
     i: int
@@ -64,6 +89,12 @@ class Flow(ABC):
         self._f_next = None
 
         self.initialize()
+
+    @property
+    @abstractmethod
+    def boundaries(self) -> List['Boundary']:
+        """boundaries"""
+        return []
 
     @abstractmethod
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):

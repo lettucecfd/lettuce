@@ -1,7 +1,8 @@
 import torch
 
 from .. import Force
-from ... import Flow, Collision
+from ... import Flow
+from ... import Collision
 
 __all__ = ['KBCCollision2D']
 
@@ -88,3 +89,9 @@ class KBCCollision2D(Collision):
         gamma_stab[torch.isnan(gamma_stab)] = 2.0
         f = flow.f - self.beta * (2 * delta_s + gamma_stab * delta_h)
         return f
+
+    def native_available(self) -> bool:
+        return False
+
+    def native_generator(self) -> 'NativeCollision':
+        pass

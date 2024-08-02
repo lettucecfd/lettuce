@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 import torch
 
 from ... import Boundary
+from ... import TorchStencil
 
 __all__ = ['AntiBounceBackOutlet']
 
@@ -17,7 +18,7 @@ class AntiBounceBackOutlet(Boundary):
     [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
     """
 
-    def __init__(self, direction: [List[int]], stencil: 'Stencil'):
+    def __init__(self, direction: [List[int]], stencil: 'TorchStencil'):
         assert len(direction) in [1, 2, 3], \
             (f"Invalid direction parameter. Expected direction of of length "
              f"1, 2 or 3 but got {len(direction)}.")
@@ -27,12 +28,11 @@ class AntiBounceBackOutlet(Boundary):
             (f"Invalid direction parameter. Expected direction with all "
              f"entries 0 except one 1 or -1 but got {direction}.")
 
-        direction = np.array(direction)
+        direction = torch.tensor(direction, device=stencil.e.device)
 
         # select velocities to be bounced (the ones pointing in "direction")
-        self.velocities = np.concatenate(np.argwhere(
-            np.matmul(stencil.e, direction) > 1 - 1e-6), axis=0)
-
+        self.velocities = torch.argwhere(
+            torch.matmul(stencil.e, direction) > 1 - 1e-6)[None, :]
         # build indices of u and f that determine the side of the domain
         self.index = []
         self.neighbor = []
@@ -59,22 +59,25 @@ class AntiBounceBackOutlet(Boundary):
             self.w = stencil.w[self.velocities]
 
     def __call__(self, flow: 'Flow'):
+        # TODO: not 100% sure about this. But collision seem to stabilize the
+        #  boundary.
+        # f = self.collision(flow.f)
         u = flow.u()
-        u_w = u[[slice(None)] + self.index] + 0.5 * (u[[slice(None)] + self.index] - u[[slice(None)] + self.neighbor])
+        u_w = (u[[slice(None)] + self.index]
+               + 0.5 * (u[[slice(None)] + self.index]
+                        - u[[slice(None)] + self.neighbor]))
         f = flow.f
-        flow.f[[np.array(flow.stencil.opposite)[self.velocities]] +
-               self.index] = (
-                - flow.f[[self.velocities] + self.index] + self.w * flow.rho()[
-            [slice(None)] + self.index] *
-                (2 + torch.einsum(self.dims, flow.stencil.e[self.velocities],
+        flow.f[[np.array(flow.stencil.opposite)[self.velocities]]
+               + self.index] = (
+                - flow.f[[self.velocities] + self.index]
+                + self.w
+                * flow.rho()[[slice(None)] + self.index]
+                * (2
+                   + torch.einsum(self.dims, flow.stencil.e[self.velocities],
                                   u_w) ** 2 / flow.stencil.cs ** 4
-                 - (torch.norm(u_w, dim=0) / flow.stencil.cs) ** 2)
+                   - (torch.norm(u_w, dim=0) / flow.stencil.cs) ** 2)
         )
         return f
-
-    def make_no_collision_mask(self, shape: List[int], context: 'Context'
-                               ) -> Optional[torch.Tensor]:
-        pass
 
     def make_no_streaming_mask(self, f_shape, context: 'Context'):
         no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool,
@@ -83,11 +86,10 @@ class AntiBounceBackOutlet(Boundary):
                        + self.index] = 1
         return no_stream_mask
 
-    # not 100% sure about this. But collision seem to stabilize the boundary.
-    # def make_no_collision_mask(self, f_shape):
-    #    no_collision_mask = torch.zeros(size=f_shape[1:], dtype=torch.bool, device=self.lattice.device)
-    #    no_collision_mask[self.index] = 1
-    #    return no_collision_mask
+    def make_no_collision_mask(self, shape: List[int], context: 'Context'):
+        no_collision_mask = context.zero_tensor(shape, dtype=bool)
+        no_collision_mask[self.index] = 1
+        return no_collision_mask
 
     def native_available(self) -> bool:
         return False

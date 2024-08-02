@@ -6,7 +6,7 @@ on:
       - "master"
   pull_request:
     branches:
-      - "master"
+      - "**"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.

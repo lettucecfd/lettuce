@@ -44,8 +44,8 @@ jobs:
           python setup.py install
       - name: Unit tests with pytest
         run: |
-          py.test
+          py.test tests
       - name: Integration tests
         run: |
-          lettuce --no-cuda convergence
-          lettuce --no-cuda benchmark
+          lettuce --no-cuda convergence --use-no-cuda_native
+          lettuce --no-cuda benchmark --use-no-cuda_native

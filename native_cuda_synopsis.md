@@ -19,6 +19,7 @@ So, the Dimensions can be accessed via `flow.stencil.d` instead of `flow.units.l
 - `reporters` was renamed to `reporter`
 - `no_collision_mask` now includes the boundary's identifier (important for custom flows).
 - `flow.u_pu` directly returns velocity field in physical units as a property. Same counts for `flow.p_pu` (pressure) and `flow.rho_pu` (density).
+- `units` (a `lt.UnitConverter`) can be called from both `lt.Simulation` and `lt.Flow`
 
 ## Updating runfiles
 1. Move device and dtype declarations into lt.Context and remove all lattice declarations.

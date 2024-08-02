@@ -11,13 +11,13 @@ lattice = lt.Lattice(lt.D3Q27, device=device, dtype=torch.float32)  # single pre
 resolution = 80  # resolution of the lattice, low resolution leads to unstable speeds somewhen after 10 (PU)
 flow = lt.TaylorGreenVortex3D(resolution, 1600, 0.1, lattice)
 
-# select collision model - try also KBCCollision or RegularizedCollision
+# select _collision model - try also KBCCollision or RegularizedCollision
 collision = lt.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
 streaming = lt.StandardStreaming(lattice)
 simulation = lt.Simulation(flow, lattice, collision, streaming)
 simulation.initialize_f_neq()  # initialize non-conserved moments
 
-# reporters will grab the results in between simulation steps (see io.py and simulation.py)
+# reporters will grab the results in between simulation steps (see io.py and _simulation.py)
 # Output: Column 1: time in LU, Column 2: kinetic energy in PU
 energy = lt.IncompressibleKineticEnergy(lattice, flow)
 kinE_reporter = lt.ObservableReporter(energy, interval=1, out=None)
@@ -32,7 +32,7 @@ print("Simulating", int(simulation.flow.units.convert_time_to_lu(10)), "steps! M
 print("MLUPS: ", simulation.step(int(simulation.flow.units.convert_time_to_lu(10))))
 
 # ---------- Plot kinetic energy over time (PU) -------------
-# grab output of kinetic energy reporter
+# grab output of kinetic energy _reporter
 E = np.asarray(kinE_reporter.out)
 # normalize to size of grid, not always necessary
 E[:, 1] = E[:, 1] / (2 * np.pi) ** 3

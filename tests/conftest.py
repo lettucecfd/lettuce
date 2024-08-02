@@ -6,105 +6,45 @@ import pytest
 import numpy as np
 import torch
 
-from lettuce import (
-    stencils, Stencil, get_subclasses, Transform, Lattice, moments
-)
+from lettuce import *
+from lettuce.ext import _stencil
 
-STENCILS = list(get_subclasses(Stencil, stencils))
-TRANSFORMS = list(get_subclasses(Transform, moments))
+STENCILS = list(get_subclasses(Stencil, _stencil))
 
 
 @pytest.fixture(
-    params=["cpu",
-            pytest.param("cuda:0",
-                         marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available."))])
-def device(request):
-    """Run a test case for all available devices."""
-    return request.param
-
-
-@pytest.fixture(params=[torch.float32, torch.float64])
-# not testing torch.float16 (half precision is not precise enough)
-def dtype_device(request, device):
-    """Run a test case for all available devices and data types available on the device."""
-    if device == "cpu" and request.param == torch.float16:
-        pytest.skip("Half precision is only available on GPU.")
-    if device == "cuda:0" and request.param == torch.float32:
-        pytest.skip("Tolerances are not yet adapted to CUDA single precision.")
-    return request.param, device
-
-
-@pytest.fixture(params=STENCILS)
-def stencil(request):
-    """Run a test for all stencils."""
-    return request.param
-
-
-@pytest.fixture(
-    params=((torch.float64, "cpu", ""),
-            (torch.float32, "cpu", ""),
-            (torch.float64, "cuda:0", ""),
-            (torch.float32, "cuda:0", ""),
-            (torch.float64, "cuda:0", "native"),
-            (torch.float32, "cuda:0", "native")),
+    params=((torch.float64, "cpu", "no_native"),
+            (torch.float32, "cpu", "no_native"),
+            (torch.float64, "cuda", "no_native"),
+            (torch.float32, "cuda", "no_native"),
+            (torch.float64, "cuda", "cuda_native"),
+            (torch.float32, "cuda", "cuda_native")),
     ids=("cpu64", "cpu32", "cu64", "cu32", "native64", "native32"))
-def lattice(request, stencil):
-    """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
+def configurations(request):
     dtype, device, native = request.param
     if device == "cuda:0" and not torch.cuda.is_available():
         pytest.skip(reason="CUDA not available.")
-    if device == "cuda:0" and dtype == torch.float32:
-        pytest.skip("TODO: loosen tolerances")
-    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native"))
+    return dtype, device, native
 
 
-@pytest.fixture(
-    params=((torch.float64, "cpu", "", "cuda:0", ""),
-            (torch.float32, "cpu", "", "cuda:0", ""),
-            (torch.float64, "cpu", "", "cuda:0", "native"),
-            (torch.float32, "cpu", "", "cuda:0", "native"),
-            (torch.float64, "cuda:0", "", "cuda:0", "native"),
-            (torch.float32, "cuda:0", "", "cuda:0", "native")),
-    ids=("cpu_cu_64", "cpu_cu_32", "cpu_native_64", "cpu_native_32", "cu_native_64", "cu_native_32"))
-def lattice2(request, stencil):
-    """Run a test for all lattices (all stencils, devices and data types available on the device.)"""
-    dtype, device, native, device2, native2 = request.param
-    if device == "cuda:0" and not torch.cuda.is_available():
-        pytest.skip(reason="CUDA not available.")
-    if device == "cuda:0" and dtype == torch.float32:
-        pytest.skip("TODO: loosen tolerances")
-    if device2 == "cuda:0" and not torch.cuda.is_available():
-        pytest.skip(reason="CUDA not available.")
-    if device2 == "cuda:0" and dtype == torch.float32:
-        pytest.skip("TODO: loosen tolerances")
-    return Lattice(stencil, device=device, dtype=dtype, use_native=(native == "native")), \
-           Lattice(stencil, device=device2, dtype=dtype, use_native=(native2 == "native"))
+@pytest.fixture(params=STENCILS)
+def stencils(request):
+    """Run a test for all _stencil."""
+    return request.param
 
 
-@pytest.fixture()
-def f_lattice(lattice):
-    """Run a test for all lattices; return a grid with 3^D sample distribution functions alongside the lattice."""
-    np.random.seed(1)  # arbitrary, but deterministic
-    return lattice.convert_to_tensor(np.random.random([lattice.Q] + [3] * lattice.D)), lattice
+class TestFlow(ExtFlow):
 
+    def make_resolution(self, resolution: List[int]) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution]
+        else:
+            return resolution
 
-@pytest.fixture(params=[Lattice])
-def f_all_lattices(request, lattice):
-    """Run a test for all lattices and lattices-of-vector;
-    return a grid with 3^D sample distribution functions alongside the lattice.
-    """
-    np.random.seed(1)
-    f = np.random.random([lattice.Q] + [3] * lattice.D)
-    Ltc = request.param
-    ltc = Ltc(lattice.stencil, lattice.device, lattice.dtype)
-    return ltc.convert_to_tensor(f), ltc
+    def make_units(self, reynolds_number, mach_number, resolution: List[int]) -> 'UnitConversion':
+        return UnitConversion(reynolds_number, mach_number, characteristic_length_lu=resolution[0])
 
-
-@pytest.fixture(params=TRANSFORMS)
-def f_transform(request, f_all_lattices):
-    Transform = request.param
-    f, lattice = f_all_lattices
-    if lattice.stencil in Transform.supported_stencils:
-        return f, Transform(lattice)
-    else:
-        pytest.skip("Stencil not supported for this transform.")
+    def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
+        u = 1.0 * np.ones([self.stencil.d] + self.resolution)
+        p = 0.0 * np.ones([1] + self.resolution)
+        return p, u

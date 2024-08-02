@@ -6,12 +6,12 @@ on:
       - "master"
   pull_request:
     branches:
-      - "master"
+      - "**"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.
     #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * 0"
 
 
 jobs:
@@ -44,8 +44,8 @@ jobs:
           python setup.py install
       - name: Unit tests with pytest
         run: |
-          py.test
+          py.test tests
       - name: Integration tests
         run: |
-          lettuce --no-cuda convergence
-          lettuce --no-cuda benchmark
+          lettuce --no-cuda convergence --use-no-cuda_native
+          lettuce --no-cuda benchmark --use-no-cuda_native

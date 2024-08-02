@@ -52,6 +52,8 @@ class my_basic_flow(ExtFlow):
 
 
 def test_equilibrium_boundary_pu_native():
+    if not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.")
     context_native = Context(device=torch.device('cuda'), dtype=torch.float64, use_native=True)
     context_cpu = Context(device=torch.device('cpu'), dtype=torch.float64, use_native=False)
 

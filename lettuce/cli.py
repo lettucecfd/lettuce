@@ -55,7 +55,7 @@ def main(ctx, cuda, gpu_id, precision):
               help="VTK file basename to write the velocities and densities to (default=""; no info gets written).")
 @click.option("--use-cuda_native/--use-no-cuda_native", default=True, help="whether to use the cuda_native implementation or not.")
 @click.pass_context  # pass parameters to sub-commands
-def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):
+def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_cuda_native):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
@@ -66,9 +66,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out, use_native):
     # setup and run simulation
 
     flow_class, stencil = flow_by_name[flow]
-    context = Context(ctx.obj['device'], ctx.obj['dtype'], use_native)
+    context = Context(ctx.obj['device'], ctx.obj['dtype'], use_cuda_native)
 
-    flow = flow_class(context, resolution, reynolds_number=1, mach_number=0.05)
+    flow = flow_class(context, stencil=stencil, resolution=resolution, reynolds_number=1, mach_number=0.05)
 
     force = Guo(
         tau=flow.units.relaxation_parameter_lu,
@@ -152,4 +152,4 @@ def convergence(ctx, init_f_neq, use_native):
 
 if __name__ == "__main__":
     # convergence([], use_native=False)
-    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '10000', '--resolution', '2048', '--use-cuda_native']))
+    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '10000', '--resolution', '2048', '--use-no-cuda_native']))

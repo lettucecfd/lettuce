@@ -1,3 +1,5 @@
+import torch
+
 from .. import Force
 from ... import Flow, Collision
 
@@ -9,18 +11,13 @@ class KBCCollision2D(Collision):
     Entropic multi-relaxation time model according to Karlin et al. in two dimensions
     """
 
-    def __init__(self, lattice, tau):
-        Collision.__init__(self, lattice)
-        self.lattice = lattice
-        assert lattice.Q == 9, LettuceException("KBC2D only realized for D2Q9")
+    def __init__(self, tau):
+        Collision.__init__(self)
+        # TODO: move assert lattice.Q == 9, LettuceException("KBC2D only
+        #  realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
-
-        # Build a matrix that contains the indices
-        self.M = torch.zeros([3, 3, 9], device=lattice.device, dtype=lattice.dtype)
-        for i in range(3):
-            for j in range(3):
-                self.M[i, j] = lattice.e[:, 0] ** i * lattice.e[:, 1] ** j
+        self.M = None
 
     def kbc_moment_transform(self, f):
         """Transforms the f into the KBC moment representation"""
@@ -51,15 +48,22 @@ class KBCCollision2D(Collision):
 
         return s
 
-    def __call__(self, f):
+    def __call__(self, flow: 'Flow') -> torch.Tensor:
+        if self.M is None:
+            # Build a matrix that contains the indices
+            self.M = torch.zeros([3, 3, 9], device=flow.context.device,
+                                 dtype=flow.context.dtype)
+            for i in range(3):
+                for j in range(3):
+                    self.M[i, j] = (flow.torch_stencil.e[:, 0] ** i
+                                    * flow.torch_stencil.e[:, 1] ** j)
+
         # the deletes are not part of the algorithm, they just keep the memory usage lower
-        rho = self.lattice.rho(f)
-        u = self.lattice.u(f, rho=rho)
-        feq = self.lattice.equilibrium(rho, u)
+        feq = flow.equilibrium(flow)
         # k = torch.zeros_like(f)
 
-        m = self.kbc_moment_transform(f)
-        delta_s = self.compute_s_seq_from_m(f, m)
+        m = self.kbc_moment_transform(flow.f)
+        delta_s = self.compute_s_seq_from_m(flow.f, m)
 
         # k[0] = m[0, 0]
         # k[1] = m[0, 0] / 2. * m[1, 0]
@@ -72,16 +76,15 @@ class KBCCollision2D(Collision):
         # k[8] = 0
 
         m = self.kbc_moment_transform(feq)
-
-        delta_s -= self.compute_s_seq_from_m(f, m)
+        delta_s -= self.compute_s_seq_from_m(flow.f, m)
         del m
-        delta_h = f - feq - delta_s
+        delta_h = flow.f - feq - delta_s
 
-        sum_s = self.lattice.rho(delta_s * delta_h / feq)
-        sum_h = self.lattice.rho(delta_h * delta_h / feq)
+        sum_s = flow.rho(delta_s * delta_h / feq)
+        sum_h = flow.rho(delta_h * delta_h / feq)
         del feq
         gamma_stab = 1. / self.beta - (2 - 1. / self.beta) * sum_s / sum_h
         gamma_stab[gamma_stab < 1E-15] = 2.0
         gamma_stab[torch.isnan(gamma_stab)] = 2.0
-        f = f - self.beta * (2 * delta_s + gamma_stab * delta_h)
+        f = flow.f - self.beta * (2 * delta_s + gamma_stab * delta_h)
         return f

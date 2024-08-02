@@ -92,9 +92,9 @@ class Flow(ABC):
     def f_next(self, f_next_: torch.Tensor):
         self._f_next = f_next_
 
-    def rho(self) -> torch.Tensor:
+    def rho(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """density"""
-        return torch.sum(self.f, dim=0)[None, ...]
+        return torch.sum(self.f if f is None else f, dim=0)[None, ...]
 
     @property
     def rho_pu(self) -> torch.Tensor:

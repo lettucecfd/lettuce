@@ -18,9 +18,10 @@ So, the Dimensions can be accessed via `flow.stencil.d` instead of `flow.units.l
 - `lt.Collision` does not neet `lattice` definition.
 - `reporters` was renamed to `reporter`
 - `no_collision_mask` now includes the boundary's identifier (important for custom flows).
+- `flow.u_pu` directly returns velocity field in physical units as a property. Same counts for `flow.p_pu` (pressure) and `flow.rho_pu` (density).
 
 ## Updating runfiles
 1. Move device and dtype declarations into lt.Context and remove all lattice declarations.
 2. Move stencil declaration to lt.Flow and add context declaration.
-3. Remove lt.Streaming initialization.
+3. Remove lt.Streaming initialization and occurences.
 4. Rename reporters to reporter

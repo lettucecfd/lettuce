@@ -44,7 +44,7 @@ For a circle, just use a boolean function. Otherwise, you may as well use the
 array indices.
 """
 x, y = flow.grid
-r = .05      # radius
+r = .05*y.max()      # radius
 x_c = 0.3*x.max()   # center along x
 y_c = 0.5*y.max()   # center along y
 flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
@@ -85,15 +85,15 @@ energyreporter = lt.ObservableReporter(lt.IncompressibleKineticEnergy(flow),
 simulation.reporter.append(energyreporter)
 
 """
-Initialize the equilibrium. Then run num_steps iterations of the simulation.
+Run num_steps iterations of the simulation.
 This can be done repeatedly (see 02_converging_flows.py).
 """
-mlups = simulation(num_steps=1000)
+mlups = simulation(num_steps=4000)
 print("Performance in MLUPS:", mlups)
 
 """
-Before or after simulation.step, physical values can be extracted from the
-populations (simulation.f)
+Before or after simulation call, physical values can be extracted from the
+flow.
 Alternatively, the reporters can be drawn from the simulation.reporters list
 (see 01_example4convergence.py)
 """

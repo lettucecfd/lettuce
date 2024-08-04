@@ -1,5 +1,4 @@
 import warnings
-from abc import ABC
 from typing import Union, List, Optional
 
 import numpy as np
@@ -8,7 +7,8 @@ import torch
 from . import ExtFlow
 from ... import UnitConversion, Context, Stencil, Equilibrium
 from ...util import append_axes
-from .. import EquilibriumBoundaryPU, BounceBackBoundary, AntiBounceBackOutlet
+from .. import (EquilibriumBoundaryPU, BounceBackBoundary,
+                EquilibriumOutletP, AntiBounceBackOutlet)
 
 __all__ = ['Obstacle']
 
@@ -52,7 +52,7 @@ class Obstacle(ExtFlow):
     def __init__(self, context: Context, resolution: Union[int, List[int]],
                  reynolds_number, mach_number, domain_length_x,
                  char_length=1, char_velocity=1,
-                 stencil:  Optional[Stencil] = None,
+                 stencil: Optional[Stencil] = None,
                  equilibrium: Optional[Equilibrium] = None):
         self.char_length_lu = resolution[0] / domain_length_x * char_length
         self.char_length = char_length
@@ -113,8 +113,36 @@ class Obstacle(ExtFlow):
             ),
             AntiBounceBackOutlet(self._unit_vector(),
                                  self.torch_stencil),
+            # EquilibriumOutletP(self, self.context,
+            #                    self._unit_vector().tolist(), 0),
             BounceBackBoundary(self.mask)
         ]
 
     def _unit_vector(self, i=0):
         return torch.eye(self.stencil.d)[i]
+
+
+def Obstacle2D(context: 'Context', resolution: Union[int, List[int]],
+               reynolds_number, mach_number, stencil: 'Stencil',
+               char_length_lu):
+    warnings.warn("Obstacle2D is deprecated. Use Obstacle instead",
+                  DeprecationWarning)
+    resolution_x = resolution[0] if isinstance(resolution, list) \
+        else resolution
+    domain_length_x = resolution_x / char_length_lu
+    return Obstacle(context=context, resolution=resolution,
+                    reynolds_number=reynolds_number, mach_number=mach_number,
+                    domain_length_x=domain_length_x, stencil=stencil)
+
+
+def Obstacle3D(context: 'Context', resolution: Union[int, List[int]],
+               reynolds_number, mach_number, stencil: 'Stencil',
+               char_length_lu):
+    warnings.warn("Obstacle3D is deprecated. Use Obstacle instead",
+                  DeprecationWarning)
+    resolution_x = resolution[0] if isinstance(resolution, list) \
+        else resolution
+    domain_length_x = resolution_x / char_length_lu
+    return Obstacle(context=context, resolution=resolution,
+                    reynolds_number=reynolds_number, mach_number=mach_number,
+                    domain_length_x=domain_length_x, stencil=stencil)

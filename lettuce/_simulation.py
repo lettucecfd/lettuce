@@ -102,12 +102,12 @@ class Simulation:
                       f"does not support cuda_native.")
             if not self.collision.native_available():
                 name = self.collision.__class__.__name__
-                print(f"cuda_native was requested, but _collision '{name}' "
+                print(f"cuda_native was requested, but collision '{name}' "
                       f"does not support cuda_native.")
             for boundary in self.boundaries[1:]:
                 if not boundary.native_available():
                     name = boundary.__class__.__name__
-                    print(f"cuda_native was requested, but _boundary '{name}' "
+                    print(f"cuda_native was requested, but boundary '{name}' "
                           f"does not support cuda_native.")
 
             # create cuda_native equivalents

@@ -55,13 +55,13 @@ class EquilibriumOutletP(Boundary):
             self.dims = 'dc, c -> dc'
             self.w = flow.torch_stencil.w[self.velocities]
 
-    def __call__(self, flow):
+    def __call__(self, flow: 'Flow'):
         outlet = [slice(None)] + self.index
         neighbor = [slice(None)] + self.neighbor
         rho_outlet = self.rho_outlet * torch.ones_like(flow.rho()[outlet])
         feq = flow.equilibrium(flow, rho_outlet[..., None],
                                flow.u()[neighbor][..., None])
-        return flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
+        return flow.einsum("q,q->q", [feq, flow.f])
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:

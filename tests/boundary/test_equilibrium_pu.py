@@ -48,7 +48,7 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     context = Context(device=device, dtype=dtype, use_native=native)
 
     pressure = 0.01
-    velocity = [0.2] * fix_stencil.d
+    velocity = context.convert_to_tensor([0.2] * fix_stencil.d)
 
     class DummyEQBC(TestFlow):
         @property

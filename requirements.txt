@@ -1,7 +1,7 @@
 Click>=6.0
 torch>=2.1
 numpy==1.26.4
-matplotlib
+matplotlib==3.9.0
 pyevtk
 pytest
 h5py>=3.2.1

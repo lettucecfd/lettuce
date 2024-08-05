@@ -1,7 +1,8 @@
 import torch
 
 from .. import Force
-from ... import Flow, Collision
+from ... import Flow, Collision, TorchStencil
+from .. import D3Q27
 
 __all__ = ['KBCCollision3D']
 
@@ -11,12 +12,19 @@ class KBCCollision3D(Collision):
     Entropic multi-relaxation time-relaxation time model according to Karlin et al. in three dimensions
     """
 
-    def __init__(self, tau):
+    def __init__(self, tau, context: 'Context'):
         Collision.__init__(self)
-        # TODO: move `assert self.Q == 27, "KBC only realized for D3Q27"`
         self.tau = tau
         self.beta = 1. / (2 * tau)
-        self.M = None
+        # Build a matrix that contains the indices
+        self.M = context.zero_tensor([3, 3, 3, 27])
+        torch_stencil = TorchStencil(D3Q27(), context)
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    self.M[i, j, k] = (torch_stencil.e[:, 0] ** i *
+                                       torch_stencil.e[:, 1] ** j *
+                                       torch_stencil.e[:, 2] ** k)
 
     def kbc_moment_transform(self, f):
         """Transforms the f into the KBC moment representation"""
@@ -60,17 +68,6 @@ class KBCCollision3D(Collision):
         return s
 
     def __call__(self, flow: 'Flow') -> torch.Tensor:
-        if self.M is None:
-            # Build a matrix that contains the indices
-            self.M = torch.zeros([3, 3, 3, 27], device=flow.context.device,
-                                 dtype=flow.context.dtype)
-            for i in range(3):
-                for j in range(3):
-                    for k in range(3):
-                        self.M[i, j, k] = (flow.torch_stencil.e[:, 0] ** i *
-                                           flow.torch_stencil.e[:, 1] ** j *
-                                           flow.torch_stencil.e[:, 2] ** k)
-
         # the deletes are not part of the algorithm, they just keep the memory usage lower
         feq = flow.equilibrium(flow)
         # k = torch.zeros_like(f)
@@ -102,3 +99,9 @@ class KBCCollision3D(Collision):
         f = flow.f - self.beta * (2 * delta_s + gamma_stab * delta_h)
 
         return f
+
+    def native_available(self) -> bool:
+        return False
+
+    def native_generator(self) -> 'NativeCollision':
+        pass

@@ -173,8 +173,8 @@ def DummyTGV(context: 'Context', resolution: Union[int, List[int]],
 
 class DummyFlow(ExtFlow):
 
-    def __init__(self, context: Context):
-        ExtFlow.__init__(self, context, 16, 1.0, 1.0)
+    def __init__(self, context: Context, resolution: int = 16):
+        ExtFlow.__init__(self, context, resolution, 1.0, 1.0)
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:

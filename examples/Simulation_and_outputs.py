@@ -1,58 +1,30 @@
 import lettuce as lt
 import torch
-import numpy as np
 import matplotlib.pyplot as plt
 
 print("start")
 
 # ---------- Set up simulation -------------
-device = torch.device("cuda:0") if torch.cuda.is_available() \
-    else torch.device("cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 context = lt.Context(device=device, dtype=torch.float32)  # single
 # precision - float64 for double precision
 resolution = 128  # resolution of the lattice, low resolution leads to unstable
 # speeds somewhen after 10 (PU)
-flow = lt.TaylorGreenVortex3D(context=context, resolution=resolution,
-                              reynolds_number=1600, mach_number=0.1)
+flow = lt.TaylorGreenVortex(context, resolution, 1600, 0.1, lt.D3Q27)
 
 # select collision model - try also KBCCollision or RegularizedCollision
 collision = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
-simulation = lt.Simulation(flow, collision)
+simulation = lt.Simulation(flow, collision, [])
 
-# reporters will grab the results in between simulation steps
-# (see io.py and _simulation.py)
-# Output: Column 1: time in LU, Column 2: kinetic energy in PU
-energy = lt.IncompressibleKineticEnergy(flow)
-kinE_reporter = lt.ObservableReporter(energy, out=None)  # output to list
-simulation.reporter.append(kinE_reporter)
-kinE_reporter2 = lt.ObservableReporter(energy, interval=100)  # console output
-simulation.reporter.append(kinE_reporter2)
-
-# Output: separate VTK-file with ux,uy,uz and p for every time step in ../data
-VTKReporter = lt.VTKReporter(flow, interval=100)
-simulation.reporter.append(VTKReporter)
-
-tend = 10  # time in PU
-nsteps = int(simulation.flow.units.convert_time_to_lu(10))  # time in LU
-# ---------- Simulate until time = tend (PU) -------------
-print(f"Simulating {nsteps} steps! Maybe drink some water in the meantime.")
+# ---------- Simulate until time = 10 (PU) -------------
+print("Simulating", int(simulation.flow.units.convert_time_to_lu(10)),
+      "steps! Maybe drink some water in the meantime.")
 # runs simulation, but also returns overall performance in MLUPS (million
 # lattice units per second)
-print(f"MLUPS: {simulation(nsteps)}")
+print("MLUPS: ", simulation(int(simulation.flow.units.convert_time_to_lu(10))))
 
-# ---------- Plot kinetic energy over time (PU) -------------
-# grab output of kinetic energy reporter
-E = np.asarray(kinE_reporter.out)
-# normalize to size of grid, not always necessary
-E[:, 1] = E[:, 1] / (2 * np.pi) ** 3
-# save kinetic energy values for later use
-np.save("TGV3DoutRes" + str(resolution) + "E", E)
 fig = plt.figure()
 ax1 = plt.subplot(1, 2, 1)
-plt.xlabel('Time in physical units')
-plt.ylabel('Kinetic energy in physical units')
-ax1.plot(simulation.flow.units.convert_time_to_pu(range(0, E.shape[0])),
-         E[:, 1])
 
 # ---------- Plot magnitude of speed in slice of 3D volume -------------
 # grab u in PU
@@ -69,4 +41,3 @@ ax2 = plt.subplot(1, 2, 2)
 ax2.matshow(uMagnitude)
 plt.tight_layout()
 plt.show()
-plt.savefig('tgv3d-output.pdf')

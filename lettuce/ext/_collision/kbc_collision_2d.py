@@ -1,8 +1,9 @@
 import torch
 
 from .. import Force
-from ... import Flow
+from ... import Flow, TorchStencil
 from ... import Collision
+from .. import D2Q9
 
 __all__ = ['KBCCollision2D']
 
@@ -12,13 +13,17 @@ class KBCCollision2D(Collision):
     Entropic multi-relaxation time model according to Karlin et al. in two dimensions
     """
 
-    def __init__(self, tau):
+    def __init__(self, tau, context: 'Context'):
         Collision.__init__(self)
-        # TODO: move assert lattice.Q == 9, LettuceException("KBC2D only
-        #  realized for D2Q9")
         self.tau = tau
         self.beta = 1. / (2 * tau)
-        self.M = None
+        torch_stencil = TorchStencil(D2Q9(), context)
+        # Build a matrix that contains the indices
+        self.M = context.zero_tensor([3, 3, 9])
+        for i in range(3):
+            for j in range(3):
+                self.M[i, j] = (torch_stencil.e[:, 0] ** i
+                                * torch_stencil.e[:, 1] ** j)
 
     def kbc_moment_transform(self, f):
         """Transforms the f into the KBC moment representation"""
@@ -50,14 +55,6 @@ class KBCCollision2D(Collision):
         return s
 
     def __call__(self, flow: 'Flow') -> torch.Tensor:
-        if self.M is None:
-            # Build a matrix that contains the indices
-            self.M = torch.zeros([3, 3, 9], device=flow.context.device,
-                                 dtype=flow.context.dtype)
-            for i in range(3):
-                for j in range(3):
-                    self.M[i, j] = (flow.torch_stencil.e[:, 0] ** i
-                                    * flow.torch_stencil.e[:, 1] ** j)
 
         # the deletes are not part of the algorithm, they just keep the memory usage lower
         feq = flow.equilibrium(flow)

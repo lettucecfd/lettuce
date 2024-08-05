@@ -53,7 +53,8 @@ class Simulation:
         self.context = flow.context
         self.collision = collision
         self.reporter = reporter
-        self.boundaries = [None] + flow.boundaries
+        self.boundaries = ([None]
+                           + sorted(flow.boundaries, key=lambda b: str(b)))
 
         # ==================================== #
         # initialise masks based on boundaries #
@@ -149,7 +150,7 @@ class Simulation:
         warnings.warn("lt.Simulation.step() is deprecated and will be "
                       "removed in a future version. Instead, call simulation "
                       "directly: simulation(num_steps)", DeprecationWarning)
-        return self.__call__(num_steps)
+        return self(num_steps)
 
     @property
     def units(self):
@@ -194,8 +195,7 @@ class Simulation:
         beg = timer()
 
         if self.flow.i == 0:
-            for reporter in self.reporter:
-                reporter(self)
+            self._report()
 
         for _ in range(num_steps):
             self._collide_and_stream(self)

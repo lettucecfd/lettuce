@@ -7,7 +7,9 @@ import numpy as np
 import torch
 
 from lettuce import *
+from lettuce import _stencil
 from lettuce.util import moments
+from lettuce.util.moments import Transform
 
 STENCILS = list(get_subclasses(Stencil, _stencil))
 TRANSFORMS = list(get_subclasses(Transform, moments))

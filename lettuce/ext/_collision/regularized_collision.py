@@ -42,3 +42,9 @@ class RegularizedCollision(Collision):
         f = feq + (1. - 1. / self.tau) * fi1
 
         return f
+
+    def native_available(self) -> bool:
+        return False
+
+    def native_generator(self) -> 'NativeCollision':
+        pass

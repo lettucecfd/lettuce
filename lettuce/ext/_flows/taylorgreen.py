@@ -36,7 +36,7 @@ class TaylorGreenVortex(ExtFlow):
         else:
             assert len(resolution) in [2, 3], ('the resolution of a '
                                                'taylor-green-vortex '
-                                               'must be 2 or 3 dimensional!')
+                                               'must be 2- or 3-dimensional!')
             return resolution
 
     def make_units(self, reynolds_number, mach_number,
@@ -50,10 +50,10 @@ class TaylorGreenVortex(ExtFlow):
 
     @property
     def grid(self):
-        endpoints = [2 * torch.pi * (1 - 1 / self.resolution[n]) for n in
-                     range(self.d)]  # like endpoint=False in np.linspace
+        endpoints = [2 * torch.pi * (1 - 1 / n) for n in
+                     self.resolution]  # like endpoint=False in np.linspace
         xyz = tuple(torch.linspace(0, endpoints[n],
-                                   steps=self.resolution[0],
+                                   steps=self.resolution[n],
                                    device=self.context.device,
                                    dtype=self.context.dtype)
                     for n in range(self.d))

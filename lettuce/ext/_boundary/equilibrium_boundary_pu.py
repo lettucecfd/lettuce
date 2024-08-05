@@ -18,7 +18,7 @@ class EquilibriumBoundaryPU(Boundary):
     options are available.
     """
 
-    def __init__(self, mask, context: 'Context', velocity, pressure=0):
+    def __init__(self, context: 'Context', mask, velocity, pressure=0):
         self.velocity = context.convert_to_tensor(velocity)
         self.pressure = context.convert_to_tensor(pressure)
         self._mask = mask

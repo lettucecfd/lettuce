@@ -106,15 +106,15 @@ class Obstacle(ExtFlow):
     def boundaries(self):
         x = self.grid[0]
         return [
-            EquilibriumBoundaryPU(
-                mask=torch.abs(x) < 1e-6, context=self.context,
-                velocity=self.units.characteristic_velocity_pu
-                         * self._unit_vector()
-            ),
-            AntiBounceBackOutlet(self._unit_vector(),
-                                 self.torch_stencil),
-            # EquilibriumOutletP(self, self.context,
-            #                    self._unit_vector().tolist(), 0),
+            EquilibriumBoundaryPU(context=self.context,
+                                  mask=torch.abs(x) < 1e-6,
+                                  velocity=self.units.characteristic_velocity_pu
+                                           * self._unit_vector()
+                                  ),
+            # AntiBounceBackOutlet(self._unit_vector(),
+            #                      self.torch_stencil),
+            EquilibriumOutletP(self, self.context,
+                               self._unit_vector().tolist(), 0),
             BounceBackBoundary(self.mask)
         ]
 

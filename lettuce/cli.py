@@ -120,12 +120,12 @@ def convergence(ctx, init_f_neq, use_cuda_native):
         flow.initialize()
 
         collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
-        boundaries = []
 
-        error_reporter = ErrorReporter(flow, interval=1, out=None)
+        error_reporter = ErrorReporter(flow.analytic_solution(), interval=1,
+                                       out=None)
         reporter = [error_reporter]
 
-        simulation = Simulation(flow, collision, boundaries, reporter)
+        simulation = Simulation(flow, collision, reporter)
         # if init_f_neq:
         #     simulation.initialize_f_neq()
 

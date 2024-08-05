@@ -27,7 +27,7 @@ to initialize the Obstacle flow object.
 """
 nx = 200
 ny = 100
-Re = 100
+Re = 300
 Ma = 0.01
 lx = 1
 
@@ -98,7 +98,7 @@ Alternatively, the reporters can be drawn from the simulation.reporters list
 (see 01_example4convergence.py)
 """
 
-u = flow.u_pu.cpu().numpy()
+u = context.convert_to_ndarray(flow.u_pu)
 u_norm = np.linalg.norm(u, axis=0).transpose()
 plt.imshow(u_norm)
 plt.title('Velocity after simulation')

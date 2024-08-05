@@ -3,7 +3,6 @@ Fixtures for unit tests.
 """
 import pytest
 
-import numpy as np
 import torch
 
 from lettuce import *
@@ -32,19 +31,3 @@ def stencils(request):
     """Run a test for all stencil."""
     return request.param
 
-
-class TestFlow(ExtFlow):
-
-    def make_resolution(self, resolution: List[int]) -> List[int]:
-        if isinstance(resolution, int):
-            return [resolution]
-        else:
-            return resolution
-
-    def make_units(self, reynolds_number, mach_number, resolution: List[int]) -> 'UnitConversion':
-        return UnitConversion(reynolds_number, mach_number, characteristic_length_lu=resolution[0])
-
-    def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
-        u = 1.0 * np.ones([self.stencil.d] + self.resolution)
-        p = 0.0 * np.ones([1] + self.resolution)
-        return p, u

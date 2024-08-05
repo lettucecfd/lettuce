@@ -5,7 +5,6 @@ import warnings
 from typing import Union, List, Optional
 
 import torch
-import numpy as np
 
 from ... import UnitConversion
 from . import ExtFlow
@@ -14,13 +13,19 @@ __all__ = ['TaylorGreenVortex', 'TaylorGreenVortex2D', 'TaylorGreenVortex3D']
 
 
 class TaylorGreenVortex(ExtFlow):
-
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,
                  equilibrium: Optional['Equilibrium'] = None):
-        self.stencil = stencil() if callable(stencil) else stencil
-        self.d = self.stencil.d or len(resolution)
+        if stencil is None and not isinstance(resolution, list):
+            warnings.warn("Requiring information about dimensionality!"
+                          " Either via stencil or resolution. Setting "
+                          "dimension to 2.", UserWarning)
+            self.d = 2
+        else:
+            self.stencil = stencil() if callable(stencil) else stencil
+            self.d = self.stencil.d if self.stencil is not None else len(
+                resolution)
         ExtFlow.__init__(self, context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 

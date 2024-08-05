@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 import numpy as np
 
@@ -6,9 +8,9 @@ from typing import List, Optional
 from abc import ABC, abstractmethod
 
 from . import *
-from .cuda_native import NativeCollision, NativeBoundary, Generator
+from .cuda_native import NativeCollision, Generator
 
-__all__ = ['Collision', 'Boundary', 'Reporter', 'Simulation']
+__all__ = ['Collision', 'Reporter', 'Simulation']
 
 
 class Collision(ABC):
@@ -51,7 +53,7 @@ class Simulation:
         self.context = flow.context
         self.collision = collision
         self.reporter = reporter
-        self.boundaries = flow.boundaries
+        self.boundaries = [None] + flow.boundaries
 
         # ==================================== #
         # initialise masks based on boundaries #
@@ -143,6 +145,12 @@ class Simulation:
 
             self._collide_and_stream = native_kernel
 
+    def step(self, num_steps: int):
+        warnings.warn("lt.Simulation.step() is deprecated and will be "
+                      "removed in a future version. Instead, call simulation "
+                      "directly: simulation(num_steps)", DeprecationWarning)
+        return self.__call__(num_steps)
+
     @property
     def units(self):
         return self.flow.units
@@ -180,14 +188,14 @@ class Simulation:
 
     def _report(self):
         for reporter in self.reporter:
-            reporter(self.flow)
+            reporter(self)
 
     def __call__(self, num_steps):
         beg = timer()
 
         if self.flow.i == 0:
             for reporter in self.reporter:
-                reporter(self.flow)
+                reporter(self)
 
         for _ in range(num_steps):
             self._collide_and_stream(self)

@@ -30,8 +30,9 @@ flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
 collision = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 simulation = lt.Simulation(flow=flow, collision=collision, reporter=[])
 
-simulation.reporter.append(lt.VTKReporter(flow, interval=100,
-                                          filename_base="./output"))
+simulation.reporter.append(lt.VTKReporter(flow, interval=1000,
+                                          filename_base=
+                                          "./data/converging_obstacle"))
 
 """
 We now add a reporter which we access later. The output can be written to files
@@ -47,7 +48,7 @@ energy convergence every 2000 steps.
 The populations are kept on the GPU until evaluated by [...].cpu()
 """
 nmax = 30000
-ntest = 2000
+ntest = 1000
 it = 0
 i = 0
 mlups = 0
@@ -64,7 +65,6 @@ while it <= nmax:
         print("CRASHED!")
         break
     if abs(energy_new - energy_old)/energy_old < 0.0075:
-
         print(f"CONVERGED! To {abs(energy_new - energy_old)/energy_old:.2%} "
               f"after {it} iterations.")
         break

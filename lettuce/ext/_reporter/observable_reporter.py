@@ -173,15 +173,18 @@ class ObservableReporter(Reporter):
         self._parameter_name = observable.__class__.__name__
         print('steps    ', 'time    ', self._parameter_name)
 
-    def __call__(self, flow):
-        if flow.i % self.interval == 0:
-            observed = self.observable.context.convert_to_ndarray(self.observable(flow.f))
+    def __call__(self, simulation: 'Simulation'):
+        if simulation.flow.i % self.interval == 0:
+            observed = self.observable.context.convert_to_ndarray(
+                self.observable(simulation.flow.f))
             assert len(observed.shape) < 2
             if len(observed.shape) == 0:
                 observed = [observed.item()]
             else:
                 observed = observed.tolist()
-            entry = [flow.i, flow.units.convert_time_to_pu(flow.i)] + observed
+            entry = ([simulation.flow.i,
+                     simulation.units.convert_time_to_pu(simulation.flow.i)]
+                     + observed)
             if isinstance(self.out, list):
                 self.out.append(entry)
             else:

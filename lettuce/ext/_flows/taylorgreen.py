@@ -44,8 +44,8 @@ class TaylorGreenVortex(ExtFlow):
         return UnitConversion(
             reynolds_number=reynolds_number,
             mach_number=mach_number,
-            characteristic_length_lu=resolution[0],
-            characteristic_length_pu=2 * torch.pi,
+            characteristic_length_lu=resolution[0] / (2 * torch.pi),
+            characteristic_length_pu=1,
             characteristic_velocity_pu=1)
 
     @property
@@ -59,10 +59,10 @@ class TaylorGreenVortex(ExtFlow):
                     for n in range(self.d))
         return torch.meshgrid(*xyz, indexing='ij')
 
-    def initial_pu(self) -> (float, float):
+    def initial_pu(self) -> (torch.Tensor, torch.Tensor):
         return self.analytic_solution(t=0)
 
-    def analytic_solution(self, t=0):
+    def analytic_solution(self, t=0) -> (torch.Tensor, torch.Tensor):
         grid = self.grid
         nu = self.context.convert_to_tensor(self.units.viscosity_pu)
         if len(self.resolution) == 2:

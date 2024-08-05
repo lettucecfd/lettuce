@@ -64,7 +64,8 @@ The collision is usually BGK (low dissipation, but may be unstable) or KBC
 flows, KBC is preferred for driven flows in smaller domains (where energy
 conversation plays a smaller role, but gradients may be higher).
 """
-collision = lt.KBCCollision2D(tau=flow.units.relaxation_parameter_lu)
+collision = lt.KBCCollision2D(tau=flow.units.relaxation_parameter_lu,
+                              context=context)
 
 """
 Simulation object setup.

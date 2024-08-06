@@ -139,7 +139,7 @@ def convergence(ctx, init_f_neq, use_cuda_native):
                                  reynolds_number=10000,
                                  mach_number=mach_number)
         collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
-        error_reporter = ErrorReporter(flow.analytic_solution(), interval=1,
+        error_reporter = ErrorReporter(flow.analytic_solution, interval=1,
                                        out=None)
 
         simulation = Simulation(flow, collision, [error_reporter])

@@ -74,7 +74,8 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq,
                                      torch.ones_like(flow_2.f))[..., :1]
 
-    assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
+    assert context.convert_to_ndarray(flow_1.f) == pytest.approx(
+        context.convert_to_ndarray(flow_2.f))
 
 
 def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):

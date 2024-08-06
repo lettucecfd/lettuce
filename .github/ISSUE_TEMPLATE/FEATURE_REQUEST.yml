@@ -1,10 +1,10 @@
 ---
 name: "Feature Request"
-about: Suggest an idea for improving Wagtail
+about: Suggest an idea for improving lettuce
 title: ''
 labels: Enhancement
 assignees: ''
-
+# borrowed from https://github.com/wagtail/wagtail/tree/main/.github/ISSUE_TEMPLATE
 ---
 
 ### Is your proposal related to a problem?

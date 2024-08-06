@@ -11,12 +11,13 @@ class RegularizedCollision(Collision):
     Regularized LBM according to Jonas Latt and Bastien Chopard (2006)
     """
 
-    def __init__(self, tau):
+    def __init__(self, tau: float = None):
         self.tau = tau
         self.Q_matrix = None
 
     def __call__(self, flow: 'Flow'):
         if self.Q_matrix is None:
+            self.tau = flow.units.relaxation_parameter_lu
             self.Q_matrix = torch.zeros([flow.stencil.q, flow.stencil.d,
                                          flow.stencil.d],
                                         device=flow.context.device,

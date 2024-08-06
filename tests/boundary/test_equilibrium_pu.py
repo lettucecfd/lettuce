@@ -1,5 +1,3 @@
-import torch
-
 from tests.common import *
 
 
@@ -25,11 +23,11 @@ def fix_stencil_x_moment_dims(request):
 
 class TestEquilibriumBoundary(EquilibriumBoundaryPU):
 
-    def make_no_collision_mask(self, shape: List[int], context: 'Context'
-                               ) -> Optional[torch.Tensor]:
-        m = context.zero_tensor(shape, dtype=bool)
-        m[..., :1] = True
-        return m
+    # def make_no_collision_mask(self, shape: List[int], context: 'Context'
+    #                            ) -> Optional[torch.Tensor]:
+    #     m = context.zero_tensor(shape, dtype=bool)
+    #     m[..., :1] = True
+    #     return m
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:
@@ -52,8 +50,12 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
 
     class DummyEQBC(TestFlow):
         @property
-        def boundaries(self) -> List[Boundary]:
-            return [TestEquilibriumBoundary(self.context, velocity, pressure)]
+        def boundaries(self) -> List['Boundary']:
+            m = self.context.zero_tensor(self.resolution, dtype=bool)
+            m[..., :1] = True
+            return [TestEquilibriumBoundary(context=self.context,
+                                            mask=m, velocity=velocity,
+                                            pressure=pressure)]
 
     flow_1 = DummyEQBC(context, resolution=fix_stencil.d * [16],
                        reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
@@ -71,8 +73,9 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     feq = flow_2.equilibrium(flow_2, rho, u)
 
     # apply manually calculated feq to f
-    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq,
-                                     torch.ones_like(flow_2.f))[..., :1]
+    flow_2.f[..., :1] = flow_2.einsum("q,q->q",
+                                      [feq, torch.ones_like(
+                                          flow_2.f)])[..., :1]
 
     assert context.convert_to_ndarray(flow_1.f) == pytest.approx(
         context.convert_to_ndarray(flow_2.f))
@@ -94,11 +97,14 @@ def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
     class DummyEQBC(TestFlow):
         @property
         def boundaries(self) -> List[Boundary]:
-            return [TestEquilibriumBoundary(self.context,
-                                            self.context.convert_to_tensor(
-                                                velocity),
-                                            self.context.convert_to_tensor(
-                                                pressure))]
+            m = self.context.zero_tensor(self.resolution, dtype=bool)
+            m[..., :1] = True
+            return [TestEquilibriumBoundary(context=self.context,
+                                            mask=m,
+                                            velocity=self.context.
+                                            convert_to_tensor(velocity),
+                                            pressure=self.context.
+                                            convert_to_tensor(pressure))]
 
     flow_native = DummyEQBC(context_native, resolution=16, reynolds_number=1,
                             mach_number=0.1, stencil=stencil)

@@ -30,3 +30,9 @@ class BGKInitialization(Collision):
         mnew[self.momentum_indices] = rho * self.u
         f = self.moment_transformation.inverse_transform(mnew)
         return f
+
+    def native_available(self) -> bool:
+        return False
+
+    def native_generator(self) -> 'NativeCollision':
+        pass

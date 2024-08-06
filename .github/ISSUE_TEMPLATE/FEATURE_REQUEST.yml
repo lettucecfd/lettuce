@@ -1,5 +1,5 @@
 name: "Feature Request"
-about: Suggest an idea for improving lettuce
+description: Suggest an idea for improving lettuce
 title: "[Feature]: "
 labels: ["enhancement"]
 assignees: []

@@ -19,8 +19,9 @@ class EquilibriumBoundaryPU(Boundary):
     """
 
     def __init__(self, context: 'Context', mask, velocity, pressure=0):
+        velocity = [velocity] if not hasattr(velocity, '__len__') else velocity
         self.velocity = context.convert_to_tensor(velocity)
-        self.pressure = context.convert_to_tensor(pressure)
+        self.pressure = context.convert_to_tensor([pressure])
         self._mask = mask
 
     def __call__(self, flow: 'Flow'):

@@ -84,5 +84,8 @@ class Context:
                                 dtype=new_dtype)
 
     @staticmethod
-    def convert_to_ndarray(tensor: torch.Tensor) -> np.ndarray:
-        return tensor.detach().cpu().numpy()
+    def convert_to_ndarray(tensor: Union[torch.Tensor, List]) -> np.ndarray:
+        if isinstance(tensor, torch.Tensor):
+            return tensor.detach().cpu().numpy()
+        else:
+            return np.array(tensor)

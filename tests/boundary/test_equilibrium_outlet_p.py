@@ -17,15 +17,17 @@ def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
                     "moment False")
     context = Context(device=torch.device(device), dtype=dtype,
                       use_native=native)
+    stencil = fix_stencil  # TorchStencil(stencil=fix_stencil, context=context)
 
-    flow = TestFlow(context, stencil=fix_stencil, resolution=16,
+    flow = TestFlow(context, stencil=stencil, resolution=16,
                     reynolds_number=1, mach_number=0.1)
-    direction = [0] * (fix_stencil.d - 1) + [1]
+    direction = [0] * (stencil.d - 1) + [1]
     boundary_cpu = EquilibriumOutletP(flow=flow, context=context,
-                                      direction=direction, rho_outlet=1.2)
+                                      direction=direction,
+                                      rho_outlet=1.2)
     f_post_boundary = boundary_cpu(flow)[..., -1]
-    u_slice = [fix_stencil.d, *flow.resolution[:fix_stencil.d - 1], 1]
-    rho_slice = [1, *flow.resolution[:fix_stencil.d - 1], 1]
+    u_slice = [stencil.d, *flow.resolution[:stencil.d - 1], 1]
+    rho_slice = [1, *flow.resolution[:stencil.d - 1], 1]
     u = flow.units.convert_velocity_to_lu(context.one_tensor(u_slice))
     rho = context.one_tensor(rho_slice) * 1.2
     reference = flow.equilibrium(flow, rho=rho, u=u)[..., 0]

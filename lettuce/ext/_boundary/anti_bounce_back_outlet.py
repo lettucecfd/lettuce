@@ -3,8 +3,8 @@ from typing import List
 import numpy as np
 import torch
 
-from ... import Boundary
-from ... import TorchStencil
+from ... import Boundary, Context
+from ... import Stencil
 
 __all__ = ['AntiBounceBackOutlet']
 
@@ -18,7 +18,10 @@ class AntiBounceBackOutlet(Boundary):
     [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
     """
 
-    def __init__(self, direction: [List[int]], stencil: 'TorchStencil'):
+    def __init__(self, direction: [List[int]], stencil: 'Stencil',
+                 context: 'Context' = None):
+        context = Context() if context is None else context
+        direction = context.convert_to_ndarray(direction)
         assert len(direction) in [1, 2, 3], \
             (f"Invalid direction parameter. Expected direction of of length "
              f"1, 2 or 3 but got {len(direction)}.")
@@ -34,9 +37,8 @@ class AntiBounceBackOutlet(Boundary):
         # self.velocities = torch.argwhere(
         #     torch.eq(torch.matmul(stencil.e, direction), 1))[None, :]
         self.velocities = np.concatenate(np.argwhere(
-            np.matmul(self.stencil.e.cpu().numpy(), direction.cpu().numpy()) >
-            1 - 1e-6),
-            axis=0)
+            np.matmul(context.convert_to_ndarray(stencil.e), direction) >
+            1 - 1e-6), axis=0)
 
         # build indices of u and f that determine the side of the domain
         self.index = []
@@ -53,15 +55,19 @@ class AntiBounceBackOutlet(Boundary):
                 self.neighbor.append(1)
         # construct indices for einsum and get w in proper shape for the
         # calculation in each dimension
+        print(stencil.w)
+        print(self.velocities)
+        print(context.convert_to_tensor(stencil.w))
+        w = context.convert_to_tensor(stencil.w)[self.velocities]
         if len(direction) == 3:
             self.dims = 'dc, cxy -> dxy'
-            self.w = stencil.w[self.velocities].view(1, -1).t().unsqueeze(1)
+            self.w = w.view(1, -1).t().unsqueeze(1)
         if len(direction) == 2:
             self.dims = 'dc, cx -> dx'
-            self.w = stencil.w[self.velocities].view(1, -1).t()
+            self.w = w.view(1, -1).t()
         if len(direction) == 1:
             self.dims = 'dc, c -> dc'
-            self.w = stencil.w[self.velocities]
+            self.w = w
 
     def __call__(self, flow: 'Flow'):
         # not 100% sure about this. But collision seem to stabilize the

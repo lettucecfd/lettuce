@@ -5,16 +5,17 @@ import torch
 
 __all__ = ['EquilibriumOutletP']
 
-from ... import Flow, Context, Boundary#, AntiBounceBackOutlet
+from ... import Flow, Context, Boundary
+from . import AntiBounceBackOutlet
 
 
-class EquilibriumOutletP(Boundary):
+class EquilibriumOutletP(AntiBounceBackOutlet):
     """Equilibrium outlet with constant pressure.
     """
 
     def __init__(self, flow: 'Flow', context: 'Context', direction: List[int],
-                 stencil: 'TorchStencil', rho_outlet: float = 1.0):
-        super().__init__(direction, stencil)
+                 rho_outlet: float = 1.0):
+        super().__init__(direction, flow.stencil)
         self.rho_outlet = context.convert_to_tensor(rho_outlet)
         self.context = context
 

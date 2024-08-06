@@ -1,42 +1,55 @@
----
 name: "Feature Request"
 about: Suggest an idea for improving lettuce
-title: ''
-labels: Enhancement
-assignees: ''
-# borrowed from https://github.com/wagtail/wagtail/tree/main/.github/ISSUE_TEMPLATE
----
-
-### Is your proposal related to a problem?
-
-<!--
-  Provide a clear and concise description of what the problem is.
-  For example, "I'm always frustrated when..."
--->
-
-(Write your answer here.)
-
-### Describe the solution you'd like
-
-<!--
-  Provide a clear and concise description of what you want to happen.
--->
-
-(Describe your proposed solution here.)
-
-### Describe alternatives you've considered
-
-<!--
-  Let us know about other solutions you've tried or researched.
--->
-
-(Write your answer here.)
-
-### Additional context
-
-<!--
-  Is there anything else you can add about the proposal?
-  You might want to link to related issues here, if you haven't already.
--->
-
-(Write your answer here.)
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new and exciting feature!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: is-related
+    attributes:
+      label: Is your proposal related to a problem?
+      description: Provide a clear and concise description of what the problem is.
+      placeholder: "I'm always frustrated when..."
+      value: "This is related to a problem!"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Describe the solution you'd like"
+      description: Provide a clear and concise description of what you want to happen.
+      placeholder: (Describe your proposed solution here.)
+      value: "This is the suggested solution."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Describe alternatives you've considered"
+      description: "Let us know about other solutions you've tried or researched."
+      placeholder: (Write your answer here.)
+      value: "This is an alternative."
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      description: "Is there anything else you can add about the proposal? You might want to link to related issues here, if you haven't already."
+      placeholder: (Write your answer here.)
+      value: "This is additional context."
+    validations:
+      required: true
+      

@@ -19,7 +19,7 @@ class SmagorinskyCollision(Collision):
 
     def __call__(self, flow: 'Flow'):
         rho = flow.rho()
-        u_eq = 0 if self.force is None else self.force.u_eq(flow.f)
+        u_eq = 0 if self.force is None else self.force.u_eq(flow)
         u = flow.u() + u_eq
         feq = flow.equilibrium(flow, rho, u)
         S_shear = flow.shear_tensor(flow.f - feq)
@@ -34,7 +34,7 @@ class SmagorinskyCollision(Collision):
             nu_eff = nu + nu_t
             self.tau_eff = nu_eff * 3.0 + 0.5
         Si = 0 if self.force is None else self.force.source_term(u)
-        return f - 1.0 / self.tau_eff * (flow.f - feq) + Si
+        return flow.f - 1.0 / self.tau_eff * (flow.f - feq) + Si
 
     def native_available(self) -> bool:
         return False

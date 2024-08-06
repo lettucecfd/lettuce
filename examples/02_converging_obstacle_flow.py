@@ -30,7 +30,7 @@ flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
 collision = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 simulation = lt.Simulation(flow=flow, collision=collision, reporter=[])
 
-simulation.reporter.append(lt.VTKReporter(flow, interval=1000,
+simulation.reporter.append(lt.VTKReporter(interval=1000,
                                           filename_base=
                                           "./data/converging_obstacle"))
 

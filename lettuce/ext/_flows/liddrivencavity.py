@@ -1,52 +1,64 @@
 """
 Cavity flow
 """
+from typing import List, Union, Optional
 
 import numpy as np
+import torch
 
-from lettuce.unit import UnitConversion
-from lettuce.boundary import BounceBackBoundary, EquilibriumBoundaryPU
-from lettuce.flows.flow import LettuceFlow
+from ... import UnitConversion
+from .. import BounceBackBoundary, EquilibriumBoundaryPU
+from ._ext_flow import ExtFlow
 
 
-class Cavity2D(LettuceFlow):
-    def __init__(self, resolution, reynolds_number, mach_number, lattice):
-        self.resolution = resolution
-        self.shape = (resolution, resolution)
-        self._mask = np.zeros(shape=self.shape, dtype=bool)
-        self.units = UnitConversion(
-            lattice,
+class Cavity2D(ExtFlow):
+
+    def __init__(self, context: 'Context', resolution, reynolds_number,
+                 mach_number):
+        super().__init__(context, resolution, reynolds_number, mach_number)
+
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution] * 2
+        else:
+            assert len(resolution) == 2, 'expected 2-dimensional resolution'
+            return resolution
+
+    def make_units(self, reynolds_number, mach_number,
+                   resolution: List[int]) -> 'UnitConversion':
+        return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
             characteristic_length_lu=resolution, characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 
-    def initial_solution(self, x):
-        return (np.array([0 * x[0]], dtype=float),
-                np.array([0 * x[0], 0 * x[1]], dtype=float))  # p, u
+    def initial_pu(self):
+        return (torch.stack([torch.zeros_like(self.grid[0])]),
+                torch.stack([torch.zeros_like(self.grid[0])] * 2))  # p, u
 
     @property
-    def mask(self):
-        return self._mask
-
-    @property
-    def grid(self):
-        x = np.linspace(0, 1, num=self.resolution, endpoint=False)
-        y = np.linspace(0, 1, num=self.resolution, endpoint=False)
-        return np.meshgrid(x, y, indexing='ij')
+    def grid(self) -> (torch.Tensor, torch.Tensor):
+        endpoints = [1 - 1 / n for n in
+                     self.resolution]  # like endpoint=False in np.linspace
+        xyz = tuple(torch.linspace(0, endpoints[n],
+                                   steps=self.resolution[n],
+                                   device=self.context.device,
+                                   dtype=self.context.dtype)
+                    for n in self.stencil.d)
+        return torch.meshgrid(*xyz, indexing='ij')
 
     @property
     def boundaries(self):
-        x, y = self.grid
-        boundary = np.zeros(np.shape(y), dtype=bool)
-        top = np.zeros(np.shape(y), dtype=bool)
+        x, *y = self.grid
+        boundary = self.context.zero_tensor(x.shape, dtype=bool)
+        top = self.context.zero_tensor(x.shape, dtype=bool)
         boundary[[0, -1], 1:] = True  # left and right
         boundary[:, 0] = True  # bottom
         top[:, -1] = True  # top
         return [
             # bounce back walls
-            BounceBackBoundary(boundary, self.units.lattice),
+            BounceBackBoundary(boundary),
             # moving fluid on top# moving bounce back top
-            EquilibriumBoundaryPU(top, self.units.lattice, self.units,
-                                  np.array([1.0, 0.0])),
+            EquilibriumBoundaryPU(self.context, top, [1.0, 0.0]),
         ]

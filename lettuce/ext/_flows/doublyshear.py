@@ -1,6 +1,7 @@
 """
 Doubly shear layer in 2D.
-Special Inputs & standard value: shear_layer_width = 80, initial_perturbation_magnitude = 0.05
+Special Inputs & standard value: shear_layer_width = 80,
+initial_perturbation_magnitude = 0.05
 """
 from typing import Union, List, Optional
 
@@ -8,7 +9,7 @@ import numpy as np
 import torch
 
 from lettuce._unit import UnitConversion
-from ... import ExtFlow
+from . import ExtFlow
 
 __all__ = ['DoublyPeriodicShear2D']
 

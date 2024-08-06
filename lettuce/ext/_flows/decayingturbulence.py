@@ -1,6 +1,7 @@
 """
 DecayingTurbulence vortex in 2D and 3D. Dimension is set by the stencil.
-Special Inputs & standard value: wavenumber_energy-peak = 20, initial_energy = 0.5
+Special Inputs & standard value: wavenumber_energy-peak = 20,
+initial_energy = 0.5
 
 Additional attributes / properties
 __________
@@ -9,6 +10,8 @@ energy_spectrum: returns a pair [spectrum, wavenumbers]
 from typing import Union, List, Optional
 
 import numpy as np
+import torch
+
 from ... import UnitConversion
 from . import ExtFlow
 
@@ -29,13 +32,15 @@ class DecayingTurbulence(ExtFlow):
         ExtFlow.__init__(self, context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 
-    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
             return [resolution] * (stencil.d or self.stencil.d)
         else:
             return resolution
 
-    def make_units(self, reynolds_number, mach_number, resolution) -> 'UnitConversion':
+    def make_units(self, reynolds_number, mach_number, resolution
+                   ) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number,
             mach_number=mach_number,
@@ -49,20 +54,23 @@ class DecayingTurbulence(ExtFlow):
 
     def _generate_wavenumbers(self):
         self.dimensions = self.grid[0].shape
-        frequencies = [np.fft.fftfreq(dim, d=1 / dim) for dim in self.dimensions]
+        frequencies = [np.fft.fftfreq(dim, d=1 / dim)
+                       for dim in self.dimensions]
         wavenumber = np.meshgrid(*frequencies)
         wavenorms = np.linalg.norm(wavenumber, axis=0)
         self.wavenumbers = np.arange(int(np.max(wavenorms)))
-        wavemask = (wavenorms[..., None] > self.wavenumbers - 0.5) & (wavenorms[..., None] <= self.wavenumbers + 0.5)
+        wavemask = ((wavenorms[..., None] > self.wavenumbers - 0.5)
+                    & (wavenorms[..., None] <= self.wavenumbers + 0.5))
         return wavenorms, wavenumber, wavemask
 
     def _generate_spectrum(self):
         wavenorms, wavenumber, wavemask = self._generate_wavenumbers()
-        ek = (wavenorms) ** 4 * np.exp(-2 * (wavenorms / self.k0) ** 2)
+        ek = wavenorms ** 4 * np.exp(-2 * (wavenorms / self.k0) ** 2)
         ek /= np.sum(ek)
         ek *= self.ic_energy
         self.spectrum = ek[..., None] * wavemask
-        self.spectrum = np.sum(self.spectrum, axis=tuple((np.arange(self.stencil.d))))
+        self.spectrum = np.sum(self.spectrum,
+                               axis=tuple((np.arange(self.stencil.d))))
         return ek, wavenumber
 
     def _generate_initial_velocity(self, ek, wavenumber):
@@ -78,18 +86,24 @@ class DecayingTurbulence(ExtFlow):
             u_real[dim].ravel()[0] = 0
             u_imag[dim].ravel()[0] = 0
 
-        u_real_h = [np.sqrt(2 / self.stencil.d * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
+        u_real_h = [np.sqrt(2 / self.stencil.d * ek
+                            / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
                     * u_real[dim] for dim in range(self.stencil.d)]
-        u_imag_h = [np.sqrt(2 / self.stencil.d * ek / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
+        u_imag_h = [np.sqrt(2 / self.stencil.d * ek
+                            / (u_imag[dim] ** 2 + u_real[dim] ** 2 + 1.e-15))
                     * u_imag[dim] for dim in range(self.stencil.d)]
         for dim in range(self.stencil.d):
             u_real_h[dim].ravel()[0] = 0
             u_imag_h[dim].ravel()[0] = 0
 
-        ### Remove divergence
-        # modified wave number sin(k*dx) is used, as the gradient below uses second order cental differences
-        # Modify if other schemes are used or use kx, ky if you don't know the modified wavenumber !!!
-        wavenumber_modified = [np.sin(wavenumber[dim] * dx) / dx for dim in range(self.stencil.d)]
+        """ Remove divergence
+        # modified wave number sin(k*dx) is used, as the gradient below uses 
+        # second order cental differences
+        # Modify if other schemes are used or use kx, ky if you don't know 
+        # the modified wavenumber !!!
+        """
+        wavenumber_modified = [np.sin(wavenumber[dim] * dx) / dx
+                               for dim in range(self.stencil.d)]
         wavenorm_modified = np.linalg.norm(wavenumber_modified, axis=0) + 1e-16
 
         divergence_real = np.zeros(self.dimensions)
@@ -106,21 +120,23 @@ class DecayingTurbulence(ExtFlow):
             u_real[dim].ravel()[0] = 0
             u_imag[dim].ravel()[0] = 0
 
-        ### Scale velocity field to achieve the desired inicial energy
-        e_kin = [np.sum(u_real[dim] ** 2 + u_imag[dim] ** 2) for dim in range(self.stencil.d)]
+        # Scale velocity field to achieve the desired inicial energy
+        e_kin = [np.sum(u_real[dim] ** 2 + u_imag[dim] ** 2)
+                 for dim in range(self.stencil.d)]
         e_kin = np.sum(e_kin) * .5
 
         factor = np.sqrt(self.ic_energy / e_kin)
         u_real = [u_real[dim] * factor for dim in range(self.stencil.d)]
         u_imag = [u_imag[dim] * factor for dim in range(self.stencil.d)]
 
-        ### Backtransformation to physical space
+        # Backtransformation to physical space
         norm = ((self.resolution[0] * dx ** (1 - self.stencil.d) * np.sqrt(
             self.units.characteristic_length_pu))
                 if self.stencil.d == 3 else (self.resolution[0] / dx))
 
         u = np.asarray([
-            (np.fft.ifftn(u_real[dim] + u_imag[dim] * 1.0j, axes=tuple((np.arange(self.stencil.d)))) * norm).real
+            (np.fft.ifftn(u_real[dim] + u_imag[dim] * 1.0j,
+                          axes=tuple((np.arange(self.stencil.d)))) * norm).real
             for dim in range(self.stencil.d)])
 
         return u
@@ -131,7 +147,8 @@ class DecayingTurbulence(ExtFlow):
         return np.zeros(self.dimensions)[None, ...]
 
     def initial_pu(self):
-        """Return initial solution. Note: this function sets the characteristic velocity in phyiscal units."""
+        """Return initial solution. Note: this function sets the
+        characteristic velocity in phyiscal units."""
         ek, wavenumber = self._generate_spectrum()
         u = self._generate_initial_velocity(ek, wavenumber)
         p = self._compute_initial_pressure()
@@ -143,7 +160,16 @@ class DecayingTurbulence(ExtFlow):
         return self.spectrum, self.wavenumbers
 
     @property
-    def grid(self):
-        grid = [np.linspace(0, 2 * np.pi, num=self.resolution[0],
-                            endpoint=False) for _ in range(self.stencil.d)]
-        return np.meshgrid(*grid)
+    def grid(self) -> (torch.Tensor, ...):
+        endpoints = [2 * torch.pi * (1 - 1 / n) for n in
+                     self.resolution]  # like endpoint=False in np.linspace
+        xyz = tuple(torch.linspace(0, endpoints[n],
+                                   steps=self.resolution[n],
+                                   device=self.context.device,
+                                   dtype=self.context.dtype)
+                    for n in range(self.stencil.d))
+        return torch.meshgrid(*xyz, indexing='ij')
+
+    @property
+    def boundaries(self) -> List['Boundary']:
+        return []

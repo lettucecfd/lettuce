@@ -11,6 +11,7 @@ class ErrorReporter(Reporter):
 
     def __init__(self, analytical_solution, interval=1, out=sys.stdout):
         Reporter.__init__(self, interval)
+        self.analytical_solution = analytical_solution
         self.out = [] if out is None else out
         if not isinstance(self.out, list):
             print("#error_u         error_p", file=self.out)
@@ -20,7 +21,7 @@ class ErrorReporter(Reporter):
             simulation.flow.i), simulation.flow.f
 
         if i % self.interval == 0:
-            pref, uref = simulation.flow.analytic_solution(t=t)
+            pref, uref = self.analytical_solution(t=t)
             pref = simulation.flow.context.convert_to_tensor(pref)
             uref = simulation.flow.context.convert_to_tensor(uref)
             u = simulation.flow.u_pu

@@ -17,19 +17,21 @@ class Obstacle(ExtFlow):
     """
     Flow class to simulate the flow around an object (mask).
     It consists of one inflow (equilibrium boundary)
-    and one outflow (anti-bounce-back-boundary), leading to a flow in positive x direction.
+    and one outflow (anti-bounce-back-boundary), leading to a flow in positive
+    x direction.
 
     Parameters
     ----------
-    shape : Tuple[int]:
+    resolution : Tuple[int]:
         Grid resolution.
     domain_length_x : float
         Length of the domain in physical units.
 
     Attributes
     ----------
-    mask : np.array with dtype = bool
-        Boolean mask to define the obstacle. The shape of this object is the shape of the grid.
+    _mask : torch.Tensor with dtype = bool
+        Boolean mask to define the obstacle. The shape of this object is the
+        shape of the grid.
         Initially set to zero (no obstacle).
 
     Examples
@@ -108,13 +110,14 @@ class Obstacle(ExtFlow):
         return [
             EquilibriumBoundaryPU(context=self.context,
                                   mask=torch.abs(x) < 1e-6,
-                                  velocity=self.units.characteristic_velocity_pu
-                                           * self._unit_vector()
+                                  velocity=self.units.
+                                  characteristic_velocity_pu
+                                  * self._unit_vector()
                                   ),
-            # AntiBounceBackOutlet(self._unit_vector(),
-            #                      self.torch_stencil),
-            EquilibriumOutletP(self, self.context,
-                               self._unit_vector().tolist(), 0),
+            AntiBounceBackOutlet(self._unit_vector(),
+                                 self.torch_stencil),
+            # EquilibriumOutletP(self, self.context,
+            #                    self._unit_vector().tolist(), 0),
             BounceBackBoundary(self.mask)
         ]
 

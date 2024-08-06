@@ -50,6 +50,7 @@ class Simulation:
     def __init__(self, flow: 'Flow', collision: 'Collision',
                  reporter: List['Reporter']):
         self.flow = flow
+        self.flow.collision = collision
         self.context = flow.context
         self.collision = collision
         self.reporter = reporter

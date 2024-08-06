@@ -64,9 +64,11 @@ class AntiBounceBackOutlet(Boundary):
             self.w = stencil.w[self.velocities]
 
     def __call__(self, flow: 'Flow'):
-        # TODO: not 100% sure about this. But collision seem to stabilize the
-        #  boundary.
-        # f = self.collision(flow.f)
+        # not 100% sure about this. But collision seem to stabilize the
+        # boundary.
+        flow.collision(flow)
+
+        # actual algorithm
         u = flow.u()
         u_w = (u[[slice(None)] + self.index]
                + 0.5 * (u[[slice(None)] + self.index]
@@ -88,11 +90,8 @@ class AntiBounceBackOutlet(Boundary):
     def make_no_streaming_mask(self, f_shape, context: 'Context'):
         no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool,
                                      device=context.device)
-        no_stream_mask[[self.stencil.opposite.cpu().numpy()[
-                            self.velocities]] +
-                       self.index] = 1
-        # no_stream_mask[[self.stencil.opposite[self.velocities].to(
-        #     dtype=torch.uint8)] + self.index] = 1
+        no_stream_mask[[context.convert_to_ndarray(self.stencil.opposite)[
+                            self.velocities]] + self.index] = 1
         return no_stream_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):

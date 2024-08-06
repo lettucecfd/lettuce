@@ -125,6 +125,14 @@ def fix_configuration(request):
 
 
 class TestFlow(ExtFlow):
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None):
+        self._boundaries = []
+        super().__init__(context, resolution, reynolds_number, mach_number,
+                         stencil, equilibrium)
+
     def make_resolution(self, resolution: List[int],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
@@ -145,3 +153,45 @@ class TestFlow(ExtFlow):
         u = 1.01 * np.ones([self.stencil.d] + self.resolution)
         p = 0.01 * np.ones([1] + self.resolution)
         return p, u
+
+    @property
+    def boundaries(self) -> List['Boundary']:
+        return self._boundaries
+
+    @boundaries.setter
+    def boundaries(self, boundaries: List['Boundary']):
+        self._boundaries = boundaries
+
+
+def DummyTGV(context: 'Context', resolution: Union[int, List[int]],
+             reynolds_number, mach_number,
+             stencil: Optional['Stencil'] = None,
+             equilibrium: Optional['Equilibrium'] = None):
+    return TaylorGreenVortex(context, resolution, reynolds_number, mach_number,
+                             stencil, equilibrium)
+
+
+class DummyFlow(ExtFlow):
+
+    def __init__(self, context: Context, resolution: int = 16):
+        ExtFlow.__init__(self, context, resolution, 1.0, 1.0)
+
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
+        return [resolution, resolution] if isinstance(resolution, int)\
+            else resolution
+
+    def make_units(self, reynolds_number, mach_number, _: List[int]
+                   ) -> 'UnitConversion':
+        return UnitConversion(reynolds_number=reynolds_number,
+                              mach_number=mach_number)
+
+    def initial_pu(self) -> (float, List[float]):
+        ...
+
+    def initialize(self):
+        ...
+
+    @property
+    def boundaries(self) -> List['Boundary']:
+        return []

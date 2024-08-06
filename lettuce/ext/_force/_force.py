@@ -9,7 +9,7 @@ class Force(ABC):
         ...
 
     @abstractmethod
-    def u_eq(self, f):
+    def u_eq(self, flow: 'Flow'):
         ...
 
     @property

@@ -21,7 +21,7 @@ def test_standard_streaming_x3(f_all_lattices):
 
 def test_standard_streaming_hardcoded_2D(lattice):
     if not (lattice.stencil.D() == 2):
-        pytest.skip("Custom Test for 2D _stencil")
+        pytest.skip("Custom Test for 2D stencil")
 
     dummy_flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = NoCollision(lattice)
@@ -46,7 +46,7 @@ def test_standard_streaming_hardcoded_2D(lattice):
 
 def test_standard_streaming_hardcoded_3D(lattice):
     if not (lattice.stencil.D() == 3):
-        pytest.skip("Custom Test for 3D _stencil")
+        pytest.skip("Custom Test for 3D stencil")
 
     dummy_flow = TaylorGreenVortex3D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
     collision = NoCollision(lattice)

@@ -8,7 +8,7 @@ def test_opposite(lattice):
 
 
 def test_symmetry(lattice):
-    """Test if the _stencil is symmetric"""
+    """Test if the stencil is symmetric"""
     assert sum(sum(lattice.e.cpu().numpy())) == pytest.approx(0.0)
 
 

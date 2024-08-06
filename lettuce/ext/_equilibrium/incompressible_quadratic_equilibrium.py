@@ -8,10 +8,8 @@ class IncompressibleQuadraticEquilibrium(Equilibrium):
         self.rho0 = rho0
 
     def __call__(self, flow: 'Flow', rho=None, u=None):
-        if rho is None:
-            rho = flow.rho()
-        if u is None:
-            u = flow.u()
+        rho = flow.rho() if rho is None else rho
+        u = flow.u() if u is None else u
 
         exu = flow.einsum("qd,d->q", [flow.torch_stencil.e, u])
         uxu = flow.einsum("d,d->", [u, u])

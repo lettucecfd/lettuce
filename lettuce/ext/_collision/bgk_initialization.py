@@ -12,8 +12,10 @@ class BGKInitialization(Collision):
     def __init__(self, flow: 'Flow', moment_transformation):
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation
-        p, u = flow.initial_pu()
-        self.u = flow.units.convert_velocity_to_lu(flow.context.convert_to_tensor(u))
+        p_pu, u_pu = flow.initial_pu()
+        self.u = flow.units.convert_velocity_to_lu(
+                flow.context.convert_to_tensor(u_pu)
+            )
         self.rho0 = flow.units.characteristic_density_lu
         momentum_names = tuple([f"j{x}" for x in "xyz"[:flow.stencil.d]])
         self.momentum_indices = moment_transformation[momentum_names]
@@ -28,3 +30,9 @@ class BGKInitialization(Collision):
         mnew[self.momentum_indices] = rho * self.u
         f = self.moment_transformation.inverse_transform(mnew)
         return f
+
+    def native_available(self) -> bool:
+        return True
+
+    def native_generator(self) -> 'NativeCollision':
+        pass

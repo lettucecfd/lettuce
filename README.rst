@@ -53,6 +53,18 @@ Resources
 .. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
 .. _Code: https://github.com/lettucecfd/lettuce-paper
 
+Resources
+---------
+
+- `Documentation`_
+- Presentation at CFDML2021 - `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
+
+.. _Documentation: https://lettuceboltzmann.readthedocs.io
+.. _Preprint: https://arxiv.org/pdf/2106.12929.pdf
+.. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
+.. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
+.. _Code: https://github.com/lettucecfd/lettuce-paper
+
 Getting Started
 ---------------
 

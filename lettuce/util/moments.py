@@ -70,11 +70,11 @@ class Transform:
         return m
 
     def equilibrium(self, m):
-        """A very inefficient and basic implementation of the _equilibrium moments.
+        """A very inefficient and basic implementation of the equilibrium moments.
         """
         warnings.warn(
-            "Transform._equilibrium is a poor man's implementation of the moment _equilibrium."
-            "Please consider implementing the _equilibrium moments for your transform by hand.",
+            "Transform.equilibrium is a poor man's implementation of the moment equilibrium."
+            "Please consider implementing the equilibrium moments for your transform by hand.",
             InefficientCodeWarning
         )
         f = self.inverse_transform(m)
@@ -152,7 +152,7 @@ class D2Q9Dellar(Transform):
         return self.lattice.mv(self.inverse, m)
 
     def equilibrium(self, m):
-        warnings.warn("I am not 100% sure if this _equilibrium is correct.", ExperimentalWarning)
+        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]
@@ -210,7 +210,7 @@ class D2Q9Lallemand(Transform):
 
     def equilibrium(self, m):
         """From Lallemand and Luo"""
-        warnings.warn("I am not 100% sure if this _equilibrium is correct.", ExperimentalWarning)
+        warnings.warn("I am not 100% sure if this equilibrium is correct.", ExperimentalWarning)
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]

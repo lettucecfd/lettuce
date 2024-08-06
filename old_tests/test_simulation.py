@@ -60,7 +60,7 @@ def test_initialize_fneq(Case, dtype_device):
     flow = Case(resolution=32, reynolds_number=1000, mach_number=0.1, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation_neq = Simulation(flow, lattice, collision, streaming)
+    simulation_neq = Simulation(flow, collision, [])
 
     pre_rho = lattice.rho(simulation_neq.f)
     pre_u = lattice.u(simulation_neq.f)
@@ -77,14 +77,14 @@ def test_initialize_fneq(Case, dtype_device):
     assert torch.allclose(pre_ke, post_ke, rtol=0.0, atol=tol)
 
     if Case is TaylorGreenVortex2D:
-        error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
-        error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
-        simulation_eq = Simulation(flow, lattice, collision, streaming)
-        simulation_neq.reporters.append(error_reporter_neq)
-        simulation_eq.reporters.append(error_reporter_eq)
+        error_reporter_neq = ErrorReporter(flow.analytic_solution, interval=1, out=None)
+        error_reporter_eq = ErrorReporter(flow.analytic_solution, interval=1, out=None)
+        simulation_eq = Simulation(flow, collision, [])
+        simulation_neq.reporter.append(error_reporter_neq)
+        simulation_eq.reporter.append(error_reporter_eq)
 
-        simulation_neq.step(10)
-        simulation_eq.step(10)
+        simulation_neq(10)
+        simulation_eq(10)
         error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
         error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
 

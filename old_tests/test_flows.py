@@ -6,6 +6,7 @@ from lettuce import torch_gradient, DecayingTurbulence
 from lettuce import Lattice, Simulation, BGKCollision, BGKInitialization, StandardStreaming
 from lettuce import Obstacle2D, Obstacle3D
 from lettuce.flows.poiseuille import PoiseuilleFlow2D
+from lettuce import Context
 
 # Flows to test
 INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, DoublyPeriodicShear2D, DecayingTurbulence]
@@ -15,9 +16,10 @@ INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 @pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
 def test_flow_2d(IncompressibleFlow, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)
-    flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
+    context = Context(dtype=dtype, device=device, use_native=False)
+    flow = IncompressibleFlow(context=context, resolution=16,
+                              reynolds_number=1, mach_number=0.05)
+    collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
     simulation.step(1)

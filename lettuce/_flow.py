@@ -64,7 +64,7 @@ class Flow(ABC):
     resolution: List[int]
     units: 'UnitConversion'
     stencil: 'Stencil'
-    torch_stencil: '_TorchStencil'
+    torch_stencil: 'TorchStencil'
     equilibrium: 'Equilibrium'
     boundaries: List['Boundary']
 

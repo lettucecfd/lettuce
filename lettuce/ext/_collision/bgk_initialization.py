@@ -1,5 +1,6 @@
 from .. import Force
 from ... import Flow, Collision
+from ...util.moments import Transform
 
 __all__ = ['BGKInitialization']
 
@@ -9,7 +10,7 @@ class BGKInitialization(Collision):
     Keep velocity constant.
     """
 
-    def __init__(self, flow: 'Flow', moment_transformation):
+    def __init__(self, flow: 'Flow', moment_transformation: Transform):
         self.tau = flow.units.relaxation_parameter_lu
         self.moment_transformation = moment_transformation
         p_pu, u_pu = flow.initial_pu()

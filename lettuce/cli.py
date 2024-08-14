@@ -60,7 +60,7 @@ def main(ctx, cuda, gpu_id, precision):
               help="File to write profiling information to (default=""; "
                    "no profiling information gets written).")
 @click.option("-f", "--flow", type=click.Choice(list(flow_by_name.keys())),
-              default="taylor2D")
+              default="taylor2d")
 @click.option("-v", "--vtk-out", type=str, default="",
               help="VTK file basename to write the velocities and densities "
                    "to (default=""; no info gets written).")
@@ -82,7 +82,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
     context = Context(ctx.obj['device'], ctx.obj['dtype'], use_cuda_native)
 
     flow = flow_class(context, resolution=resolution, reynolds_number=1,
-                      mach_number=0.05)
+                      mach_number=0.05, stencil=stencil)
 
     force = Guo(
         tau=flow.units.relaxation_parameter_lu,
@@ -153,11 +153,11 @@ def convergence(ctx, use_cuda_native):
 
         print(f"{resolution:15} {error_u:15.2e} {factor_u / 2:15.1f} "
               f"{error_p:15.2e} {factor_p / 2:15.1f}")
-    if factor_u / 2 < 1.9:
-        print("Velocity convergence order < 2.")
-    if factor_p / 2 < 0.9:
-        print("Velocity convergence order < 1.")
-    if factor_u / 2 < 1.9 or factor_p / 2 < 0.9:
+    if factor_u / 2 < (2 - 1e-6):
+        print("FAILED: Velocity convergence order < 2.")
+        sys.exit(1)
+    if factor_p / 2 < (1 - 1e-6):
+        print("FAILED: Pressure convergence order < 1.")
         sys.exit(1)
     else:
         return 0

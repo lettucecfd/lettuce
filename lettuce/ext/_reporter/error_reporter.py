@@ -21,11 +21,10 @@ class ErrorReporter(Reporter):
             simulation.flow.i), simulation.flow.f
 
         if i % self.interval == 0:
-            pref, uref = self.analytical_solution(t=t)
-            pref = simulation.flow.context.convert_to_tensor(pref)
-            uref = simulation.flow.context.convert_to_tensor(uref)
-            u = simulation.flow.u_pu
+            pref, uref = [simulation.flow.context.convert_to_tensor(
+                _) for _ in self.analytical_solution(t=t)]
             p = simulation.flow.p_pu
+            u = simulation.flow.u_pu
 
             resolution = torch.pow(torch.prod(
                 simulation.flow.context.convert_to_tensor(p.size())),

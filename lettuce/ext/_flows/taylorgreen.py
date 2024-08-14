@@ -62,7 +62,7 @@ class TaylorGreenVortex(ExtFlow):
     def initial_pu(self) -> (torch.Tensor, torch.Tensor):
         return self.analytic_solution(t=0)
 
-    def analytic_solution(self, t=0) -> (torch.Tensor, torch.Tensor):
+    def analytic_solution(self, t: float) -> (torch.Tensor, torch.Tensor):
         grid = self.grid
         nu = self.context.convert_to_tensor(self.units.viscosity_pu)
         if len(self.resolution) == 2:

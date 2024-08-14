@@ -104,10 +104,10 @@ class Flow(ABC):
     def initialize(self):
         """initializing in equilibrium"""
         initial_p, initial_u = self.initial_pu()
-        initial_u = self.context.convert_to_tensor(
-            self.units.convert_velocity_to_lu(initial_u))
         initial_rho = self.context.convert_to_tensor(
             self.units.convert_pressure_pu_to_density_lu(initial_p))
+        initial_u = self.context.convert_to_tensor(
+            self.units.convert_velocity_to_lu(initial_u))
         self.f = self.context.convert_to_tensor(
             self.equilibrium(self, rho=initial_rho, u=initial_u))
 
@@ -135,6 +135,10 @@ class Flow(ABC):
     def p_pu(self) -> torch.Tensor:
         return self.units.convert_density_lu_to_pressure_pu(self.rho())
 
+    @property
+    def u_pu(self):
+        return self.units.convert_velocity_to_lu(self.u())
+
     def j(self) -> torch.Tensor:
         """momentum"""
         return self.einsum("qd,q->d", [self.torch_stencil.e, self.f])
@@ -153,10 +157,6 @@ class Flow(ABC):
                 acceleration = acceleration[index]
             correction = acceleration / (2 * rho)
         return v + correction
-
-    @property
-    def u_pu(self):
-        return self.units.convert_velocity_to_lu(self.u())
 
     @property
     def velocity(self):

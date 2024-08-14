@@ -7,32 +7,47 @@ __all__ = ['Context']
 
 
 class Context:
-    def __init__(self, device: Optional[torch.device] = None, dtype: Optional[torch.dtype] = None, use_native: Optional[bool] = None):
+    def __init__(self, device: Optional[torch.device] = None,
+                 dtype: Optional[torch.dtype] = None,
+                 use_native: Optional[bool] = None):
 
         # check sanity of context configuration
 
         if device is None and use_native is None:
-            device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+            device = torch.device('cuda:0'
+                                  if torch.cuda.is_available() else 'cpu')
             use_native = True if torch.cuda.is_available() else False
 
         elif device is None:
-            assert not use_native or torch.cuda.is_available(), 'cuda_native extension explicitly requested but cuda is not available!'
+            assert not use_native or torch.cuda.is_available(), \
+                ('cuda_native extension explicitly requested but '
+                 'cuda is not available!')
             device = torch.device('cuda:0')
 
         elif use_native is None:
             if 'cuda' in str(device):
-                assert torch.cuda.is_available(), 'cuda device explicitly requested but cuda is not available!'
+                assert torch.cuda.is_available(), \
+                    ('cuda device explicitly requested but '
+                     'cuda is not available!')
                 use_native = True
             else:
-                assert 'cpu' in str(device), f"lettuce is designed to work on cpu or cuda devices. {device} is not supported!"
+                assert 'cpu' in str(device), \
+                    (f"lettuce is designed to work on cpu or cuda devices. "
+                     f"{device} is not supported!")
                 use_native = False
 
         else:
             if 'cuda' in str(device):
-                assert torch.cuda.is_available(), 'cuda device explicitly requested but cuda is not available!'
+                assert torch.cuda.is_available(), \
+                    ('cuda device explicitly requested '
+                     'but cuda is not available!')
             else:
-                assert 'cpu' in str(device), f"lettuce is designed to work on cpu or cuda devices. {device} is not supported!"
-                assert not use_native, 'can not use explicitly requested cuda_native extension on explicitly requested cpu device!'
+                assert 'cpu' in str(device), \
+                    (f"lettuce is designed to work on cpu or cuda devices. "
+                     f"{device} is not supported!")
+                assert not use_native, \
+                    ('can not use explicitly requested cuda_native extension '
+                     'on explicitly requested cpu device!')
 
         dtype = dtype or torch.float32  # default dtype to single
         assert dtype in [torch.float16, torch.float32, torch.float64], \

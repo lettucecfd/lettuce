@@ -118,8 +118,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
 @click.pass_context
 def convergence(ctx, use_cuda_native):
     """Use Taylor Green 2D for convergence test in diffusive scaling."""
-
-    context = Context(ctx.obj['device'], ctx.obj['dtype'], use_cuda_native)
+    use_cuda_native &= ctx.obj['device'].type != 'cpu'
+    context = Context(ctx.obj['device'], ctx.obj['dtype'],
+                      use_native=use_cuda_native)
 
     error_u_old = None
     error_p_old = None

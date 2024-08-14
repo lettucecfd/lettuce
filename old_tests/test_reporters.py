@@ -88,6 +88,7 @@ def test_vtk_reporter_mask(tmpdir):
 
 
 def test_HDF5Reporter(tmpdir):
+    step = 3
     lattice = Lattice(D2Q9, "cpu")
     flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10,
                                mach_number=0.05, lattice=lattice)
@@ -101,10 +102,10 @@ def test_HDF5Reporter(tmpdir):
     hdf5_reporter = HDF5Reporter(
         flow=flow,
         collision=collision,
-        interval=1,
+        interval=step,
         filebase=tmpdir / "output")
     simulation.reporters.append(hdf5_reporter)
-    simulation.step(3)
+    simulation.step(step)
     assert os.path.isfile(tmpdir / "output.h5")
 
     dataset_train = LettuceDataset(

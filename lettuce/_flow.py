@@ -137,7 +137,7 @@ class Flow(ABC):
 
     @property
     def u_pu(self):
-        return self.units.convert_velocity_to_lu(self.u())
+        return self.units.convert_velocity_to_pu(self.u())
 
     def j(self) -> torch.Tensor:
         """momentum"""

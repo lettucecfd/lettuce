@@ -7,8 +7,8 @@ print("start")
 
 # ---------- Set up simulation -------------
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-context = lt.Context(device=device, dtype=torch.float32)  # single
-# precision - float64 for double precision
+context = lt.Context(device=device, dtype=torch.float32)  # single precision
+# - torch.float64 for double precision
 resolution = 80  # resolution of the lattice, low resolution leads to
 # unstable speeds somewhen after 10 (PU)
 flow = lt.TaylorGreenVortex(context, resolution, 1600, 0.1, lt.D3Q27)

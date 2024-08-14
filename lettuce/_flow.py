@@ -81,7 +81,7 @@ class Flow(ABC):
         self.resolution = resolution
         self.units = units
         self.stencil = stencil
-        self.torch_stencil = _TorchStencil(stencil, context)
+        self.torch_stencil = TorchStencil(stencil, context)
         self.equilibrium = equilibrium
 
         self.i = 0

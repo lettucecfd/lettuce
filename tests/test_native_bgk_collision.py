@@ -1,10 +1,6 @@
 import pytest
 import torch.cuda
 
-from lettuce import Context, Simulation
-from lettuce.ext import BGKCollision
-from lettuce.ext import ExtFlow
-
 from lettuce import Context, UnitConversion, Simulation
 from lettuce.ext import ExtFlow, BGKCollision
 from typing import List, Union, Optional

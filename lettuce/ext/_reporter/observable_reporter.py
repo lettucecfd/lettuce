@@ -32,7 +32,8 @@ class IncompressibleKineticEnergy(Observable):
 
     def __call__(self, f):
         dx = self.flow.units.convert_length_to_pu(1.0)
-        kinE = self.flow.units.convert_incompressible_energy_to_pu(torch.sum(self.flow.incompressible_energy()))
+        kinE = self.flow.units.convert_incompressible_energy_to_pu(
+            torch.sum(self.flow.incompressible_energy()))
         kinE *= dx ** self.flow.stencil.d
         return kinE
 
@@ -51,7 +52,8 @@ class Enstrophy(Observable):
         dx = self.flow.units.convert_length_to_pu(1.0)
         grad_u0 = torch_gradient(u0, dx=dx, order=6)
         grad_u1 = torch_gradient(u1, dx=dx, order=6)
-        vorticity = torch.sum((grad_u0[1] - grad_u1[0]) * (grad_u0[1] - grad_u1[0]))
+        vorticity = torch.sum((grad_u0[1] - grad_u1[0])
+                              * (grad_u0[1] - grad_u1[0]))
         if self.flow.stencil.d == 3:
             u2 = self.flow.units.convert_velocity_to_pu(self.flow.u()[2])
             grad_u2 = torch_gradient(u2, dx=dx, order=6)
@@ -70,8 +72,8 @@ class EnergySpectrum(Observable):
         self.dx = self.flow.units.convert_length_to_pu(1.0)
         self.dimensions = self.flow.grid[0].shape
         frequencies = [self.context.convert_to_tensor(
-                np.fft.fftfreq(dim, d=1 / dim)
-            ) for dim in self.dimensions]
+            np.fft.fftfreq(dim, d=1 / dim)
+        ) for dim in self.dimensions]
         wavenumbers = torch.stack(torch.meshgrid(*frequencies, indexing='ij'))
         wavenorms = torch.norm(wavenumbers, dim=0)
 
@@ -85,7 +87,9 @@ class EnergySpectrum(Observable):
                 (wavenorms[..., None] > self.wavenumbers.to(
                     dtype=self.context.dtype, device=self.context.device) -
                  0.5) &
-                (wavenorms[..., None] <= self.wavenumbers.to(dtype=self.context.dtype, device=self.context.device) + 0.5)
+                (wavenorms[..., None] <= self.wavenumbers.to(
+                    dtype=self.context.dtype, device=self.context.device)
+                 + 0.5)
         )
 
     def __call__(self, f):
@@ -101,7 +105,8 @@ class EnergySpectrum(Observable):
 
     def _ekin_spectrum(self, u):
         """distinguish between different torch versions"""
-        torch_ge_18 = (version.parse(torch.__version__) >= version.parse("1.8.0"))
+        torch_ge_18 = (version.parse(torch.__version__) >= version.parse(
+            "1.8.0"))
         if torch_ge_18:
             return self._ekin_spectrum_torch_ge_18(u)
         else:
@@ -110,12 +115,12 @@ class EnergySpectrum(Observable):
     def _ekin_spectrum_torch_lt_18(self, u):
         zeros = torch.zeros(self.dimensions, dtype=self.context.dtype,
                             device=self.context.device)[..., None]
-        uh = (torch.stack([
-                torch.fft(torch.cat((u[i][..., None], zeros),
-                          self.flow.stencil.d),
-                          signal_ndim=self.flow.stencil.d)
-                for i in range(self.flow.stencil.d)]) / self.norm
-            )
+        uh = (torch.stack(
+            [torch.fft(torch.cat((u[i][..., None], zeros),
+                                 self.flow.stencil.d),
+                       signal_ndim=self.flow.stencil.d)
+             for i in range(self.flow.stencil.d)
+             ]) / self.norm)
         ekin = torch.sum(0.5 * (uh[..., 0] ** 2 + uh[..., 1] ** 2), dim=0)
         return ekin
 
@@ -158,7 +163,7 @@ class ObservableReporter(Reporter):
 
     >>> from lettuce import TaylorGreenVortex3D, Enstrophy, D3Q27, Context
     >>> context = Context(device=torch.device("cpu"))
-    >>> flow = TaylorGreenVortex3D(context, 50, 300, 0.1, D3Q27())
+    >>> flow = TaylorGreenVortex(context, 50, 300, 0.1, D3Q27())
     >>> simulation = ...
     >>> enstrophy = Enstrophy(flow)
     >>> reporter = ObservableReporter(enstrophy, interval=10)
@@ -166,9 +171,8 @@ class ObservableReporter(Reporter):
     """
 
     def __init__(self, observable, interval=1, out=sys.stdout):
-        Reporter.__init__(self, None)
+        super().__init__(interval)
         self.observable = observable
-        self.interval = interval
         self.out = [] if out is None else out
         self._parameter_name = observable.__class__.__name__
         print('steps    ', 'time    ', self._parameter_name)
@@ -183,7 +187,7 @@ class ObservableReporter(Reporter):
             else:
                 observed = observed.tolist()
             entry = ([simulation.flow.i,
-                     simulation.units.convert_time_to_pu(simulation.flow.i)]
+                      simulation.units.convert_time_to_pu(simulation.flow.i)]
                      + observed)
             if isinstance(self.out, list):
                 self.out.append(entry)

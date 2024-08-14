@@ -18,7 +18,8 @@ def test_bounce_back_boundary(f_lattice):
     mask = (f[0] > 0).cpu().numpy()  # will contain all points
     bounce_back = BounceBackBoundary(mask, lattice)
     f = bounce_back(f)
-    assert f[lattice.stencil.opposite].cpu().numpy() == pytest.approx(f_old.cpu().numpy())
+    assert (f[lattice.stencil.opposite].cpu().numpy() ==
+            pytest.approx(f_old.cpu().numpy()))
 
 
 def test_bounce_back_boundary_not_applied_if_mask_empty(f_lattice):
@@ -37,12 +38,14 @@ def test_equilibrium_boundary_pu(f_lattice):
     pressure = 0
     velocity = 0.1 * np.ones(lattice.D)
     feq = lattice.equilibrium(
-        lattice.convert_to_tensor(units.convert_pressure_pu_to_density_lu(pressure)),
+        lattice.convert_to_tensor(units.convert_pressure_pu_to_density_lu(
+            pressure)),
         lattice.convert_to_tensor(units.convert_velocity_to_lu(velocity))
     )
     feq_field = torch.einsum("q,q...->q...", feq, torch.ones_like(f))
 
-    eq_boundary = EquilibriumBoundaryPU(mask, lattice, units, velocity=velocity, pressure=pressure)
+    eq_boundary = EquilibriumBoundaryPU(mask, lattice, units,
+                                        velocity=velocity, pressure=pressure)
     f = eq_boundary(f)
 
     assert f.cpu().numpy() == pytest.approx(feq_field.cpu().numpy())
@@ -50,8 +53,10 @@ def test_equilibrium_boundary_pu(f_lattice):
 
 
 def test_anti_bounce_back_outlet(f_lattice):
-    """Compares the result of the application of the boundary to f to the result using the formula taken from page 195
-    of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are similar it is assumed to be working fine."""
+    """Compares the result of the application of the boundary to f to the
+    result using the formula taken from page 195
+    of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are
+    similar it is assumed to be working fine."""
     f, lattice = f_lattice
     # generates reference value of f using non-dynamic formula
     f_ref = f
@@ -67,24 +72,36 @@ def test_anti_bounce_back_outlet(f_lattice):
             u_w_norm = torch.norm(u_w, dim=0)
 
             for i in [1, 11, 13, 15, 17, 19, 21, 23, 25]:
-                stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+                stencil_e_tensor = torch.tensor(lattice.stencil.e[i],
+                                                device=f.device, dtype=f.dtype)
 
-                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + (
-                        lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :]
-                        * (2 + torch.einsum('c, cyz -> yz', stencil_e_tensor, u_w) ** 2
-                           / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = (
+                        - f_ref[i, -1, :, :]
+                        + (lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :]
+                           * (2 + torch.einsum(
+                            'c, cyz -> yz', stencil_e_tensor, u_w
+                           ) ** 2
+                           / lattice.stencil.cs ** 4
+                           - (u_w_norm / lattice.stencil.cs) ** 2))
+                )
 
         if Q == 19:
             u_w = u[:, -1, :, :] + 0.5 * (u[:, -1, :, :] - u[:, -2, :, :])
             u_w_norm = torch.norm(u_w, dim=0)
 
             for i in [1, 11, 13, 15, 17]:
-                stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+                stencil_e_tensor = torch.tensor(lattice.stencil.e[i],
+                                                device=f.device, dtype=f.dtype)
 
-                f_ref[lattice.stencil.opposite[i], -1, :, :] = - f_ref[i, -1, :, :] + (
-                        lattice.stencil.w[i] * lattice.rho(f)[0, -1, :, :]
-                        * (2 + torch.einsum('c, cyz -> yz', stencil_e_tensor, u_w) ** 2
-                           / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+                f_ref[lattice.stencil.opposite[i], -1, :, :] = (
+                        - f_ref[i, -1, :, :]
+                        + (lattice.stencil.w[i]
+                           * lattice.rho(f)[0, -1, :, :]
+                           * (2 + torch.einsum('c, cyz -> yz',
+                                               stencil_e_tensor,
+                                               u_w) ** 2
+                              / lattice.stencil.cs ** 4
+                              - (u_w_norm / lattice.stencil.cs) ** 2)))
 
     if D == 2 and Q == 9:
         direction = [1, 0]
@@ -92,12 +109,15 @@ def test_anti_bounce_back_outlet(f_lattice):
         u_w_norm = torch.norm(u_w, dim=0)
 
         for i in [1, 5, 8]:
-            stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+            stencil_e_tensor = torch.tensor(lattice.stencil.e[i],
+                                            device=f.device, dtype=f.dtype)
 
             f_ref[lattice.stencil.opposite[i], -1, :] = - f_ref[i, -1, :] + (
                     lattice.stencil.w[i] * lattice.rho(f)[0, -1, :]
-                    * (2 + torch.einsum('c, cy -> y', stencil_e_tensor, u_w) ** 2
-                       / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+                    * (2 + torch.einsum('c, cy -> y', stencil_e_tensor,
+                                        u_w) ** 2
+                       / lattice.stencil.cs ** 4 - (
+                               u_w_norm / lattice.stencil.cs) ** 2))
 
     if D == 1 and Q == 3:
         direction = [1]
@@ -105,12 +125,15 @@ def test_anti_bounce_back_outlet(f_lattice):
         u_w_norm = torch.norm(u_w, dim=0)
 
         for i in [1]:
-            stencil_e_tensor = torch.tensor(lattice.stencil.e[i], device=f.device, dtype=f.dtype)
+            stencil_e_tensor = torch.tensor(lattice.stencil.e[i],
+                                            device=f.device, dtype=f.dtype)
 
             f_ref[lattice.stencil.opposite[i], -1] = - f_ref[i, -1] + (
                     lattice.stencil.w[i] * lattice.rho(f)[0, -1]
-                    * (2 + torch.einsum('c, x -> x', stencil_e_tensor, u_w) ** 2
-                       / lattice.stencil.cs ** 4 - (u_w_norm / lattice.stencil.cs) ** 2))
+                    * (2 + torch.einsum('c, x -> x', stencil_e_tensor,
+                                        u_w) ** 2
+                       / lattice.stencil.cs ** 4 - (
+                               u_w_norm / lattice.stencil.cs) ** 2))
 
     # generates value from actual boundary implementation
     abb_outlet = AntiBounceBackOutlet(lattice, direction)
@@ -150,11 +173,15 @@ def test_equilibrium_pressure_outlet(dtype_device):
                 BounceBackBoundary(self.mask, self.units.lattice)
             ]
 
-    flow = MyObstacle((32, 32), reynolds_number=10, mach_number=0.1, lattice=lattice, domain_length_x=3)
+    flow = MyObstacle((32, 32), reynolds_number=10, mach_number=0.1,
+                      lattice=lattice, domain_length_x=3)
     mask = np.zeros_like(flow.grid[0], dtype=bool)
     mask[10:20, 10:20] = 1
     flow.mask = mask
-    simulation = Simulation(flow, lattice, RegularizedCollision(lattice, flow.units.relaxation_parameter_lu),
+    simulation = Simulation(flow, lattice,
+                            RegularizedCollision(
+                                lattice,
+                                flow.units.relaxation_parameter_lu),
                             StandardStreaming(lattice))
     simulation.step(30)
     rho = lattice.rho(simulation.f)

@@ -15,7 +15,6 @@ class KBCCollision(Collision):
     """
 
     def __init__(self, tau: float = None):
-        Collision.__init__(self)
         self.tau = tau
         self.beta = None
         self.M = None

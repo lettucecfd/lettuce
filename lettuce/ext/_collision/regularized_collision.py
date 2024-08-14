@@ -1,6 +1,5 @@
 import torch
 
-from .. import Force
 from ... import Flow, Collision
 
 __all__ = ['RegularizedCollision']

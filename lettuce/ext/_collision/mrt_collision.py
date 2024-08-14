@@ -1,4 +1,3 @@
-from .. import Force
 from ... import Flow, Collision
 
 __all__ = ['MRTCollision']
@@ -9,11 +8,12 @@ class MRTCollision(Collision):
     Multiple relaxation time collision operator
 
     This is an MRT operator in the most general sense of the word.
-    The transform does not have to be linear and can, e.g., be any moment or cumulant transform.
+    The transform does not have to be linear and can, e.g., be any moment or
+    cumulant transform.
     """
 
-    def __init__(self, transform, relaxation_parameters, context: 'Context'):
-        Collision.__init__(self)
+    def __init__(self, transform: 'Transform', relaxation_parameters: list,
+                 context: 'Context'):
         self.transform = transform
         self.relaxation_parameters = context.convert_to_tensor(
             relaxation_parameters)
@@ -31,4 +31,3 @@ class MRTCollision(Collision):
 
     def native_generator(self) -> 'NativeCollision':
         pass
-

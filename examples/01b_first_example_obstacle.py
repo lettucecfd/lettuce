@@ -6,7 +6,7 @@ import numpy as np
 """
 Context definitions.
 
-The context defines the default device (cpu or cuda) and datatype (e.g., 
+The context defines the default device (cpu or cuda) and datatype (e.g.,
 float32 for single, float64 for double precision).
 Native CUDA is currently not supported for the anti-bounce-back outlet.
 """

@@ -30,9 +30,10 @@ flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
 collision = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 simulation = lt.Simulation(flow=flow, collision=collision, reporter=[])
 
-simulation.reporter.append(lt.VTKReporter(interval=1000,
-                                          filename_base=
-                                          "./data/converging_obstacle"))
+simulation.reporter.append(lt.VTKReporter(
+    interval=1000,
+    filename_base="./data/converging_obstacle"
+))
 
 """
 We now add a reporter which we access later. The output can be written to files

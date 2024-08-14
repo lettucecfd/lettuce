@@ -10,7 +10,6 @@ class SmagorinskyCollision(Collision):
     """
 
     def __init__(self, tau, smagorinsky_constant=0.17, force: 'Force' = None):
-        Collision.__init__(self)
         self.force = force
         self.tau = tau
         self.iterations = 2

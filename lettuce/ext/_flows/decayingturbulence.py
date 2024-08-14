@@ -97,9 +97,9 @@ class DecayingTurbulence(ExtFlow):
             u_imag_h[dim].ravel()[0] = 0
 
         """ Remove divergence
-        # modified wave number sin(k*dx) is used, as the gradient below uses 
+        # modified wave number sin(k*dx) is used, as the gradient below uses
         # second order cental differences
-        # Modify if other schemes are used or use kx, ky if you don't know 
+        # Modify if other schemes are used or use kx, ky if you don't know
         # the modified wavenumber !!!
         """
         wavenumber_modified = [np.sin(wavenumber[dim] * dx) / dx

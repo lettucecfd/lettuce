@@ -32,7 +32,8 @@ class VTKReporter(Reporter):
             p = simulation.flow.p_pu
             if simulation.flow.stencil.d == 2:
                 self.point_dict["p"] = (
-                    simulation.flow.context.convert_to_ndarray(p[0, ..., None]))
+                    simulation.flow.context.convert_to_ndarray(
+                        p[0, ..., None]))
                 for d in range(simulation.flow.stencil.d):
                     self.point_dict[f"u{'xyz'[d]}"] = (
                         simulation.flow.context.convert_to_ndarray(

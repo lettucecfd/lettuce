@@ -126,8 +126,8 @@ def convergence(ctx, use_cuda_native):
     error_p_old = None
     factor_u = None
     factor_p = None
-    print(("{:>15} " * 5).format("resolution", "error (u)", "order (u)",
-                                 "error (p)", "order (p)"))
+    print(("{:>15} " * 6).format("resolution", "error (u)", "order (u)",
+                                 "error (p)", "order (p)", "MLUPS"))
 
     for i in range(4, 9):
         resolution = 2 ** i
@@ -143,8 +143,7 @@ def convergence(ctx, use_cuda_native):
 
         simulation = Simulation(flow, collision, [error_reporter])
 
-        for _ in range(10 * resolution):
-            simulation(1)
+        mlups = simulation(10 * resolution)
 
         error_u, error_p = np.mean(np.abs(error_reporter.out), axis=0).tolist()
         factor_u = 0 if error_u_old is None else error_u_old / error_u
@@ -153,7 +152,7 @@ def convergence(ctx, use_cuda_native):
         error_p_old = error_p
 
         print(f"{resolution:15} {error_u:15.2e} {factor_u / 2:15.1f} "
-              f"{error_p:15.2e} {factor_p / 2:15.1f}")
+              f"{error_p:15.2e} {factor_p / 2:15.1f} {mlups:15.2f}")
     if factor_u / 2 < (2 - 1e-6):
         print("FAILED: Velocity convergence order < 2.")
         sys.exit(1)

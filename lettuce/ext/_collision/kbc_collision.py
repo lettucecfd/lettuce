@@ -2,7 +2,7 @@ import warnings
 
 import torch
 
-from ... import Flow, Collision, TorchStencil
+from ... import Flow, Collision, _TorchStencil
 from .. import D3Q27, D2Q9
 
 __all__ = ['KBCCollision3D', 'KBCCollision2D', 'KBCCollision']
@@ -104,7 +104,7 @@ class KBCCollision(Collision):
                 self.kbc_moment_transform = self.kbc_moment_transform_3d
                 # Build a matrix that contains the indices
                 self.M = flow.context.zero_tensor([3, 3, 3, 27])
-                torch_stencil = TorchStencil(D3Q27(), flow.context)
+                torch_stencil = _TorchStencil(D3Q27(), flow.context)
                 for i in range(3):
                     for j in range(3):
                         for k in range(3):
@@ -118,7 +118,7 @@ class KBCCollision(Collision):
                 self.kbc_moment_transform = self.kbc_moment_transform_2d
                 # Build a matrix that contains the indices
                 self.M = flow.context.zero_tensor([3, 3, 9])
-                torch_stencil = TorchStencil(D2Q9(), flow.context)
+                torch_stencil = _TorchStencil(D2Q9(), flow.context)
                 for i in range(3):
                     for j in range(3):
                         self.M[i, j] = (torch_stencil.e[:, 0] ** i

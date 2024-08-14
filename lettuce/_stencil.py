@@ -6,7 +6,7 @@ import numpy as np
 
 from ._context import Context
 
-__all__ = ['Stencil', 'TorchStencil']
+__all__ = ['Stencil', '_TorchStencil']
 
 
 class Stencil(ABC):
@@ -25,7 +25,7 @@ class Stencil(ABC):
         return len(self.e)
 
 
-class TorchStencil:
+class _TorchStencil:
     e: torch.Tensor
     w: torch.Tensor
     opposite: torch.Tensor

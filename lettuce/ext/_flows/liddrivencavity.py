@@ -29,7 +29,7 @@ class Cavity2D(ExtFlow):
                    resolution: List[int]) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=1,
+            characteristic_length_lu=resolution[0], characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 
@@ -45,7 +45,7 @@ class Cavity2D(ExtFlow):
                                    steps=self.resolution[n],
                                    device=self.context.device,
                                    dtype=self.context.dtype)
-                    for n in self.stencil.d)
+                    for n in range(self.stencil.d))
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property

@@ -64,7 +64,7 @@ class DoublyPeriodicShear2D(ExtFlow):
                                    steps=self.resolution[n],
                                    device=self.context.device,
                                    dtype=self.context.dtype)
-                    for n in self.stencil.d)
+                    for n in range(self.stencil.d))
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property

@@ -81,6 +81,55 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
         context.convert_to_ndarray(flow_2.f))
 
 
+def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
+    if fix_stencil.d < 2:
+        return 0
+    device, dtype, native = fix_configuration
+    context = Context(device=device, dtype=dtype, use_native=native)
+
+    class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
+
+        def make_no_collision_mask(self, shape: List[int], context: 'Context'
+                                   ) -> Optional[torch.Tensor]:
+            a = context.one_tensor(shape, dtype=bool)
+            return a
+
+        def make_no_streaming_mask(self, shape: List[int], context: 'Context'
+                                   ) -> Optional[torch.Tensor]:
+            return context.one_tensor(shape, dtype=bool)
+
+    class DummyEQBC(TaylorGreenVortex):
+        @property
+        def boundaries(self):
+            u = self.context.one_tensor([2, 1, 1]) * 0.1
+            p = self.context.zero_tensor([1, 1, 1])
+            boundary = my_equilibrium_boundary_mask(
+                self.context, torch.ones(self.resolution), u, p)
+            return [boundary]
+
+    flow_1 = DummyEQBC(context, resolution=fix_stencil.d * [16],
+                       reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+    flow_2 = DummyTGV(context, resolution=fix_stencil.d * [16],
+                      reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+
+    simulation = Simulation(flow=flow_1, collision=NoCollision(), reporter=[])
+    simulation(num_steps=1)
+
+    pressure = 0
+    velocity = 0.1 * np.ones(flow_2.stencil.d)
+
+    feq = flow_2.equilibrium(
+        flow_2,
+        context.convert_to_tensor(
+            flow_2.units.convert_pressure_pu_to_density_lu(pressure)),
+        context.convert_to_tensor(
+            flow_2.units.convert_velocity_to_lu(velocity))
+    )
+    flow_2.f = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))
+
+    assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
+
+
 def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
     if not torch.cuda.is_available():
         pytest.skip(reason="CUDA is not available on this machine.")

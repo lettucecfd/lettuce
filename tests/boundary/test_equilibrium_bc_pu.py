@@ -59,8 +59,8 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
 
     flow_1 = DummyEQBC(context, resolution=fix_stencil.d * [16],
                        reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
-    flow_2 = TestFlow(context, resolution=fix_stencil.d * [16],
-                      reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+    flow_2 = TestFlow(context, resolution=16, reynolds_number=1,
+                      mach_number=0.1, stencil=fix_stencil)
 
     simulation = Simulation(flow=flow_1, collision=NoCollision(), reporter=[])
     simulation(num_steps=1)
@@ -87,30 +87,21 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
     device, dtype, native = fix_configuration
     context = Context(device=device, dtype=dtype, use_native=native)
 
-    class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
-
-        def make_no_collision_mask(self, shape: List[int], context: 'Context'
-                                   ) -> Optional[torch.Tensor]:
-            a = context.one_tensor(shape, dtype=bool)
-            return a
-
-        def make_no_streaming_mask(self, shape: List[int], context: 'Context'
-                                   ) -> Optional[torch.Tensor]:
-            return context.one_tensor(shape, dtype=bool)
-
     class DummyEQBC(TaylorGreenVortex):
         @property
         def boundaries(self):
-            u = self.context.one_tensor([2, 1, 1]) * 0.1
-            p = self.context.zero_tensor([1, 1, 1])
-            boundary = my_equilibrium_boundary_mask(
-                self.context, torch.ones(self.resolution), u, p)
-            return [boundary]
+            # u = self.context.one_tensor(self.stencil.d) * 0.1
+            u = self.context.one_tensor(self.stencil.d) * 0.1
+            p = 0  # self.context.zero_tensor([1, 1, 1])
+            m = self.context.zero_tensor(self.resolution, dtype=bool)
+            m[..., :1] = True
+            return [TestEquilibriumBoundary(
+                self.context, m, u, p)]
 
-    flow_1 = DummyEQBC(context, resolution=fix_stencil.d * [16],
-                       reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
-    flow_2 = DummyTGV(context, resolution=fix_stencil.d * [16],
-                      reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
+    flow_1 = DummyEQBC(context, resolution=16, reynolds_number=1,
+                       mach_number=0.1, stencil=fix_stencil)
+    flow_2 = DummyTGV(context, resolution=16, reynolds_number=1,
+                      mach_number=0.1, stencil=fix_stencil)
 
     simulation = Simulation(flow=flow_1, collision=NoCollision(), reporter=[])
     simulation(num_steps=1)
@@ -125,7 +116,7 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
         context.convert_to_tensor(
             flow_2.units.convert_velocity_to_lu(velocity))
     )
-    flow_2.f = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))
+    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[..., :1]
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 

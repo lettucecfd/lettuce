@@ -10,24 +10,6 @@ from lettuce import *
 from tests.common import DummyFlow
 
 
-@pytest.mark.parametrize("Collision", [KBCCollision2D, KBCCollision3D])
-def test_collision_optimizes_pseudo_entropy(Collision, f_all_lattices):
-    """checks if the pseudo-entropy of the KBC collision model is at least
-    higher than the BGK pseudo-entropy"""
-    f, lattice = f_all_lattices
-    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
-            (Collision == KBCCollision3D and lattice.stencil != D3Q27))):
-        pytest.skip()
-    tau = 0.5003
-    coll_kbc = Collision(lattice, tau)
-    coll_bgk = BGKCollision(lattice, tau)
-    f_kbc = coll_kbc(f)
-    f_bgk = coll_bgk(f)
-    entropy_kbc = lattice.pseudo_entropy_local(f_kbc)
-    entropy_bgk = lattice.pseudo_entropy_local(f_bgk)
-    assert (entropy_bgk.cpu().numpy() < entropy_kbc.cpu().numpy()).all()
-
-
 @pytest.mark.parametrize("Transform", [D2Q9Lallemand, D2Q9Dellar])
 def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
     dtype, device = dtype_device

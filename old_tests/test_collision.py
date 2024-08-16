@@ -10,22 +10,6 @@ from lettuce import *
 from tests.common import DummyFlow
 
 
-@pytest.mark.parametrize("Transform", [D2Q9Lallemand, D2Q9Dellar])
-def test_collision_fixpoint_2x_MRT(Transform, dtype_device):
-    dtype, device = dtype_device
-    context = Context(device=device, dtype=dtype)
-    np.random.seed(1)  # arbitrary, but deterministic
-    stencil = D2Q9()
-    f = context.convert_to_tensor(np.random.random([stencil.q] + [3] *
-                                                   stencil.d))
-    f_old = copy(f)
-    flow = DummyFlow(context, 1)
-    collision = MRTCollision(Transform(stencil), np.array([0.5] * 9))
-    f = collision(collision(flow))
-    print(f.cpu().numpy(), f_old.cpu().numpy())
-    assert f.cpu().numpy() == pytest.approx(f_old.cpu().numpy(), abs=1e-5)
-
-
 def test_bgk_collision_devices(lattice2):
     if lattice2[0].stencil.D() != 2 and lattice2[0].stencil.D() != 3:
         pytest.skip("Test for 2D and 3D only!")

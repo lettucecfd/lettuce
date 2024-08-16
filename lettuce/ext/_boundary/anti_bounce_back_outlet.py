@@ -18,10 +18,11 @@ class AntiBounceBackOutlet(Boundary):
     [0, -1, 0] is negative y-direction in 3D; [0, -1] for the same in 2D
     """
 
-    def __init__(self, direction: [List[int]], stencil: 'Stencil',
-                 context: 'Context' = None):
-        context = Context() if context is None else context
-        direction = context.convert_to_ndarray(direction)
+    def __init__(self, direction: [List[int]], flow: 'Flow',
+                 collision: 'Collision' = None):
+        self.collision = BGKCollision(tau=flow.units.relaxation_parameter_lu) \
+            if collision is None else collision
+        context = flow.context
         assert len(direction) in [1, 2, 3], \
             (f"Invalid direction parameter. Expected direction of of length "
              f"1, 2 or 3 but got {len(direction)}.")

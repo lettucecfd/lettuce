@@ -13,11 +13,11 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
     """Equilibrium outlet with constant pressure.
     """
 
-    def __init__(self, flow: 'Flow', context: 'Context', direction: List[int],
+    def __init__(self, direction: List[int], flow: 'Flow',
                  rho_outlet: float = 1.0):
-        super().__init__(direction, flow.stencil)
-        self.rho_outlet = context.convert_to_tensor(rho_outlet)
-        self.context = context
+        super().__init__(direction, flow)
+        self.context = flow.context
+        self.rho_outlet = self.context.convert_to_tensor(rho_outlet)
 
         assert len(direction) in [1, 2, 3], \
             (f"Invalid direction parameter. Expected direction of of length 1,"

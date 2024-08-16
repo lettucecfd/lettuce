@@ -22,8 +22,7 @@ def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
     flow = TestFlow(context, stencil=stencil, resolution=16,
                     reynolds_number=1, mach_number=0.1)
     direction = [0] * (stencil.d - 1) + [1]
-    boundary_cpu = EquilibriumOutletP(flow=flow, context=context,
-                                      direction=direction,
+    boundary_cpu = EquilibriumOutletP(flow=flow, direction=direction,
                                       rho_outlet=1.2)
     f_post_boundary = boundary_cpu(flow)[..., -1]
     u_slice = [stencil.d, *flow.resolution[:stencil.d - 1], 1]

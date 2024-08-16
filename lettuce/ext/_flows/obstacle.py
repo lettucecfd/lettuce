@@ -115,9 +115,9 @@ class Obstacle(ExtFlow):
                                   * self._unit_vector()
                                   ),
             AntiBounceBackOutlet(self._unit_vector(),
-                                 self.torch_stencil),
-            # EquilibriumOutletP(self, self.context,
-            #                    self._unit_vector().tolist(), 0),
+                                 self),
+            # EquilibriumOutletP(direction=self._unit_vector().tolist(),
+            # self, rho_outlet=0),
             BounceBackBoundary(self.mask)
         ]
 

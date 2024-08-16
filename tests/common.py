@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import torch
+from copy import copy
 
 from lettuce import *
 
@@ -82,6 +83,29 @@ def configuration_ids():
     return buffer
 
 
+def collision_params():
+    return [BGKCollision,
+            KBCCollision,
+            MRTCollision,
+            NoCollision,
+            RegularizedCollision,
+            SmagorinskyCollision,
+            TRTCollision
+        ]
+
+
+def collision_ids():
+    return [
+            'BGKCollision',
+            'KBCCollision',
+            'MRTCollision',
+            'NoCollision',
+            'RegularizedCollision',
+            'SmagorinskyCollision',
+            'TRTCollision'
+        ]
+
+
 @pytest.fixture(params=dtype_params(), ids=dtype_ids())
 def fix_dtype(request):
     return request.param
@@ -121,6 +145,12 @@ def fix_native(request):
 def fix_configuration(request):
     if 'cuda' in request.param[0].type and not torch.cuda.is_available():
         pytest.skip(reason="CUDA is not available on this machine.")
+    return request.param
+
+
+@pytest.fixture(params=collision_params(),
+                ids=collision_ids())
+def fix_collision(request):
     return request.param
 
 

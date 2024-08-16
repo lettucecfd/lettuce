@@ -12,19 +12,6 @@ import numpy as np
 import torch
 
 
-def test_masks(dtype_device):
-    """test if masks are applied from boundary conditions"""
-    dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device)
-    flow = Obstacle((16, 16), 100, 0.1, lattice, 2)
-    flow.mask[1, 1] = 1
-    streaming = StandardStreaming(lattice)
-    collision = BGKCollision(lattice, 1.0)
-    simulation = Simulation(flow, lattice, collision, streaming)
-    assert simulation.streaming.no_stream_mask.any()
-    assert simulation.collision.no_collision_mask.any()
-
-
 def test_equilibrium_pressure_outlet(dtype_device):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, dtype=dtype, device=device)

@@ -46,7 +46,7 @@ class DecayingTurbulence(ExtFlow):
             mach_number=mach_number,
             characteristic_length_lu=resolution[0],
             characteristic_length_pu=2 * np.pi,
-            characteristic_velocity_pu=1
+            characteristic_velocity_pu=None
         )
 
     def analytic_solution(self, x, t=0):
@@ -151,6 +151,7 @@ class DecayingTurbulence(ExtFlow):
         characteristic velocity in phyiscal units."""
         ek, wavenumber = self._generate_spectrum()
         u = self._generate_initial_velocity(ek, wavenumber)
+        self.units.characteristic_velocity_pu = np.array(u).max()
         p = self._compute_initial_pressure()
         self.units.characteristic_velocity_pu = np.linalg.norm(u, axis=0).max()
         return p, u

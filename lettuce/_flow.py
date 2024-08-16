@@ -178,11 +178,12 @@ class Flow(ABC):
         f_w = self.einsum("q,q->q", [self.f, 1 / self.torch_stencil.w])
         return self.rho() - self.einsum("q,q->", [self.f, f_w])
 
-    def pseudo_entropy_local(self) -> torch.Tensor:
+    def pseudo_entropy_local(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """pseudo_entropy derived by a Taylor expansion around the local
         equilibrium"""
-        f_feq = self.f / self.equilibrium(self)
-        return self.rho() - self.einsum("q,q->", [self.f, f_feq])
+        f = self.f if f is None else f
+        f_feq = f / self.equilibrium(self)
+        return self.rho(f) - self.einsum("q,q->", [f, f_feq])
 
     def shear_tensor(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """computes the shear tensor of a given self.f in the sense

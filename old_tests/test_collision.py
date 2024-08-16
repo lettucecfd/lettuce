@@ -10,31 +10,6 @@ from lettuce import *
 from tests.common import DummyFlow
 
 
-@pytest.mark.parametrize("Collision",
-                         [BGKCollision, TRTCollision, KBCCollision2D,
-                          KBCCollision3D, RegularizedCollision])
-def test_collision_relaxes_shear_moments(Collision, f_all_lattices):
-    """checks whether the collision models relax the shear moments according
-    to the prescribed relaxation time"""
-    f, lattice = f_all_lattices
-    if ((Collision == KBCCollision2D and lattice.stencil != D2Q9) or (
-            (Collision == KBCCollision3D and lattice.stencil != D3Q27))):
-        pytest.skip()
-    rho = lattice.rho(f)
-    u = lattice.u(f)
-    feq = lattice.equilibrium(rho, u)
-    shear_pre = lattice.shear_tensor(f)
-    shear_eq_pre = lattice.shear_tensor(feq)
-    tau = 0.6
-    coll = Collision(lattice, tau)
-    f_post = coll(f)
-    shear_post = lattice.shear_tensor(f_post)
-    assert (shear_post.cpu().numpy() ==
-            pytest.approx((shear_pre
-                           - 1 / tau * (shear_pre - shear_eq_pre)
-                           ).cpu().numpy(), abs=1e-5))
-
-
 @pytest.mark.parametrize("Collision", [KBCCollision2D, KBCCollision3D])
 def test_collision_optimizes_pseudo_entropy(Collision, f_all_lattices):
     """checks if the pseudo-entropy of the KBC collision model is at least

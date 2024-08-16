@@ -85,8 +85,8 @@ class EnergySpectrum(Observable):
         self.wavenumbers = torch.arange(int(torch.max(wavenorms)))
         self.wavemask = (
                 (wavenorms[..., None] > self.wavenumbers.to(
-                    dtype=self.context.dtype, device=self.context.device) -
-                 0.5) &
+                    dtype=self.context.dtype, device=self.context.device)
+                 - 0.5) &
                 (wavenorms[..., None] <= self.wavenumbers.to(
                     dtype=self.context.dtype, device=self.context.device)
                  + 0.5)

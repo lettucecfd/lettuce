@@ -1,9 +1,11 @@
 from tests.common import *
 
 @pytest.mark.parametrize("Collision", [BGKCollision])
-def test_collision_fixpoint_2x(Collision, fix_configuration, fix_stencil):
-    device, dtype, native = fix_configuration
-    context = Context(device=device, dtype=dtype, use_native=native)
+def test_collision_fixpoint_2x(Collision,
+                               fix_device,
+                               fix_dtype,
+                               fix_stencil):
+    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,

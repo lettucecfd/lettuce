@@ -2,7 +2,8 @@ from tests.common import *
 
 
 def test_collision_conserves_mass(fix_conserving_collision,
-                                  fix_configuration,
+                                  fix_device,
+                                  fix_dtype,
                                   fix_stencil):
     if (fix_conserving_collision == KBCCollision
         and type(fix_stencil) not in [D2Q9, D3Q27]):

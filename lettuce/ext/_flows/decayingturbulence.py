@@ -13,6 +13,7 @@ import numpy as np
 import torch
 
 from ... import UnitConversion
+from .._stencil import D1Q3, D2Q9, D3Q19
 from . import ExtFlow
 
 
@@ -29,13 +30,16 @@ class DecayingTurbulence(ExtFlow):
         self.ic_energy = ic_energy
         self.wavenumbers = []
         self.spectrum = []
-        ExtFlow.__init__(self, context, resolution, reynolds_number,
+        default_stencils = [D1Q3(), D2Q9(), D3Q19()]
+        stencil = stencil or default_stencils[len(resolution) - 1]
+        stencil = stencil() if callable(stencil) else stencil
+        super().__init__(context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
-            return [resolution] * (stencil.d or self.stencil.d)
+            return [resolution] * stencil.d
         else:
             return resolution
 

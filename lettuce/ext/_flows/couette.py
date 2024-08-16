@@ -15,10 +15,12 @@ __all__ = ['CouetteFlow2D']
 
 class CouetteFlow2D(ExtFlow):
 
-    def __init__(self, resolution: Union[int, List[int]], reynolds_number,
-                 mach_number, context: 'Context'):
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None):
         super().__init__(context, resolution, reynolds_number,
-                         mach_number)
+                         mach_number, stencil, equilibrium)
         self.u0 = 0  # background velocity
 
     def make_resolution(self, resolution: Union[int, List[int]],

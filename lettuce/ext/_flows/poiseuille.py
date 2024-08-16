@@ -12,13 +12,20 @@ from lettuce.ext._boundary import BounceBackBoundary
 
 __all__ = ['PoiseuilleFlow2D']
 
+from .._stencil import D2Q9
+
 
 class PoiseuilleFlow2D(ExtFlow):
 
-    def __init__(self, context: 'Context', resolution, reynolds_number,
-                 mach_number, initialize_with_zeros=True):
-        super().__init__(context, resolution, reynolds_number, mach_number)
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None,
+                 initialize_with_zeros=True):
+        self.stencil = D2Q9() if stencil is None else stencil
         self.initialize_with_zeros = initialize_with_zeros
+        super().__init__(context, resolution, reynolds_number, mach_number,
+                         self.stencil, equilibrium)
 
     def analytic_solution(self, grid):
         half_lattice_spacing = 0.5 / self.resolution[0]
@@ -36,8 +43,9 @@ class PoiseuilleFlow2D(ExtFlow):
 
     def initial_pu(self):
         if self.initialize_with_zeros:
-            p = np.array([0 * self.grid[0]], dtype=float)
-            u = np.array([0 * self.grid[0], 0 * self.grid[1]], dtype=float)
+            p = self.context.zero_tensor(self.resolution)
+            u = torch.stack(2*[p], dim=0)
+            p = torch.stack([p], dim=0)
             return p, u
         else:
             return self.analytic_solution(self.grid)
@@ -46,13 +54,15 @@ class PoiseuilleFlow2D(ExtFlow):
                    resolution: List[int]) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=1,
+            characteristic_length_lu=resolution[0], characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
-        pass
+        if isinstance(resolution, int):
+            resolution = [resolution] * self.stencil
+        return resolution
 
     @property
     def grid(self):

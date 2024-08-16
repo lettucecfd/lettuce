@@ -82,8 +82,8 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
 
 
 def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
-    if fix_stencil.d < 2:
-        return 0
+    if fix_stencil.d not in [2, 3]:
+        pytest.skip("TGV Test can only be done in 2D or 3D.")
     device, dtype, native = fix_configuration
     context = Context(device=device, dtype=dtype, use_native=native)
 

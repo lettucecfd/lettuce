@@ -14,4 +14,3 @@ def test_bounce_back_boundary(fix_stencil, fix_configuration):
     f_bounced = bounce_back(flow)
     assert (f_old[flow.stencil.opposite].cpu().numpy() ==
             pytest.approx(f_bounced.cpu().numpy()))
-

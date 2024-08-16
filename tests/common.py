@@ -149,7 +149,6 @@ class TestFlow(ExtFlow):
                               characteristic_length_lu=resolution[0])
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
-        print(self.resolution)
         u = 1.01 * np.ones([self.stencil.d] + self.resolution)
         p = 0.01 * np.ones([1] + self.resolution)
         return p, u

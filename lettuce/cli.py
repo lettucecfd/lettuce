@@ -23,11 +23,11 @@ from lettuce.ext import (BGKCollision, ErrorReporter, VTKReporter,
 
 @click.group()
 @click.version_option(version=lettuce_version)
-@click.option("--cuda/--no-cuda", 
+@click.option("--cuda/--no-cuda",
               default=True,
               help="Use cuda (default=True).")
-@click.option("-i", "--gpu-id", 
-              type=int, 
+@click.option("-i", "--gpu-id",
+              type=int,
               default=0,
               help="Device ID of the GPU (default=0).")
 @click.option("-p", "--precision",
@@ -55,28 +55,28 @@ def main(ctx, cuda, gpu_id, precision):
 
 
 @main.command()
-@click.option("-s", "--steps", 
-              type=int, 
+@click.option("-s", "--steps",
+              type=int,
               default=10,
               help="Number of time steps.")
-@click.option("-r", "--resolution", 
-              type=int, 
+@click.option("-r", "--resolution",
+              type=int,
               default=1024,
               help="Grid Resolution")
-@click.option("-o", "--profile-out", 
-              type=str, 
+@click.option("-o", "--profile-out",
+              type=str,
               default="",
               help="File to write profiling information to (default=""; "
                    "no profiling information gets written).")
-@click.option("-f", "--flow", 
+@click.option("-f", "--flow",
               type=click.Choice(list(flow_by_name.keys())),
               default="taylor2d")
-@click.option("-v", "--vtk-out", 
-              type=str, 
+@click.option("-v", "--vtk-out",
+              type=str,
               default="",
               help="VTK file basename to write the velocities and densities "
                    "to (default=""; no info gets written).")
-@click.option("--use-cuda_native/--use-no-cuda_native", 
+@click.option("--use-cuda_native/--use-no-cuda_native",
               default=True,
               help="whether to use the cuda_native implementation or not.")
 @click.pass_context  # pass parameters to sub-commands
@@ -126,7 +126,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
 
 
 @main.command()
-@click.option("--use-cuda_native/--use-no-cuda_native", default=True,
+@click.option("--use-cuda_native/--use-no-cuda_native",
+              default=True,
               help="whether to use the cuda_native implementation or not.")
 @click.pass_context
 def convergence(ctx, use_cuda_native):

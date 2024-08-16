@@ -106,6 +106,25 @@ def collision_ids():
         ]
 
 
+def conserving_collision_params():
+    return [BGKCollision,
+            KBCCollision,
+            TRTCollision,
+            RegularizedCollision,
+            SmagorinskyCollision
+        ]
+
+
+def conserving_collision_ids():
+    return [
+            'BGKCollision',
+            'KBCCollision',
+            'TRTCollision',
+            'RegularizedCollision',
+            'SmagorinskyCollision'
+        ]
+
+
 @pytest.fixture(params=dtype_params(), ids=dtype_ids())
 def fix_dtype(request):
     return request.param
@@ -151,6 +170,12 @@ def fix_configuration(request):
 @pytest.fixture(params=collision_params(),
                 ids=collision_ids())
 def fix_collision(request):
+    return request.param
+
+
+@pytest.fixture(params=conserving_collision_params(),
+                ids=conserving_collision_ids())
+def fix_conserving_collision(request):
     return request.param
 
 

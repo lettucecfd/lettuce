@@ -139,9 +139,10 @@ class Flow(ABC):
     def u_pu(self):
         return self.units.convert_velocity_to_pu(self.u())
 
-    def j(self) -> torch.Tensor:
+    def j(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """momentum"""
-        return self.einsum("qd,q->d", [self.torch_stencil.e, self.f])
+        return self.einsum("qd,q->d",
+                           [self.torch_stencil.e, self.f if f is None else f])
 
     def u(self, rho=None, acceleration=None) -> torch.Tensor:
         """velocity; the `acceleration` is used to compute the correct velocity

@@ -1,9 +1,9 @@
 from tests.common import *
 
 
-def test_collision_conserves_mass(fix_conserving_collision,
-                                  fix_configuration,
-                                  fix_stencil):
+def test_collision_conserves_momentum(fix_conserving_collision,
+                                      fix_configuration,
+                                      fix_stencil):
     device, dtype, native = fix_configuration
     context = Context(device=device, dtype=dtype, use_native=native)
     flow = TestFlow(context=context,
@@ -15,6 +15,5 @@ def test_collision_conserves_mass(fix_conserving_collision,
         pytest.skip("KBCCollision only implemented for D2Q9 and D3Q27")
     collision = fix_conserving_collision(tau=0.51)
     f_collided = collision(flow)
-    assert (flow.rho().cpu().numpy()
-            == pytest.approx(flow.rho(f_collided).cpu().numpy()))
-
+    assert (flow.j().cpu().numpy()
+            == pytest.approx(flow.j(f_collided).cpu().numpy(), abs=1e-5))

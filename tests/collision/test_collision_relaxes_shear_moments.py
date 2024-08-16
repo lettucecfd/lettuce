@@ -8,14 +8,15 @@ def test_collision_relaxes_shear_moments(Collision,
                                          fix_stencil):
     """checks whether the collision models relax the shear moments according
     to the prescribed relaxation time"""
-    if Collision == KBCCollision and fix_stencil not in [D2Q9, D3Q27]:
+    if Collision == KBCCollision and type(fix_stencil) not in [D2Q9, D3Q27]:
         pytest.skip("KBCCollision only implemented for D2Q9 and D3Q27")
     device, dtype, native = fix_configuration
     context = Context(device=device, dtype=dtype, use_native=native)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,
-                    mach_number=0.1)
+                    mach_number=0.1,
+                    stencil=fix_stencil)
     feq = flow.equilibrium(flow)
     shear_pre = flow.shear_tensor()
     shear_eq_pre = flow.shear_tensor(feq)

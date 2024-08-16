@@ -33,8 +33,6 @@ class DummyBGK(ExtFlow):
 
 
 def test_native_bgk_collision():
-    if not torch.cuda.is_available():
-        pytest.skip(reason="CUDA is not available on this machine.")
     cpu_context = Context(torch.device('cpu'), use_native=False)
     cpu_flow = DummyBGK(cpu_context)
 

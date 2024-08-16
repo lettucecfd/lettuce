@@ -3,20 +3,14 @@ from tests.common import *
 
 # TODO: Implement cuda_native generator and test suite
 
-def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
+def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_device, fix_dtype):
     """
     Test for the equilibrium outlet p boundary algorithm. This test verifies
     that the algorithm correctly computes the
     equilibrium outlet pressure by comparing its output to manually calculated
     equilibrium values.
     """
-
-    device, dtype, native = fix_configuration
-    if native:
-        pytest.skip("TODO: native_available for equilibrium_outlet_p at the "
-                    "moment False")
-    context = Context(device=torch.device(device), dtype=dtype,
-                      use_native=native)
+    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
     stencil = fix_stencil
 
     flow = TestFlow(context, stencil=stencil, resolution=16,

@@ -3,14 +3,12 @@ from copy import copy
 from tests.common import *
 
 
-def test_anti_bounce_back_outlet(fix_configuration, fix_stencil):
+def test_anti_bounce_back_outlet(fix_device, fix_dtype, fix_stencil):
     """Compares the result of the application of the boundary to f to the
     result using the formula taken from page 195
     of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are
     similar it is assumed to be working fine."""
-
-    device, dtype, native = fix_configuration
-    context = Context(device=device, dtype=dtype, use_native=native)
+    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
     flow = TestFlow(context, resolution=fix_stencil.d * [16],
                     reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
     f = flow.f

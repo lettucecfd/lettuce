@@ -116,7 +116,8 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
         context.convert_to_tensor(
             flow_2.units.convert_velocity_to_lu(velocity))
     )
-    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq, torch.ones_like(flow_2.f))[..., :1]
+    flow_2.f[..., :1] = torch.einsum("q,q...->q...", feq,
+                                     torch.ones_like(flow_2.f))[..., :1]
 
     assert flow_1.f.cpu().numpy() == pytest.approx(flow_2.f.cpu().numpy())
 

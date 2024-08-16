@@ -114,7 +114,7 @@ class Obstacle(ExtFlow):
                                   characteristic_velocity_pu
                                   * self._unit_vector()
                                   ),
-            AntiBounceBackOutlet(self._unit_vector(),
+            AntiBounceBackOutlet(self._unit_vector().tolist(),
                                  self),
             # EquilibriumOutletP(direction=self._unit_vector().tolist(),
             # self, rho_outlet=0),

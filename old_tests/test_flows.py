@@ -13,29 +13,6 @@ INCOMPRESSIBLE_2D = [TaylorGreenVortex2D, CouetteFlow2D, PoiseuilleFlow2D, Doubl
 INCOMPRESSIBLE_3D = [TaylorGreenVortex3D, DecayingTurbulence]
 
 
-@pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_2D)
-def test_flow_2d(IncompressibleFlow, dtype_device):
-    dtype, device = dtype_device
-    context = Context(dtype=dtype, device=device, use_native=False)
-    flow = IncompressibleFlow(context=context, resolution=16,
-                              reynolds_number=1, mach_number=0.05)
-    collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    simulation.step(1)
-
-
-@pytest.mark.parametrize("IncompressibleFlow", INCOMPRESSIBLE_3D)
-def test_flow_3d(IncompressibleFlow, dtype_device):
-    dtype, device = dtype_device
-    lattice = Lattice(D3Q27, dtype=dtype, device=device)
-    flow = IncompressibleFlow(16, 1, 0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    simulation.step(1)
-
-
 @pytest.mark.parametrize("_stencil", [D2Q9, D3Q27])
 def test_divergence(stencil, dtype_device):
     dtype, device = dtype_device

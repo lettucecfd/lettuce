@@ -17,7 +17,7 @@ def test_equilibrium_outlet_p_algorithm(fix_stencil, fix_configuration):
                     "moment False")
     context = Context(device=torch.device(device), dtype=dtype,
                       use_native=native)
-    stencil = fix_stencil  # TorchStencil(stencil=fix_stencil, context=context)
+    stencil = fix_stencil
 
     flow = TestFlow(context, stencil=stencil, resolution=16,
                     reynolds_number=1, mach_number=0.1)

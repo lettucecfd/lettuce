@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 @pytest.mark.parametrize("stencil2d3d", [D2Q9(), D3Q27()])
 def test_divergence(stencil2d3d, fix_configuration):
     device, dtype, use_native = fix_configuration
@@ -31,4 +32,3 @@ def test_divergence(stencil2d3d, fix_configuration):
     assert (flow.ic_energy ==
             pytest.approx(context.convert_to_ndarray(ekin), rel=1))
     assert (0 == pytest.approx(divergence, abs=2e-3))
-    

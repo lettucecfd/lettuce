@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 def test_equilibrium_pressure_outlet(fix_configuration, fix_stencil):
     pytest.skip("TODO rtol is too big or simulation time too short!")
     if fix_stencil.d not in [2, 3]:

@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 def test_masks(fix_configuration):
     """test if masks are applied from boundary conditions"""
     device, dtype, native = fix_configuration

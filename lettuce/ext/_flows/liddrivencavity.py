@@ -61,7 +61,8 @@ class Cavity2D(ExtFlow):
             BounceBackBoundary(boundary),
             # moving fluid on top# moving bounce back top
             EquilibriumBoundaryPU(
-                self.context, top, 
+                self.context,
+                top,
                 [float(self.units.characteristic_velocity_pu), 0.0]
             ),
         ]

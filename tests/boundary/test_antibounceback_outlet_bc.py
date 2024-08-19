@@ -86,12 +86,16 @@ def test_anti_bounce_back_outlet(fix_configuration, fix_stencil):
             stencil_e_tensor = torch.tensor(flow.stencil.e[i],
                                             device=f.device, dtype=f.dtype)
 
-            f_ref[flow.stencil.opposite[i], -1] = - f_ref[i, -1] + (
-                    flow.stencil.w[i] * flow.rho()[0, -1]
-                    * (2 + torch.einsum('c, x -> x', stencil_e_tensor,
-                                        u_w) ** 2
-                       / flow.stencil.cs ** 4 - (
-                               u_w_norm / flow.stencil.cs) ** 2))
+            f_ref[flow.stencil.opposite[i], -1] = (
+                    - f_ref[i, -1]
+                    + (flow.stencil.w[i]
+                       * flow.rho()[0, -1]
+                       * (2 + torch.einsum('c, x -> x', stencil_e_tensor,
+                                           u_w) ** 2
+                       / flow.stencil.cs ** 4
+                          - (u_w_norm / flow.stencil.cs) ** 2)
+                       )
+            )
 
     # generates value from actual boundary implementation
     abb_outlet = AntiBounceBackOutlet(direction=direction, flow=flow)

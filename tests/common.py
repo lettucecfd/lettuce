@@ -52,7 +52,8 @@ def device_params():
 
 
 def device_ids():
-    return ['CPU', 'CUDA']
+    return ['CPU', 'CUDA'] \
+        if torch.cuda.is_available() else ['CPU']
 
 
 def native_params():

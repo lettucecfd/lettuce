@@ -47,15 +47,11 @@ def stencil_ids():
 
 
 def device_params():
-    if not torch.cuda.is_available():
-        pytest.skip(reason="CUDA is not available on this machine.")
-    return [torch.device('cpu'), torch.device('cuda')] \
-        if torch.cuda.is_available() else torch.device('cpu')
+    return [torch.device('cpu'), torch.device('cuda')]
 
 
 def device_ids():
-    return ['CPU', 'CUDA'] \
-        if torch.cuda.is_available() else 'CPU'
+    return ['CPU', 'CUDA']
 
 
 def native_params():

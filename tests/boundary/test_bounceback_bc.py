@@ -3,8 +3,11 @@ from tests.common import *
 from copy import copy
 
 
-def test_bounce_back_boundary(fix_stencil, fix_device, fix_dtype):
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+def test_bounce_back_boundary(fix_stencil, fix_configuration):
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context, resolution=fix_stencil.d * [16],
                     reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
     f_old = copy(flow.f)
@@ -17,8 +20,11 @@ def test_bounce_back_boundary(fix_stencil, fix_device, fix_dtype):
 
 
 def test_bounce_back_boundary_not_applied_if_mask_empty(fix_stencil,
-                                                        fix_device, fix_dtype):
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+                                                        fix_configuration):
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context, resolution=fix_stencil.d * [16],
                     reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
     f_old = copy(flow.f)

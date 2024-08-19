@@ -1,14 +1,16 @@
 from tests.common import *
 
 
-def test_collision_optimizes_pseudo_entropy(fix_device,
-                                            fix_dtype,
+def test_collision_optimizes_pseudo_entropy(fix_configuration,
                                             fix_stencil):
     """checks if the pseudo-entropy of the KBC collision model is at least
     higher than the BGK pseudo-entropy"""
     if type(fix_stencil) not in [D2Q9, D3Q27]:
         pytest.skip("KBCCollision only implemented for D2Q9 and D3Q27.")
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,

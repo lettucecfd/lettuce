@@ -2,10 +2,12 @@ from tests.common import *
 
 @pytest.mark.parametrize("Collision", [BGKCollision])
 def test_collision_fixpoint_2x(Collision,
-                               fix_device,
-                               fix_dtype,
+                               fix_configuration,
                                fix_stencil):
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,

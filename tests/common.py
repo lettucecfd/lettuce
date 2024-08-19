@@ -181,6 +181,8 @@ def fix_conserving_collision(request):
 
 
 class TestFlow(ExtFlow):
+    __test__ = False
+
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,

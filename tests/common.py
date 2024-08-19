@@ -47,7 +47,8 @@ def stencil_ids():
 
 
 def device_params():
-    return [torch.device('cpu'), torch.device('cuda')]
+    return [torch.device('cpu'), torch.device('cuda')] \
+        if torch.cuda.is_available() else [torch.device('cpu')]
 
 
 def device_ids():

@@ -43,9 +43,9 @@ class PoiseuilleFlow2D(ExtFlow):
 
     def initial_pu(self):
         if self.initialize_with_zeros:
-            p = self.context.zero_tensor(self.resolution)
-            u = torch.stack(2*[p], dim=0)
-            p = torch.stack([p], dim=0)
+            zeros = self.context.zero_tensor(self.resolution)
+            u = torch.stack(2*[zeros], dim=0)
+            p = torch.stack([zeros], dim=0)
             return p, u
         else:
             return self.analytic_solution(self.grid)
@@ -61,7 +61,7 @@ class PoiseuilleFlow2D(ExtFlow):
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
-            resolution = [resolution] * self.stencil
+            resolution = [resolution] * self.stencil.d
         return resolution
 
     @property
@@ -74,7 +74,7 @@ class PoiseuilleFlow2D(ExtFlow):
 
     @property
     def boundaries(self):
-        mask = self.context.zero_tensor(self.grid[0].shape, dtype=bool)
+        mask = self.context.zero_tensor(self.resolution, dtype=bool)
         mask[:, [0, -1]] = True
         boundary = BounceBackBoundary(mask=mask)
         return [boundary]

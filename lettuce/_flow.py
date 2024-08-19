@@ -163,9 +163,10 @@ class Flow(ABC):
     def velocity(self):
         return self.j() / self.rho()
 
-    def incompressible_energy(self) -> torch.Tensor:
+    def incompressible_energy(self, f: Optional[torch.Tensor] = None
+                              ) -> torch.Tensor:
         """incompressible kinetic energy"""
-        return 0.5 * self.einsum("d,d->", [self.u(), self.u()])
+        return 0.5 * self.einsum("d,d->", [self.u(f), self.u(f)])
 
     def entropy(self) -> torch.Tensor:
         """entropy according to the H-theorem"""

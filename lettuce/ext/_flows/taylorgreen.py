@@ -21,18 +21,16 @@ class TaylorGreenVortex(ExtFlow):
             warnings.warn("Requiring information about dimensionality!"
                           " Either via stencil or resolution. Setting "
                           "dimension to 2.", UserWarning)
-            self.d = 2
+            self.stencil = D2Q9()
         else:
             self.stencil = stencil() if callable(stencil) else stencil
-            self.d = self.stencil.d if self.stencil is not None else len(
-                resolution)
         ExtFlow.__init__(self, context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
-            return [resolution] * self.d
+            return [resolution] * self.stencil.d
         else:
             assert len(resolution) in [2, 3], ('the resolution of a '
                                                'taylor-green-vortex '
@@ -56,7 +54,7 @@ class TaylorGreenVortex(ExtFlow):
                                    steps=self.resolution[n],
                                    device=self.context.device,
                                    dtype=self.context.dtype)
-                    for n in range(self.d))
+                    for n in range(self.stencil.d))
         return torch.meshgrid(*xyz, indexing='ij')
 
     def initial_pu(self) -> (torch.Tensor, torch.Tensor):

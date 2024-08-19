@@ -87,7 +87,6 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
         self.generate_velocity(generator)
         self.generate_density(generator)
         generator.equilibrium.generate_f_eq(generator, rho=f"density{self.index}", u=f"velocity{self.index}")
-        # generator._equilibrium.generate_f_eq(generator)
         f_eq = f"f_eq_density{self.index}_velocity{self.index}"
         generator.append_pipeline_buffer(f"if (no_collision_mask[node_index] == {self.index})")
         generator.append_pipeline_buffer('{                      ')

@@ -16,7 +16,7 @@ class BGKCollision(Collision):
 
     def __call__(self, flow: 'Flow') -> torch.Tensor:
         rho = flow.rho()
-        u_eq = 0 if self.force is None else self.force.u_eq(flow.f)
+        u_eq = 0 if self.force is None else self.force.u_eq(flow)
         u = flow.u(rho=rho) + u_eq
         feq = flow.equilibrium(flow, rho, u)
         si = self.force.source_term(u) if self.force is not None else 0

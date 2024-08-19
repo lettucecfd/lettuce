@@ -1,27 +1,21 @@
 """
-Doubly shear layer in 2D.
-Special Inputs & standard value: shear_layer_width = 80,
-initial_perturbation_magnitude = 0.05
+Cavity flow
 """
-from typing import Union, List, Optional
+from typing import List, Union, Optional
 
 import numpy as np
 import torch
 
-from lettuce._unit import UnitConversion
-from . import ExtFlow
+from ... import UnitConversion
+from .. import BounceBackBoundary, EquilibriumBoundaryPU
+from ._ext_flow import ExtFlow
 
-__all__ = ['DoublyPeriodicShear2D']
 
-
-class DoublyPeriodicShear2D(ExtFlow):
+class Cavity2D(ExtFlow):
 
     def __init__(self, context: 'Context', resolution, reynolds_number,
-                 mach_number, shear_layer_width=80,
-                 initial_perturbation_magnitude=0.05):
+                 mach_number):
         super().__init__(context, resolution, reynolds_number, mach_number)
-        self.initial_perturbation_magnitude = initial_perturbation_magnitude
-        self.shear_layer_width = shear_layer_width
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
@@ -35,26 +29,13 @@ class DoublyPeriodicShear2D(ExtFlow):
                    resolution: List[int]) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=1,
+            characteristic_length_lu=resolution[0], characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 
-    def analytic_solution(self, x, t=0):
-        raise NotImplementedError
-
-    def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
-        pert = self.initial_perturbation_magnitude
-        w = self.shear_layer_width
-        u1 = self.context.convert_to_tensor(np.choose(
-            self.grid[1] > 0.5,
-            [np.tanh(w * (self.grid[1] - 0.25)),
-             np.tanh(w * (0.75 - self.grid[1]))]
-        ))
-        u2 = self.context.convert_to_tensor(
-            pert * np.sin(2 * np.pi * (self.grid[0] + 0.25)))
-        u = torch.stack([u1, u2])
-        p = torch.zeros_like(u1)[None, ...]
-        return p, u
+    def initial_pu(self):
+        return (torch.stack([torch.zeros_like(self.grid[0])]),
+                torch.stack([torch.zeros_like(self.grid[0])] * 2))  # p, u
 
     @property
     def grid(self) -> (torch.Tensor, torch.Tensor):
@@ -69,4 +50,18 @@ class DoublyPeriodicShear2D(ExtFlow):
 
     @property
     def boundaries(self):
-        return []
+        x, *y = self.grid
+        boundary = self.context.zero_tensor(x.shape, dtype=bool)
+        top = self.context.zero_tensor(x.shape, dtype=bool)
+        boundary[[0, -1], 1:] = True  # left and right
+        boundary[:, 0] = True  # bottom
+        top[:, -1] = True  # top
+        return [
+            # bounce back walls
+            BounceBackBoundary(boundary),
+            # moving fluid on top# moving bounce back top
+            EquilibriumBoundaryPU(
+                self.context, top, 
+                [float(self.units.characteristic_velocity_pu), 0.0]
+            ),
+        ]

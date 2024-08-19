@@ -13,7 +13,7 @@ def test_convergence(fix_configuration):
     print(("{:>15} " * 6).format("resolution", "error (u)", "order (u)",
                                  "error (p)", "order (p)", "MLUPS"))
 
-    for i in range(4, 9 if dtype==torch.float64 else 7):  # single
+    for i in range(4, 9 if dtype == torch.float64 else 7):  # single
         # precission does not converge as far
         resolution = 2 ** i
         mach_number = 8 / resolution

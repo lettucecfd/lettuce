@@ -151,8 +151,9 @@ class Flow(ABC):
         v = self.j() / rho
         # apply correction due to forcing, which effectively averages the pre-
         # and post-collision velocity
-        correction = 0.0
-        if acceleration is not None:
+        if acceleration is None:
+            correction = 0.0
+        else:
             if len(acceleration.shape) == 1:
                 index = [Ellipsis] + [None] * self.stencil.d
                 acceleration = acceleration[index]

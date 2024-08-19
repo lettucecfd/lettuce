@@ -7,6 +7,7 @@ from typing import Union, List, Optional
 import torch
 
 from ... import UnitConversion
+from .._stencil import D2Q9
 from . import ExtFlow
 
 __all__ = ['TaylorGreenVortex', 'TaylorGreenVortex2D', 'TaylorGreenVortex3D']

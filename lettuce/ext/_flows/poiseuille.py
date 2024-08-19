@@ -27,18 +27,18 @@ class PoiseuilleFlow2D(ExtFlow):
         super().__init__(context, resolution, reynolds_number, mach_number,
                          self.stencil, equilibrium)
 
-    def analytic_solution(self, grid):
+    def analytic_solution(self, t=0) -> (torch.Tensor, torch.Tensor):
         half_lattice_spacing = 0.5 / self.resolution[0]
-        x, y = grid
+        x, y = self.grid
         nu = self.units.viscosity_pu
         rho = 1
-        u = self.context.convert_to_tensor([
-            self.acceleration[0] / (2 * rho * nu)
+        u = torch.stack(
+            (self.acceleration[0] / (2 * rho * nu)
             * ((y - half_lattice_spacing) * (1 - half_lattice_spacing - y)),
-            np.zeros(x.shape)
-        ])
-        p = self.context.convert_to_tensor(
-            [y * 0 + self.units.convert_density_lu_to_pressure_pu(rho)])
+            self.context.zero_tensor(x.shape)),
+            dim=0
+        )
+        p = y * 0 + self.units.convert_density_lu_to_pressure_pu(rho)
         return p, u
 
     def initial_pu(self):

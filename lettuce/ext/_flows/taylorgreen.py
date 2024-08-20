@@ -62,6 +62,8 @@ class TaylorGreenVortex(ExtFlow):
         return self.analytic_solution(t=0)
 
     def analytic_solution(self, t: float) -> (torch.Tensor, torch.Tensor):
+        if t > 0 and self.stencil.d > 2:
+            warnings.warn("The analytic solution is only true for the 2D TGV!")
         grid = self.grid
         nu = self.context.convert_to_tensor(self.units.viscosity_pu)
         if len(self.resolution) == 2:

@@ -1,6 +1,6 @@
 from copy import deepcopy
-
 from tests.common import *
+
 
 def test_checkpoint(tmpdir):
     context = Context()
@@ -20,7 +20,7 @@ def test_checkpoint(tmpdir):
     assert torch.eq(f0, flow.f).all()
 
     """
-    This could be a way to test a dump-load workflow which stores all flow 
+    This could be a way to test a dump-load workflow which stores all flow
     attributes. I did not get it to work, yet.
     context = Context('cuda')
     flow = PoiseuilleFlow2D(context=context,

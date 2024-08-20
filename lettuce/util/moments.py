@@ -4,6 +4,8 @@ Moments and cumulants of the distribution function.
 
 import warnings
 import torch
+from lettuce._flow import Flow
+
 import lettuce
 from lettuce.util import (LettuceException, InefficientCodeWarning,
                           get_subclasses, ExperimentalWarning)
@@ -34,14 +36,14 @@ def moment_tensor(e, multiindex):
         return np.prod(np.power(e, multiindex[..., None, :]), axis=-1)
 
 
-def get_default_moment_transform(lattice):
-    if lattice.stencil == D1Q3:
-        return D1Q3Transform(lattice)
-    if lattice.stencil == D2Q9:
-        return D2Q9Lallemand(lattice)
+def get_default_moment_transform(stencil: 'Stencil', context: 'Context'):
+    if stencil == D1Q3 or isinstance(stencil, D1Q3):
+        return D1Q3Transform(stencil, context)
+    if stencil == D2Q9 or isinstance(stencil, D2Q9):
+        return D2Q9Lallemand(stencil, context)
     else:
         raise LettuceException(f"No default moment transform for lattice "
-                               f"{lattice}.")
+                               f"{stencil}.")
 
 
 class Moments:
@@ -58,9 +60,9 @@ class Transform:
     transforms.
     """
 
-    def __init__(self, lattice, names=None):
-        self.lattice = lattice
-        self.names = [f"m{i}" for i in range(lattice.Q)]\
+    def __init__(self, stencil: 'Stencil', context: 'Context', names=None):
+        self.context = context
+        self.names = [f"m{i}" for i in range(stencil.q)]\
             if names is None else names
 
     def __getitem__(self, moment_names):
@@ -85,7 +87,7 @@ class Transform:
             InefficientCodeWarning
         )
         f = self.inverse_transform(m)
-        feq = self.lattice.equilibrium(self.lattice.rho(f), self.lattice.u(f))
+        feq = Flow.equilibrium(None, Flow.rho(None, f), Flow.u(None, f))
         return self.transform(feq)
 
 
@@ -103,16 +105,16 @@ class D1Q3Transform(Transform):
     names = ["rho", "j", "e"]
     supported_stencils = [D1Q3]
 
-    def __init__(self, lattice):
-        super(D1Q3Transform, self).__init__(lattice, self.names)
-        self.matrix = self.lattice.convert_to_tensor(self.matrix)
-        self.inverse = self.lattice.convert_to_tensor(self.inverse)
+    def __init__(self, stencil: 'Stencil', context: 'Context'):
+        super(D1Q3Transform, self).__init__(stencil, context, self.names)
+        self.matrix = self.context.convert_to_tensor(self.matrix)
+        self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
+        return Flow.mv(None, self.matrix, f)
 
     def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
+        return Flow.mv(None, self.inverse, m)
 
     # def _equilibrium(self, m):
     #    # TODO
@@ -149,18 +151,16 @@ class D2Q9Dellar(Transform):
     names = ['rho', 'jx', 'jy', 'Pi_xx', 'Pi_xy', 'PI_yy', 'N', 'Jx', 'Jy']
     supported_stencils = [D2Q9]
 
-    def __init__(self, lattice):
-        super(D2Q9Dellar, self).__init__(
-            lattice, self.names
-        )
-        self.matrix = self.lattice.convert_to_tensor(self.matrix)
-        self.inverse = self.lattice.convert_to_tensor(self.inverse)
+    def __init__(self, stencil: 'Stencil', context: 'Context'):
+        super(D2Q9Dellar, self).__init__(stencil, context, self.names)
+        self.matrix = self.context.convert_to_tensor(self.matrix)
+        self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
+        return Flow.mv(None, self.matrix, f)
 
     def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
+        return Flow.mv(None, self.inverse, m)
 
     def equilibrium(self, m):
         warnings.warn("I am not 100% sure if this equilibrium is correct.",
@@ -207,18 +207,16 @@ class D2Q9Lallemand(Transform):
     names = ['rho', 'jx', 'jy', 'pxx', 'pxy', 'e', 'qx', 'qy', 'eps']
     supported_stencils = [D2Q9]
 
-    def __init__(self, lattice):
-        super(D2Q9Lallemand, self).__init__(
-            lattice, self.names
-        )
-        self.matrix = self.lattice.convert_to_tensor(self.matrix)
-        self.inverse = self.lattice.convert_to_tensor(self.inverse)
+    def __init__(self, stencil: 'Stencil', context: 'Context'):
+        super(D2Q9Lallemand, self).__init__(stencil, context, self.names)
+        self.matrix = self.context.convert_to_tensor(self.matrix)
+        self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
+        return Flow.mv(None, self.matrix, f)
 
     def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
+        return Flow.mv(None, self.inverse, m)
 
     def equilibrium(self, m):
         """From Lallemand and Luo"""
@@ -512,18 +510,16 @@ class D3Q27Hermite(Transform):
              'J_xxyyz', 'J_xxyzz', 'J_xyyzz', 'J_xyxzyz']
     supported_stencils = [D3Q27]
 
-    def __init__(self, lattice):
-        super(D3Q27Hermite, self).__init__(
-            lattice, self.names
-        )
-        self.matrix = self.lattice.convert_to_tensor(self.matrix)
-        self.inverse = self.lattice.convert_to_tensor(self.inverse)
+    def __init__(self, stencil: 'Stencil', context: 'Context'):
+        super(D3Q27Hermite, self).__init__(stencil, context, self.names)
+        self.matrix = self.context.convert_to_tensor(self.matrix)
+        self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return self.lattice.mv(self.matrix, f)
+        return Flow.mv(None, self.matrix, f)
 
     def inverse_transform(self, m):
-        return self.lattice.mv(self.inverse, m)
+        return Flow.mv(None, self.inverse, m)
 
     def equilibrium(self, m):
         meq = torch.zeros_like(m)

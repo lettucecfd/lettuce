@@ -52,7 +52,7 @@ class PoiseuilleFlow2D(ExtFlow):
                    resolution: List[int]) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution[0],
+            characteristic_length_lu=resolution[0]-1,
             characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )

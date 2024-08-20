@@ -24,10 +24,9 @@ class Guo(Force):
                       * emu_eeuF)
         return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
-    def u_eq(self, flow: 'Flow'):
-        return (self.ueq_scaling_factor
-                * append_axes(self.acceleration, self.flow.torch_stencil.d)
-                / self.flow.rho())
+    def u_eq(self, flow: 'Flow' = None):
+        flow = self.flow if flow is None else flow
+        return (self.ueq_scaling_factor * append_axes(self.acceleration, flow.torch_stencil.d) / flow.rho())
 
     @property
     def ueq_scaling_factor(self):

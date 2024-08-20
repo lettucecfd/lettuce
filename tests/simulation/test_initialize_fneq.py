@@ -2,8 +2,9 @@ from tests.common import *
 
 
 def initialize_pressure(flow: 'Flow', max_num_steps=100000, tol_pressure=1e-6):
-    """Reinitialize equilibrium distributions with pressure obtained by a Jacobi solver.
-    Note that this method has to be called before initialize_f_neq.
+    """Reinitialize equilibrium distributions with pressure obtained by a
+    Jacobi solver. Note that this method has to be called before
+    initialize_f_neq.
     """
     u = flow.u()
     rho = pressure_poisson(
@@ -17,8 +18,8 @@ def initialize_pressure(flow: 'Flow', max_num_steps=100000, tol_pressure=1e-6):
 
 
 def initialize_f_neq(flow: 'Flow'):
-    """Initialize the distribution function values. The f^(1) contributions are approximated by finite differences.
-    See Krüger et al. (2017).
+    """Initialize the distribution function values. The f^(1) contributions are
+    approximated by finite differences. See Krüger et al. (2017).
     """
     rho = flow.rho()
     u = flow.u()
@@ -41,6 +42,7 @@ def initialize_f_neq(flow: 'Flow'):
     feq = flow.equilibrium(flow, rho, u)
 
     return feq - fneq
+
 
 @pytest.mark.parametrize("Case", [TaylorGreenVortex, DecayingTurbulence])
 @pytest.mark.parametrize("Stencils", [D2Q9, D3Q19, D3Q27])

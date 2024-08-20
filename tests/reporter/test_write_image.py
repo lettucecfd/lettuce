@@ -1,6 +1,7 @@
 from tests.common import *
 import os
 
+
 def test_write_image(tmpdir):
     # pytest.skip("matplotlib not working")
     context = Context()

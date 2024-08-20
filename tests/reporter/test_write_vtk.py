@@ -2,6 +2,7 @@ from tests.common import *
 from lettuce.ext._reporter.vtk_reporter import write_vtk
 import os
 
+
 def test_write_vtk(tmpdir):
     context = Context(device='cpu')
     flow = TaylorGreenVortex(context, resolution=[16, 16], reynolds_number=10,

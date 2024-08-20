@@ -1,6 +1,7 @@
 import os
 from tests.common import *
 
+
 def test_vtk_reporter_no_mask(tmpdir):
     context = Context(device="cpu")
     flow = TaylorGreenVortex(context=context, resolution=[16, 16],

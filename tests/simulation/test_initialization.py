@@ -1,10 +1,6 @@
 import warnings
 from copy import deepcopy
 
-import numpy as np
-import pytest
-from sympy.ntheory.factor_ import rho_msg
-
 from tests.simulation.test_initialize_fneq import initialize_pressure
 from lettuce.util.moments import get_default_moment_transform
 from tests.common import *
@@ -13,13 +9,16 @@ from tests.common import *
 def initialize(simulation: 'Simulation',
                max_num_steps=500,
                tol_pressure=0.001):
-    """Iterative initialization to get moments consistent with the initial velocity.
+    """
+    Iterative initialization to get moments consistent with the initial
+    velocity.
 
-    Using the initialization does not better TGV convergence. Maybe use a better scheme?
+    Using the initialization does not better TGV convergence.
+    Maybe use a better scheme?
     """
     warnings.warn(
-        "Iterative initialization does not work well and solutions may diverge. Use with care. "
-        "Use initialize_f_neq instead.",
+        "Iterative initialization does not work well and solutions may "
+        "diverge. Use with care. Use initialize_f_neq instead.",
         ExperimentalWarning)
     # stencil = flow.stencil if callable(flow.stencil) else flow.stencil.__class__
     transform = get_default_moment_transform(simulation.flow.stencil.__class__,

@@ -1,12 +1,9 @@
-"""
-Tests for equilibria
-"""
-
 from tests.common import *
 
 
 @pytest.mark.parametrize("fix_equilibrium", [QuadraticEquilibrium])
-def test_equilibrium_conserves_mass(fix_equilibrium, fix_configuration,
+def test_equilibrium_conserves_mass(fix_equilibrium,
+                                    fix_configuration,
                                     fix_stencil):
     device, dtype, use_native = fix_configuration
     if use_native:
@@ -24,8 +21,9 @@ def test_equilibrium_conserves_mass(fix_equilibrium, fix_configuration,
 
 
 @pytest.mark.parametrize("fix_equilibrium", [QuadraticEquilibrium])
-def test_equilibrium_conserves_momentum(fix_equilibrium, fix_configuration,
-                                    fix_stencil):
+def test_equilibrium_conserves_momentum(fix_equilibrium,
+                                        fix_configuration,
+                                        fix_stencil):
     device, dtype, use_native = fix_configuration
     if use_native:
         pytest.skip("This test does not depend on the native implementation.")

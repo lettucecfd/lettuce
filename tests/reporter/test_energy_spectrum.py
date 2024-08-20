@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 @pytest.mark.parametrize("flowname", flow_by_name.keys())
 def test_energy_spectrum(tmpdir, flowname):
     context = Context(device=torch.device('cpu'))
@@ -16,7 +17,8 @@ def test_energy_spectrum(tmpdir, flowname):
     energy = IncompressibleKineticEnergy(flow)().item()
 
     if Flow == DecayingTurbulence:
-        # check that the reported spectrum agrees with the spectrum used for initialization
+        # check that the reported spectrum agrees with the spectrum used for
+        # initialization
         ek_ref, _ = flow.energy_spectrum
         assert (spectrum == pytest.approx(ek_ref, rel=0.0, abs=0.1))
     if Flow == TaylorGreenVortex:

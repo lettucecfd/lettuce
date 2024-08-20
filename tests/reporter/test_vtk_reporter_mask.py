@@ -2,6 +2,7 @@ import os
 
 from tests.common import *
 
+
 def test_vtk_reporter_mask(tmpdir):
     flow = PoiseuilleFlow2D(context=Context(), resolution=16,
                             reynolds_number=10, mach_number=0.05)

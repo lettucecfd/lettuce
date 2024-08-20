@@ -1,6 +1,7 @@
 from tests.common import *
 import matplotlib.pyplot as plt
 
+
 @pytest.mark.parametrize("ForceType", [Guo, ShanChen])
 def test_force(ForceType, fix_device):
     if fix_device.type == 'cuda' and not torch.cuda.is_available():

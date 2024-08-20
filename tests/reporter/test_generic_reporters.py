@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 @pytest.mark.parametrize("Observable", [Enstrophy,
                                         EnergySpectrum,
                                         MaximumVelocity,

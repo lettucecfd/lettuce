@@ -1,6 +1,7 @@
 import os
 from tests.common import *
 
+
 def test_HDF5Reporter(tmpdir):
     step = 3
     context = Context(device='cpu')

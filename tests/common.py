@@ -84,14 +84,15 @@ def configuration_ids():
 
 
 def collision_params():
-    return [BGKCollision,
-            KBCCollision,
-            MRTCollision,
-            NoCollision,
-            RegularizedCollision,
-            SmagorinskyCollision,
-            TRTCollision
-        ]
+    return [
+        BGKCollision,
+        KBCCollision,
+        MRTCollision,
+        NoCollision,
+        RegularizedCollision,
+        SmagorinskyCollision,
+        TRTCollision
+    ]
 
 
 def collision_ids():
@@ -117,12 +118,12 @@ def conserving_collision_params():
 
 def conserving_collision_ids():
     return [
-            'BGKCollision',
-            'KBCCollision',
-            'TRTCollision',
-            'RegularizedCollision',
-            'SmagorinskyCollision'
-        ]
+        'BGKCollision',
+        'KBCCollision',
+        'TRTCollision',
+        'RegularizedCollision',
+        'SmagorinskyCollision'
+    ]
 
 
 @pytest.fixture(params=dtype_params(), ids=dtype_ids())

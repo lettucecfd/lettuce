@@ -12,6 +12,8 @@ __all__ = ['get_subclasses',
            'pressure_poisson',
            'append_axes']
 
+from lettuce import UnitConversion
+
 
 def get_subclasses(cls, module):
     for name, obj in _inspect.getmembers(module):
@@ -111,7 +113,7 @@ def grid_fine_to_coarse(lattice, f_fine, tau_fine, tau_coarse):
     return f_coarse
 
 
-def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
+def torch_jacobi(f, p, dx, dim, tol_abs=1e-10, max_num_steps=100000):
     """Jacobi solver for the Poisson pressure equation"""
 
     ## transform to torch.tensor
@@ -151,7 +153,8 @@ def torch_jacobi(f, p, dx, device, dim, tol_abs=1e-10, max_num_steps=100000):
     return p
 
 
-def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
+def pressure_poisson(units: 'UnitConversion', u, rho0, tol_abs=1e-10,
+                     max_num_steps=100000):
     """
     Solve the pressure poisson equation using a jacobi scheme.
 
@@ -191,8 +194,7 @@ def pressure_poisson(units, u, rho0, tol_abs=1e-10, max_num_steps=100000):
         u_mod,
         p[0],
         dx,
-        units.lattice.device,
-        dim=units.lattice.D,
+        dim=2,
         tol_abs=tol_abs,
         max_num_steps=max_num_steps
     )[None, ...]

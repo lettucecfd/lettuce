@@ -12,21 +12,6 @@ import numpy as np
 import torch
 
 
-def test_vtk_reporter_no_mask(tmpdir):
-    lattice = Lattice(D2Q9, "cpu")
-    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10,
-                               mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, collision, streaming)
-    vtk_reporter = VTKReporter(lattice, flow, interval=1,
-                               filename_base=tmpdir / "output")
-    simulation.reporters.append(vtk_reporter)
-    simulation.step(2)
-    assert os.path.isfile(tmpdir / "output_00000000.vtr")
-    assert os.path.isfile(tmpdir / "output_00000001.vtr")
-
-
 def test_vtk_reporter_mask(tmpdir):
     flow = PoiseuilleFlow2D(context=Context(), resolution=16,
                             reynolds_number=10, mach_number=0.05)

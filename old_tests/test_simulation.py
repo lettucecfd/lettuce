@@ -13,33 +13,6 @@ import torch
 # Note: Simulation is also implicitly tested in test_flows
 
 
-@pytest.mark.parametrize("use_jacobi", [True, False])
-def test_initialization(dtype_device, use_jacobi):
-    dtype, device = dtype_device
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=24, reynolds_number=10,
-                               mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, collision, streaming)
-    # set initial pressure to 0 everywhere
-    p, u = flow.initial_pu(flow.grid)
-    u0 = lattice.convert_to_tensor(flow.units.convert_velocity_to_lu(u))
-    rho0 = lattice.convert_to_tensor(np.ones_like(u0[0, ...].cpu()))
-    simulation.f = lattice.equilibrium(rho0, u0)
-    if use_jacobi:
-        simulation.initialize_pressure(1000, 1e-6)
-        num_iterations = 0
-    else:
-        num_iterations = simulation.initialize(500, 1e-3)
-    piter = lattice.convert_to_numpy(
-        flow.units.convert_density_lu_to_pressure_pu(
-            lattice.rho(simulation.f)))
-    # assert that pressure is converged up to 0.05 (max p
-    assert piter == pytest.approx(p, rel=0.0, abs=5e-2)
-    assert num_iterations < 500
-
-
 @pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D,
                                   DecayingTurbulence])
 def test_initialize_fneq(Case, dtype_device):

@@ -144,11 +144,12 @@ class Flow(ABC):
         return self.einsum("qd,q->d",
                            [self.torch_stencil.e, self.f if f is None else f])
 
-    def u(self, rho=None, acceleration=None) -> torch.Tensor:
+    def u(self, f: Optional[torch.Tensor] = None, rho=None, acceleration=None
+          ) -> torch.Tensor:
         """velocity; the `acceleration` is used to compute the correct velocity
         in the presence of a forcing scheme."""
-        rho = self.rho() if rho is None else rho
-        v = self.j() / rho
+        rho = self.rho(f=f) if rho is None else rho
+        v = self.j(f=f) / rho
         # apply correction due to forcing, which effectively averages the pre-
         # and post-collision velocity
         if acceleration is None:

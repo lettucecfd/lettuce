@@ -12,31 +12,6 @@ import numpy as np
 import torch
 
 
-@pytest.mark.parametrize("Observable", [Enstrophy, EnergySpectrum,
-                                        MaximumVelocity,
-                                        IncompressibleKineticEnergy, Mass])
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D])
-def test_generic_reporters(Observable, Case, dtype_device):
-    dtype, device = dtype_device
-    lattice = Lattice(D2Q9, dtype=dtype, device=device, use_native=False)
-    flow = Case(32, 10000, 0.05, lattice=lattice)
-    if Case == TaylorGreenVortex3D:
-        lattice = Lattice(D3Q27, dtype=dtype, device=device, use_native=False)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, collision, streaming)
-    reporter = ObservableReporter(Observable(lattice, flow), interval=1,
-                                  out=None)
-    simulation.reporters.append(reporter)
-    simulation.step(2)
-    values = np.asarray(reporter.out)
-    if Observable is EnergySpectrum:
-        assert values[1, 2:] == pytest.approx(values[0, 2:], rel=0.0,
-                                              abs=values[0, 2:].sum() / 10)
-    else:
-        assert values[1, 2] == pytest.approx(values[0, 2], rel=0.05)
-
-
 def test_write_vtk(tmpdir):
     lattice = Lattice(D2Q9, "cpu")
     flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10,

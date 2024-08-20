@@ -8,12 +8,13 @@ from lettuce._version import get_versions
 import pickle
 import io
 import numpy as np
+from lettuce._simulation import Reporter
 
 __all__ = ["HDF5Reporter",
            "LettuceDataset"]
 
 
-class HDF5Reporter:
+class HDF5Reporter(Reporter):
     """ HDF5 _reporter for distribution function f in lettuce containing
         metadata of the simulation.
 
@@ -32,13 +33,13 @@ class HDF5Reporter:
         --------
         Create a HDF5 _reporter.
         >>> import lettuce as lt
-        >>> lattice = lt.Lattice(lt.D3Q27, device="cpu")
-        >>> flow = lt.TaylorGreenVortex3D(50, 300, 0.1, lattice)
+        >>> context = Context()
+        >>> flow = lt.TaylorGreenVortex(context, [50, 50], 300, 0.1)
         >>> _collision = ...
         >>> simulation = ...
         >>> hdf5_reporter = lt.HDF5Reporter(
+        >>>     context=context,
         >>>     flow=flow,
-        >>>     lattice=lattice,
         >>>     _collision=_collision,
         >>>     interval= 100,
         >>>     filebase="./h5_output")
@@ -46,7 +47,7 @@ class HDF5Reporter:
         """
 
     def __init__(self, flow, collision, interval, filebase='./output', metadata=None):
-        self.lattice = flow.units.lattice
+        self.context = flow.context
         self.interval = interval
         self.filebase = filebase
         fs = h5py.File(self.filebase + '.h5', 'w')
@@ -56,19 +57,20 @@ class HDF5Reporter:
         if metadata:
             for attr in metadata:
                 fs.attrs[attr] = metadata[attr]
-        self.shape = (self.lattice.Q, *flow.grid[0].shape)
+        self.shape = (flow.stencil.q, *flow.grid[0].shape)
         fs.create_dataset(name="f",
                           shape=(0, *self.shape),
                           maxshape=(None, *self.shape))
         fs.close()
 
-    def __call__(self, i, t, f):
-        if i % self.interval == 0:
+    def __call__(self, simulation: 'Simulation'):  # i, t, f):
+        if simulation.flow.i % self.interval == 0:
             with h5py.File(self.filebase + '.h5', 'r+') as fs:
                 fs["f"].resize(fs["f"].shape[0] + 1, axis=0)
-                fs["f"][-1, ...] = self.lattice.convert_to_numpy(f)
+                fs["f"][-1, ...] = self.context.convert_to_ndarray(
+                    simulation.flow.f)
                 fs.attrs['data'] = str(fs["f"].shape[0])
-                fs.attrs['steps'] = str(i)
+                fs.attrs['steps'] = str(simulation.flow.i)
 
     @staticmethod
     def _pickle_to_h5(instance):
@@ -116,7 +118,7 @@ class LettuceDataset(data.Dataset):
         self.fs = h5py.File(self.filebase, "r")
         self.shape = self.fs["f"].shape
         self.keys = list(self.fs.keys())
-        self.lattice = self._unpickle_from_h5(self.fs.attrs["flow"]).units.lattice
+        self.context = self._unpickle_from_h5(self.fs.attrs["flow"]).context
 
     def __str__(self):
         for attr, value in self.fs.attrs.items():
@@ -144,7 +146,7 @@ class LettuceDataset(data.Dataset):
         self.fs.close()
 
     def get_data(self, idx):
-        return self.lattice.convert_to_tensor(self.fs["f"][idx])
+        return self.context.convert_to_tensor(self.fs["f"][idx])
 
     def get_attr(self, attr):
         return self.fs.attrs[attr]

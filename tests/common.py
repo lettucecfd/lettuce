@@ -97,23 +97,24 @@ def collision_params():
 
 def collision_ids():
     return [
-            'BGKCollision',
-            'KBCCollision',
-            'MRTCollision',
-            'NoCollision',
-            'RegularizedCollision',
-            'SmagorinskyCollision',
-            'TRTCollision'
-        ]
+        'BGKCollision',
+        'KBCCollision',
+        'MRTCollision',
+        'NoCollision',
+        'RegularizedCollision',
+        'SmagorinskyCollision',
+        'TRTCollision'
+    ]
 
 
 def conserving_collision_params():
-    return [BGKCollision,
-            KBCCollision,
-            TRTCollision,
-            RegularizedCollision,
-            SmagorinskyCollision
-        ]
+    return [
+        BGKCollision,
+        KBCCollision,
+        TRTCollision,
+        RegularizedCollision,
+        SmagorinskyCollision
+    ]
 
 
 def conserving_collision_ids():

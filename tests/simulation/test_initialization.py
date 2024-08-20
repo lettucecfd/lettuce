@@ -20,7 +20,6 @@ def initialize(simulation: 'Simulation',
         "Iterative initialization does not work well and solutions may "
         "diverge. Use with care. Use initialize_f_neq instead.",
         ExperimentalWarning)
-    # stencil = flow.stencil if callable(flow.stencil) else flow.stencil.__class__
     transform = get_default_moment_transform(simulation.flow.stencil.__class__,
                                              simulation.flow.context)
     collision = BGKInitialization(simulation.flow, transform)

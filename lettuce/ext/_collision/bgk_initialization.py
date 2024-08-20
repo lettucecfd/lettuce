@@ -33,7 +33,7 @@ class BGKInitialization(Collision):
         return f
 
     def native_available(self) -> bool:
-        return True
+        return False
 
     def native_generator(self) -> 'NativeCollision':
         pass

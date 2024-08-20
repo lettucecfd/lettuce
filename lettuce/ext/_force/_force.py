@@ -5,6 +5,10 @@ __all__ = ['Force']
 
 class Force(ABC):
     @abstractmethod
+    def __init__(self, flow: 'Flow', tau, acceleration):
+        ...
+
+    @abstractmethod
     def source_term(self, u):
         ...
 

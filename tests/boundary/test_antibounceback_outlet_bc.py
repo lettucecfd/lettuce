@@ -3,12 +3,15 @@ from copy import copy
 from tests.common import *
 
 
-def test_anti_bounce_back_outlet(fix_device, fix_dtype, fix_stencil):
+def test_anti_bounce_back_outlet(fix_configuration, fix_stencil):
     """Compares the result of the application of the boundary to f to the
     result using the formula taken from page 195
     of "The lattice Boltzmann method" (2016 by Krüger et al.) if both are
     similar it is assumed to be working fine."""
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context, resolution=fix_stencil.d * [16],
                     reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
     f = flow.f
@@ -83,12 +86,16 @@ def test_anti_bounce_back_outlet(fix_device, fix_dtype, fix_stencil):
             stencil_e_tensor = torch.tensor(flow.stencil.e[i],
                                             device=f.device, dtype=f.dtype)
 
-            f_ref[flow.stencil.opposite[i], -1] = - f_ref[i, -1] + (
-                    flow.stencil.w[i] * flow.rho()[0, -1]
-                    * (2 + torch.einsum('c, x -> x', stencil_e_tensor,
-                                        u_w) ** 2
-                       / flow.stencil.cs ** 4 - (
-                               u_w_norm / flow.stencil.cs) ** 2))
+            f_ref[flow.stencil.opposite[i], -1] = (
+                    - f_ref[i, -1]
+                    + (flow.stencil.w[i]
+                       * flow.rho()[0, -1]
+                       * (2 + torch.einsum('c, x -> x', stencil_e_tensor,
+                                           u_w) ** 2
+                       / flow.stencil.cs ** 4
+                          - (u_w_norm / flow.stencil.cs) ** 2)
+                       )
+            )
 
     # generates value from actual boundary implementation
     abb_outlet = AntiBounceBackOutlet(direction=direction, flow=flow)

@@ -6,9 +6,12 @@ from tests.common import *
 
 
 @pytest.mark.parametrize("fix_equilibrium", [QuadraticEquilibrium])
-def test_equilibrium_conserves_mass(fix_equilibrium, fix_device, fix_dtype,
+def test_equilibrium_conserves_mass(fix_equilibrium, fix_configuration,
                                     fix_stencil):
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,
@@ -21,9 +24,12 @@ def test_equilibrium_conserves_mass(fix_equilibrium, fix_device, fix_dtype,
 
 
 @pytest.mark.parametrize("fix_equilibrium", [QuadraticEquilibrium])
-def test_equilibrium_conserves_momentum(fix_equilibrium, fix_device, fix_dtype,
+def test_equilibrium_conserves_momentum(fix_equilibrium, fix_configuration,
                                     fix_stencil):
-    context = Context(device=fix_device, dtype=fix_dtype, use_native=False)
+    device, dtype, use_native = fix_configuration
+    if use_native:
+        pytest.skip("This test does not depend on the native implementation.")
+    context = Context(device=device, dtype=dtype, use_native=False)
     flow = TestFlow(context=context,
                     resolution=[16] * fix_stencil.d,
                     reynolds_number=100,

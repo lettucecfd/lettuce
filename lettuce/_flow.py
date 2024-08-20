@@ -151,8 +151,9 @@ class Flow(ABC):
         v = self.j() / rho
         # apply correction due to forcing, which effectively averages the pre-
         # and post-collision velocity
-        correction = 0.0
-        if acceleration is not None:
+        if acceleration is None:
+            correction = 0.0
+        else:
             if len(acceleration.shape) == 1:
                 index = [Ellipsis] + [None] * self.stencil.d
                 acceleration = acceleration[index]
@@ -163,9 +164,10 @@ class Flow(ABC):
     def velocity(self):
         return self.j() / self.rho()
 
-    def incompressible_energy(self) -> torch.Tensor:
+    def incompressible_energy(self, f: Optional[torch.Tensor] = None
+                              ) -> torch.Tensor:
         """incompressible kinetic energy"""
-        return 0.5 * self.einsum("d,d->", [self.u(), self.u()])
+        return 0.5 * self.einsum("d,d->", [self.u(f), self.u(f)])
 
     def entropy(self) -> torch.Tensor:
         """entropy according to the H-theorem"""

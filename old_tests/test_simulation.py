@@ -13,22 +13,6 @@ import torch
 # Note: Simulation is also implicitly tested in test_flows
 
 
-def test_save_and_load(dtype_device, tmpdir):
-    dtype, device = dtype_device
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10,
-                               mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow, lattice, collision, streaming)
-    simulation.step(10)
-    simulation.save_checkpoint(tmpdir / "checkpoint.pic")
-    simulation2 = Simulation(flow, lattice, collision, streaming)
-    simulation2.load_checkpoint(tmpdir / "checkpoint.pic")
-    assert (lattice.convert_to_numpy(simulation2.f)
-            == pytest.approx(lattice.convert_to_numpy(simulation.f)))
-
-
 @pytest.mark.parametrize("use_jacobi", [True, False])
 def test_initialization(dtype_device, use_jacobi):
     dtype, device = dtype_device

@@ -102,13 +102,19 @@ def torch_gradient(f, dx=1, order=2):
     return out
 
 
-def grid_fine_to_coarse(lattice, f_fine, tau_fine, tau_coarse):
+def grid_fine_to_coarse(flow: 'Flow', f_fine, tau_fine, tau_coarse):
     if f_fine.shape.__len__() == 3:
-        f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2]))
+        f_eq = flow.equilibrium(flow,
+                                rho=flow.rho(f_fine[:, ::2, ::2]),
+                                u=flow.u(f_fine[:, ::2, ::2]))
         f_neq = f_fine[:, ::2, ::2] - f_eq
-    if f_fine.shape.__len__() == 4:
-        f_eq = lattice.equilibrium(lattice.rho(f_fine[:, ::2, ::2, ::2]), lattice.u(f_fine[:, ::2, ::2, ::2]))
+    elif f_fine.shape.__len__() == 4:
+        f_eq = flow.equilibrium(flow,
+                                rho=flow.rho(f_fine[:, ::2, ::2, ::2]),
+                                u=flow.u(f_fine[:, ::2, ::2, ::2]))
         f_neq = f_fine[:, ::2, ::2, ::2] - f_eq
+    else:
+        raise LettuceException("Invalid dimension!")
     f_coarse = f_eq + 2 * tau_coarse / tau_fine * f_neq
     return f_coarse
 

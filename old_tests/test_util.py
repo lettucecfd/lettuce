@@ -9,35 +9,6 @@ from lettuce.util import pressure_poisson
 import pytest
 
 
-def test_grid_fine_to_coarse_2d():
-    lattice = Lattice(D2Q9, 'cpu', dtype=torch.double)
-    # streaming = StandardStreaming(lattice)
-
-    flow_f = TaylorGreenVortex2D(40, 1600, 0.15, lattice)
-    collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
-    streaming_f = StandardStreaming(lattice)
-    sim_f = Simulation(flow_f, lattice, collision_f, streaming_f)
-
-    flow_c = TaylorGreenVortex2D(20, 1600, 0.15, lattice)
-    collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
-    streaming_c = StandardStreaming(lattice)
-    sim_c = Simulation(flow_c, lattice, collision_c, streaming_c)
-
-    f_c = grid_fine_to_coarse(lattice, sim_f.f, flow_f.units.relaxation_parameter_lu,
-                              flow_c.units.relaxation_parameter_lu)
-
-    p_init, u_init = flow_c.initial_pu(flow_c.grid)
-    rho_init = lattice.convert_to_tensor(flow_c.units.convert_pressure_pu_to_density_lu(p_init))
-    u_init = lattice.convert_to_tensor(flow_c.units.convert_velocity_to_lu(u_init))
-    shear_c_init = lattice.shear_tensor(sim_c.f)
-    shear_c = lattice.shear_tensor(f_c)
-
-    assert torch.isclose(lattice.u(f_c), u_init).all()
-    assert torch.isclose(lattice.rho(f_c), rho_init).all()
-    assert torch.isclose(f_c, sim_c.f).all()
-    assert torch.isclose(shear_c_init, shear_c).all()
-
-
 def test_grid_fine_to_coarse_3d():
     lattice = Lattice(D3Q27, 'cpu', dtype=torch.double)
 

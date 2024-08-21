@@ -3,6 +3,8 @@ Moments and cumulants of the distribution function.
 """
 
 import warnings
+from typing import List
+
 import torch
 from lettuce._flow import Flow
 
@@ -29,7 +31,7 @@ __all__ = [
 _ALL_STENCILS = get_subclasses(Stencil, module=lettuce)
 
 
-def moment_tensor(e, multiindex):
+def moment_tensor(e: List[List[int]], multiindex):
     if isinstance(e, torch.Tensor):
         return torch.prod(torch.pow(e, multiindex[..., None, :]), dim=-1)
     else:

@@ -1,5 +1,4 @@
-import pytest
-
+from lettuce._flow import pressure_poisson
 from tests.common import *
 
 
@@ -18,7 +17,6 @@ def test_pressure_poisson(fix_configuration, Stencil):
     u = flow.units.convert_velocity_to_lu(u)
     rho0 = flow.units.convert_pressure_pu_to_density_lu(p0)
     rho = pressure_poisson(flow.units, u, torch.ones_like(rho0))
-    pfinal = flow.units.convert_density_lu_to_pressure_pu(rho).cpu().numpy()
-    print(p0.max(), p0.min(), p0.mean(), pfinal.max(), pfinal.min(), pfinal.mean())
-    print((p0 - pfinal).max(), (p0 - pfinal).min())
-    assert p0 == pytest.approx(pfinal, rel=0.0, abs=0.05)
+    pfinal = context.convert_to_ndarray(
+        flow.units.convert_density_lu_to_pressure_pu(rho))
+    assert pfinal == pytest.approx(p0, rel=0.0, abs=0.05)

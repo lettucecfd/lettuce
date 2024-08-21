@@ -25,7 +25,13 @@ class DecayingTurbulence(ExtFlow):
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number, k0=20, ic_energy=0.5,
                  stencil: Optional['Stencil'] = None,
-                 equilibrium: Optional['Equilibrium'] = None):
+                 equilibrium: Optional['Equilibrium'] = None,
+                 initialize_pressure: bool = True,
+                 initialize_fneq: bool = True,
+                 randseed: Optional[int] = None):
+        self.initialize_pressure = initialize_pressure
+        self.initialize_fneq = initialize_fneq
+        self.randseed = randseed
         self.k0 = k0
         self.ic_energy = ic_energy
         self.wavenumbers = []
@@ -33,6 +39,8 @@ class DecayingTurbulence(ExtFlow):
         default_stencils = [D1Q3(), D2Q9(), D3Q19()]
         stencil = stencil or default_stencils[len(resolution) - 1]
         stencil = stencil() if callable(stencil) else stencil
+        if stencil.d != 2:
+            self.initialize_pressure = False
         super().__init__(context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 
@@ -79,6 +87,7 @@ class DecayingTurbulence(ExtFlow):
 
     def _generate_initial_velocity(self, ek, wavenumber):
         dx = self.units.convert_length_to_pu(1.0)
+        np.random.seed(self.randseed)
         u = np.random.random(np.array(wavenumber).shape) * 2 * np.pi + 0j
         u = [np.fft.fftn(u[dim], axes=tuple((np.arange(self.stencil.d))))
              for

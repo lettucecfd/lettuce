@@ -17,7 +17,9 @@ class TaylorGreenVortex(ExtFlow):
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,
-                 equilibrium: Optional['Equilibrium'] = None):
+                 equilibrium: Optional['Equilibrium'] = None,
+                 initialize_fneq: bool = True):
+        self.initialize_fneq = initialize_fneq
         if stencil is None and not isinstance(resolution, list):
             warnings.warn("Requiring information about dimensionality!"
                           " Either via stencil or resolution. Setting "

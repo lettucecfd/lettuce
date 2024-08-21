@@ -23,7 +23,9 @@ class DoublyPeriodicShear2D(ExtFlow):
                  stencil: Optional['Stencil'] = None,
                  equilibrium: Optional['Equilibrium'] = None,
                  shear_layer_width=80,
-                 initial_perturbation_magnitude=0.05):
+                 initial_perturbation_magnitude=0.05,
+                 initialize_fneq: bool = True):
+        self.initialize_fneq = initialize_fneq
         self.initial_perturbation_magnitude = initial_perturbation_magnitude
         self.shear_layer_width = shear_layer_width
         self.stencil = D2Q9() if stencil is None else stencil
@@ -46,7 +48,7 @@ class DoublyPeriodicShear2D(ExtFlow):
             characteristic_velocity_pu=1
         )
 
-    def analytic_solution(self, x, t=0):
+    def analytic_solution(self, t=0):
         raise NotImplementedError
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):

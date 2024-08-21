@@ -327,10 +327,11 @@ def initialize_f_neq(flow: 'Flow'):
 
     Pi_1 = (1.0 * flow.units.relaxation_parameter_lu * rho * S
             / flow.torch_stencil.cs ** 2)
+    print(flow.torch_stencil.e.device)
     Q = (torch.einsum('ia,ib->iab',
                       [flow.torch_stencil.e, flow.torch_stencil.e])
-         - torch.eye(flow.torch_stencil.d)
-         * flow.torch_stencil.cs ** 2)
+         - torch.eye(flow.stencil.d, device=flow.torch_stencil.e.device)
+         * flow.stencil.cs ** 2)
     Pi_1_Q = flow.einsum('ab,iab->i', [Pi_1, Q])
     fneq = flow.einsum('i,i->i', [flow.torch_stencil.w, Pi_1_Q])
 

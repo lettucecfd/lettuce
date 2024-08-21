@@ -11,11 +11,8 @@ def test_initialize_fneq(fix_configuration, fix_stencil, Case):
     # fixture setup
     if fix_stencil.d == 1:
         pytest.skip("Testflows not working for 1D")
-    elif Case is DoublyPeriodicShear2D and fix_stencil.d != 2:
+    if Case is DoublyPeriodicShear2D and fix_stencil.d != 2:
         pytest.skip("DoublyPeriodicShear2D only working for 2D")
-    elif Case is DecayingTurbulence and fix_stencil.d != 2:
-        pytest.skip("Initialize_pressure in DecayingTurbulence only working "
-                    "for 2D")
     device, dtype, use_native = fix_configuration
     # if dtype == torch.float32:
     #     pytest.skip("TGV is not accurate enough for single precision.")

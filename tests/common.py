@@ -4,6 +4,8 @@ import torch
 from copy import copy
 
 from lettuce import *
+from lettuce.util.moments import Transform, D1Q3Transform, D2Q9Dellar, \
+    D2Q9Lallemand, D3Q27Hermite
 
 
 def dtype_params():
@@ -81,6 +83,31 @@ def configuration_ids():
                     else:
                         buffer.append(f"{device}-{dtype}")
     return buffer
+
+
+def transform_params():
+    Transforms = [
+        D1Q3Transform,
+        D2Q9Dellar,
+        D2Q9Lallemand,
+        D3Q27Hermite
+    ]
+    Stencils = [
+        D1Q3,
+        D2Q9,
+        D2Q9,
+        D3Q27
+    ]
+    return zip(Transforms, Stencils)
+
+
+def transform_ids():
+    return ["D1Q3", "D2Q9Dellar", "D2Q9Lallemand", "D3Q27"]
+
+
+@pytest.fixture(params=transform_params(), ids=transform_ids())
+def fix_transform(request):
+    return request.param
 
 
 COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))

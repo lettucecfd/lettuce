@@ -125,7 +125,7 @@ class Flow(ABC):
 
     def rho(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """density"""
-        return torch.sum(f or self.f, dim=0)[None, ...]
+        return torch.sum(self.f if f is None else f, dim=0)[None, ...]
 
     @property
     def rho_pu(self) -> torch.Tensor:
@@ -142,13 +142,13 @@ class Flow(ABC):
     def j(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """momentum"""
         return self.einsum("qd,q->d",
-                           [self.torch_stencil.e, f or self.f])
+                           [self.torch_stencil.e, self.f if f is None else f])
 
     def u(self, f: Optional[torch.Tensor] = None, rho=None, acceleration=None
           ) -> torch.Tensor:
         """velocity; the `acceleration` is used to compute the correct velocity
         in the presence of a forcing scheme."""
-        rho = rho or self.rho(f=f)
+        rho = self.rho(f=f) if rho is None else rho
         v = self.j(f=f) / rho
         # apply correction due to forcing, which effectively averages the pre-
         # and post-collision velocity
@@ -185,7 +185,7 @@ class Flow(ABC):
                              ) -> torch.Tensor:
         """pseudo_entropy derived by a Taylor expansion around the local
         equilibrium"""
-        f = f or self.f
+        f = self.f if f is None else f
         f_feq = f / self.equilibrium(self)
         return self.rho(f) - self.einsum("q,q->", [f, f_feq])
 
@@ -194,7 +194,7 @@ class Flow(ABC):
         Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
         shear = self.einsum("qa,qb->qab",
                             [self.torch_stencil.e, self.torch_stencil.e])
-        shear = self.einsum("q,qab->ab", [f or self.f, shear])
+        shear = self.einsum("q,qab->ab", [self.f if f is None else f, shear])
         return shear
 
     def mv(self, m, v) -> torch.Tensor:

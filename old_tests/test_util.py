@@ -9,36 +9,6 @@ from lettuce.util import pressure_poisson
 import pytest
 
 
-def test_grid_fine_to_coarse_3d():
-    lattice = Lattice(D3Q27, 'cpu', dtype=torch.double)
-
-    flow_f = TaylorGreenVortex3D(40, 1600, 0.15, lattice)
-    collision_f = BGKCollision(lattice, tau=flow_f.units.relaxation_parameter_lu)
-    sim_f = Simulation(flow_f, lattice, collision_f)
-
-    flow_c = TaylorGreenVortex3D(20, 1600, 0.15, lattice)
-    collision_c = BGKCollision(lattice, tau=flow_c.units.relaxation_parameter_lu)
-    sim_c = Simulation(flow_c, lattice, collision_c)
-
-    f_c = grid_fine_to_coarse(
-        lattice,
-        sim_f.f,
-        flow_f.units.relaxation_parameter_lu,
-        flow_c.units.relaxation_parameter_lu
-    )
-
-    p_c_init, u_c_init = flow_c.initial_pu(flow_c.grid)
-    rho_c_init = flow_c.units.convert_pressure_pu_to_density_lu(p_c_init)
-    u_c_init = flow_c.units.convert_velocity_to_lu(u_c_init)
-    shear_c_init = lattice.shear_tensor(sim_c.f)
-    shear_c = lattice.shear_tensor(f_c)
-
-    assert np.isclose(lattice.u(f_c).cpu().numpy(), u_c_init).all()
-    assert np.isclose(lattice.rho(f_c).cpu().numpy(), rho_c_init).all()
-    assert torch.isclose(f_c, sim_c.f).all()
-    assert torch.isclose(shear_c_init, shear_c).all()
-
-
 @pytest.mark.parametrize("Stencil", [D2Q9, D3Q27])
 def test_pressure_poisson(dtype_device, Stencil):
     dtype, device = dtype_device

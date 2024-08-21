@@ -1,15 +1,12 @@
 from tests.common import *
 
 
-def test_grid_fine_to_coarse_2d():
-    context = Context(dtype=torch.float64)
-    flow_f = TaylorGreenVortex(context, [40] * 2, 1600, 0.15)
-    collision_f = BGKCollision(tau=flow_f.units.relaxation_parameter_lu)
-    # sim_f = Simulation(flow_f, collision_f, [])
+@pytest.mark.parametrize("dims", [2, 3])
+def test_grid_fine_to_coarse(dims):
+    context = Context(device='cpu', dtype=torch.float64)
+    flow_f = TaylorGreenVortex(context, [40] * dims, 1600, 0.15)
 
-    flow_c = TaylorGreenVortex(context, [20] * 2, 1600, 0.15)
-    collision_c = BGKCollision(tau=flow_c.units.relaxation_parameter_lu)
-    # sim_c = Simulation(flow_c, collision_c, [])
+    flow_c = TaylorGreenVortex(context, [20] * dims, 1600, 0.15)
 
     f_c = grid_fine_to_coarse(flow_f,
                               flow_f.f,

@@ -83,28 +83,10 @@ def configuration_ids():
     return buffer
 
 
-def collision_params():
-    return [
-        BGKCollision,
-        KBCCollision,
-        MRTCollision,
-        NoCollision,
-        RegularizedCollision,
-        SmagorinskyCollision,
-        TRTCollision
-    ]
-
-
-def collision_ids():
-    return [
-        'BGKCollision',
-        'KBCCollision',
-        'MRTCollision',
-        'NoCollision',
-        'RegularizedCollision',
-        'SmagorinskyCollision',
-        'TRTCollision'
-    ]
+COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))
+@pytest.fixture(params=COLLISIONS)
+def fix_collision(request):
+    return request.param
 
 
 def conserving_collision_params():
@@ -167,12 +149,6 @@ def fix_configuration(request):
     if 'cuda' in request.param[0].type and not torch.cuda.is_available():
         pytest.skip(reason="CUDA is not available on this machine.",
                     allow_module_level=True)
-    return request.param
-
-
-@pytest.fixture(params=collision_params(),
-                ids=collision_ids())
-def fix_collision(request):
     return request.param
 
 

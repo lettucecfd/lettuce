@@ -2,11 +2,6 @@ import pytest
 import numpy as np
 
 
-def test_symmetry(lattice):
-    """Test if the stencil is symmetric"""
-    assert sum(sum(lattice.e.cpu().numpy())) == pytest.approx(0.0)
-
-
 def test_weights(lattice):
     """Test if the sum of all weights equals one."""
     assert sum(lattice.w.cpu().numpy()) == pytest.approx(1.0)

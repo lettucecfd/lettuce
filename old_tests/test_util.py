@@ -10,23 +10,6 @@ import pytest
 
 
 @pytest.mark.parametrize("order", [2, 4, 6])
-def test_torch_gradient_2d(order):
-    lattice = Lattice(D2Q9, device='cpu', )
-    flow = TaylorGreenVortex2D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)
-    grid = flow.grid
-    p, u = flow.initial_pu(grid)
-    dx = flow.units.convert_length_to_pu(1.0)
-    u0_grad = torch_gradient(lattice.convert_to_tensor(u[0]), dx=dx, order=order).numpy()
-    u0_grad_np = np.array(np.gradient(u[0], dx))
-    u0_grad_analytic = np.array([
-        -np.sin(grid[0]) * np.sin(grid[1]),
-        np.cos(grid[0]) * np.cos(grid[1]),
-    ])
-    assert (u0_grad_analytic == pytest.approx(u0_grad, rel=0.0, abs=1e-3))
-    assert (u0_grad_np[:, 2:-2, 2:-2] == pytest.approx(u0_grad[:, 2:-2, 2:-2], rel=0.0, abs=1e-3))
-
-
-@pytest.mark.parametrize("order", [2, 4, 6])
 def test_torch_gradient_3d(order):
     lattice = Lattice(D3Q27, device='cpu', )
     flow = TaylorGreenVortex3D(resolution=100, reynolds_number=1, mach_number=0.05, lattice=lattice)

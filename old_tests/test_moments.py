@@ -5,11 +5,7 @@ from lettuce._stencil import *
 from lettuce.lattices import Lattice
 
 
-def test_getitem(dtype_device):
-    dtype, device = dtype_device
-    moments = D2Q9Lallemand(Lattice(D2Q9, device, dtype))
-    assert moments["jx", "jy"] == [1, 2]
-    assert moments["rho"] == [0]
+
 
 
 def test_moment_equilibrium_dellar(dtype_device):

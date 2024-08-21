@@ -16,7 +16,7 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted #runs-on: ${{ matrix.cfg.os }}
+    runs-on: workstation-mcbs #runs-on: ${{ matrix.cfg.os }}
     strategy:
       fail-fast: false
       matrix:

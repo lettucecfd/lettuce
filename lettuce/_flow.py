@@ -7,6 +7,7 @@ from typing import Optional, List, Union, Callable, AnyStr
 from abc import ABC, abstractmethod
 
 from . import *
+from .util import torch_gradient, torch_jacobi
 from .cuda_native import NativeEquilibrium
 
 __all__ = ['Equilibrium', 'Flow', 'Boundary']
@@ -76,7 +77,6 @@ class Flow(ABC):
     def __init__(self, context: 'Context', resolution: List[int],
                  units: 'UnitConversion', stencil: 'Stencil',
                  equilibrium: 'Equilibrium'):
-
         self.context = context
         self.resolution = resolution
         self.units = units
@@ -228,3 +228,102 @@ class Flow(ABC):
 
         if self.context.use_native:
             self._f_next = self.context.empty_tensor(self.f.shape)
+
+
+def pressure_poisson(units: 'UnitConversion', u, rho0, tol_abs=1e-10,
+                     max_num_steps=100000):
+    """
+    Solve the pressure poisson equation using a jacobi scheme.
+
+    Parameters
+    ----------
+    units : lettuce.UnitConversion
+        The flow instance.
+    u : torch.Tensor
+        The velocity tensor.
+    rho0 : torch.Tensor
+        Initial guess for the density (i.e., pressure).
+    tol_abs : float
+        The tolerance for pressure convergence.
+
+
+    Returns
+    -------
+    rho : torch.Tensor
+        The converged density (i.e., pressure).
+    """
+    # convert to physical units
+    dx = units.convert_length_to_pu(1.0)
+    u = units.convert_velocity_to_pu(u)
+    p = units.convert_density_lu_to_pressure_pu(rho0)
+
+    # compute laplacian
+    with torch.no_grad():
+        u_mod = torch.zeros_like(u[0])
+        dim = u.shape[0]
+        for i in range(dim):
+            for j in range(dim):
+                derivative = torch_gradient(
+                    torch_gradient(u[i] * u[j], dx)[i],
+                    dx
+                )[j]
+                u_mod -= derivative
+    # TODO(@MCBs): still not working in 3D
+
+    p_mod = torch_jacobi(
+        u_mod,
+        p[0],
+        dx,
+        dim=2,
+        tol_abs=tol_abs,
+        max_num_steps=max_num_steps
+    )[None, ...]
+
+    return units.convert_pressure_pu_to_density_lu(p_mod)
+
+
+def initialize_pressure_poisson(flow: 'Flow',
+                               max_num_steps=100000,
+                               tol_pressure=1e-6):
+    """Reinitialize equilibrium distributions with pressure obtained by a
+    Jacobi solver. Note that this method has to be called before
+    initialize_f_neq.
+    """
+    u = flow.u()
+    rho = pressure_poisson(
+        flow.units,
+        u,
+        flow.rho(),
+        tol_abs=tol_pressure,
+        max_num_steps=max_num_steps
+    )
+    return flow.equilibrium(flow=flow, rho=rho, u=u)
+
+
+def initialize_f_neq(flow: 'Flow'):
+    """Initialize the distribution function values. The f^(1) contributions are
+    approximated by finite differences. See Krüger et al. (2017).
+    """
+    rho = flow.rho()
+    u = flow.u()
+
+    grad_u0 = torch_gradient(u[0], dx=1, order=6)[None, ...]
+    grad_u1 = torch_gradient(u[1], dx=1, order=6)[None, ...]
+    S = torch.cat([grad_u0, grad_u1])
+
+    if flow.stencil.d == 3:
+        grad_u2 = torch_gradient(u[2], dx=1, order=6)[None, ...]
+        S = torch.cat([S, grad_u2])
+
+    Pi_1 = (1.0 * flow.units.relaxation_parameter_lu * rho * S
+            / flow.torch_stencil.cs ** 2)
+    Q = (torch.einsum('ia,ib->iab',
+                      [flow.torch_stencil.e, flow.torch_stencil.e])
+         - torch.eye(flow.torch_stencil.d)
+         * flow.torch_stencil.cs ** 2)
+    Pi_1_Q = flow.einsum('ab,iab->i', [Pi_1, Q])
+    fneq = flow.einsum('i,i->i', [flow.torch_stencil.w, Pi_1_Q])
+
+    feq = flow.equilibrium(flow, rho, u)
+
+    return feq - fneq

@@ -9,10 +9,7 @@ __all__ = ['get_subclasses',
     , 'torch_gradient',
            'grid_fine_to_coarse',
            'torch_jacobi',
-           'pressure_poisson',
            'append_axes']
-
-from lettuce import UnitConversion
 
 
 def get_subclasses(cls, module):
@@ -157,55 +154,6 @@ def torch_jacobi(f, p, dx, dim, tol_abs=1e-10, max_num_steps=100000):
         # Error is defined as the mean value of the residuum
         error = _torch.mean(residuum ** 2)
     return p
-
-
-def pressure_poisson(units: 'UnitConversion', u, rho0, tol_abs=1e-10,
-                     max_num_steps=100000):
-    """
-    Solve the pressure poisson equation using a jacobi scheme.
-
-    Parameters
-    ----------
-    units : lettuce.UnitConversion
-        The flow instance.
-    u : torch.Tensor
-        The velocity tensor.
-    rho0 : torch.Tensor
-        Initial guess for the density (i.e., pressure).
-    tol_abs : float
-        The tolerance for pressure convergence.
-
-
-    Returns
-    -------
-    rho : torch.Tensor
-        The converged density (i.e., pressure).
-    """
-    # convert to physical units
-    dx = units.convert_length_to_pu(1.0)
-    u = units.convert_velocity_to_pu(u)
-    p = units.convert_density_lu_to_pressure_pu(rho0)
-
-    # compute laplacian
-    with _torch.no_grad():
-        u_mod = _torch.zeros_like(u[0])
-        dim = u.shape[0]
-        for i in range(dim):
-            for j in range(dim):
-                derivative = torch_gradient(torch_gradient(u[i] * u[j], dx)[i], dx)[j]
-                u_mod -= derivative
-    # TODO(@MCBs): still not working in 3D
-
-    p_mod = torch_jacobi(
-        u_mod,
-        p[0],
-        dx,
-        dim=2,
-        tol_abs=tol_abs,
-        max_num_steps=max_num_steps
-    )[None, ...]
-
-    return units.convert_pressure_pu_to_density_lu(p_mod)
 
 
 def append_axes(array, n):

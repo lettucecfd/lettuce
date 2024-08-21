@@ -66,6 +66,7 @@ class Transform:
         self.context = context
         self.names = [f"m{i}" for i in range(stencil.q)]\
             if names is None else names
+        self.stencil = stencil
 
     def __getitem__(self, moment_names):
         if not isinstance(moment_names, tuple):
@@ -78,7 +79,7 @@ class Transform:
     def inverse_transform(self, m):
         return m
 
-    def equilibrium(self, m):
+    def equilibrium(self, m: torch.Tensor, flow: 'Flow'):
         """A very inefficient and basic implementation of the equilibrium
         moments.
         """
@@ -89,8 +90,28 @@ class Transform:
             InefficientCodeWarning
         )
         f = self.inverse_transform(m)
-        feq = Flow.equilibrium(None, Flow.rho(None, f), Flow.u(None, f))
+        feq = flow.equilibrium(flow, flow.rho(None, f), flow.u(None, f))
         return self.transform(feq)
+
+    def einsum(self, equation, fields, *args) -> torch.Tensor:
+        """Einstein summation on local fields."""
+        inputs, output = equation.split("->")
+        inputs = inputs.split(",")
+        for i, inp in enumerate(inputs):
+            if len(inp) == len(fields[i].shape):
+                pass
+            elif len(inp) == len(fields[i].shape) - self.stencil.d:
+                inputs[i] += "..."
+                if not output.endswith("..."):
+                    output += "..."
+            else:
+                assert False, "Bad dimension."
+        equation = ",".join(inputs) + "->" + output
+        return torch.einsum(equation, fields, *args)
+
+    def mv(self, m, v) -> torch.Tensor:
+        """matrix-vector multiplication"""
+        return self.einsum("ij,j->i", [m, v])
 
 
 class D1Q3Transform(Transform):
@@ -113,10 +134,10 @@ class D1Q3Transform(Transform):
         self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return Flow.mv(None, self.matrix, f)
+        return self.mv(self.matrix, f)
 
     def inverse_transform(self, m):
-        return Flow.mv(None, self.inverse, m)
+        return self.mv(self.inverse, m)
 
     # def _equilibrium(self, m):
     #    # TODO
@@ -159,12 +180,12 @@ class D2Q9Dellar(Transform):
         self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return Flow.mv(None, self.matrix, f)
+        return self.mv(self.matrix, f)
 
     def inverse_transform(self, m):
-        return Flow.mv(None, self.inverse, m)
+        return self.mv(self.inverse, m)
 
-    def equilibrium(self, m):
+    def equilibrium(self, m, flow: 'Flow'):
         warnings.warn("I am not 100% sure if this equilibrium is correct.",
                       ExperimentalWarning)
         meq = torch.zeros_like(m)
@@ -215,12 +236,12 @@ class D2Q9Lallemand(Transform):
         self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return Flow.mv(None, self.matrix, f)
+        return self.mv(self.matrix, f)
 
     def inverse_transform(self, m):
-        return Flow.mv(None, self.inverse, m)
+        return self.mv(self.inverse, m)
 
-    def equilibrium(self, m):
+    def equilibrium(self, m, flow: 'Flow'):
         """From Lallemand and Luo"""
         warnings.warn("I am not 100% sure if this equilibrium is correct.",
                       ExperimentalWarning)
@@ -518,12 +539,12 @@ class D3Q27Hermite(Transform):
         self.inverse = self.context.convert_to_tensor(self.inverse)
 
     def transform(self, f):
-        return Flow.mv(None, self.matrix, f)
+        return self.mv(self.matrix, f)
 
     def inverse_transform(self, m):
-        return Flow.mv(None, self.inverse, m)
+        return self.mv(self.inverse, m)
 
-    def equilibrium(self, m):
+    def equilibrium(self, m, flow: 'Flow'):
         meq = torch.zeros_like(m)
         rho = m[0]
         jx = m[1]

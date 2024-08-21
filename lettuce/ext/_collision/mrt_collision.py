@@ -20,7 +20,7 @@ class MRTCollision(Collision):
 
     def __call__(self, flow: 'Flow'):
         m = self.transform.transform(flow.f)
-        meq = self.transform.equilibrium(m)
+        meq = self.transform.equilibrium(m, flow)
         m = m - flow.einsum("q,q->q", [1 / self.relaxation_parameters,
                                        m - meq])
         f = self.transform.inverse_transform(m)

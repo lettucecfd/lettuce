@@ -207,10 +207,6 @@ class Flow(ABC):
         shear = self.einsum("q,qab->ab", [self.f if f is None else f, shear])
         return shear
 
-    def mv(self, m, v) -> torch.Tensor:
-        """matrix-vector multiplication"""
-        return self.einsum("ij,j->i", [m, v])
-
     def einsum(self, equation, fields, *args) -> torch.Tensor:
         """Einstein summation on local fields."""
         inputs, output = equation.split("->")

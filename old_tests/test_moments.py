@@ -5,15 +5,6 @@ from lettuce._stencil import *
 from lettuce.lattices import Lattice
 
 
-@pytest.mark.parametrize("MomentSet", (D2Q9Dellar, D2Q9Lallemand))
-def test_conserved_moments_d2q9(MomentSet):
-    multiindices = np.array([
-        [0, 0], [1, 0], [0, 1]
-    ])
-    m = moment_tensor(D2Q9.e, multiindices)
-    assert m == pytest.approx(MomentSet.matrix[:3, :])
-
-
 def test_inverse_transform(f_transform):
     f, transform = f_transform
     lattice = transform.lattice

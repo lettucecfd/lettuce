@@ -1,8 +1,11 @@
 Click>=6.0
 torch>=2.4
 numpy==1.26.4
-matplotlib
+matplotlib==3.9.0
 pyevtk
 pytest
 h5py>=3.2.1
 mmh3
+lettuce~=0.2.3+87.g819d78f.dirty
+packaging~=24.1
+setuptools~=71.0.1

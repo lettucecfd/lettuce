@@ -1,5 +1,5 @@
 from lettuce._flow import pressure_poisson
-from tests.common import *
+from tests.conftest import *
 
 
 def test_initialize_pressure(fix_configuration):

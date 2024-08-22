@@ -1,5 +1,5 @@
 from lettuce.util.moments import moment_tensor
-from tests.common import *
+from tests.conftest import *
 
 
 def test_moments_density_array(fix_stencil):

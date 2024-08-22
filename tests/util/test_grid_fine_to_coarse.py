@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("dims", [2, 3])

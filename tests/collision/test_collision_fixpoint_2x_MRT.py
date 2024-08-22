@@ -1,5 +1,5 @@
 from lettuce.util.moments import D2Q9Lallemand, D2Q9Dellar
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("Transform", [D2Q9Lallemand, D2Q9Dellar])

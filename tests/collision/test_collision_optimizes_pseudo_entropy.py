@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_collision_optimizes_pseudo_entropy(fix_configuration,

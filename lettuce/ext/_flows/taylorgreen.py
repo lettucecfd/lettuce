@@ -7,6 +7,7 @@ from typing import Union, List, Optional
 import torch
 
 from ... import UnitConversion
+from .._stencil import D2Q9
 from . import ExtFlow
 
 __all__ = ['TaylorGreenVortex', 'TaylorGreenVortex2D', 'TaylorGreenVortex3D']
@@ -16,23 +17,23 @@ class TaylorGreenVortex(ExtFlow):
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,
-                 equilibrium: Optional['Equilibrium'] = None):
+                 equilibrium: Optional['Equilibrium'] = None,
+                 initialize_fneq: bool = True):
+        self.initialize_fneq = initialize_fneq
         if stencil is None and not isinstance(resolution, list):
             warnings.warn("Requiring information about dimensionality!"
                           " Either via stencil or resolution. Setting "
                           "dimension to 2.", UserWarning)
-            self.d = 2
+            self.stencil = D2Q9()
         else:
             self.stencil = stencil() if callable(stencil) else stencil
-            self.d = self.stencil.d if self.stencil is not None else len(
-                resolution)
         ExtFlow.__init__(self, context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
-            return [resolution] * self.d
+            return [resolution] * self.stencil.d
         else:
             assert len(resolution) in [2, 3], ('the resolution of a '
                                                'taylor-green-vortex '
@@ -44,8 +45,8 @@ class TaylorGreenVortex(ExtFlow):
         return UnitConversion(
             reynolds_number=reynolds_number,
             mach_number=mach_number,
-            characteristic_length_lu=resolution[0] / (2 * torch.pi),
-            characteristic_length_pu=1,
+            characteristic_length_lu=resolution[0],
+            characteristic_length_pu=2 * torch.pi,
             characteristic_velocity_pu=1)
 
     @property
@@ -56,7 +57,7 @@ class TaylorGreenVortex(ExtFlow):
                                    steps=self.resolution[n],
                                    device=self.context.device,
                                    dtype=self.context.dtype)
-                    for n in range(self.d))
+                    for n in range(self.stencil.d))
         return torch.meshgrid(*xyz, indexing='ij')
 
     def initial_pu(self) -> (torch.Tensor, torch.Tensor):

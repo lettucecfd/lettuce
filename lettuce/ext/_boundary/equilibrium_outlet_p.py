@@ -13,11 +13,11 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
     """Equilibrium outlet with constant pressure.
     """
 
-    def __init__(self, flow: 'Flow', context: 'Context', direction: List[int],
+    def __init__(self, direction: List[int], flow: 'Flow',
                  rho_outlet: float = 1.0):
-        super().__init__(direction, flow.stencil)
-        self.rho_outlet = context.convert_to_tensor(rho_outlet)
-        self.context = context
+        super(EquilibriumOutletP, self).__init__(direction, flow)
+        self.context = flow.context
+        self.rho_outlet = self.context.convert_to_tensor(rho_outlet)
 
         assert len(direction) in [1, 2, 3], \
             (f"Invalid direction parameter. Expected direction of of length 1,"
@@ -61,13 +61,16 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
             self.w = flow.torch_stencil.w[self.velocities]
 
     def __call__(self, flow: 'Flow'):
-        outlet = [slice(None)] + self.index
-        neighbor = [slice(None)] + self.neighbor
-        rho_outlet = self.rho_outlet * torch.ones_like(flow.rho()[outlet])
-        feq = flow.equilibrium(flow, rho_outlet[..., None],
-                               flow.u()[neighbor][..., None])
-        return flow.einsum("q,q->q", [feq,
-                                      torch.ones_like(flow.f)])
+        here = [slice(None)] + self.index
+        other = [slice(None)] + self.neighbor
+        rho = flow.rho()
+        u = flow.u()
+        rho_w = self.rho_outlet * torch.ones_like(rho[here])
+        u_w = u[other]
+        feq = flow.f
+        feq[here] = flow.equilibrium(flow, rho_w[..., None], u_w[..., None])[
+            ..., 0]
+        return flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:

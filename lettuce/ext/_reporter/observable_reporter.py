@@ -1,4 +1,7 @@
 import sys
+from abc import ABC, abstractmethod
+from typing import Optional
+
 import torch
 import numpy as np
 
@@ -11,26 +14,27 @@ __all__ = ['Observable', 'ObservableReporter', 'MaximumVelocity',
            'Mass']
 
 
-class Observable:
-    def __init__(self, flow: Flow):
+class Observable(ABC):
+    def __init__(self, flow: 'Flow'):
         self.context = flow.context
         self.flow = flow
 
-    def __call__(self, f):
-        raise NotImplementedError
+    @abstractmethod
+    def __call__(self, f: Optional[torch.Tensor] = None):
+        ...
 
 
 class MaximumVelocity(Observable):
     """Maximum velocitiy"""
 
-    def __call__(self, f):
+    def __call__(self, f: Optional[torch.Tensor] = None):
         return torch.norm(self.flow.u_pu, dim=0).max()
 
 
 class IncompressibleKineticEnergy(Observable):
     """Total kinetic energy of an incompressible flow."""
 
-    def __call__(self, f):
+    def __call__(self, f: Optional[torch.Tensor] = None):
         dx = self.flow.units.convert_length_to_pu(1.0)
         kinE = self.flow.units.convert_incompressible_energy_to_pu(
             torch.sum(self.flow.incompressible_energy()))
@@ -46,7 +50,7 @@ class Enstrophy(Observable):
     The function only works for periodic domains
     """
 
-    def __call__(self, f):
+    def __call__(self, f: Optional[torch.Tensor] = None):
         u0 = self.flow.units.convert_velocity_to_pu(self.flow.u()[0])
         u1 = self.flow.units.convert_velocity_to_pu(self.flow.u()[1])
         dx = self.flow.units.convert_length_to_pu(1.0)
@@ -70,7 +74,7 @@ class EnergySpectrum(Observable):
     def __init__(self, flow: Flow):
         super(EnergySpectrum, self).__init__(flow)
         self.dx = self.flow.units.convert_length_to_pu(1.0)
-        self.dimensions = self.flow.grid[0].shape
+        self.dimensions = self.flow.resolution
         frequencies = [self.context.convert_to_tensor(
             np.fft.fftfreq(dim, d=1 / dim)
         ) for dim in self.dimensions]
@@ -92,7 +96,7 @@ class EnergySpectrum(Observable):
                  + 0.5)
         )
 
-    def __call__(self, f):
+    def __call__(self, f: Optional[torch.Tensor] = None):
         u = self.flow.u()
         return self.spectrum_from_u(u)
 
@@ -147,7 +151,7 @@ class Mass(Observable):
         super(Mass, self).__init__(flow)
         self.mask = no_mass_mask
 
-    def __call__(self, f):
+    def __call__(self, f: Optional[torch.Tensor] = None):
         mass = f[..., 1:-1, 1:-1].sum()
         if self.mask is not None:
             mass -= (f * self.mask.to(dtype=torch.float)).sum()

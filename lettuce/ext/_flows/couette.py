@@ -15,11 +15,13 @@ __all__ = ['CouetteFlow2D']
 
 class CouetteFlow2D(ExtFlow):
 
-    def __init__(self, resolution: Union[int, List[int]], reynolds_number,
-                 mach_number, context: 'Context'):
-        super().__init__(context, resolution, reynolds_number,
-                         mach_number)
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
+                 equilibrium: Optional['Equilibrium'] = None):
         self.u0 = 0  # background velocity
+        super().__init__(context, resolution, reynolds_number,
+                         mach_number, stencil, equilibrium)
 
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
@@ -35,7 +37,7 @@ class CouetteFlow2D(ExtFlow):
             mach_number=mach_number,
             characteristic_length_lu=resolution[0],
             characteristic_length_pu=1,
-            characteristic_velocity_pu=1
+            characteristic_velocity_pu=self.u0
         )
 
     def analytic_solution(self):
@@ -45,9 +47,10 @@ class CouetteFlow2D(ExtFlow):
         return u
 
     def initial_pu(self):
-        return (torch.zeros(self.resolution),
-                torch.stack([torch.zeros(self.resolution),
-                             torch.zeros(self.resolution)]))
+        zeros = self.context.zero_tensor(self.resolution)
+        p = zeros[None, ...]
+        u = torch.stack([zeros, zeros], dim=0)
+        return p, u
 
     @property
     def grid(self):

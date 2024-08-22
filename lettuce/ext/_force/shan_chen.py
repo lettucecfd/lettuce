@@ -6,9 +6,9 @@ __all__ = ['ShanChen']
 
 class ShanChen(Force):
 
-    def __init__(self, context, tau, acceleration):
+    def __init__(self, flow, tau, acceleration):
         self.tau = tau
-        self.acceleration = context.convert_to_tensor(acceleration)
+        self.acceleration = flow.context.convert_to_tensor(acceleration)
 
     def source_term(self, u):
         return 0

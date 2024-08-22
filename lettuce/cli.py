@@ -165,14 +165,17 @@ def convergence(ctx, use_cuda_native):
         error_u_old = error_u
         error_p_old = error_p
 
-        print(f"{resolution:15} {error_u:15.2e} {factor_u / 2:15.1f} "
-              f"{error_p:15.2e} {factor_p / 2:15.1f} {mlups:15.2f}")
-    if factor_u / 2 < (2 - 1e-6):
-        print("FAILED: Velocity convergence order < 2.")
-        sys.exit(1)
-    if factor_p / 2 < (1 - 1e-6):
-        print("FAILED: Pressure convergence order < 1.")
-        sys.exit(1)
+        print(f"{resolution:15} {error_u:15.2e} {factor_u / 2:15.2f} "
+              f"{error_p:15.2e} {factor_p / 2:15.2f} {mlups:15.2f}")
+    tol = 1e-1
+    if not (2 - tol) < factor_u / 2 < (2 + tol):
+        print(f"FAILED: Velocity convergence order {factor_u / 2} is not in "
+              f"[1.9, 2.1")
+        return 1
+    if not (1 - tol) < factor_p / 2 < (1 + tol):
+        print(f"FAILED: Pressure convergence order {factor_p / 2} is not in "
+              f"[0.9, 1.1].")
+        return 1
     else:
         return 0
 

@@ -6,6 +6,7 @@ from copy import copy
 from lettuce import *
 from lettuce.util.moments import *
 
+
 def dtype_params():
     return [torch.float64, torch.float32]
 

@@ -49,17 +49,11 @@ def stencil_ids():
 
 
 def device_params():
-    if torch.cuda.is_available():
-        return [torch.device('cpu'), torch.device('cuda')]
-    else:
-        return [torch.device('cpu')]
+    return [torch.device('cpu'), torch.device('cuda')]
 
 
 def device_ids():
-    if torch.cuda.is_available():
-        return ['CPU', 'CUDA']
-    else:
-        return ['CPU']
+    return ['CPU', 'CUDA']
 
 
 def native_params():
@@ -169,11 +163,17 @@ def fix_stencil(request):
 
 @pytest.fixture(params=device_params(), ids=device_ids())
 def fix_device(request):
+    if 'cuda' in request.param and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 
 @pytest.fixture(params=native_params(), ids=native_ids())
 def fix_native(request):
+    if request.param[0] and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 

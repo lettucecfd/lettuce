@@ -9,9 +9,6 @@ import versioneer
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
 requirements = ['Click>=6.0', "torch>=2.1", "numpy==1.26.4", "matplotlib==3.9.0", "pyevtk", "h5py>=3.2.1", "mmh3"]
 
 setup_requirements = ['pytest-runner', 'pytest']
@@ -35,7 +32,7 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
     package_data={'lettuce.native_generator': ['lettuce/native_generator/template/setup.py']},
     include_package_data=True,
     keywords='lettuce',

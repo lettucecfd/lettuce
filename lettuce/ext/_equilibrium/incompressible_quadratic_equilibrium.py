@@ -1,4 +1,4 @@
-from ... import Flow, Equilibrium
+from ... import Equilibrium
 
 __all__ = ['IncompressibleQuadraticEquilibrium']
 

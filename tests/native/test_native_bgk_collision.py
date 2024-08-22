@@ -33,14 +33,14 @@ class DummyBGK(ExtFlow):
 
 
 def test_native_bgk_collision():
-    cpu_context = Context(torch.device('cpu'), use_native=False)
+    cpu_context = Context('cpu')
     cpu_flow = DummyBGK(cpu_context)
 
     assert cpu_flow.f.shape[0] == 9
     assert cpu_flow.f.shape[1] == 16
     assert cpu_flow.f.shape[2] == 16
 
-    native_context = Context(torch.device('cuda'), use_native=True)
+    native_context = Context(use_native=True)
     native_flow = DummyBGK(native_context)
 
     assert native_flow.f.shape[0] == 9

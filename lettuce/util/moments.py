@@ -276,8 +276,7 @@ class D2Q9Lallemand(Transform):
 
 """
 D3Q19 is not implemented, yet. Also, the moments should be ordered so that
-1...D+1 correspond to momentum,
-which is no the case for this matrix.
+1...D+1 correspond to momentum, which is no the case for this matrix.
 """
 
 

@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 if not torch.cuda.is_available():
     pytest.skip(reason="CUDA is not available on this machine, "

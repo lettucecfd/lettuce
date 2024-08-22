@@ -1,7 +1,7 @@
 """Testing that initializing fneq improves TGV solution"""
 import pytest
 
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("Case", [DecayingTurbulence,

@@ -1,5 +1,5 @@
 import os
-from tests.common import *
+from tests.conftest import *
 
 
 def test_vtk_reporter_no_mask(tmpdir):

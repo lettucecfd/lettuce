@@ -1,5 +1,5 @@
 from lettuce._flow import pressure_poisson
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("Stencil", [D2Q9, D3Q27])

@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def moment_dims_params():

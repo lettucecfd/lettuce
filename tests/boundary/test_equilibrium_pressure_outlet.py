@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_equilibrium_pressure_outlet(fix_configuration, fix_stencil):

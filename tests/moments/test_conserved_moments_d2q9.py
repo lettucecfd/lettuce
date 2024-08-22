@@ -1,5 +1,5 @@
 from lettuce.util.moments import D2Q9Dellar, D2Q9Lallemand, moment_tensor
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("MomentSet", (D2Q9Dellar, D2Q9Lallemand))

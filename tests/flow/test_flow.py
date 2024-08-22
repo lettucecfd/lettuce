@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("flowname", flow_by_name.keys())

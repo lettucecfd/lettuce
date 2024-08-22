@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_moment_equilibrium_D3Q27Hermite(fix_device, fix_dtype):

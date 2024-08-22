@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_collision_conserves_momentum(fix_conserving_collision,

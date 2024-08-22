@@ -1,6 +1,6 @@
 from copy import copy
 
-from tests.common import *
+from tests.conftest import *
 
 
 def test_anti_bounce_back_outlet(fix_configuration, fix_stencil):

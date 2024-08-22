@@ -44,7 +44,10 @@ Getting Started
 ---------------
 
 To find some very simple examples of how to use lettuce, please have a look
-at the examples_. These will guide you through lettuce's main features.
+at the examples_. These will guide you through lettuce's main features. The
+simplest example is:
+
+https://github.com/lettucecfd/lettuce/blob/ef9830b59c6ad50e02fdf0ce24cc47ea520aa354/examples/00_simplest_TGV.py#L6-L21
 
 Please ensure you have Jupyter installed to run the Jupyter notebooks.
 

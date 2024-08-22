@@ -1,5 +1,5 @@
 from copy import deepcopy
-from tests.common import *
+from tests.conftest import *
 
 
 def test_checkpoint(tmpdir):

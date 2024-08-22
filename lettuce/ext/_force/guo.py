@@ -5,23 +5,37 @@ __all__ = ['Guo']
 
 
 class Guo(Force):
-    def __init__(self, lattice, tau, acceleration):
-        self.lattice = lattice
+
+    def __init__(self, flow, tau, acceleration):
+        self.flow = flow
         self.tau = tau
-        self.acceleration = lattice.convert_to_tensor(acceleration)
+        self.acceleration = flow.context.convert_to_tensor(acceleration)
 
     def source_term(self, u):
-        emu = append_axes(self.lattice.e, self.lattice.D) - u
-        eu = self.lattice.einsum("ib,b->i", [self.lattice.e, u])
-        eeu = self.lattice.einsum("ia,i->ia", [self.lattice.e, eu])
-        emu_eeu = emu / (self.lattice.cs ** 2) + eeu / (self.lattice.cs ** 4)
-        emu_eeuF = self.lattice.einsum("ia,a->i", [emu_eeu, self.acceleration])
-        weemu_eeuF = append_axes(self.lattice.w, self.lattice.D) * emu_eeuF
+        emu = append_axes(self.flow.torch_stencil.e,
+                          self.flow.torch_stencil.d) - u
+        eu = self.flow.einsum("ib,b->i", [self.flow.torch_stencil.e, u])
+        eeu = self.flow.einsum("ia,i->ia", [self.flow.torch_stencil.e, eu])
+        emu_eeu = (emu / (self.flow.torch_stencil.cs ** 2)
+                   + eeu / (self.flow.torch_stencil.cs ** 4))
+        emu_eeuF = self.flow.einsum("ia,a->i", [emu_eeu, self.acceleration])
+        weemu_eeuF = (append_axes(self.flow.torch_stencil.w,
+                                  self.flow.torch_stencil.d)
+                      * emu_eeuF)
         return (1 - 1 / (2 * self.tau)) * weemu_eeuF
 
-    def u_eq(self, f):
-        return self.ueq_scaling_factor * append_axes(self.acceleration, self.lattice.D) / self.lattice.rho(f)
+    def u_eq(self, flow: 'Flow' = None):
+        flow = self.flow if flow is None else flow
+        return (self.ueq_scaling_factor
+                * append_axes(self.acceleration, flow.torch_stencil.d)
+                / flow.rho())
 
     @property
     def ueq_scaling_factor(self):
         return 0.5
+
+    def native_available(self) -> bool:
+        return False
+
+    def native_generator(self) -> 'NativeForce':
+        pass

@@ -1,5 +1,4 @@
 from .bgk_collision import BGKCollision
-from .bgk_initialization import BGKInitialization
 from .kbc_collision import KBCCollision3D, KBCCollision2D, KBCCollision
 from .mrt_collision import MRTCollision
 from .no_collision import NoCollision
@@ -9,7 +8,6 @@ from .trt_collision import TRTCollision
 
 __all__ = [
     'BGKCollision',
-    'BGKInitialization',
     'KBCCollision2D',
     'KBCCollision3D',
     'KBCCollision',

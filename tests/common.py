@@ -1,8 +1,11 @@
 import pytest
 import numpy as np
 import torch
+from copy import copy
 
 from lettuce import *
+from lettuce.util.moments import Transform, D1Q3Transform, D2Q9Dellar, \
+    D2Q9Lallemand, D3Q27Hermite
 
 
 def dtype_params():
@@ -82,6 +85,57 @@ def configuration_ids():
     return buffer
 
 
+def transform_params():
+    Transforms = [
+        D1Q3Transform,
+        D2Q9Dellar,
+        D2Q9Lallemand,
+        D3Q27Hermite
+    ]
+    Stencils = [
+        D1Q3,
+        D2Q9,
+        D2Q9,
+        D3Q27
+    ]
+    return zip(Transforms, Stencils)
+
+
+def transform_ids():
+    return ["D1Q3", "D2Q9Dellar", "D2Q9Lallemand", "D3Q27"]
+
+
+@pytest.fixture(params=transform_params(), ids=transform_ids())
+def fix_transform(request):
+    return request.param
+
+
+COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))
+@pytest.fixture(params=COLLISIONS)
+def fix_collision(request):
+    return request.param
+
+
+def conserving_collision_params():
+    return [
+        BGKCollision,
+        KBCCollision,
+        TRTCollision,
+        RegularizedCollision,
+        SmagorinskyCollision
+    ]
+
+
+def conserving_collision_ids():
+    return [
+        'BGKCollision',
+        'KBCCollision',
+        'TRTCollision',
+        'RegularizedCollision',
+        'SmagorinskyCollision'
+    ]
+
+
 @pytest.fixture(params=dtype_params(), ids=dtype_ids())
 def fix_dtype(request):
     return request.param
@@ -109,22 +163,37 @@ def fix_stencil(request):
 
 @pytest.fixture(params=device_params(), ids=device_ids())
 def fix_device(request):
+    if 'cuda' in request.param.type and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 
 @pytest.fixture(params=native_params(), ids=native_ids())
 def fix_native(request):
+    if request.param[0] and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 
 @pytest.fixture(params=configuration_params(), ids=configuration_ids())
 def fix_configuration(request):
     if 'cuda' in request.param[0].type and not torch.cuda.is_available():
-        pytest.skip(reason="CUDA is not available on this machine.")
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
+    return request.param
+
+
+@pytest.fixture(params=conserving_collision_params(),
+                ids=conserving_collision_ids())
+def fix_conserving_collision(request):
     return request.param
 
 
 class TestFlow(ExtFlow):
+    __test__ = False
+
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,
@@ -149,7 +218,6 @@ class TestFlow(ExtFlow):
                               characteristic_length_lu=resolution[0])
 
     def initial_pu(self) -> (float, Union[np.array, torch.Tensor]):
-        print(self.resolution)
         u = 1.01 * np.ones([self.stencil.d] + self.resolution)
         p = 0.01 * np.ones([1] + self.resolution)
         return p, u

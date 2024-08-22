@@ -110,6 +110,8 @@ def fix_transform(request):
 
 
 COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))
+
+
 @pytest.fixture(params=COLLISIONS)
 def fix_collision(request):
     return request.param

@@ -1,39 +1,72 @@
 """
 Couette Flow
 """
+from typing import Union, List, Optional
 
 import numpy as np
+import torch
 
 from ... import UnitConversion
 from .. import BounceBackBoundary, EquilibriumBoundaryPU
+from ._ext_flow import ExtFlow
 
 __all__ = ['CouetteFlow2D']
 
 
-class CouetteFlow2D(object):
-    def __init__(self, resolution, reynolds_number, mach_number, lattice):
-        self.resolution = resolution
-        self.units = UnitConversion(
-            reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution, characteristic_length_pu=1,
+class CouetteFlow2D(ExtFlow):
+
+    def __init__(self, resolution: Union[int, List[int]], reynolds_number,
+                 mach_number, context: 'Context'):
+        super().__init__(context, resolution, reynolds_number,
+                         mach_number)
+        self.u0 = 0  # background velocity
+
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution] * 2
+        else:
+            return resolution
+
+    def make_units(self, reynolds_number, mach_number, resolution: List[int]
+                   ) -> 'UnitConversion':
+        return UnitConversion(
+            reynolds_number=reynolds_number,
+            mach_number=mach_number,
+            characteristic_length_lu=resolution[0],
+            characteristic_length_pu=1,
             characteristic_velocity_pu=1
         )
 
-    def analytic_solution(self, x, t=0):
-        # TODO
-        raise NotImplementedError
+    def analytic_solution(self):
+        dvdy = 1/self.resolution[0]
+        x, y = self.grid
+        u = self.context.convert_to_tensor([dvdy*y + self.u0])
+        return u
 
-    def initial_solution(self, x):
-        return np.array([0 * x[0]], dtype=float), np.array([0 * x[0], 0 * x[1]], dtype=float)
+    def initial_pu(self):
+        return (torch.zeros(self.resolution),
+                torch.stack([torch.zeros(self.resolution),
+                             torch.zeros(self.resolution)]))
 
     @property
     def grid(self):
-        x = np.linspace(0, 1, num=self.resolution, endpoint=False)
-        y = np.linspace(0, 1, num=self.resolution, endpoint=False)
-        return np.meshgrid(x, y, indexing='ij')
+        xyz = tuple(torch.linspace(0, 1, steps=n,
+                                   device=self.context.device,
+                                   dtype=self.context.dtype)
+                    for n in self.resolution)
+        return torch.meshgrid(*xyz, indexing='ij')
 
     @property
     def boundaries(self):
-        x, y = self.grid
-        return [EquilibriumBoundaryPU(np.abs(y - 1) < 1e-6, self.units.lattice, self.units, np.array([1.0, 0.0])),
-                BounceBackBoundary(np.abs(y) < 1e-6, self.units.lattice)]
+        ktop = torch.zeros(self.resolution, dtype=torch.bool)
+        ktop[:, 1] = True
+        kbottom = torch.zeros(self.resolution, dtype=torch.bool)
+        kbottom[:, -1] = True
+        return [
+            # moving bounce back top
+            EquilibriumBoundaryPU(self.context, mask=ktop,
+                                  velocity=np.array([1.0, 0.0])),
+            # bounce back bottom
+            BounceBackBoundary(kbottom)
+        ]

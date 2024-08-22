@@ -1,85 +1,121 @@
 """
 Taylor-Green vortex in 2D and 3D.
 """
+import warnings
 from typing import Union, List, Optional
 
 import torch
-import numpy as np
 
 from ... import UnitConversion
 from . import ExtFlow
 
-__all__ = ['TaylorGreenVortex2D', 'TaylorGreenVortex3D']
+__all__ = ['TaylorGreenVortex', 'TaylorGreenVortex2D', 'TaylorGreenVortex3D']
 
 
-class TaylorGreenVortex2D(ExtFlow):
-    def __init__(self, context: 'Context', resolution: Union[int, List[int]], reynolds_number, mach_number, stencil: Optional['Stencil'] = None,
+class TaylorGreenVortex(ExtFlow):
+    def __init__(self, context: 'Context', resolution: Union[int, List[int]],
+                 reynolds_number, mach_number,
+                 stencil: Optional['Stencil'] = None,
                  equilibrium: Optional['Equilibrium'] = None):
-        ExtFlow.__init__(self, context, resolution, reynolds_number, mach_number, stencil, equilibrium)
-
-    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
-        if isinstance(resolution, int):
-            return [resolution] * 2
+        if stencil is None and not isinstance(resolution, list):
+            warnings.warn("Requiring information about dimensionality!"
+                          " Either via stencil or resolution. Setting "
+                          "dimension to 2.", UserWarning)
+            self.d = 2
         else:
-            assert len(resolution) == 2, 'the resolution of a 2d taylor green vortex must obviously be 2!'
+            self.stencil = stencil() if callable(stencil) else stencil
+            self.d = self.stencil.d if self.stencil is not None else len(
+                resolution)
+        ExtFlow.__init__(self, context, resolution, reynolds_number,
+                         mach_number, stencil, equilibrium)
+
+    def make_resolution(self, resolution: Union[int, List[int]],
+                        stencil: Optional['Stencil'] = None) -> List[int]:
+        if isinstance(resolution, int):
+            return [resolution] * self.d
+        else:
+            assert len(resolution) in [2, 3], ('the resolution of a '
+                                               'taylor-green-vortex '
+                                               'must be 2- or 3-dimensional!')
             return resolution
 
-    def make_units(self, reynolds_number, mach_number, resolution) -> 'UnitConversion':
+    def make_units(self, reynolds_number, mach_number,
+                   resolution) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number,
             mach_number=mach_number,
-            characteristic_length_lu=resolution[0],
-            characteristic_length_pu=2 * np.pi,
-            characteristic_velocity_pu=1)
-
-    @property
-    def grid(self):
-        x = np.linspace(0, 2 * np.pi, num=self.resolution[0], endpoint=False)
-        y = np.linspace(0, 2 * np.pi, num=self.resolution[1], endpoint=False)
-        return np.meshgrid(x, y, indexing='ij')
-
-    def initial_pu(self) -> (float, float):
-        return self.analytic_solution(t=0)
-
-    def analytic_solution(self, t=0):
-        grid = self.grid
-        nu = self.units.viscosity_pu
-        u = np.array([np.cos(grid[0]) * np.sin(grid[1]) * np.exp(-2 * nu * t),
-                      -np.sin(grid[0]) * np.cos(grid[1]) * np.exp(-2 * nu * t)])
-        p = -np.array([0.25 * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * np.exp(-4 * nu * t)])
-        return p, u
-
-
-class TaylorGreenVortex3D(ExtFlow):
-    def make_resolution(self, resolution: Union[int, List[int]], stencil: Optional['Stencil'] = None) -> List[int]:
-        if isinstance(resolution, int):
-            return [resolution] * 3
-        else:
-            assert len(resolution) == 3, 'the resolution of a 3d taylor green vortex must obviously be 3!'
-            return resolution
-
-    def make_units(self, reynolds_number, mach_number, resolution) -> 'UnitConversion':
-        return UnitConversion(
-            reynolds_number=reynolds_number, mach_number=mach_number,
-            characteristic_length_lu=resolution[0] / (2 * np.pi),
+            characteristic_length_lu=resolution[0] / (2 * torch.pi),
             characteristic_length_pu=1,
             characteristic_velocity_pu=1)
 
     @property
     def grid(self):
-        x = np.linspace(0, 2 * np.pi, num=self.resolution[0], endpoint=False)
-        y = np.linspace(0, 2 * np.pi, num=self.resolution[1], endpoint=False)
-        z = np.linspace(0, 2 * np.pi, num=self.resolution[2], endpoint=False)
-        return np.meshgrid(x, y, z, indexing='ij')
+        endpoints = [2 * torch.pi * (1 - 1 / n) for n in
+                     self.resolution]  # like endpoint=False in np.linspace
+        xyz = tuple(torch.linspace(0, endpoints[n],
+                                   steps=self.resolution[n],
+                                   device=self.context.device,
+                                   dtype=self.context.dtype)
+                    for n in range(self.d))
+        return torch.meshgrid(*xyz, indexing='ij')
 
-    def initial_pu(self):
-        return self.analytic_solution()
+    def initial_pu(self) -> (torch.Tensor, torch.Tensor):
+        return self.analytic_solution(t=0)
 
-    def analytic_solution(self):
+    def analytic_solution(self, t: float) -> (torch.Tensor, torch.Tensor):
+        if t > 0 and self.stencil.d > 2:
+            warnings.warn("The analytic solution is only true for the 2D TGV!")
         grid = self.grid
-        u = np.array([
-            np.sin(grid[0]) * np.cos(grid[1]) * np.cos(grid[2]),
-            -np.cos(grid[0]) * np.sin(grid[1]) * np.cos(grid[2]),
-            np.zeros_like(np.sin(grid[0]))])
-        p = np.array([1 / 16. * (np.cos(2 * grid[0]) + np.cos(2 * grid[1])) * (np.cos(2 * grid[2]) + 2)])
+        nu = self.context.convert_to_tensor(self.units.viscosity_pu)
+        if len(self.resolution) == 2:
+            u = torch.stack(
+                [torch.cos(grid[0])
+                 * torch.sin(grid[1])
+                 * torch.exp(-2 * nu * t),
+                 -torch.sin(grid[0])
+                 * torch.cos(grid[1])
+                 * torch.exp(-2 * nu * t)])
+            p = -torch.stack(
+                [0.25 * (torch.cos(2 * grid[0]) + torch.cos(2 * grid[1]))
+                 * torch.exp(-4 * nu * t)])
+        else:
+            u = torch.stack(
+                [torch.sin(grid[0])
+                 * torch.cos(grid[1])
+                 * torch.cos(grid[2]),
+                 -torch.cos(grid[0])
+                 * torch.sin(grid[1])
+                 * torch.cos(grid[2]),
+                 torch.zeros_like(grid[0])])
+            p = torch.stack(
+                [1 / 16. * (torch.cos(2 * grid[0]) + torch.cos(2 * grid[1]))
+                 * (torch.cos(2 * grid[2]) + 2)])
         return p, u
+
+    @property
+    def boundaries(self) -> List['Boundary']:
+        return []
+
+
+def TaylorGreenVortex3D(context: 'Context', resolution: Union[int, List[int]],
+                        reynolds_number, mach_number,
+                        stencil: Optional['Stencil'] = None,
+                        equilibrium: Optional['Equilibrium'] = None):
+    warnings.warn("TaylorGreenVortex3D is deprecated. Use TaylorGreenVortex"
+                  " instead", DeprecationWarning)
+    return TaylorGreenVortex(context=context, resolution=resolution,
+                             reynolds_number=reynolds_number,
+                             mach_number=mach_number, stencil=stencil,
+                             equilibrium=equilibrium)
+
+
+def TaylorGreenVortex2D(context: 'Context', resolution: Union[int, List[int]],
+                        reynolds_number, mach_number,
+                        stencil: Optional['Stencil'] = None,
+                        equilibrium: Optional['Equilibrium'] = None):
+    warnings.warn("TaylorGreenVortex2D is deprecated. Use TaylorGreenVortex"
+                  " instead", DeprecationWarning)
+    return TaylorGreenVortex(context=context, resolution=resolution,
+                             reynolds_number=reynolds_number,
+                             mach_number=mach_number, stencil=stencil,
+                             equilibrium=equilibrium)

@@ -16,7 +16,8 @@ import torch
 def test_save_and_load(dtype_device, tmpdir):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    flow = TaylorGreenVortex2D(resolution=16, reynolds_number=10,
+                               mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow, lattice, collision, streaming)
@@ -24,14 +25,16 @@ def test_save_and_load(dtype_device, tmpdir):
     simulation.save_checkpoint(tmpdir / "checkpoint.pic")
     simulation2 = Simulation(flow, lattice, collision, streaming)
     simulation2.load_checkpoint(tmpdir / "checkpoint.pic")
-    assert lattice.convert_to_numpy(simulation2.f) == pytest.approx(lattice.convert_to_numpy(simulation.f))
+    assert (lattice.convert_to_numpy(simulation2.f)
+            == pytest.approx(lattice.convert_to_numpy(simulation.f)))
 
 
 @pytest.mark.parametrize("use_jacobi", [True, False])
 def test_initialization(dtype_device, use_jacobi):
     dtype, device = dtype_device
     lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=24, reynolds_number=10, mach_number=0.05, lattice=lattice)
+    flow = TaylorGreenVortex2D(resolution=24, reynolds_number=10,
+                               mach_number=0.05, lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
     simulation = Simulation(flow, lattice, collision, streaming)
@@ -45,22 +48,26 @@ def test_initialization(dtype_device, use_jacobi):
         num_iterations = 0
     else:
         num_iterations = simulation.initialize(500, 1e-3)
-    piter = lattice.convert_to_numpy(flow.units.convert_density_lu_to_pressure_pu(lattice.rho(simulation.f)))
+    piter = lattice.convert_to_numpy(
+        flow.units.convert_density_lu_to_pressure_pu(
+            lattice.rho(simulation.f)))
     # assert that pressure is converged up to 0.05 (max p
     assert piter == pytest.approx(p, rel=0.0, abs=5e-2)
     assert num_iterations < 500
 
 
-@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D, DecayingTurbulence])
+@pytest.mark.parametrize("Case", [TaylorGreenVortex2D, TaylorGreenVortex3D,
+                                  DecayingTurbulence])
 def test_initialize_fneq(Case, dtype_device):
     dtype, device = dtype_device
-    lattice = Lattice(D2Q9, device, dtype, use_native=False)  # TODO use_native Fails here
+    lattice = Lattice(D2Q9, device, dtype, use_native=False)
     if "3D" in Case.__name__:
-        lattice = Lattice(D3Q27, dtype=dtype, device=device, use_native=False)  # TODO use_native Fails here
-    flow = Case(resolution=32, reynolds_number=1000, mach_number=0.1, lattice=lattice)
+        lattice = Lattice(D3Q27, dtype=dtype, device=device, use_native=False)
+    flow = Case(resolution=32, reynolds_number=1000, mach_number=0.1,
+                lattice=lattice)
     collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
     streaming = StandardStreaming(lattice)
-    simulation_neq = Simulation(flow, lattice, collision, streaming)
+    simulation_neq = Simulation(flow, collision, [])
 
     pre_rho = lattice.rho(simulation_neq.f)
     pre_u = lattice.u(simulation_neq.f)
@@ -77,15 +84,19 @@ def test_initialize_fneq(Case, dtype_device):
     assert torch.allclose(pre_ke, post_ke, rtol=0.0, atol=tol)
 
     if Case is TaylorGreenVortex2D:
-        error_reporter_neq = ErrorReporter(lattice, flow, interval=1, out=None)
-        error_reporter_eq = ErrorReporter(lattice, flow, interval=1, out=None)
-        simulation_eq = Simulation(flow, lattice, collision, streaming)
-        simulation_neq.reporters.append(error_reporter_neq)
-        simulation_eq.reporters.append(error_reporter_eq)
+        error_reporter_neq = ErrorReporter(flow.analytic_solution, interval=1,
+                                           out=None)
+        error_reporter_eq = ErrorReporter(flow.analytic_solution,
+                                          interval=1, out=None)
+        simulation_eq = Simulation(flow, collision, [])
+        simulation_neq.reporter.append(error_reporter_neq)
+        simulation_eq.reporter.append(error_reporter_eq)
 
-        simulation_neq.step(10)
-        simulation_eq.step(10)
-        error_u, error_p = np.mean(np.abs(error_reporter_neq.out), axis=0).tolist()
-        error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out), axis=0).tolist()
+        simulation_neq(10)
+        simulation_eq(10)
+        error_u, error_p = np.mean(np.abs(error_reporter_neq.out),
+                                   axis=0).tolist()
+        error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out),
+                                         axis=0).tolist()
 
         assert error_u < error_u_eq

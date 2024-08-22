@@ -163,7 +163,7 @@ def fix_stencil(request):
 
 @pytest.fixture(params=device_params(), ids=device_ids())
 def fix_device(request):
-    if 'cuda' in request.param and not torch.cuda.is_available():
+    if 'cuda' in request.param.type and not torch.cuda.is_available():
         pytest.skip(reason="CUDA is not available on this machine.",
                     allow_module_level=True)
     return request.param

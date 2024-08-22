@@ -171,11 +171,11 @@ def convergence(ctx, use_cuda_native):
     if not (2 - tol) < factor_u / 2 < (2 + tol):
         print(f"FAILED: Velocity convergence order {factor_u / 2} is not in "
               f"[1.9, 2.1")
-        return 1
+        sys.exit(1)
     if not (1 - tol) < factor_p / 2 < (1 + tol):
         print(f"FAILED: Pressure convergence order {factor_p / 2} is not in "
               f"[0.9, 1.1].")
-        return 1
+        sys.exit(1)
     else:
         return 0
 

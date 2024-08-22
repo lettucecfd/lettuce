@@ -51,9 +51,6 @@ def test_initialize_fneq(fix_configuration, fix_stencil, Case):
     u_neq = flow_neq.u()
     ke_neq = flow_neq.incompressible_energy()
 
-    print(u_eq)
-    print(u_neq)
-
     tol = 1e-6
     assert (context.convert_to_ndarray(rho_neq)
             == pytest.approx(context.convert_to_ndarray(rho_eq),
@@ -85,9 +82,11 @@ def test_initialize_fneq(fix_configuration, fix_stencil, Case):
         simulation_neq(10)
         simulation_eq(10)
 
-        error_u, error_p = np.mean(np.abs(error_reporter_neq.out),
+        error_u_neq, error_p_neq = np.mean(np.abs(error_reporter_neq.out),
                                    axis=0).tolist()
         error_u_eq, error_p_eq = np.mean(np.abs(error_reporter_eq.out),
                                          axis=0).tolist()
 
-        assert error_u < error_u_eq
+        assert error_u_neq < error_u_eq
+        print(f"Relative improvement: "
+              f"{(error_u_neq - error_u_eq) / error_u_eq}")

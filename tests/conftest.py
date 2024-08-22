@@ -4,8 +4,6 @@ import torch
 from copy import copy
 
 from lettuce import *
-from lettuce.util.moments import Transform, D1Q3Transform, D2Q9Dellar, \
-    D2Q9Lallemand, D3Q27Hermite
 
 
 def dtype_params():

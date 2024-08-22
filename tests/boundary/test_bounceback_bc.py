@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 from copy import copy
 

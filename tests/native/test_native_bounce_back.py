@@ -5,7 +5,7 @@ import torch.cuda
 
 from lettuce import Context, Simulation
 from lettuce.ext import NoCollision, BounceBackBoundary
-from tests.common import DummyFlow
+from tests.conftest import DummyFlow
 
 
 class MyBounceBackBoundary(BounceBackBoundary):

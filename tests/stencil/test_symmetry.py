@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_symmetry(fix_stencil):

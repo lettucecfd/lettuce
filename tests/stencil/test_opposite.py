@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 def test_opposite(fix_stencil):
     """Test if the opposite field holds the index of the opposite direction."""

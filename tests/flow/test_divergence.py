@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 @pytest.mark.parametrize("stencil2d3d", [D2Q9(), D3Q27()])

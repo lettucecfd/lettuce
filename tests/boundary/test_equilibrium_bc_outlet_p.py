@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 # TODO: Implement cuda_native generator and test suite

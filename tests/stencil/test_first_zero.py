@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_first_zero(fix_stencil):

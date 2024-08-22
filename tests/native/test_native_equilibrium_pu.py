@@ -4,7 +4,7 @@ Test boundary conditions.
 
 from lettuce import *
 from lettuce.ext import *
-from tests.common import DummyTGV
+from tests.conftest import DummyTGV
 
 import pytest
 

@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def create_default_unit_conversion():

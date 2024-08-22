@@ -3,7 +3,7 @@ import torch.cuda
 
 from lettuce import Context, Simulation
 from lettuce.ext import NoCollision
-from tests.common import DummyFlow
+from tests.conftest import DummyFlow
 
 
 class DummyStreaming(DummyFlow):

@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 from lettuce.ext._reporter.vtk_reporter import write_vtk
 import os
 

@@ -1,4 +1,4 @@
-from tests.common import *
+from tests.conftest import *
 
 
 def test_orthogonality(fix_device, fix_dtype, fix_transform):

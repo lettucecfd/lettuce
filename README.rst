@@ -40,64 +40,59 @@ Resources
 .. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
 .. _Code: https://github.com/lettucecfd/lettuce-paper
 
-
-Resources
----------
-
-- `Documentation`_
-- Presentation at CFDML2021 - `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
-
-.. _Documentation: https://lettuceboltzmann.readthedocs.io
-.. _Preprint: https://arxiv.org/pdf/2106.12929.pdf
-.. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
-.. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
-.. _Code: https://github.com/lettucecfd/lettuce-paper
-
 Getting Started
 ---------------
 
-The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
+To find some very simple examples of how to use lettuce, please have a look
+at the examples_. These will guide you through lettuce's main features. The
+simplest example is:
 
-.. code:: python
+https://github.com/lettucecfd/lettuce/blob/ef9830b59c6ad50e02fdf0ce24cc47ea520aa354/examples/00_simplest_TGV.py#L6-L21
 
-    import torch
-    import lettuce as lt
-
-    lattice = lt.Lattice(lt.D2Q9, device='cuda', dtype=torch.float64, use_native=False)  # for running on cpu: device='cpu'
-    flow = lt.TaylorGreenVortex2D(resolution=128, reynolds_number=100, mach_number=0.05, lattice=lattice)
-    collision = lt.BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = lt.StandardStreaming(lattice)
-    simulation = lt.Simulation(flow=flow, lattice=lattice, collision=collision, streaming=streaming)
-    mlups = simulation.step(num_steps=1000)
-    print("Performance in MLUPS:", mlups)
-
-More advanced examples_ are available as jupyter notebooks.
-
-Please ensure you have Jupyter installed to run these notebooks.
+Please ensure you have Jupyter installed to run the Jupyter notebooks.
 
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
 
 Installation
 ------------
 
-* Install the anaconda package manager from www.anaconda.org
-* Create a new conda environment and install PyTorch::
+* Install the anaconda or miniconda package manager from www.anaconda.org
+* Create a new conda environment and activate it::
 
-    conda create -n lettuce -c pytorch -c nvidia pytorch pytorch-cuda=12.1
-
-* Activate the conda environment::
-
+    conda create -n lettuce
     conda activate lettuce
 
-* Install all requirements::
+* Follow the recommendations at https://pytorch.org/get-started/locally/ to
+install pytorch based on your GPU's CUDA version. You may need to install
+the nvidia toolkit. You may follow the instructions at https://developer
+.nvidia.com/cuda-downloads. You may need to check the compatibility of your
+NVIDIA driver with the desired CUDA version:
+https://docs.nvidia.com/deploy/cuda-compatibility/. To get your CUDA version,
+run::
 
-    conda install -c conda-forge -c anaconda matplotlib pytest click pyevtk h5py mmh3
+    nvcc --version
 
-* Clone this repository from github
-* Change into the cloned directory
-* Run the install script::
+* For CUDA 12.1 (if supported by your GPU) use::
+
+    conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia
+
+* Install the remaining dependencies::
+
+    conda activate lettuce
+    conda install -c pytorch -c conda-forge matplotlib pytest click pyevtk mmh3 h5py scipy pandas numpy
+
+* Clone this repository from github and change to it::
+
+    git clone https://github.com/lettucecfd/lettuce
+    cd lettuce
+
+* If you want to only **USE** lettuce, run the install script::
 
     python setup.py install
+
+* If you are a **developer**, do this to update the lettuce package when running a script::
+
+    python setup.py develop
 
 * Run the test cases::
 
@@ -107,14 +102,13 @@ Installation
 
     lettuce --no-cuda convergence
 
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found,
-  make sure that cuda drivers are installed and compatible with the installed cudatoolkit
-  (see conda install command above).
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`.
+If CUDA is not found, make sure that cuda drivers are installed and
+compatible with the installed cudatoolkit (see conda install command above).
 
 * Check out the performance, running on GPU::
 
     lettuce benchmark
-
 
 Citation
 --------
@@ -127,7 +121,6 @@ If you use Lettuce in your research, please cite the following paper::
       pages={40},
       organization={Springer Nature}
     }
-
 
 Credits
 -------

@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 @pytest.mark.parametrize("Collision",
                          [BGKCollision, TRTCollision, KBCCollision,
                           RegularizedCollision])

@@ -86,7 +86,7 @@ class AntiBounceBackOutlet(Boundary):
                 * (2 + torch.einsum(self.dims,
                                     flow.torch_stencil.e[self.velocities],
                                     u_w) ** 2 / flow.torch_stencil.cs ** 4
-                     - (torch.norm(u_w, dim=0) / flow.torch_stencil.cs) ** 2)
+                   - (torch.norm(u_w, dim=0) / flow.torch_stencil.cs) ** 2)
         )
         return f
 

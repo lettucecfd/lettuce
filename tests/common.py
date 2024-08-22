@@ -4,6 +4,8 @@ import torch
 from copy import copy
 
 from lettuce import *
+from lettuce.util.moments import Transform, D1Q3Transform, D2Q9Dellar, \
+    D2Q9Lallemand, D3Q27Hermite
 
 
 def dtype_params():
@@ -83,46 +85,55 @@ def configuration_ids():
     return buffer
 
 
-def collision_params():
-    return [BGKCollision,
-            KBCCollision,
-            MRTCollision,
-            NoCollision,
-            RegularizedCollision,
-            SmagorinskyCollision,
-            TRTCollision
-        ]
+def transform_params():
+    Transforms = [
+        D1Q3Transform,
+        D2Q9Dellar,
+        D2Q9Lallemand,
+        D3Q27Hermite
+    ]
+    Stencils = [
+        D1Q3,
+        D2Q9,
+        D2Q9,
+        D3Q27
+    ]
+    return zip(Transforms, Stencils)
 
 
-def collision_ids():
-    return [
-            'BGKCollision',
-            'KBCCollision',
-            'MRTCollision',
-            'NoCollision',
-            'RegularizedCollision',
-            'SmagorinskyCollision',
-            'TRTCollision'
-        ]
+def transform_ids():
+    return ["D1Q3", "D2Q9Dellar", "D2Q9Lallemand", "D3Q27"]
+
+
+@pytest.fixture(params=transform_params(), ids=transform_ids())
+def fix_transform(request):
+    return request.param
+
+
+COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))
+@pytest.fixture(params=COLLISIONS)
+def fix_collision(request):
+    return request.param
 
 
 def conserving_collision_params():
-    return [BGKCollision,
-            KBCCollision,
-            TRTCollision,
-            RegularizedCollision,
-            SmagorinskyCollision
-        ]
+    return [
+        BGKCollision,
+        KBCCollision,
+        TRTCollision,
+        RegularizedCollision,
+        SmagorinskyCollision
+    ]
 
 
 def conserving_collision_ids():
     return [
-            'BGKCollision',
-            'KBCCollision',
-            'TRTCollision',
-            'RegularizedCollision',
-            'SmagorinskyCollision'
-        ]
+        'BGKCollision',
+        'KBCCollision',
+        'TRTCollision',
+        'RegularizedCollision',
+        'SmagorinskyCollision'
+    ]
 
 
 @pytest.fixture(params=dtype_params(), ids=dtype_ids())
@@ -152,11 +163,17 @@ def fix_stencil(request):
 
 @pytest.fixture(params=device_params(), ids=device_ids())
 def fix_device(request):
+    if 'cuda' in request.param and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 
 @pytest.fixture(params=native_params(), ids=native_ids())
 def fix_native(request):
+    if request.param[0] and not torch.cuda.is_available():
+        pytest.skip(reason="CUDA is not available on this machine.",
+                    allow_module_level=True)
     return request.param
 
 
@@ -165,12 +182,6 @@ def fix_configuration(request):
     if 'cuda' in request.param[0].type and not torch.cuda.is_available():
         pytest.skip(reason="CUDA is not available on this machine.",
                     allow_module_level=True)
-    return request.param
-
-
-@pytest.fixture(params=collision_params(),
-                ids=collision_ids())
-def fix_collision(request):
     return request.param
 
 

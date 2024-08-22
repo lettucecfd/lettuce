@@ -17,7 +17,9 @@ class TaylorGreenVortex(ExtFlow):
     def __init__(self, context: 'Context', resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  stencil: Optional['Stencil'] = None,
-                 equilibrium: Optional['Equilibrium'] = None):
+                 equilibrium: Optional['Equilibrium'] = None,
+                 initialize_fneq: bool = True):
+        self.initialize_fneq = initialize_fneq
         if stencil is None and not isinstance(resolution, list):
             warnings.warn("Requiring information about dimensionality!"
                           " Either via stencil or resolution. Setting "
@@ -62,6 +64,8 @@ class TaylorGreenVortex(ExtFlow):
         return self.analytic_solution(t=0)
 
     def analytic_solution(self, t: float) -> (torch.Tensor, torch.Tensor):
+        if t > 0 and self.stencil.d > 2:
+            warnings.warn("The analytic solution is only true for the 2D TGV!")
         grid = self.grid
         nu = self.context.convert_to_tensor(self.units.viscosity_pu)
         if len(self.resolution) == 2:

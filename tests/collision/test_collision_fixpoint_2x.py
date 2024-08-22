@@ -1,5 +1,6 @@
 from tests.common import *
 
+
 @pytest.mark.parametrize("Collision", [BGKCollision])
 def test_collision_fixpoint_2x(Collision,
                                fix_configuration,

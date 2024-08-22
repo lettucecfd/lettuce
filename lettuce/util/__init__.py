@@ -15,7 +15,6 @@ __all__ = ['get_subclasses',
            'torch_gradient',
            'grid_fine_to_coarse',
            'torch_jacobi',
-           'pressure_poisson',
            'append_axes',
            'HDF5Reporter',
            'LettuceDataset', ]

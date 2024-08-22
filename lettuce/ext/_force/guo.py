@@ -26,7 +26,9 @@ class Guo(Force):
 
     def u_eq(self, flow: 'Flow' = None):
         flow = self.flow if flow is None else flow
-        return (self.ueq_scaling_factor * append_axes(self.acceleration, flow.torch_stencil.d) / flow.rho())
+        return (self.ueq_scaling_factor
+                * append_axes(self.acceleration, flow.torch_stencil.d)
+                / flow.rho())
 
     @property
     def ueq_scaling_factor(self):

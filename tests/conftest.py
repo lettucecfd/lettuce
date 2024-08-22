@@ -4,6 +4,7 @@ import torch
 from copy import copy
 
 from lettuce import *
+from lettuce.util.moments import *
 
 
 def dtype_params():

@@ -6,6 +6,7 @@ import warnings
 from typing import List
 
 import torch
+from lettuce._flow import Flow
 
 import lettuce
 from lettuce.util import (LettuceException, InefficientCodeWarning,

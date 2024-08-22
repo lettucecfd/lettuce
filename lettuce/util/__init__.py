@@ -3,7 +3,8 @@ Utility functions.
 '''
 
 from .utility import *
-from .moments import *
+# not importing moments due to cyclic import issue
+# from .moments import *
 from .datautils import *
 from .utility import get_subclasses
 
@@ -19,12 +20,12 @@ __all__ = [
     'append_axes',
     'HDF5Reporter',
     'LettuceDataset',
-    'moment_tensor',
-    'get_default_moment_transform',
-    'Moments',
-    'Transform',
-    'D1Q3Transform',
-    'D2Q9Lallemand',
-    'D2Q9Dellar',
-    'D3Q27Hermite'
+    # 'moment_tensor',
+    # 'get_default_moment_transform',
+    # 'Moments',
+    # 'Transform',
+    # 'D1Q3Transform',
+    # 'D2Q9Lallemand',
+    # 'D2Q9Dellar',
+    # 'D3Q27Hermite'
 ]

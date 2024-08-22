@@ -105,6 +105,7 @@ def transform_ids():
 
 @pytest.fixture(params=transform_params(), ids=transform_ids())
 def fix_transform(request):
+    return request.param
 
 
 COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))

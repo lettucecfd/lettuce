@@ -7,10 +7,11 @@ __all__ = ['Context']
 
 
 class Context:
-    def __init__(self, device: Optional[torch.device] = None,
+    def __init__(self, device: Optional[torch.device | str] = None,
                  dtype: Optional[torch.dtype] = None,
                  use_native: Optional[bool] = None):
-
+        if device is str:
+            assert 'cuda' in device or 'cpu' in device
         # check sanity of context configuration
 
         if device is None and use_native is None:

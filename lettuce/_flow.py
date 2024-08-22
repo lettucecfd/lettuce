@@ -6,7 +6,7 @@ import torch
 from typing import Optional, List, Union, Callable, AnyStr
 from abc import ABC, abstractmethod
 
-from . import *
+from . import TorchStencil
 from .util import torch_gradient, torch_jacobi
 from .cuda_native import NativeEquilibrium
 

@@ -1,3 +1,3 @@
 """Top-level package for tests."""
 
-__all__ = ["conftest.py"]
+__all__ = ["conftest"]

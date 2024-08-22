@@ -4,9 +4,7 @@ import torch
 from copy import copy
 
 from lettuce import *
-from lettuce.util.moments import Transform, D1Q3Transform, D2Q9Dellar, \
-    D2Q9Lallemand, D3Q27Hermite
-
+from lettuce.util.moments import *
 
 def dtype_params():
     return [torch.float64, torch.float32]
@@ -107,10 +105,11 @@ def transform_ids():
 
 @pytest.fixture(params=transform_params(), ids=transform_ids())
 def fix_transform(request):
-    return request.param
 
 
 COLLISIONS = list(get_subclasses(Collision, lettuce.ext._collision))
+
+
 @pytest.fixture(params=COLLISIONS)
 def fix_collision(request):
     return request.param

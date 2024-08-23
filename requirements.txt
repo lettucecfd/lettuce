@@ -6,6 +6,5 @@ pyevtk
 pytest
 h5py>=3.2.1
 mmh3
-lettuce~=0.2.3+87.g819d78f.dirty
 packaging~=24.1
 setuptools~=71.0.1

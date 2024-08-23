@@ -1,6 +1,7 @@
 Click>=6.0
 pytorch>=2.4
 pytorch-cuda==12.1
+cudatoolkit
 numpy==1.26.4
 matplotlib
 pyevtk

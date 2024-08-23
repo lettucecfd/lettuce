@@ -2,7 +2,7 @@ Click>=6.0
 pytorch>=2.4
 pytorch-cuda==12.1
 numpy==1.26.4
-matplotlib==3.9.0
+matplotlib
 pyevtk
 pytest
 h5py>=3.2.1

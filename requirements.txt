@@ -7,5 +7,5 @@ pyevtk
 pytest
 h5py>=3.2.1
 mmh3
-packaging~=24.1
-setuptools~=71.0.1
+packaging=24.1
+setuptools=71.0.1

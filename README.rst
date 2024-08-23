@@ -79,7 +79,7 @@ run::
 * Install the remaining dependencies::
 
     conda activate lettuce
-    conda install -c pytorch -c conda-forge matplotlib pytest click pyevtk mmh3 h5py scipy pandas numpy
+    conda install -c pytorch -c conda-forge matplotlib pytest click pyevtk mmh3 h5py numpy
 
 * Clone this repository from github and change to it::
 

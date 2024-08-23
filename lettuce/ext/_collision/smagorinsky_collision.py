@@ -1,3 +1,5 @@
+import torch
+
 from ... import Flow, Collision
 from .. import Force
 
@@ -28,7 +30,7 @@ class SmagorinskyCollision(Collision):
 
         for i in range(self.iterations):
             S = S_shear / self.tau_eff
-            S = flow.einsum('ab,ab->', [S, S])
+            S = torch.einsum('ab...,ab...->...', [S, S])
             nu_t = self.constant ** 2 * S
             nu_eff = nu + nu_t
             self.tau_eff = nu_eff * 3.0 + 0.5

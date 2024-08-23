@@ -70,7 +70,7 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         feq = flow.f
         feq[here] = flow.equilibrium(flow, rho_w[..., None], u_w[..., None])[
             ..., 0]
-        return flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
+        return torch.einsum("q...,q...->q...", [feq, torch.ones_like(flow.f)])
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:

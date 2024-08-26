@@ -21,8 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
-          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
+          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch>=2.4 pytorch-cuda' }
+          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch>=2.4 pytorch-cuda' }
           - { os: macos-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
 
     steps:

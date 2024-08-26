@@ -31,11 +31,7 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3.0.4
         with:
-          auto-update-conda: true
-          activate-environment: test
-          auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
-          miniconda-version: "latest"
       - name: Install dependencies
         run: |
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia

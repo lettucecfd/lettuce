@@ -21,7 +21,7 @@ def fix_stencil_x_moment_dims(request):
     return request.param
 
 
-class TestEquilibriumBoundary(EquilibriumBoundaryPU):
+class DummyEquilibriumBoundary(EquilibriumBoundaryPU):
 
     # def make_no_collision_mask(self, shape: List[int], context: 'Context'
     #                            ) -> Optional[torch.Tensor]:
@@ -53,9 +53,9 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
         def boundaries(self) -> List['Boundary']:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
-            return [TestEquilibriumBoundary(context=self.context,
-                                            mask=m, velocity=velocity,
-                                            pressure=pressure)]
+            return [DummyEquilibriumBoundary(context=self.context,
+                                             mask=m, velocity=velocity,
+                                             pressure=pressure)]
 
     flow_1 = DummyEQBC(context, resolution=fix_stencil.d * [16],
                        reynolds_number=1, mach_number=0.1, stencil=fix_stencil)
@@ -95,7 +95,7 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
             p = 0  # self.context.zero_tensor([1, 1, 1])
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
-            return [TestEquilibriumBoundary(
+            return [DummyEquilibriumBoundary(
                 self.context, m, u, p)]
 
     flow_1 = DummyEQBC(context, resolution=16, reynolds_number=1,
@@ -140,12 +140,12 @@ def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
         def boundaries(self) -> List[Boundary]:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
-            return [TestEquilibriumBoundary(context=self.context,
-                                            mask=m,
-                                            velocity=self.context.
-                                            convert_to_tensor(velocity),
-                                            pressure=self.context.
-                                            convert_to_tensor(pressure))]
+            return [DummyEquilibriumBoundary(context=self.context,
+                                             mask=m,
+                                             velocity=self.context.
+                                             convert_to_tensor(velocity),
+                                             pressure=self.context.
+                                             convert_to_tensor(pressure))]
 
     flow_native = DummyEQBC(context_native, resolution=16, reynolds_number=1,
                             mach_number=0.1, stencil=stencil)

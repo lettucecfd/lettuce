@@ -42,6 +42,7 @@ jobs:
       - name: Install dependencies
         shell: bash {0}
         run: |
+          conda activate test
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
           conda info
@@ -51,12 +52,15 @@ jobs:
         run: |
           python -c "import os; print(os.environ); from setuptools import setup"
       - name: Install package
+        shell: bash {0}
         run: |
           python setup.py install
       - name: Unit tests with pytest
+        shell: bash {0}
         run: |
           py.test tests
       - name: Integration tests
+        shell: bash {0}
         run: |
           lettuce --no-cuda convergence --use-no-cuda_native
           lettuce --no-cuda benchmark --use-no-cuda_native

@@ -37,10 +37,6 @@ jobs:
           python-version: ${{ matrix.cfg.python-version }}
       - name: Install dependencies
         uses: conda-incubator/setup-miniconda@v3.0.4
-        with:
-          activate-environment: anaconda-client-env
-          environment-file: etc/example-environment.yml
-          auto-activate-base: false
       - run: |
           python -m pip install --upgrade pip
           conda install pytorch==2.4 "${{ matrix.cfg.torch-version }}"

@@ -32,24 +32,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.cfg.python-version }}
-      - name: Install dependencies
+      - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3.0.4
         with:
           auto-update-conda: true
           auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
-      - run: |
+      - name: Install dependencies
+        shell: bash {0}
+        run: |
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
           conda info
           conda list
-      - name: Display the path
+      - name: Test setuptools import
+        shell: bash {0}
         run: |
           import os
           print(os.environ)
           from setuptools import setup
           print("success!")
-        shell: python {0}
       - name: Install package
         run: |
           python setup.py install

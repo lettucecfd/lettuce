@@ -34,9 +34,15 @@ jobs:
           python-version: ${{ matrix.cfg.python-version }}
       - name: Install dependencies
         uses: conda-incubator/setup-miniconda@v3.0.4
+        with:
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: ${{ matrix.cfg.python-version }}
       - run: |
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
-          conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge
+          conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
+          conda info
+          conda list
       - name: Install package
         run: |
           python setup.py install

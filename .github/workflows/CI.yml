@@ -36,9 +36,11 @@ jobs:
           auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
           miniconda-version: "latest"
-      - name: Install dependencies
+      - name: Init conda
         run: |
           conda init
+      - name: Install dependencies
+        run: |
           conda activate test
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia

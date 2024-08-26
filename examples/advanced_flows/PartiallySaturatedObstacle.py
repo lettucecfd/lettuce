@@ -8,7 +8,7 @@ import numpy as np
 """
 Setting up variable parameters
 """
-dim = 3
+dim = 2
 context = lt.Context(use_native=False)
 Re = 250
 Ma = 0.01
@@ -17,11 +17,11 @@ saturation = 0.5
 """
 Setting up the Flow object
 """
+
+
 class ObstaclePartially(lt.Obstacle):
-    def __init__(self, context, resolution, reynolds_number, mach_number,
-                 domain_length_x, saturation):
-        super().__init__(context, resolution, reynolds_number, mach_number,
-                         domain_length_x)
+    def __init__(self, resolution, domain_length_x):
+        super().__init__(context, resolution, Re, Ma, domain_length_x)
         self.saturation = saturation
         return
 
@@ -55,18 +55,20 @@ class ObstaclePartially(lt.Obstacle):
 """
 Setting up post-processing
 """
+
+
 class Show2D:
-    def __init__(self, mask, outdir: str, dpi: int = 1200,
-                 save: bool = True, show_mask: bool = True, mask_alpha=1.):
+    def __init__(self, mask, outdir: str, **kwargs):
         self.outdir = outdir
         if len(mask.shape) > 2:
             mask = mask[:, :, int(mask.shape[2] / 2)]
         self.mask = context.convert_to_ndarray(mask).transpose() \
             if isinstance(flow.mask, torch.Tensor) else mask.transpose()
-        self.dpi = dpi
-        self.save = save
-        self.show_mask = show_mask
-        self.mask_alpha = mask_alpha
+        self.dpi = kwargs['dpi'] if 'dpi' in kwargs else 1200
+        self.save = kwargs['save'] if 'save' in kwargs else True
+        self.show_mask = kwargs['show_mask'] if 'show_mask' in kwargs else True
+        self.mask_alpha = kwargs['mask_alpha'] if 'mask_alpha' in kwargs \
+            else 1.
         self.__call__(mask, "solid_mask", "solid_mask")
 
     def __call__(self, data, title: str, name: str, vlim=None):
@@ -104,12 +106,8 @@ nz = 1 if dim == 2 else 10
 ny = 50
 nx = 2 * ny
 flow = ObstaclePartially(
-    context=context,
     resolution=[nx, ny, nz] if dim == 3 else [nx, ny],
-    reynolds_number=Re,
-    mach_number=Ma,
-    domain_length_x=10.1,
-    saturation=saturation
+    domain_length_x=10.1
 )
 x, y, *z = flow.grid
 # flow.mask = ((x >= 2) & (x < 5) & (y >= x) & (y <= 3))  # triangle

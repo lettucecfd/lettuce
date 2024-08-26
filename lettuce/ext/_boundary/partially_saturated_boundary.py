@@ -1,8 +1,7 @@
-from typing import List, Optional
-
+from typing import List
 import torch
-
 from ... import Boundary
+
 
 class PartiallySaturatedBC(Boundary):
     """
@@ -38,11 +37,11 @@ class PartiallySaturatedBC(Boundary):
         return f
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'
-                               ) -> Optional[torch.Tensor]:
+                               ) -> torch.Tensor:
         return self._mask
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
-                               ) -> Optional[torch.Tensor]:
+                               ):
         pass
 
     def native_available(self) -> bool:

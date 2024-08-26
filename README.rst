@@ -56,9 +56,17 @@ Please ensure you have Jupyter installed to run the Jupyter notebooks.
 Installation
 ------------
 
-* Install the anaconda or miniconda package manager from www.anaconda.org
-* Create a new conda environment and activate it::
+* Install the anaconda or miniconda package manager from https://www.anaconda.org
 
+* Clone this repository from github and change to it::
+
+    git clone https://github.com/lettucecfd/lettuce
+    cd lettuce
+
+* Update conda, create a new conda environment and activate it::
+
+
+    conda update conda
     conda create -n lettuce
     conda activate lettuce
 
@@ -79,12 +87,12 @@ run::
 * Install the remaining dependencies::
 
     conda activate lettuce
-    conda install -c pytorch -c conda-forge matplotlib pytest click pyevtk mmh3 h5py numpy
+    conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge
 
-* Clone this repository from github and change to it::
-
-    git clone https://github.com/lettucecfd/lettuce
-    cd lettuce
+* **NOTE**: Sometimes, the installation does not properly set the
+`CUDA_HOME` variable. In this case, you may install `cudatoolkit`
+and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/`
+subdirectory!).
 
 * If you want to only **USE** lettuce, run the install script::
 
@@ -94,13 +102,13 @@ run::
 
     python setup.py develop
 
-* Run the test cases::
-
-    python setup.py test
-
 * Check out the convergence order, running on CPU::
 
     lettuce --no-cuda convergence
+
+* Run the test cases::
+
+    pytest tests
 
 * For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`.
 If CUDA is not found, make sure that cuda drivers are installed and

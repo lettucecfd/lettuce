@@ -43,6 +43,8 @@ jobs:
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
       - name: Install package
         run: |
+          conda info
+          conda list
           python setup.py install
       - name: Unit tests with pytest
         run: |

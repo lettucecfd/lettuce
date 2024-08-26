@@ -48,7 +48,7 @@ jobs:
       - name: Install lettuce
         shell: bash -el {0}
         run: |
-          python3 setup.py install
+          pip install setup.py
       - name: Unit tests with pytest
         shell: bash -el {0}
         run: |

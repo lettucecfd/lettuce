@@ -97,11 +97,11 @@ subdirectory!).
 
 * If you want to only **USE** lettuce, run the install script::
 
-    python setup.py install
+    pip install setup.py
 
 * If you are a **developer**, do this to update the lettuce package when running a script::
 
-    python setup.py develop
+    pip install -e setup.py
 
 * Check out the convergence order, running on CPU::
 

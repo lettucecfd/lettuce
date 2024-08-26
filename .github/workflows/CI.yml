@@ -33,12 +33,13 @@ jobs:
         with:
           python-version: ${{ matrix.cfg.python-version }}
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
           activate-environment: test
           auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
+          miniconda-version: "latest"
       - name: Install dependencies
         shell: bash {0}
         run: |

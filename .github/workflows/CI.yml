@@ -48,10 +48,7 @@ jobs:
       - name: Test setuptools import
         shell: bash {0}
         run: |
-          import os
-          print(os.environ)
-          from setuptools import setup
-          print("success!")
+          python -c "import os; print(os.environ); from setuptools import setup"
       - name: Install package
         run: |
           python setup.py install

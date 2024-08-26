@@ -43,6 +43,7 @@ jobs:
       - name: Install dependencies
         shell: bash {0}
         run: |
+          conda init
           conda activate test
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
@@ -51,7 +52,7 @@ jobs:
       - name: Test setuptools import
         shell: bash {0}
         run: |
-          python -c "import os; print(os.environ); from setuptools import setup"
+          python -c "import os; print(os.environ); import numpy as np; from setuptools import setup"
       - name: Install package
         shell: bash {0}
         run: |

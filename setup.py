@@ -9,7 +9,7 @@ import versioneer
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-requirements = ['click', "h5py", "matplotlib", "mmh3", "numpy", "packaging",
+requirements = ["click", "h5py", "matplotlib", "mmh3", "numpy", "packaging",
                 "pyevtk", "pytest", "pytorch"]
 
 setup_requirements = ['pytest-runner', 'pytest']

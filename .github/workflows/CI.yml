@@ -28,12 +28,8 @@ jobs:
     steps:
 
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.cfg.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.cfg.python-version }}
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v3.0.4
         with:
           auto-update-conda: true
           activate-environment: test
@@ -41,30 +37,24 @@ jobs:
           python-version: ${{ matrix.cfg.python-version }}
           miniconda-version: "latest"
       - name: Install dependencies
-        shell: bash {0}
+        shell: bash -el {0}
         run: |
-          conda init
-          conda activate test
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
-          conda info
-          conda list
-      - name: Test setuptools import
-        shell: bash {0}
+      - name: Test import
+        shell: bash -el {0}
         run: |
-          conda activate test
-          python -c "import os; print(os.environ); import numpy as np; from setuptools import setup"
-      - name: Install package
-        shell: bash {0}
+          python3 -c "import os; print(os.environ); import numpy as np; from setuptools import setup"
+      - name: Install lettuce
+        shell: bash -el {0}
         run: |
-          conda activate test
-          python setup.py install
+          python3 setup.py install
       - name: Unit tests with pytest
-        shell: bash {0}
+        shell: bash -el {0}
         run: |
-          py.test tests
+          pytest tests
       - name: Integration tests
-        shell: bash {0}
+        shell: bash -el {0}
         run: |
           lettuce --no-cuda convergence --use-no-cuda_native
           lettuce --no-cuda benchmark --use-no-cuda_native

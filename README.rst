@@ -101,7 +101,7 @@ subdirectory!).
 
 * If you are a **developer**, do this to update the lettuce package when running a script::
 
-    pip install -e setup.py
+    pip install --use-pep517 -e setup.py
 
 * Check out the convergence order, running on CPU::
 

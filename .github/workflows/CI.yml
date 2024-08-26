@@ -44,7 +44,7 @@ jobs:
       - name: Install lettuce
         shell: bash -el {0}
         run: |
-          pip install -e .
+          pip install --use-pep517 -e .
       - name: Unit tests with pytest
         shell: bash -el {0}
         run: |

@@ -46,9 +46,7 @@ jobs:
       - name: Display the path
         run: |
           import os
-          print(os.environ['CONDA_DEFAULT_ENV'])
-          print(os.environ['CONDA_PREFIX'])
-          print(os.environ['PATH'])
+          print(os.environ)
           from setuptools import setup
           print("success!")
         shell: python {0}

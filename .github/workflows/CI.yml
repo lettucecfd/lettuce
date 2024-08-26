@@ -31,26 +31,18 @@ jobs:
       - name: Setup Miniconda
         uses: conda-incubator/setup-miniconda@v3.0.4
         with:
-          auto-update-conda: true
-          activate-environment: test
-          auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
-          miniconda-version: "latest"
       - name: Install dependencies
-        shell: bash -el {0}
         run: |
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
       - name: Install lettuce
-        shell: bash -el {0}
         run: |
           pip install --use-pep517 -e .
       - name: Unit tests with pytest
-        shell: bash -el {0}
         run: |
           pytest tests
       - name: Integration tests
-        shell: bash -el {0}
         run: |
           lettuce --no-cuda convergence --use-no-cuda_native
           lettuce --no-cuda benchmark --use-no-cuda_native

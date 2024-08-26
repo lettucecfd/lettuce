@@ -43,7 +43,15 @@ jobs:
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
           conda info
           conda list
-          python "import os; print(os.environ['CONDA_DEFAULT_ENV']); print(os.environ['CONDA_PREFIX']); from setuptools import setup; print("success!")"
+      - name: Display the path
+        run: |
+          import os
+          print(os.environ['CONDA_DEFAULT_ENV'])
+          print(os.environ['CONDA_PREFIX'])
+          print(os.environ['PATH'])
+          from setuptools import setup
+          print("success!")
+        shell: python {0}
       - name: Install package
         run: |
           python setup.py install

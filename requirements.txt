@@ -2,7 +2,7 @@ click==8.1.7
 h5py==3.11.0
 matplotlib==3.9.2
 mmh3==4.1.0
-numpy==1.26.4
+numpy==2.0.0
 packaging==24.1
 pyevtk==1.6.0
 pytest==8.3.2

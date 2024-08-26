@@ -38,7 +38,6 @@ jobs:
       - name: Install dependencies
         uses: conda-incubator/setup-miniconda@v3.0.4
       - run: |
-          python -m pip install --upgrade pip
           conda install pytorch==2.4 "${{ matrix.cfg.torch-version }}"
           conda install -r "requirements.txt"
       - name: Install package

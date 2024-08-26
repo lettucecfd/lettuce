@@ -36,24 +36,25 @@ jobs:
           auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
           miniconda-version: "latest"
-      - name: Init conda
-        run: |
-          conda init
       - name: Install dependencies
+        shell: bash -el {0}
         run: |
-          conda activate test
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
       - name: Test import
+        shell: bash -el {0}
         run: |
           python3 -c "import os; print(os.environ); import numpy as np; from setuptools import setup"
       - name: Install lettuce
+        shell: bash -el {0}
         run: |
           python3 setup.py install
       - name: Unit tests with pytest
+        shell: bash -el {0}
         run: |
           pytest tests
       - name: Integration tests
+        shell: bash -el {0}
         run: |
           lettuce --no-cuda convergence --use-no-cuda_native
           lettuce --no-cuda benchmark --use-no-cuda_native

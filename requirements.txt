@@ -6,6 +6,7 @@ numpy==1.26.4
 packaging==24.1
 pyevtk==1.6.0
 pytest==8.3.2
+python==3.12
 pytorch==2.4
 pytorch-cuda
 setuptools==71.0.1

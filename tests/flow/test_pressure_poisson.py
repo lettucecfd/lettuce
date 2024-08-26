@@ -19,4 +19,5 @@ def test_pressure_poisson(fix_configuration, Stencil):
     rho = pressure_poisson(flow.units, u, torch.ones_like(rho0))
     pfinal = context.convert_to_ndarray(
         flow.units.convert_density_lu_to_pressure_pu(rho))
+    p0 = context.convert_to_ndarray(p0)
     assert pfinal == pytest.approx(p0, rel=0.0, abs=0.05)

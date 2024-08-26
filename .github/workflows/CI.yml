@@ -36,6 +36,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3.0.4
         with:
           auto-update-conda: true
+          activate-environment: test
           auto-activate-base: false
           python-version: ${{ matrix.cfg.python-version }}
       - name: Install dependencies

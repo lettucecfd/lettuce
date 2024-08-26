@@ -58,7 +58,6 @@ setup(
         'lettuce.cuda_native.ext._force',
         'lettuce.util']),
     setup_requires=setup_requirements,
-    test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),

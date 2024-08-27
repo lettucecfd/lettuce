@@ -59,16 +59,17 @@ Setting up post-processing
 
 class Show2D:
     def __init__(self, mask, outdir: str, **kwargs):
-        self.outdir = outdir
-        if len(mask.shape) > 2:
+        if len(mask.shape) == 3:
             mask = mask[:, :, int(mask.shape[2] / 2)]
-        self.mask = context.convert_to_ndarray(mask).transpose() \
-            if isinstance(flow.mask, torch.Tensor) else mask.transpose()
+        self.mask = context.convert_to_ndarray(mask).transpose()
+        self.outdir = outdir
+
         self.dpi = kwargs['dpi'] if 'dpi' in kwargs else 1200
         self.save = kwargs['save'] if 'save' in kwargs else True
         self.show_mask = kwargs['show_mask'] if 'show_mask' in kwargs else True
         self.mask_alpha = kwargs['mask_alpha'] if 'mask_alpha' in kwargs \
             else 1.
+
         self.__call__(mask, "solid_mask", "solid_mask")
 
     def __call__(self, data, title: str, name: str, vlim=None):

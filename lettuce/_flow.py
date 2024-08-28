@@ -2,6 +2,7 @@ import pickle
 
 import numpy as np
 import torch
+import warnings
 
 from typing import Optional, List, Union, Callable, AnyStr
 from abc import ABC, abstractmethod
@@ -151,8 +152,8 @@ class Flow(ABC):
 
     def j(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """momentum"""
-        return self.einsum("qd,q->d",
-                           [self.torch_stencil.e, self.f if f is None else f])
+        return torch.einsum("qd,q...->d...",
+                            [self.torch_stencil.e, self.f if f is None else f])
 
     def u(self, f: Optional[torch.Tensor] = None, rho=None, acceleration=None
           ) -> torch.Tensor:
@@ -172,24 +173,29 @@ class Flow(ABC):
         return v + correction
 
     @property
-    def velocity(self):
-        return self.j() / self.rho()
+    def velocity(self, f: Optional[torch.Tensor] = None):
+        f = self.f if f is None else f
+        return self.j(f) / self.rho(f)
 
     def incompressible_energy(self, f: Optional[torch.Tensor] = None
                               ) -> torch.Tensor:
         """incompressible kinetic energy"""
-        return 0.5 * self.einsum("d,d->", [self.u(f), self.u(f)])
+        f = self.f if f is None else f
+        return 0.5 * torch.einsum("d...,d...->...", [self.u(f), self.u(f)])
 
-    def entropy(self) -> torch.Tensor:
+    def entropy(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """entropy according to the H-theorem"""
-        f_log = -torch.log(self.einsum("q,q->q",
-                                       [self.f, 1 / self.torch_stencil.w]))
-        return self.einsum("q,q->", [self.f, f_log])
+        f = self.f if f is None else f
+        f_log = -torch.log(torch.einsum("q...,q...->...",
+                                        [f, 1 / self.torch_stencil.w]))
+        return torch.einsum("q...,q...->...", [f, f_log])
 
-    def pseudo_entropy_global(self) -> torch.Tensor:
+    def pseudo_entropy_global(self, f: Optional[torch.Tensor] = None
+                              ) -> torch.Tensor:
         """pseudo_entropy derived by a Taylor expansion around the weights"""
-        f_w = self.einsum("q,q->q", [self.f, 1 / self.torch_stencil.w])
-        return self.rho() - self.einsum("q,q->", [self.f, f_w])
+        f = self.f if f is None else f
+        f_w = torch.einsum("q...,q...->q...", [f, 1 / self.torch_stencil.w])
+        return self.rho() - torch.einsum("q...,q...->...", [f, f_w])
 
     def pseudo_entropy_local(self, f: Optional[torch.Tensor] = None
                              ) -> torch.Tensor:
@@ -197,18 +203,24 @@ class Flow(ABC):
         equilibrium"""
         f = self.f if f is None else f
         f_feq = f / self.equilibrium(self)
-        return self.rho(f) - self.einsum("q,q->", [f, f_feq])
+        return self.rho(f) - torch.einsum("q...,q...->...", [f, f_feq])
 
     def shear_tensor(self, f: Optional[torch.Tensor] = None) -> torch.Tensor:
         """computes the shear tensor of a given self.f in the sense
         Pi_{\alpha \beta} = f_i * e_{i \alpha} * e_{i \beta}"""
-        shear = self.einsum("qa,qb->qab",
+        shear = torch.einsum("qa,qb->qab",
                             [self.torch_stencil.e, self.torch_stencil.e])
-        shear = self.einsum("q,qab->ab", [self.f if f is None else f, shear])
+        shear = torch.einsum("q...,qab->ab...", [self.f if f is None else f, shear])
         return shear
 
     def einsum(self, equation, fields, *args) -> torch.Tensor:
         """Einstein summation on local fields."""
+        warnings.warn(
+        "The `einsum` method is deprecated and will be removed in a future version. "
+        "Please use `torch.einsum` directly instead.",
+        DeprecationWarning,
+        stacklevel=2
+        )
         inputs, output = equation.split("->")
         inputs = inputs.split(",")
         for i, inp in enumerate(inputs):
@@ -327,8 +339,8 @@ def initialize_f_neq(flow: 'Flow'):
                       [flow.torch_stencil.e, flow.torch_stencil.e])
          - torch.eye(flow.stencil.d, device=flow.torch_stencil.e.device)
          * flow.stencil.cs ** 2)
-    Pi_1_Q = flow.einsum('ab,iab->i', [Pi_1, Q])
-    fneq = flow.einsum('i,i->i', [flow.torch_stencil.w, Pi_1_Q])
+    Pi_1_Q = torch.einsum('ab...,iab->i...', [Pi_1, Q])
+    fneq = torch.einsum('i,i...->i...', [flow.torch_stencil.w, Pi_1_Q])
 
     feq = flow.equilibrium(flow, rho, u)
 

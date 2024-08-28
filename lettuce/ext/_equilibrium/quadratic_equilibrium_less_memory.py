@@ -15,11 +15,11 @@ class QuadraticEquilibriumLessMemory(Equilibrium):
         rho = flow.rho() if rho is None else rho
         u = flow.u() if u is None else u
 
-        feq = flow.einsum(
-            "q,q->q",
+        feq = torch.einsum(
+            "q,q...->q...",
             [flow.torch_stencil.w,
              rho * ((2 * torch.tensordot(flow.torch_stencil.e, u, dims=1)
-                     - flow.einsum("d,d->", [u, u]))
+                     - torch.einsum("d...,d...->...", [u, u]))
                     / (2 * flow.torch_stencil.cs ** 2)
                     + 0.5 * (torch.tensordot(flow.torch_stencil.e, u, dims=1)
                              / (flow.torch_stencil.cs ** 2)) ** 2 + 1

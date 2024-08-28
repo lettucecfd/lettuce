@@ -21,9 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
-          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
-          - { os: macos-latest, python-version: '3.12', torch-version: 'pytorch>=2.4' }
+          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
+          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
+          - { os: macos-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
 
     steps:
 
@@ -33,7 +33,7 @@ jobs:
         with:
           python-version: ${{ matrix.cfg.python-version }}
       - name: Install dependencies
-        shell: bash -el {0}
+        shell: bash -el {0}  # specifying shell to make sure the conda environment and installations are still active
         run: |
           conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
           conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia

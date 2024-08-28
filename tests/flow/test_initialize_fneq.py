@@ -88,5 +88,5 @@ def test_initialize_fneq(fix_configuration, fix_stencil, Case):
                                          axis=0).tolist()
 
         assert error_u_neq < error_u_eq
-        print(f"Relative improvement: "
+        print(f"Relative improvement in velocity error: "
               f"{(error_u_neq - error_u_eq) / error_u_eq}")

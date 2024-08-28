@@ -9,7 +9,8 @@ import versioneer
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-requirements = ['Click>=6.0', "torch>=2.1", "numpy==1.26.4", "matplotlib==3.9.0", "pyevtk", "h5py>=3.2.1", "mmh3"]
+requirements = ["click", "h5py", "matplotlib", "mmh3", "numpy", "packaging",
+                "pyevtk", "pytest", "torch"]
 
 setup_requirements = ['pytest-runner', 'pytest']
 
@@ -21,8 +22,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.12',
     ],
     description="Lattice Boltzmann Python GPU",
     entry_points={
@@ -33,7 +33,10 @@ setup(
     install_requires=requirements,
     license="MIT license",
     long_description=readme,
-    package_data={'lettuce.native_generator': ['lettuce/native_generator/template/setup.py']},
+    package_data={
+        'lettuce.native_generator':
+            ['lettuce/native_generator/template/setup.py']
+    },
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
@@ -55,7 +58,6 @@ setup(
         'lettuce.cuda_native.ext._force',
         'lettuce.util']),
     setup_requires=setup_requirements,
-    test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),

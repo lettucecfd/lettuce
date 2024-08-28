@@ -4,10 +4,6 @@
         :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
         :alt: CI Status
 
-.. image:: https://github.com/mcbs/lettuce/actions/workflows/codeql.yml/badge.svg
-        :target: https://github.com/lettucecfd/lettuce/actions/workflows/codeql.yml
-        :alt: Codeql Status
-
 .. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
         :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status

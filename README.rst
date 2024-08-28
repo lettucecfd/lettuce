@@ -83,13 +83,13 @@ unless you installed `pytorch-cuda`!_::
 
 * **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
 
-* If you want to only **use** lettuce, run the install script::
+* If you want to only **use** lettuce, run the installation using PEP517 (from the lettuce base directory!)::
 
-    pip install --use-pep517 setup.py
+    pip install --use-pep517 .
 
-* If you are a **developer**, do this to update the lettuce package when running a script::
+* If you are a **developer**, add the changeable-installation-flag (`-e`)::
 
-    pip install --use-pep517 -e setup.py
+    pip install --use-pep517 -e .
 
 * Check out the convergence order, running on CPU::
 

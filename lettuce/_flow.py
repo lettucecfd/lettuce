@@ -2,6 +2,7 @@ import pickle
 
 import numpy as np
 import torch
+import warnings
 
 from typing import Optional, List, Union, Callable, AnyStr
 from abc import ABC, abstractmethod
@@ -211,6 +212,28 @@ class Flow(ABC):
                             [self.torch_stencil.e, self.torch_stencil.e])
         shear = torch.einsum("q...,qab->ab...", [self.f if f is None else f, shear])
         return shear
+
+    def einsum(self, equation, fields, *args) -> torch.Tensor:
+        """Einstein summation on local fields."""
+        warnings.warn(
+        "The `einsum` method is deprecated and will be removed in a future version. "
+        "Please use `torch.einsum` directly instead.",
+        DeprecationWarning,
+        stacklevel=2
+        )
+        inputs, output = equation.split("->")
+        inputs = inputs.split(",")
+        for i, inp in enumerate(inputs):
+            if len(inp) == len(fields[i].shape):
+                pass
+            elif len(inp) == len(fields[i].shape) - self.stencil.d:
+                inputs[i] += "..."
+                if not output.endswith("..."):
+                    output += "..."
+            else:
+                assert False, "Bad dimension."
+        equation = ",".join(inputs) + "->" + output
+        return torch.einsum(equation, fields, *args)
 
     def dump(self, filename):
         with open(filename, "wb") as file:

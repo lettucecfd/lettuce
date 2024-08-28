@@ -75,8 +75,7 @@ Installation
 
     conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia
 
-* Install the remaining dependencies. _This will not include CUDA-support
-unless you installed `pytorch-cuda`!_::
+* Install the remaining dependencies. _This will not include CUDA-support unless you installed `pytorch-cuda`!_::
 
     conda activate lettuce
     conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge

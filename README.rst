@@ -43,9 +43,7 @@ Resources
 Getting Started
 ---------------
 
-To find some very simple examples of how to use lettuce, please have a look
-at the examples_. These will guide you through lettuce's main features. The
-simplest example is:
+To find some very simple examples of how to use lettuce, please have a look at the examples_. These will guide you through lettuce's main features. The simplest example is:
 
 https://github.com/lettucecfd/lettuce/blob/ef9830b59c6ad50e02fdf0ce24cc47ea520aa354/examples/00_simplest_TGV.py#L6-L21
 
@@ -65,18 +63,11 @@ Installation
 
 * Update conda, create a new conda environment and activate it::
 
-
     conda update conda
     conda create -n lettuce
     conda activate lettuce
 
-* Follow the recommendations at https://pytorch.org/get-started/locally/ to
-install pytorch based on your GPU's CUDA version. You may need to install
-the nvidia toolkit. You may follow the instructions at https://developer
-.nvidia.com/cuda-downloads. You may need to check the compatibility of your
-NVIDIA driver with the desired CUDA version:
-https://docs.nvidia.com/deploy/cuda-compatibility/. To get your CUDA version,
-run::
+* Follow the recommendations at https://pytorch.org/get-started/locally/ to install pytorch based on your GPU's CUDA version. You may need to install the nvidia toolkit. You may follow the instructions at https://developer.nvidia.com/cuda-downloads. You may need to check the compatibility of your NVIDIA driver with the desired CUDA version: https://docs.nvidia.com/deploy/cuda-compatibility/. To get your CUDA version, run::
 
     nvcc --version
 
@@ -90,14 +81,11 @@ unless you installed `pytorch-cuda`!_::
     conda activate lettuce
     conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge
 
-* **NOTE**: Sometimes, the installation does not properly set the
-`CUDA_HOME` variable. In this case, you may install `cudatoolkit`
-and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/`
-subdirectory!).
+* **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
 
-* If you want to only **USE** lettuce, run the install script::
+* If you want to only **use** lettuce, run the install script::
 
-    pip install setup.py
+    pip install --use-pep517 setup.py
 
 * If you are a **developer**, do this to update the lettuce package when running a script::
 
@@ -111,9 +99,7 @@ subdirectory!).
 
     pytest tests
 
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`.
-If CUDA is not found, make sure that cuda drivers are installed and
-compatible with the installed cudatoolkit (see conda install command above).
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit (see conda install command above).
 
 * Check out the performance, running on GPU::
 

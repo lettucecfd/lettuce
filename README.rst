@@ -82,7 +82,7 @@ Installation
 
 * **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
 
-* If you want to only **use** lettuce, run the installation using PEP517 (from the lettuce base directory!)::
+* If you want to only **use** lettuce, run the installation (from the lettuce base directory!). Ideally, use [PEP 517](https://peps.python.org/pep-0517/)::
 
     pip install --use-pep517 .
 

@@ -4,7 +4,7 @@ import os
 
 from ... import Reporter
 
-__all__ = ['VTKReporter']
+__all__ = ['VTKReporter', 'write_vtk']
 
 
 def write_vtk(point_dict, id=0, filename_base="./data/output"):

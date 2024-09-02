@@ -115,7 +115,8 @@ class NaNReporter(Reporter):
         pass
 
 
-def unravel_index(indices: torch.Tensor, shape: tuple[int, ...], ) -> torch.Tensor:
+def unravel_index(indices: torch.Tensor, shape: tuple[int, ...],
+                  ) -> torch.Tensor:
     r"""Converts flat indices into unraveled coordinates in a target shape.
 
     This is a `torch` implementation of `numpy.unravel_index`.

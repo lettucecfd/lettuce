@@ -159,8 +159,10 @@ class HighMaReporter(NaNReporter):
         index_max = torch.argmax(ma)
         index_max = unravel_index(index_max, ma.shape)
         ma = simulation.context.convert_to_ndarray(ma)
-        max_ma = ma[index_max[0], index_max[1], index_max[2] if
-        simulation.flow.stencil.d == 3 else None]
+        max_ma = ma[
+            index_max[0],
+            index_max[1],
+            index_max[2] if simulation.flow.stencil.d == 3 else None]
         my_file.write(
             f"Max. Ma{str(index_max.tolist())} = {max_ma}\n\n")
 

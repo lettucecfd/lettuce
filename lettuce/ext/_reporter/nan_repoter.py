@@ -12,6 +12,11 @@ __all__ = ["NaNReporter", "HighMaReporter", "BreakableSimulation"]
 
 
 class BreakableSimulation(Simulation):
+    def __init__(self, flow: 'Flow', collision: 'Collision',
+                 reporter: List['Reporter']):
+        flow.context.use_native = False
+        super().__init__(flow, collision, reporter)
+
     def __call__(self, num_steps: int):
         beg = timer()
 
@@ -35,46 +40,19 @@ class NaNReporter(Reporter):
     # ...to avoid this, leave outdir=None to omit creation and file-output of
     # nan_location. This will not impact the abortion of sim. by NaN_Reporter
 
-    def __init__(self, interval=100, outdir=None, vtk=False, vtk_dir=None):
+    def __init__(self, interval=100, outdir=None, vtk=False):
         self.outdir = outdir
         self.vtk = vtk
-        self.vtk_dir = vtk_dir or self.outdir
         self.name = 'NaN'
+        self.failed_iteration = None
         super().__init__(interval)
 
     def __call__(self, simulation: 'Simulation'):
         if simulation.flow.i % self.interval == 0:
             if self.is_failed(simulation):
+                self.failed_iteration = simulation.flow.i
                 if self.outdir is not None:
-                    if not os.path.exists(self.outdir):
-                        os.mkdir(self.outdir)
-
-                    my_file = open(f"{self.outdir}/{self.name}_reporter.txt",
-                                   "w")
-                    self.show_max(my_file, simulation)
-                    my_file.write(f"(!) {self.name} detected at \n")
-
-                    for location in self.locations_string(simulation):
-                        my_file.write(f"{location:6}   ")
-                    my_file.write("\n")
-                    for fail in self.failed_locations_list(simulation):
-                        for fail_dim in fail:
-                            my_file.write(f"{fail_dim:6}  ")
-                        my_file.write("\n")
-                    if len(self.failed_locations_list(simulation)) >= 100:
-                        my_file.write(f"(!) {self.name} detected for more "
-                                      f"than 100 values. Showing only first "
-                                      f"100 values\n")
-
-                    my_file.close()
-
-                # write vtk output with u and p fields to vtk_dir, if vtk_dir is not None
-                if self.vtk_dir is not None and self.vtk:
-                    if not os.path.exists(self.vtk_dir):
-                        os.mkdir(self.vtk_dir)
-                    vtkreporter = VTKReporter(
-                        1, filename_base=self.vtk_dir+"/fail")
-                    vtkreporter(simulation)
+                    self.outputs(simulation)
 
                 print(
                     f'(!) ABORT MESSAGE: FailReporter detected {self.name}'
@@ -83,6 +61,35 @@ class NaNReporter(Reporter):
                     f'details!')
                 # telling simulation to abort simulation by setting i too high
                 simulation.flow.i = int(simulation.flow.i + 1e10)
+
+    def outputs(self, simulation: 'Simulation'):
+        if not os.path.exists(self.outdir):
+            os.mkdir(self.outdir)
+
+        my_file = open(f"{self.outdir}/{self.name}_reporter.txt",
+                       "w")
+        self.show_max(my_file, simulation)
+        my_file.write(f"(!) {self.name} detected at \n")
+
+        for location in self.locations_string(simulation):
+            my_file.write(f"{location:6}   ")
+        my_file.write("\n")
+        for fail in self.failed_locations_list(simulation):
+            for fail_dim in fail:
+                my_file.write(f"{fail_dim:6}  ")
+            my_file.write("\n")
+        if len(self.failed_locations_list(simulation)) >= 100:
+            my_file.write(f"(!) {self.name} detected for more "
+                          f"than 100 values. Showing only first "
+                          f"100 values\n")
+
+        my_file.close()
+
+        # write vtk output with u and p fields
+        if self.vtk:
+            vtkreporter = VTKReporter(
+                1, filename_base=self.outdir + f"/{self.name}_fail")
+            vtkreporter(simulation)
 
     def is_failed(self, simulation: 'Simulation') -> bool:
         # checks if any item of self.fails(simulation) is true
@@ -142,8 +149,8 @@ def unravel_index(indices: torch.Tensor, shape: tuple[int, ...],
 
 class HighMaReporter(NaNReporter):
     """reports any Ma>0.3 and aborts the simulation"""
-    def __init__(self, interval=100, outdir=None, vtk=False, vtk_dir=None):
-        super().__init__(interval, outdir, vtk, vtk_dir)
+    def __init__(self, interval=100, outdir=None, vtk=False):
+        super().__init__(interval, outdir, vtk)
         self.name = 'HighMa'
 
     def show_max(self, my_file, simulation: 'Simulation'):
@@ -152,8 +159,10 @@ class HighMaReporter(NaNReporter):
         index_max = torch.argmax(ma)
         index_max = unravel_index(index_max, ma.shape)
         ma = simulation.context.convert_to_ndarray(ma)
-        max_ma = ma[index_max[0], index_max[1], index_max[2] if
-        simulation.flow.stencil.d == 3 else None]
+        max_ma = ma[
+            index_max[0],
+            index_max[1],
+            index_max[2] if simulation.flow.stencil.d == 3 else None]
         my_file.write(
             f"Max. Ma{str(index_max.tolist())} = {max_ma}\n\n")
 

@@ -10,8 +10,7 @@ if not os.path.exists("./data"):
     os.mkdir("./data")
 
 flow = lt.TaylorGreenVortex(
-    lt.Context(dtype=torch.float64, use_native=False),  # for running on cpu:
-    # device='cpu'
+    lt.Context(dtype=torch.float64),
     resolution=32,
     reynolds_number=30000,
     mach_number=0.3,
@@ -23,10 +22,10 @@ simulation = lt.BreakableSimulation(
     collision=lt.BGKCollision(tau=flow.units.relaxation_parameter_lu),
     reporter=[nan_reporter])
 simulation(10000)
+print(f"Failed after {nan_reporter.failed_iteration} iterations")
 
 flow = lt.Obstacle(
-    lt.Context(dtype=torch.float64, use_native=False),  # for running on cpu:
-    # device='cpu'
+    lt.Context(dtype=torch.float64),
     resolution=[32, 32],
     reynolds_number=100,
     mach_number=0.01,
@@ -42,3 +41,4 @@ simulation = lt.BreakableSimulation(
     collision=lt.BGKCollision(tau=flow.units.relaxation_parameter_lu),
     reporter=[high_ma_reporter])
 simulation(10000)
+print(f"Failed after {high_ma_reporter.failed_iteration} iterations")

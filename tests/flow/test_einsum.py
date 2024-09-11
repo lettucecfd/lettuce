@@ -200,7 +200,7 @@ def test_einsum(fix_dim):
     f_log = -torch.log(torch.einsum("q...,q...->q...", [flow.f,
                                                         1 / flow.torch_stencil.w]))
     f2 = torch.einsum("q...,q...->...", [flow.f, f_log])
-    assert torch.allclose(f0, f1, rtol=)
+    assert torch.allclose(f0, f1)
     assert torch.allclose(f1, f2)
 
     f0 = flow.pseudo_entropy_global()

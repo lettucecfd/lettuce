@@ -170,7 +170,7 @@ class GuoEinsum(Guo):
 
 @pytest.mark.parametrize("fix_dim", [1, 2, 3])
 def test_einsum(fix_dim):
-    context = Context()
+    context = Context(dtype=torch.float64)
 
     flow = EinsumFlow(context, [16] * fix_dim)
     flow.f = torch.rand_like(flow.f)
@@ -200,7 +200,7 @@ def test_einsum(fix_dim):
     f_log = -torch.log(torch.einsum("q...,q...->q...", [flow.f,
                                                         1 / flow.torch_stencil.w]))
     f2 = torch.einsum("q...,q...->...", [flow.f, f_log])
-    assert torch.allclose(f0, f1)
+    assert torch.allclose(f0, f1, rtol=)
     assert torch.allclose(f1, f2)
 
     f0 = flow.pseudo_entropy_global()

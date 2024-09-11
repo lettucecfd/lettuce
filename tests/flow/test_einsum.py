@@ -170,7 +170,7 @@ class GuoEinsum(Guo):
 
 @pytest.mark.parametrize("fix_dim", [1, 2, 3])
 def test_einsum(fix_dim):
-    context = Context()
+    context = Context(dtype=torch.float64)
 
     flow = EinsumFlow(context, [16] * fix_dim)
     flow.f = torch.rand_like(flow.f)

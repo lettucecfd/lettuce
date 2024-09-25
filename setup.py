@@ -9,10 +9,8 @@ import versioneer
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
-
-requirements = ['Click>=6.0', "torch>=1.2", "numpy", "matplotlib", "pyevtk"]
+requirements = ["click", "h5py", "matplotlib", "mmh3", "numpy", "packaging",
+                "pyevtk", "pytest", "torch"]
 
 setup_requirements = ['pytest-runner', 'pytest']
 
@@ -24,8 +22,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.12',
     ],
     description="Lattice Boltzmann Python GPU",
     entry_points={
@@ -35,13 +32,32 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description=readme + '\n\n' + history,
+    long_description=readme,
+    package_data={
+        'lettuce.native_generator':
+            ['lettuce/native_generator/template/setup.py']
+    },
     include_package_data=True,
     keywords='lettuce',
     name='lettuce',
-    packages=find_packages(include=['lettuce', 'lettuce.flows']),
+    packages=find_packages(include=[
+        'lettuce',
+        'lettuce.ext',
+        'lettuce.ext._boundary',
+        'lettuce.ext._collision',
+        'lettuce.ext._equilibrium',
+        'lettuce.ext._flows',
+        'lettuce.ext._force',
+        'lettuce.ext._reporter',
+        'lettuce.ext._stencil',
+        'lettuce.cuda_native',
+        'lettuce.cuda_native.ext',
+        'lettuce.cuda_native.ext._boundary',
+        'lettuce.cuda_native.ext._collision',
+        'lettuce.cuda_native.ext._equilibrium',
+        'lettuce.cuda_native.ext._force',
+        'lettuce.util']),
     setup_requires=setup_requirements,
-    test_suite='tests',
     url='https://github.com/lettucecfd/lettuce',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),

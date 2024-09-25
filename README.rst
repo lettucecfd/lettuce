@@ -1,17 +1,16 @@
 .. image:: https://raw.githubusercontent.com/lettucecfd/lettuce/master/.source/img/logo_lettuce_typo.png
 
-.. image:: https://travis-ci.com/lettucecfd/lettuce.svg?branch=master
-        :target: https://travis-ci.com/lettucecfd/lettuce
+.. image:: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml/badge.svg
+        :target: https://github.com/lettucecfd/lettuce/actions/workflows/CI.yml
+        :alt: CI Status
 
-.. image:: https://readthedocs.org/projects/lettuceboltzmann/badge/?version=latest
-        :target: https://lettuceboltzmann.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/lettucecfd/badge/?version=latest
+        :target: https://lettucecfd.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
-
+        
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3757641.svg
         :target: https://doi.org/10.5281/zenodo.3757641
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/lettucecfd/lettuce.svg?logo=lgtm&logoWidth=18
-        :target: https://lgtm.com/projects/g/lettucecfd/lettuce/context:python
 
 
 GPU-accelerated Lattice Boltzmann Simulations in Python
@@ -19,86 +18,99 @@ GPU-accelerated Lattice Boltzmann Simulations in Python
 
 Lettuce is a Computational Fluid Dynamics framework based on the lattice Boltzmann method (LBM).
 
-It provides
+- **GPU-Accelerated Computation**: Utilizes PyTorch for high performance and efficient GPU utilization.
+- **Rapid Prototyping**: Supports both 2D and 3D simulations for quick and reliable analysis.
+- **Advanced Techniques**: Integrates neural networks and automatic differentiation to enhance LBM.
+- **Optimized Performance**: Includes custom PyTorch extensions for native CUDA kernels.
 
-* GPU-accelerated computation based on PyTorch
-* Rapid Prototyping in 2D and 3D
-* Usage of neural networks and automatic differentiation within LBM
+Resources
+---------
 
+- `Documentation`_
+- Presentation at CFDML2021 - `Paper`_ | `Preprint`_ | `Slides`_ | `Video`_ | `Code`_
+
+.. _Paper: https://www.springerprofessional.de/en/lettuce-pytorch-based-lattice-boltzmann-framework/19862378
+.. _Documentation: https://lettuceboltzmann.readthedocs.io
+.. _Preprint: https://arxiv.org/pdf/2106.12929.pdf
+.. _Slides: https://drive.google.com/file/d/1jyJFKgmRBTXhPvTfrwFs292S4MC3Fqh8/view
+.. _Video: https://www.youtube.com/watch?v=7nVCuuZDCYA
+.. _Code: https://github.com/lettucecfd/lettuce-paper
 
 Getting Started
 ---------------
 
-The following Python code will run a two-dimensional Taylor-Green vortex on a GPU:
+To find some very simple examples of how to use lettuce, please have a look at the examples_. These will guide you through lettuce's main features. Please ensure you have Jupyter installed to run the Jupyter notebooks.
 
-.. code:: python
+The simplest example is:
 
-    import torch
-    from lettuce import BGKCollision, StandardStreaming, Lattice, D2Q9, TaylorGreenVortex2D, Simulation
-
-    device = "cuda:0"   # for running on cpu: device = "cpu"
-    dtype = torch.float32
-
-    lattice = Lattice(D2Q9, device, dtype)
-    flow = TaylorGreenVortex2D(resolution=256, reynolds_number=10, mach_number=0.05, lattice=lattice)
-    collision = BGKCollision(lattice, tau=flow.units.relaxation_parameter_lu)
-    streaming = StandardStreaming(lattice)
-    simulation = Simulation(flow=flow, lattice=lattice,  collision=collision, streaming=streaming)
-    mlups = simulation.step(num_steps=1000)
-
-    print("Performance in MLUPS:", mlups)
-
-
-More advanced examples_ are available as jupyter notebooks:
-
-* `A First Example`_
-* `Decaying Turbulence`_
+https://github.com/lettucecfd/lettuce/blob/ef9830b59c6ad50e02fdf0ce24cc47ea520aa354/examples/00_simplest_TGV.py#L6-L21
 
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
-.. _A First Example: https://github.com/lettucecfd/lettuce/tree/master/examples/A_first_example.ipynb
-.. _Decaying Turbulence: https://github.com/lettucecfd/lettuce/tree/master/examples/DecayingTurbulence.ipynb
-
-A complete documentation is available here_.
-
-.. _here: https://lettuceboltzmann.readthedocs.io
-
 
 Installation
 ------------
 
-* Install the anaconda package manager from www.anaconda.org
-* Create a new conda environment and install all dependencies::
+* Install the anaconda or miniconda package manager from https://www.anaconda.org
 
-    conda create -n lettuce -c pytorch -c conda-forge\
-         "pytorch>=1.2" matplotlib pytest click cudatoolkit "pyevtk>=1.2"
+* Clone this repository from github and change to it::
 
+    git clone https://github.com/lettucecfd/lettuce
+    cd lettuce
 
-* Activate the conda environment::
+* Update conda, create a new conda environment and activate it::
 
+    conda update conda
+    conda create -n lettuce
     conda activate lettuce
 
-* Clone this repository from github
-* Change into the cloned directory
-* Run the install script::
+* Follow the recommendations at https://pytorch.org/get-started/locally/ to install pytorch based on your GPU's CUDA version. You may need to install the nvidia toolkit. You may follow the instructions at https://developer.nvidia.com/cuda-downloads. You may need to check the compatibility of your NVIDIA driver with the desired CUDA version: https://docs.nvidia.com/deploy/cuda-compatibility/. To get your CUDA version, run::
 
-    python setup.py install
+    nvcc --version
 
-* Run the test cases::
+* For CUDA 12.1 (if supported by your GPU) use::
 
-    python setup.py test
+    conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia
+
+* Install the remaining dependencies. _This will not include CUDA-support unless you installed `pytorch-cuda`!_::
+
+    conda activate lettuce
+    conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge
+
+* **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
+
+* If you want to only **use** lettuce, run the installation (from the lettuce base directory!). Ideally, use [PEP 517](https://peps.python.org/pep-0517/)::
+
+    pip install --use-pep517 .
+
+* If you are a **developer**, add the changeable-installation-flag (`-e`)::
+
+    pip install --use-pep517 -e .
 
 * Check out the convergence order, running on CPU::
 
     lettuce --no-cuda convergence
 
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found,
-  make sure that cuda drivers are installed and compatible with the installed cudatoolkit
-  (see conda install command above).
+* Run the test cases::
+
+    pytest tests
+
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit (see conda install command above).
 
 * Check out the performance, running on GPU::
 
     lettuce benchmark
 
+Citation
+--------
+If you use Lettuce in your research, please cite the following paper::
+
+    @inproceedings{bedrunka2021lettuce,
+      title={Lettuce: PyTorch-Based Lattice Boltzmann Framework},
+      author={Bedrunka, Mario Christopher and Wilde, Dominik and Kliemank, Martin and Reith, Dirk and Foysi, Holger and Kr{\"a}mer, Andreas},
+      booktitle={High Performance Computing: ISC High Performance Digital 2021 International Workshops, Frankfurt am Main, Germany, June 24--July 2, 2021, Revised Selected Papers},
+      pages={40},
+      organization={Springer Nature}
+    }
 
 Credits
 -------
@@ -111,6 +123,8 @@ We use the following third-party packages:
 * matplotlib_
 * versioneer_
 * pyevtk_
+* h5py_
+* mmh3_
 
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
@@ -125,6 +139,8 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _matplotlib: https://github.com/matplotlib/matplotlib
 .. _versioneer: https://github.com/python-versioneer/python-versioneer
 .. _pyevtk: https://github.com/pyscience-projects/pyevtk
+.. _h5py: https://github.com/h5py/h5py
+.. _mmh3: https://github.com/hajimes/mmh3
 
 License
 -----------

@@ -12,4 +12,5 @@ Contributors
 
 * Dominik Wilde
 * Mario Bedrunka
+* Philipp Spelten
 * You?

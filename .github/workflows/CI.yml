@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - "**"
+  schedule:
+    # Nightly tests run on master by default:
+    #   Scheduled workflows run on the latest commit on the default or base branch.
+    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+    - cron: "0 7 * * 1"
+
+
+jobs:
+  test:
+    runs-on: ${{ matrix.cfg.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
+          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
+          - { os: macos-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
+
+    steps:
+
+      - uses: actions/checkout@v4
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3.0.4
+        with:
+          python-version: ${{ matrix.cfg.python-version }}
+      - name: Install dependencies
+        shell: bash -el {0}  # specifying shell to make sure the conda environment and installations are still active
+        run: |
+          conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
+          conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
+      - name: Install lettuce
+        shell: bash -el {0}
+        run: |
+          pip install --use-pep517 .
+      - name: Unit tests with pytest
+        shell: bash -el {0}
+        run: |
+          pytest tests
+      - name: Integration tests
+        shell: bash -el {0}
+        run: |
+          lettuce --no-cuda convergence --use-no-cuda_native
+          lettuce --no-cuda benchmark --use-no-cuda_native

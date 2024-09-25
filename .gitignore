@@ -1,9 +1,7 @@
 Makefile
 .idea/
-.github/
 .gitattributes
 .editorconfig
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

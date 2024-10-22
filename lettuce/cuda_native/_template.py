@@ -144,6 +144,12 @@ lettuce_{name}(at::Tensor f, at::Tensor f_next
 using index_t = int;
 using byte_t = unsigned char;
 
+constexpr inline index_t clamp(index_t x, index_t max) {{
+    if (x < 0)    return x + max;
+    if (x >= max) return x - max;
+    return x;
+}}
+
 #define d {d}
 #define q {q}
 #define cs {cs}
@@ -157,19 +163,27 @@ using byte_t = unsigned char;
 #endif
 
 #if d == 1
-#define node_coord(x_, y_, z_) (x_)
+#define node() (index[0])
 #elif d == 2
-#define node_coord(x_, y_, z_) (x_ * dimension[1] + y_)
+#define node() (index[0] * dimension[1] + index[1])
 #elif d == 3
-#define node_coord(x_, y_, z_) ((x_ * dimension[1] + y_)  * dimension[2] + z_)
+#define node() ((index[0] * dimension[1] + index[1])  * dimension[2] + index[2])
 #endif
 
 #if d == 1
-#define dist_coord(q_, x_, y_, z_) (q_ * dimension[0] + x_)
+#define distribution(q_) (q_ * dimension[0] + index[0])
 #elif d == 2
-#define dist_coord(q_, x_, y_, z_) ((q_ * dimension[0] + x_) * dimension[1] + y_)
+#define distribution(q_) ((q_ * dimension[0] + index[0]) * dimension[1] + index[1])
 #elif d == 3
-#define dist_coord(q_, x_, y_, z_) (((q_ * dimension[0] + x_) * dimension[1] + y_)  * dimension[2] + z_)
+#define distribution(q_) (((q_ * dimension[0] + index[00]) * dimension[1] + index[1])  * dimension[2] + index[2])
+#endif
+
+#if d == 1
+#define neighbour(q_) (q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0]))
+#elif d == 2
+#define neighbour(q_) ((q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] + e[q_][1], dimension[1]))
+#elif d == 3
+#define neighbour(q_) (((q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] + e[q_][1], dimension[1]))  * dimension[2] + clamp(index[2] + e[q_][2], dimension[2]))
 #endif
 
 template<typename scalar_t>
@@ -212,14 +226,14 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
   }};
 
 #if {support_no_collision_mask}
-  const index_t node_index = node_coord(index[0], index[1], index[2]);
+  const index_t node_index = node();
 #endif
 
 #if {support_no_streaming_mask}
   index_t dist_index[q];
 #pragma unroll
   for (index_t i = 0; i < q; ++i) {{
-    dist_index[i] = dist_coord(i, index[0], index[1], index[2]);
+    dist_index[i] = distribution(i);
   }}
   scalar_t f_reg[q];
 #pragma unroll
@@ -228,7 +242,7 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
 #else
   scalar_t f_reg[q];
   for (index_t i = 0; i < q; ++i)
-    f_reg[i] = f[dist_coord(i, index[0], index[1], index[2])];
+    f_reg[i] = f[distribution(i)];
 #endif
 
   constexpr index_t e[q][d] = {e};
@@ -271,26 +285,7 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
       f_next[dist_index[i]] = f_reg[i];
     else
 #endif
-
-    {{
-      index_t neighbor_x = index[0] + e[i][0];
-           if (neighbor_x <  0)            neighbor_x += dimension[0];
-      else if (neighbor_x >= dimension[0]) neighbor_x -= dimension[0];
-
-#if d > 1
-      index_t neighbor_y = index[1] + e[i][1];
-           if (neighbor_y <  0)            neighbor_y += dimension[1];
-      else if (neighbor_y >= dimension[1]) neighbor_y -= dimension[1];
-#endif
-
-#if d > 2
-      index_t neighbor_z = index[2] + e[i][2];
-           if (neighbor_z <  0)            neighbor_z += dimension[2];
-      else if (neighbor_z >= dimension[2]) neighbor_z -= dimension[2];
-#endif
-
-      f_next[dist_coord(i, neighbor_x, neighbor_y, neighbor_z)] = f_reg[i];
-    }}
+      f_next[neighbour(i)] = f_reg[i];
   }}
 }}
 

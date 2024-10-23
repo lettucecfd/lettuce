@@ -145,8 +145,8 @@ using index_t = int;
 using byte_t = unsigned char;
 
 constexpr inline index_t clamp(index_t x, index_t max) {{
-    if (x < 0)    return x + max;
-    if (x >= max) return x - max;
+    [[unlikely]] if (x < 0)    return x + max;
+    [[unlikely]] if (x >= max) return x - max;
     return x;
 }}
 
@@ -175,15 +175,40 @@ constexpr inline index_t clamp(index_t x, index_t max) {{
 #elif d == 2
 #define distribution(q_) ((q_ * dimension[0] + index[0]) * dimension[1] + index[1])
 #elif d == 3
-#define distribution(q_) (((q_ * dimension[0] + index[00]) * dimension[1] + index[1])  * dimension[2] + index[2])
+#define distribution(q_) (((q_ * dimension[0] + index[0]) * dimension[1] + index[1])  * dimension[2] + index[2])
 #endif
 
 #if d == 1
-#define neighbour(q_) (q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0]))
+#define neighbour(q_, sign_) (q_ * dimension[0] + clamp(index[0] sign_ e[q_][0], dimension[0]))
 #elif d == 2
-#define neighbour(q_) ((q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] + e[q_][1], dimension[1]))
+#define neighbour(q_, sign_) ((q_ * dimension[0] + clamp(index[0] sign_ e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] sign_ e[q_][1], dimension[1]))
 #elif d == 3
-#define neighbour(q_) (((q_ * dimension[0] + clamp(index[0] + e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] + e[q_][1], dimension[1]))  * dimension[2] + clamp(index[2] + e[q_][2], dimension[2]))
+#define neighbour(q_, sign_) (((q_ * dimension[0] + clamp(index[0] sign_ e[q_][0], dimension[0])) * dimension[1] + clamp(index[1] sign_ e[q_][1], dimension[1]))  * dimension[2] + clamp(index[2] sign_ e[q_][2], dimension[2]))
+#endif
+
+#define read_(q_)         f_reg[q_] = f[dist_index[q_]];   ((void)0)
+#define write_(q_)        f_next[dist_index[q_]] = f_reg[q_];   ((void)0)
+#define stream_read_(q_)  f_reg[q_] = f[neighbour(q_, -)]; ((void)0)
+#define stream_write_(q_) f_next[neighbour(q_, +)] = f_reg[q_]; ((void)0)
+
+#if {enable_pre_streaming}
+#if {support_no_streaming_mask}
+#define read(q_) {{ if (no_streaming_mask[dist_index[q_]]) {{ read_(q_); }} else {{ stream_read_(q_); }} }} ((void)0)
+#else
+#define read(q_) {{ stream_read_(q_); }} ((void)0)
+#endif
+#else
+#define read(q_) {{ read_(q_); }} ((void)0)
+#endif
+
+#if {enable_post_streaming}
+#if {support_no_streaming_mask}
+#define write(q_) {{ if (no_streaming_mask[dist_index[q_]]) {{ write_(q_); }} else {{ stream_write_(q_); }} }} ((void)0)
+#else
+#define write(q_) {{ stream_write_(q_); }} ((void)0)
+#endif
+#else
+#define write(q_) {{ write_(q_); }} ((void)0)
 #endif
 
 template<typename scalar_t>
@@ -204,6 +229,8 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
 #endif
   {kernel_parameter})
 {{
+  constexpr index_t e[q][d] = {e};
+  constexpr scalar_t w[q] = {w};
 
   const index_t index[d] = {{
     static_cast<index_t>(blockIdx.x * blockDim.x + threadIdx.x)
@@ -229,24 +256,15 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
   const index_t node_index = node();
 #endif
 
-#if {support_no_streaming_mask}
   index_t dist_index[q];
 #pragma unroll
-  for (index_t i = 0; i < q; ++i) {{
+  for (index_t i = 0; i < q; ++i)
     dist_index[i] = distribution(i);
-  }}
+
   scalar_t f_reg[q];
 #pragma unroll
   for (index_t i = 0; i < q; ++i)
-    f_reg[i] = f[dist_index[i]];
-#else
-  scalar_t f_reg[q];
-  for (index_t i = 0; i < q; ++i)
-    f_reg[i] = f[distribution(i)];
-#endif
-
-  constexpr index_t e[q][d] = {e};
-  constexpr scalar_t w[q] = {w};
+    read(i);
 
   scalar_t rho = f_reg[0];
 #pragma unroll
@@ -278,15 +296,8 @@ lettuce_cuda_{name}_kernel(scalar_t *f, scalar_t *f_next
   {pipeline_buffer}
 
 #pragma unroll
-  for (index_t i = 0; i < q; ++i) {{
-
-#if {support_no_streaming_mask}
-    if (no_streaming_mask[dist_index[i]])
-      f_next[dist_index[i]] = f_reg[i];
-    else
-#endif
-      f_next[neighbour(i)] = f_reg[i];
-  }}
+  for (index_t i = 0; i < q; ++i)
+    write(i);
 }}
 
 void

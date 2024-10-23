@@ -147,6 +147,8 @@ class Generator:
         val['name'] = self.name
         val['guard'] = f"LETTUCE_{val['name'].upper()}_HPP"
         val['version'] = self.version
+        val['enable_pre_streaming'] = '0'
+        val['enable_post_streaming'] = '1'
 
         t1 = '\n    '
         t2 = '\n        '

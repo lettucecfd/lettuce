@@ -1,12 +1,26 @@
 import json
 from typing import Optional, List, AnyStr
+from enum import Enum
 
 from . import *
 from .. import __version__, Stencil
 
 __all__ = [
-    'Generator',
+    'Generator', 'StreamingStrategy'
 ]
+
+# TODO maybe this is not the right spot for definition
+class StreamingStrategy(Enum):
+    NO_STREAMING: int = 0b00
+    PRE_STREAMING: int = 0b01
+    POST_STREAMING: int = 0b10
+    DOUBLE_STREAMING: int = 0b11
+
+    def pre_streaming(self):
+        return self.value == StreamingStrategy.PRE_STREAMING.value or self.value == StreamingStrategy.DOUBLE_STREAMING.value
+
+    def post_streaming(self):
+        return self.value == StreamingStrategy.POST_STREAMING.value or self.value == StreamingStrategy.DOUBLE_STREAMING.value
 
 
 class Generator:
@@ -21,15 +35,18 @@ class Generator:
     reg: {AnyStr: [AnyStr]}
     par: {AnyStr: [AnyStr]}
     buf: {AnyStr: [AnyStr]}
+    streaming_strategy: StreamingStrategy
 
     # noinspection PyDefaultArgument
     def __init__(self, stencil: 'Stencil', collision: Optional['NativeCollision'] = None, boundaries: List['NativeBoundary'] = [],
-                 equilibrium: Optional['NativeEquilibrium'] = None):
+                 equilibrium: Optional['NativeEquilibrium'] = None, streaming_strategy=StreamingStrategy.POST_STREAMING):
 
         self.stencil = stencil
         self.collision = collision
         self.boundaries = boundaries
         self.equilibrium = equilibrium
+
+        self.streaming_strategy = streaming_strategy
 
         if len(self.boundaries) == 0:
             self.support_no_collision_mask = False
@@ -122,6 +139,7 @@ class Generator:
         import mmh3
         name = self.stencil.__class__.__name__
         name += '_' + self.collision.__class__.__name__
+        name += '_' + self.streaming_strategy.name
         for boundary in self.boundaries:
             name += '_' + boundary.__class__.__name__
         name += '_' + self.version
@@ -161,8 +179,8 @@ class Generator:
 
         val['name'] = self.name
         val['version'] = self.version
-        val['enable_pre_streaming'] = '0'
-        val['enable_post_streaming'] = '1'
+        val['enable_pre_streaming'] = '1' if self.streaming_strategy.pre_streaming() else '0'
+        val['enable_post_streaming'] = '1' if self.streaming_strategy.post_streaming() else '0'
 
         t1 = '\n    '
         t3 = '\n            '

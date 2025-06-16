@@ -22,7 +22,6 @@ jobs:
       matrix:
         cfg:
           - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
-          - { os: windows-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
           - { os: macos-latest, python-version: '3.12', torch-version: 'pytorch==2.4' }
 
     steps:

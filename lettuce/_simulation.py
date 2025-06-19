@@ -8,9 +8,10 @@ from typing import List, Optional
 from abc import ABC, abstractmethod
 
 from . import *
-from .cuda_native import NativeCollision, Generator
+from .cuda_native import NativeCollision, Generator, StreamingStrategy
 
-__all__ = ['Collision', 'Reporter', 'Simulation']
+# todo StreamingStrategy was aliased here but should, see StreamingStrategy for todo
+__all__ = ['Collision', 'Reporter', 'Simulation', 'StreamingStrategy']
 
 
 class Collision(ABC):
@@ -46,9 +47,10 @@ class Simulation:
     no_collision_mask: Optional[torch.Tensor]
     no_streaming_mask: Optional[torch.Tensor]
     reporter: List['Reporter']
+    streaming_strategy: StreamingStrategy
 
     def __init__(self, flow: 'Flow', collision: 'Collision',
-                 reporter: List['Reporter']):
+                 reporter: List['Reporter'], streaming_strategy=StreamingStrategy.POST_STREAMING):
         self.flow = flow
         self.flow.collision = collision
         self.context = flow.context
@@ -56,6 +58,7 @@ class Simulation:
         self.reporter = reporter
         self.boundaries = ([None]
                            + sorted(flow.boundaries, key=lambda b: str(b)))
+        self.streaming_strategy = streaming_strategy
 
         # ==================================== #
         # initialise masks based on boundaries #
@@ -85,13 +88,26 @@ class Simulation:
                 if nsm is not None:
                     self.no_streaming_mask |= nsm
 
-        # ============================== #
+        # =================================== #
         # generate cuda_native implementation #
-        # ============================== #
+        # =================================== #
 
-        def collide_and_stream(*_, **__):
-            self._collide()
-            self._stream()
+        if streaming_strategy.pre_streaming() and streaming_strategy.post_streaming():
+            def collide_and_stream(*_, **__):
+                self._stream()
+                self._collide()
+                self._stream()
+        elif streaming_strategy.post_streaming():
+            def collide_and_stream(*_, **__):
+                self._collide()
+                self._stream()
+        elif streaming_strategy.pre_streaming():
+            def collide_and_stream(*_, **__):
+                self._stream()
+                self._collide()
+        else:
+            def collide_and_stream(*_, **__):
+                self._collide()
 
         self._collide_and_stream = collide_and_stream
 
@@ -129,7 +145,7 @@ class Simulation:
             # begin generating cuda_native module from cuda_native components
 
             generator = Generator(self.flow.stencil, native_collision,
-                                  native_boundaries, native_equilibrium)
+                                  native_boundaries, native_equilibrium, streaming_strategy)
 
             native_kernel = generator.resolve()
             if native_kernel is None:

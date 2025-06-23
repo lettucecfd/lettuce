@@ -68,7 +68,7 @@ class CouetteFlow2D(ExtFlow):
         kbottom[:, -1] = True
         return [
             # moving bounce back top
-            EquilibriumBoundaryPU(self.context, mask=ktop,
+            EquilibriumBoundaryPU(flow=self, context=self.context, mask=ktop,
                                   velocity=np.array([1.0, 0.0])),
             # bounce back bottom
             BounceBackBoundary(kbottom)

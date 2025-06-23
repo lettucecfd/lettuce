@@ -1,7 +1,7 @@
-import torch
-import numpy as np
-
 from typing import List, Optional, Union
+
+import numpy as np
+import torch
 
 __all__ = ['Context']
 
@@ -61,6 +61,14 @@ class Context:
         self.dtype = dtype
         self.use_native = use_native
 
+    def synchronize(self):
+        """
+        Use explicit sync to catch errors right away.
+        Notice cost of sync, so better call only when necessary or in setup code.
+        """
+        if self.device.type == 'cuda':
+            torch.cuda.synchronize(self.device)
+
     def empty_tensor(self, size: Union[List[int], torch.Size], *args,
                      dtype=None, **kwargs) -> torch.Tensor:
         return torch.empty(size, *args, **kwargs, device=self.device,
@@ -81,23 +89,31 @@ class Context:
                           ) -> torch.Tensor:
         is_tensor = isinstance(array, torch.Tensor)
         new_dtype = dtype
+
         if dtype is None:
-            if hasattr(array, 'dtype'):
-                if array.dtype in [bool, torch.bool]:
-                    new_dtype = torch.bool
-                elif array.dtype in [bool, torch.uint8, np.uint8]:
-                    new_dtype = torch.uint8
-                else:
-                    new_dtype = self.dtype
+            bool_types = [bool, torch.bool, np.bool, torch.uint8, np.uint8]
+            if hasattr(array, 'dtype') and array.dtype in bool_types:
+                new_dtype = torch.uint8
             else:
                 new_dtype = self.dtype
 
-        if is_tensor:
-            return array.to(*args, **kwargs, device=self.device,
-                            dtype=new_dtype)
+        # Convert nested lists to NumPy array first
+        if not is_tensor:
+            try:
+                array = np.array(array, dtype=np.float32 if new_dtype.is_floating_point else None)
+            except Exception as e:
+                raise ValueError(f"Failed to convert input to NumPy array: {e}")
+
+            if not array.flags['C_CONTIGUOUS']:
+                array = np.ascontiguousarray(array)
+
+            tensor = torch.from_numpy(array)
         else:
-            return torch.tensor(array, *args, **kwargs, device=self.device,
-                                dtype=new_dtype)
+            tensor = array
+
+        tensor = tensor.to(*args, **kwargs, device=self.device, dtype=new_dtype)
+        self.synchronize()
+        return tensor
 
     @staticmethod
     def convert_to_ndarray(tensor: Union[torch.Tensor, List]) -> np.ndarray:

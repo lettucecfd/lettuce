@@ -1,5 +1,4 @@
-from ... import NativeBoundary
-from ... import Generator
+from ... import NativeBoundary, DefaultCodeGeneration, Parameter, CodeRegistryList
 
 __all__ = ['NativeEquilibriumBoundaryPu']
 
@@ -13,85 +12,82 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
     def create(index):
         return NativeEquilibriumBoundaryPu(index)
 
-    def generate_velocity(self, generator: 'Generator'):
-        if not generator.launcher_hooked(f"velocity{self.index}"):
-            generator.launcher_hook(f"velocity{self.index}", f"at::Tensor velocity{self.index}", f"velocity{self.index}",
-                                    f"simulation.flow.units.convert_velocity_to_lu(simulation.boundaries[{self.index}].velocity)")
-        if not generator.kernel_hooked(f"velocity{self.index}"):
-            generator.kernel_hook(f"velocity{self.index}", f"scalar_t* p_velocity{self.index}", f"velocity{self.index}.data<scalar_t>()")
+    def cuda_velocity(self, reg: 'DefaultCodeGeneration'):
+        py_value = f"simulation.flow.units.convert_velocity_to_lu(simulation.boundaries[{self.index}].velocity)"
+        return reg.cuda_hook(py_value, Parameter('at::Tensor', f"velocity_{self.index}"))
 
-            generator.kernel_hook(f"velocity{self.index}dimension0", f"index_t velocity{self.index}dimension0", f"velocity{self.index}dimensions[0]")
-            generator.kernel_hook(f"velocity{self.index}dimension1", f"index_t velocity{self.index}dimension1", f"velocity{self.index}dimensions[1]", cond=generator.stencil.d > 1)
-            generator.kernel_hook(f"velocity{self.index}dimension2", f"index_t velocity{self.index}dimension2", f"velocity{self.index}dimensions[2]", cond=generator.stencil.d > 2)
+    def cuda_velocity_size(self, reg: 'DefaultCodeGeneration', d: int):
+        assert d in range(reg.stencil.d)
+        variable = self.cuda_velocity(reg)
+        return f"static_cast<index_t>({variable}.size({d}))"
 
-            generator.append_launcher_buffer(f"  index_t velocity{self.index}dimensions[d] = {{   ")
-            generator.append_launcher_buffer(f"      velocity{self.index}.sizes()[1] > 1 ? 1 : 0  ")
-            generator.append_launcher_buffer(f"    , velocity{self.index}.sizes()[2] > 1 ? 1 : 0  ", cond=generator.stencil.d > 1)
-            generator.append_launcher_buffer(f"    , velocity{self.index}.sizes()[3] > 1 ? 1 : 0  ", cond=generator.stencil.d > 2)
-            generator.append_launcher_buffer(f"  }};                                              ")
+    def kernel_velocity_size(self, reg: 'DefaultCodeGeneration', d: int):
+        assert d in range(reg.stencil.d)
+        variable = self.cuda_velocity_size(reg, d)
+        return reg.kernel_hook(variable, Parameter('index_t', f"velocity_{self.index}_size_{'xyz'[d]}"))
 
-            generator.append_global_buffer(f"scalar_t* velocity{self.index};                                                ")
-            generator.append_global_buffer(f"{{                                                                             ")
-            generator.append_global_buffer(f"  index_t velocity{self.index}dimensions[d] = {{                               ")
-            generator.append_global_buffer(f"      velocity{self.index}dimension0                                           ")
-            generator.append_global_buffer(f"    , velocity{self.index}dimension1                                           ", cond=generator.stencil.d > 1)
-            generator.append_global_buffer(f"    , velocity{self.index}dimension2                                           ", cond=generator.stencil.d > 2)
-            generator.append_global_buffer(f"  }};                                                                          ")
-            generator.append_global_buffer(f"  index_t velocity{self.index}index = 0;                                       ")
-            generator.append_global_buffer(f"  index_t velocity{self.index}multiplier = 1;                                  ")
-            generator.append_global_buffer(f"  for (index_t i = d - 1; i >= 0; --i) {{                                      ")
-            generator.append_global_buffer(f"    if (velocity{self.index}dimensions[i]) {{                                  ")
-            generator.append_global_buffer(f"      velocity{self.index}index += index[i] * velocity{self.index}multiplier;  ")
-            generator.append_global_buffer(f"      velocity{self.index}multiplier *= dimension[i];                          ")
-            generator.append_global_buffer(f"    }}                                                                         ")
-            generator.append_global_buffer(f"  }}                                                                           ")
-            generator.append_global_buffer(f"  velocity{self.index}=&p_velocity{self.index}[velocity{self.index}index*d];   ")
-            generator.append_global_buffer(f"}}                                                                             ")
+    def kernel_velocity(self, reg: 'DefaultCodeGeneration', d: int):
+        assert d in range(reg.stencil.d)
 
-    def generate_density(self, generator: 'Generator'):
-        if not generator.launcher_hooked(f"density{self.index}"):
-            generator.launcher_hook(f"density{self.index}", f"at::Tensor density{self.index}", f"density{self.index}",
-                                    f"simulation.flow.units.convert_pressure_pu_to_density_lu(simulation.boundaries[{self.index}].pressure)")
-        if not generator.kernel_hooked(f"density{self.index}"):
-            generator.kernel_hook(f"density{self.index}", f"scalar_t* p_density{self.index}", f"density{self.index}.data<scalar_t>()")
+        variable = self.cuda_velocity(reg)
+        p_variable = reg.kernel_hook(f"{variable}.data<scalar_t>()", Parameter('scalar_t*', f"p_{variable}"))
 
-            generator.kernel_hook(f"density{self.index}dimension0", f"index_t density{self.index}dimension0", f"density{self.index}dimensions[0]")
-            generator.kernel_hook(f"density{self.index}dimension1", f"index_t density{self.index}dimension1", f"density{self.index}dimensions[1]", cond=generator.stencil.d > 1)
-            generator.kernel_hook(f"density{self.index}dimension2", f"index_t density{self.index}dimension2", f"density{self.index}dimensions[2]", cond=generator.stencil.d > 2)
+        if not reg.pipe.registered(variable):
 
-            generator.append_launcher_buffer(f"  index_t density{self.index}dimensions[d] = {{   ")
-            generator.append_launcher_buffer(f"      density{self.index}.sizes()[1] > 1 ? 1 : 0  ")
-            generator.append_launcher_buffer(f"    , density{self.index}.sizes()[2] > 1 ? 1 : 0  ", cond=generator.stencil.d > 1)
-            generator.append_launcher_buffer(f"    , density{self.index}.sizes()[3] > 1 ? 1 : 0  ", cond=generator.stencil.d > 2)
-            generator.append_launcher_buffer(f"  }};                                             ")
+            code = CodeRegistryList(reg.stencil.d)
+            code.append('[&]{')
+            variable_i = code.mutable('index_t', f"{variable}_index", '0')
+            variable_m = code.mutable('index_t', f"{variable}_multiplier", '1')
+            for d in reversed(range(reg.stencil.d)):
+                code.append(f"if({self.kernel_velocity_size(reg, d)}) {{")
+                code.append(f"  {variable_i}+={reg.kernel_index(d)}*{variable_m};")
+                code.append(f"  {variable_m}*={reg.kernel_size(d + 1)};", cond=bool(d))
+                code.append(f"}}")
+            code.append(f"return &{p_variable}[{variable_i}*{reg.d()}];")
+            code.append('}()')
 
-            generator.append_global_buffer(f"scalar_t density{self.index};                                                ")
-            generator.append_global_buffer(f"{{                                                                           ")
-            generator.append_global_buffer(f"  index_t density{self.index}dimensions[d] = {{                              ")
-            generator.append_global_buffer(f"      density{self.index}dimension0                                          ")
-            generator.append_global_buffer(f"    , density{self.index}dimension1                                          ", cond=generator.stencil.d > 1)
-            generator.append_global_buffer(f"    , density{self.index}dimension2                                          ", cond=generator.stencil.d > 2)
-            generator.append_global_buffer(f"  }};                                                                        ")
-            generator.append_global_buffer(f"  index_t density{self.index}index = 0;                                      ")
-            generator.append_global_buffer(f"  index_t density{self.index}multiplier = 1;                                 ")
-            generator.append_global_buffer(f"  for (index_t i = d - 1; i >= 0; --i) {{                                    ")
-            generator.append_global_buffer(f"    if (density{self.index}dimensions[i]) {{                                 ")
-            generator.append_global_buffer(f"      density{self.index}index += index[i] * density{self.index}multiplier;  ")
-            generator.append_global_buffer(f"      density{self.index}multiplier *= dimension[i];                         ")
-            generator.append_global_buffer(f"    }}                                                                       ")
-            generator.append_global_buffer(f"  }}                                                                         ")
-            generator.append_global_buffer(f"  density{self.index}=p_density{self.index}[density{self.index}index];       ")
-            generator.append_global_buffer(f"}}                                                                           ")
+            reg.pipes.variable('scalar_t*', variable, str(code))
 
-    def generate(self, generator: 'Generator'):
-        self.generate_velocity(generator)
-        self.generate_density(generator)
-        generator.equilibrium.generate_f_eq(generator, rho=f"density{self.index}", u=f"velocity{self.index}")
-        f_eq = f"f_eq_density{self.index}_velocity{self.index}"
-        generator.append_pipeline_buffer(f"if (no_collision_mask[node_index] == {self.index})")
-        generator.append_pipeline_buffer('{                      ')
+        return f"{variable}[{d}]"
 
-        for i in range(generator.stencil.q):
-            generator.append_pipeline_buffer(f"  f_reg[{i}] = {f_eq}[{i}];")
+    def cuda_density(self, reg: 'DefaultCodeGeneration'):
+        py_value = f"simulation.flow.units.convert_pressure_pu_to_density_lu(simulation.boundaries[{self.index}].pressure)"
+        return reg.cuda_hook(py_value, Parameter('at::Tensor', f"density_{self.index}"))
 
-        generator.append_pipeline_buffer('}')
+    def cuda_density_size(self, reg: 'DefaultCodeGeneration', d: int):
+        assert d in range(reg.stencil.d)
+        variable = self.cuda_density(reg)
+        return f"static_cast<index_t>({variable}.sizes()[{d}])"
+
+    def kernel_density_size(self, reg: 'DefaultCodeGeneration', d: int):
+        assert d in range(reg.stencil.d)
+        variable = self.cuda_density_size(reg, d)
+        return reg.kernel_hook(variable, Parameter('index_t', f"density_{self.index}_size_{d}"))
+
+    def kernel_density(self, reg: 'DefaultCodeGeneration'):
+        variable = self.cuda_density(reg)
+        p_variable = reg.kernel_hook(f"{variable}.data<scalar_t>()", Parameter('scalar_t*', f"p_{variable}"))
+
+        code = CodeRegistryList(reg.stencil.d)
+        code.append('[&]{')
+        variable_i = code.mutable('index_t', f"{variable}_index", '0')
+        variable_m = code.mutable('index_t', f"{variable}_multiplier", '1')
+        for d in reversed(range(reg.stencil.d)):
+            code.append(f"if({self.kernel_density_size(reg, d)}) {{")
+            code.append(f"  {variable_i}+={reg.kernel_index(d)}*{variable_m};")
+            code.append(f"  {variable_m}*={reg.kernel_size(d + 1)};", cond=bool(d))
+            code.append(f"}}")
+        code.append(f"return {p_variable}[{variable_i}];")
+        code.append('}()')
+
+        return reg.pipes.variable('scalar_t', variable, str(code))
+
+    def generate(self, reg: 'DefaultCodeGeneration'):
+
+        velocity = [self.kernel_velocity(reg, d) for d in range(reg.stencil.d)]
+        density = self.kernel_density(reg)
+
+        for q in range(reg.stencil.q):
+            f_reg_q = reg.f_reg(q)
+            f_eq_q = reg.equilibrium.f_eq(reg, q, rho=density, u=velocity)
+            reg.pipe.append(f"  {f_reg_q} = {f_eq_q};")

@@ -24,7 +24,7 @@ class Collision(ABC):
         ...
 
     @abstractmethod
-    def native_generator(self) -> 'NativeCollision':
+    def native_generator(self, index: int) -> 'NativeCollision':
         ...
 
 
@@ -136,7 +136,7 @@ class Simulation:
             if self.flow.equilibrium is not None:
                 native_equilibrium = self.flow.equilibrium.native_generator()
 
-            native_collision = self.collision.native_generator()
+            native_collision = self.collision.native_generator(0)
 
             native_boundaries = []
             for i, boundary in enumerate(self.boundaries[1:], start=1):
@@ -146,7 +146,6 @@ class Simulation:
 
             generator = Generator(self.flow.stencil, native_collision,
                                   native_boundaries, native_equilibrium, streaming_strategy)
-
             native_kernel = generator.resolve()
             if native_kernel is None:
 

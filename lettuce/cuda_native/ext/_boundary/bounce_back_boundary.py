@@ -1,4 +1,4 @@
-from ... import NativeBoundary
+from ... import *
 
 __all__ = ['NativeBounceBackBoundary']
 
@@ -12,18 +12,11 @@ class NativeBounceBackBoundary(NativeBoundary):
     def create(index):
         return NativeBounceBackBoundary(index)
 
-    def generate(self, generator: 'Generator'):
-        buffer = generator.append_pipeline_buffer
-        ncm = generator.support_no_collision_mask
-
-        buffer(f"if (no_collision_mask[node_index] == {self.index})", cond=ncm)
-        buffer('{                      ')
-        buffer('  scalar_t bounce[q];  ')
-
-        for i in range(generator.stencil.q):
-            buffer(f"  bounce[{i}] = f_reg[{generator.stencil.opposite[i]}];")
-
-        for i in range(generator.stencil.q):
-            buffer(f"  f_reg[{i}] = bounce[{i}];")
-
-        buffer('}')
+    def generate(self, reg: 'DefaultCodeGeneration'):
+        reg.pipe.append('{')
+        reg.pipe.append(f"scalar_t bounce[{reg.stencil.q}];")
+        for q in range(reg.stencil.q):
+            reg.pipe.append(f"  bounce[{q}] = {reg.f_reg(reg.stencil.opposite[q])};")
+        for q in range(reg.stencil.q):
+            reg.pipe.append(f"  {reg.f_reg(q)} = bounce[{q}];")
+        reg.pipe.append('}')

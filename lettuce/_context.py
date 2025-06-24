@@ -91,7 +91,7 @@ class Context:
         new_dtype = dtype
 
         if dtype is None:
-            bool_types = [bool, torch.bool, np.bool, torch.uint8, np.uint8]
+            bool_types = [bool, torch.bool, torch.uint8, np.uint8]
             if hasattr(array, 'dtype') and array.dtype in bool_types:
                 new_dtype = torch.uint8
             else:

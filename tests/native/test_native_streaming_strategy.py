@@ -1,7 +1,7 @@
 import pytest
 import torch.cuda
 
-from lettuce import Context, Simulation, StreamingStrategy
+from lettuce import Context, Simulation, StreamingStrategy, NoCollision
 from lettuce.ext import BGKCollision
 from .test_native_bgk_collision import DummyBGK
 
@@ -32,6 +32,26 @@ def test_native_streaming_strategy(streaming_strategy):
 
     cpu_simulation(1)
     native_simulation(1)
+
+    print()
+    print(f"native_flow:")
+    for i in range(9):
+        for x in range(16):
+            for y in range(16):
+                print(native_flow.f.cpu().numpy()[i, x, y], sep=' ', end=' ')
+            print()
+        print()
+    print()
+
+    print()
+    print(f"cpu_flow:")
+    for i in range(9):
+        for x in range(16):
+            for y in range(16):
+                print(cpu_flow.f.cpu().numpy()[i, x, y], sep=' ', end=' ')
+            print()
+        print()
+    print()
 
     for i in range(9):
         for j in range(16):

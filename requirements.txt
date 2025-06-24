@@ -1,11 +1,11 @@
---extra-index-url https://download.pytorch.org/whl/cu128
-torch
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch==2.2.2
+numpy<2
 
 click==8.1.7
 h5py==3.11.0
 matplotlib==3.9.2
 mmh3==4.1.0
-numpy==2.1.0
 packaging==24.1
 pyevtk==1.6.0
 pytest==8.3.2

@@ -29,7 +29,7 @@ def main(verbose=False, install=False):
     """
 
     # Step 1: Create the collision, boundary, and equilibrium objects.
-    collision = cuda_native.ext.NativeBGKCollision()
+    collision = cuda_native.ext.NativeBGKCollision(0)
     boundaries = [
     #     cuda_native.ext.NativeBounceBackBoundary(1),
     #     cuda_native.ext.NativeBounceBackBoundary(2)
@@ -39,14 +39,13 @@ def main(verbose=False, install=False):
     # Step 2: Initialize the generator with the D2Q9 lattice, collision, boundaries, and equilibrium.
     generator = cuda_native.Generator(lt.D2Q9(), collision, boundaries, equilibrium, streaming_strategy=StreamingStrategy.PRE_STREAMING)
     # Step 3: Prepare the directory where the generated cuda_native module will be saved.
-    #generate_dir = abspath(join(dirname(__file__), 'native_hard_coded'))
-    generate_dir = abspath(join(dirname(__file__), 'native_generated'))
+    generate_dir = abspath(join(dirname(__file__), 'native_hard_coded'))
+    #generate_dir = abspath(join(dirname(__file__), 'native_generated'))
     #generate_dir = abspath(join(dirname(__file__), 'native_generated_orig'))
     #ensure_empty_dir(generate_dir)
 
     # Step 4: Generate the cuda_native module and format it into the prepared directory.
-    #structured_code = generator.generate()  # collect all code snippets
-    #generator.format(structured_code, generate_dir)  # apply code to template files
+    #generator.format(generate_dir)
 
     # if verbose:
     #     for key, buffer in structured_code.items():

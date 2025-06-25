@@ -129,36 +129,6 @@ class LambOseenVortex2D(ExtFlow):
 
         return p_pu, U_pu
 
-        # xc, yc = [r * 0.5 for r in self.resolution]
-        # xc = self.xc
-        # x, y = self.grid  # beide Shape: (nx, ny)
-        # x = self.units.convert_length_to_lu(x)
-        # y = self.units.convert_length_to_lu(y)
-        # ux0 = self.units.convert_velocity_to_lu(self.velocity_init)
-        # beta = 0.5
-        # Rc = 20.0
-        # gamma = 0.5
-        # Cv = 1.0 / 3.0
-        #
-        # r2 = (x - xc) ** 2 + (y - yc) ** 2
-        #
-        # d = torch.pow(
-        #     1.0 - (beta * ux0) ** 2 / (2.0 * Cv)
-        #     * torch.exp(1.0 - r2),
-        #     1.0 / (gamma - 1.0)
-        # )
-        #
-        # exp_term = torch.exp(-r2 / (2.0 * Rc))
-        # u_x = (ux0
-        #     - beta * ux0 * (y - yc) / Rc * exp_term)
-        # u_y = beta * ux0 * (x - xc) / Rc * exp_term
-        #
-        # p = self.units.convert_density_lu_to_pressure_pu(d)
-        # u_x = self.units.convert_velocity_to_pu(u_x)
-        # u_y = self.units.convert_velocity_to_pu(u_y)
-        # U = torch.stack([u_x, u_y], dim=0)
-        # return p, U
-
     @property
     def boundaries(self) -> List['Boundary']:
         return []

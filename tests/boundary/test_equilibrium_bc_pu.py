@@ -33,6 +33,7 @@ class DummyEquilibriumBoundary(EquilibriumBoundaryPU):
         return context.one_tensor(shape, dtype=bool)
 
 
+
 def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
     """
     Test for the equilibrium boundary algorithm. This test verifies that the

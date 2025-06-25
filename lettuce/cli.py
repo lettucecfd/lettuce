@@ -155,7 +155,7 @@ def convergence(ctx, use_cuda_native):
         error_reporter = ErrorReporter(flow.analytic_solution, interval=1,
                                        out=None)
 
-        simulation = Simulation(flow, collision, [error_reporter], streaming_strategy=StreamingStrategy.PRE_STREAMING)
+        simulation = Simulation(flow, collision, [error_reporter])
 
         mlups = simulation(10 * resolution)
 

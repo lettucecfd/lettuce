@@ -1,7 +1,7 @@
 import json
 from enum import Enum
 from functools import lru_cache as cached
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 from . import *
 from ._registry import Registry
@@ -101,7 +101,7 @@ class DefaultCodeGeneration(Registry):
     @cached
     def cuda_block_count(self, d: Optional[int] = None) -> str:
         if d is None:
-            values = [f"{self.cuda_size(d + 1)}/{self.thread_count(d)}" for d in range(self.stencil.d)]
+            values = [f"({self.cuda_size(d + 1)} + {self.thread_count(d)} - 1)/{self.thread_count(d)}" for d in range(self.stencil.d)]
             return self.cuda.variable('dim3', 'block_count', f"dim3{{{','.join(values)}}}")
 
         assert d in range(self.stencil.d)
@@ -144,7 +144,7 @@ class DefaultCodeGeneration(Registry):
         return self.kernel_hook(self.cuda_stride(d), Parameter('index_t', f"stride_{'cxyz'[d]}"))
 
     @cached
-    def kernel_offset(self, d: int, v: int) -> str:
+    def kernel_offset(self, d: int, v: int = 0) -> str:
         assert d in range(self.stencil.d)
         assert v in [-1, 0, 1]
 
@@ -283,6 +283,9 @@ class DefaultCodeGeneration(Registry):
         return self.kernel_hook(f"{variable}.data_ptr<scalar_t>()", Parameter('scalar_t*', variable))
 
     def generate(self):
+        for d in range(self.stencil.d):
+            self.pipes.append(f"if({self.kernel_index(d)}>={self.kernel_size(d + 1)})return;")
+
         self.thread_count()
         self.cuda_block_count()
 

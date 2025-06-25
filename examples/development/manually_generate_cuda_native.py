@@ -39,13 +39,13 @@ def main(verbose=False, install=False):
     # Step 2: Initialize the generator with the D2Q9 lattice, collision, boundaries, and equilibrium.
     generator = cuda_native.Generator(lt.D2Q9(), collision, boundaries, equilibrium, streaming_strategy=StreamingStrategy.PRE_STREAMING)
     # Step 3: Prepare the directory where the generated cuda_native module will be saved.
-    generate_dir = abspath(join(dirname(__file__), 'native_hard_coded'))
+    #generate_dir = abspath(join(dirname(__file__), 'native_hard_coded'))
     #generate_dir = abspath(join(dirname(__file__), 'native_generated'))
-    #generate_dir = abspath(join(dirname(__file__), 'native_generated_orig'))
+    generate_dir = abspath(join(dirname(__file__), 'native_generated_orig'))
     #ensure_empty_dir(generate_dir)
 
     # Step 4: Generate the cuda_native module and format it into the prepared directory.
-    #generator.format(generate_dir)
+    generator.format(generate_dir)
 
     # if verbose:
     #     for key, buffer in structured_code.items():

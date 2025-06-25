@@ -20,6 +20,7 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
         assert d in range(reg.stencil.d)
         variable = self.cuda_velocity(reg)
         return f"static_cast<index_t>({variable}.size({d}))"
+        #return f"static_cast<index_t>({variable}.sizes()[{d}])"
 
     def kernel_velocity_size(self, reg: 'DefaultCodeGeneration', d: int):
         assert d in range(reg.stencil.d)
@@ -38,10 +39,10 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
             code.append('[&]{')
             variable_i = code.mutable('index_t', f"{variable}_index", '0')
             variable_m = code.mutable('index_t', f"{variable}_multiplier", '1')
-            for d in reversed(range(reg.stencil.d)):
-                code.append(f"if({self.kernel_velocity_size(reg, d)}) {{")
-                code.append(f"  {variable_i}+={reg.kernel_index(d)}*{variable_m};")
-                code.append(f"  {variable_m}*={reg.kernel_size(d + 1)};", cond=bool(d))
+            for i in reversed(range(reg.stencil.d)):
+                code.append(f"if({self.kernel_velocity_size(reg, i)}) {{")
+                code.append(f"  {variable_i}+={reg.kernel_index(i)}*{variable_m};")
+                code.append(f"  {variable_m}*={reg.kernel_size(i)};", cond=bool(i))
                 code.append(f"}}")
             code.append(f"return &{p_variable}[{variable_i}*{reg.d()}];")
             code.append('}()')
@@ -57,7 +58,8 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
     def cuda_density_size(self, reg: 'DefaultCodeGeneration', d: int):
         assert d in range(reg.stencil.d)
         variable = self.cuda_density(reg)
-        return f"static_cast<index_t>({variable}.sizes()[{d}])"
+        return f"static_cast<index_t>({variable}.size({d}))"
+        #return f"static_cast<index_t>({variable}.sizes()[{d}])"
 
     def kernel_density_size(self, reg: 'DefaultCodeGeneration', d: int):
         assert d in range(reg.stencil.d)
@@ -75,7 +77,7 @@ class NativeEquilibriumBoundaryPu(NativeBoundary):
         for d in reversed(range(reg.stencil.d)):
             code.append(f"if({self.kernel_density_size(reg, d)}) {{")
             code.append(f"  {variable_i}+={reg.kernel_index(d)}*{variable_m};")
-            code.append(f"  {variable_m}*={reg.kernel_size(d + 1)};", cond=bool(d))
+            code.append(f"  {variable_m}*={reg.kernel_size(d)};", cond=bool(d))
             code.append(f"}}")
         code.append(f"return {p_variable}[{variable_i}];")
         code.append('}()')

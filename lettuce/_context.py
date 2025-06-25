@@ -98,21 +98,15 @@ class Context:
                 new_dtype = self.dtype
 
         # Convert nested lists to NumPy array first
-        if not is_tensor:
-            try:
-                array = np.array(array, dtype=np.float32 if new_dtype.is_floating_point else None)
-            except Exception as e:
-                raise ValueError(f"Failed to convert input to NumPy array: {e}")
+        if is_tensor:
+            return array
 
-            if not array.flags['C_CONTIGUOUS']:
-                array = np.ascontiguousarray(array)
+        array = np.array(array)
+        array = np.ascontiguousarray(array)
 
-            tensor = torch.from_numpy(array)
-        else:
-            tensor = array
-
+        tensor = torch.from_numpy(array)
         tensor = tensor.to(*args, **kwargs, device=self.device, dtype=new_dtype)
-        self.synchronize()
+
         return tensor
 
     @staticmethod

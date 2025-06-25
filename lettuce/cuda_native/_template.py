@@ -99,7 +99,7 @@ extra_compile_args = {{
     'cxx': [],
     'nvcc': [
         '--ptxas-options',
-        '--warn-on-spills,--allow-expensive-optimizations=true,-O3',
+        '-v,--warn-on-spills,--allow-expensive-optimizations=true,-O3',
         '--use_fast_math',
         '--optimize', '3',
         '--maxrregcount', '192'

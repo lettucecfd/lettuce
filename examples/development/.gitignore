@@ -1,2 +1,6 @@
 # don't trak manually_generate_cuda_native.py output directory
 cuda_native
+
+native_generated
+native_generated_orig
+native_hard_coded

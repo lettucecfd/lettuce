@@ -1,6 +1,6 @@
 import torch
 
-from typing import Optional, AnyStr
+from typing import Optional
 
 from ... import Flow, Collision
 from ...cuda_native.ext import NativeBGKCollision
@@ -21,7 +21,7 @@ class BGKCollision(Collision):
         si = self.force.source_term(u) if self.force is not None else 0
         return flow.f - 1.0 / self.tau * (flow.f - feq) + si
 
-    def name(self) -> AnyStr:
+    def name(self) -> str:
         if self.force is not None:
             return f"{self.__class__.__name__}_{self.force.__class__.__name__}"
         return self.__class__.__name__
@@ -29,7 +29,7 @@ class BGKCollision(Collision):
     def native_available(self) -> bool:
         return self.force is None or self.force.native_available()
 
-    def native_generator(self) -> 'NativeCollision':
+    def native_generator(self, index: int) -> 'NativeCollision':
         if self.force is not None:
             return NativeBGKCollision(self.force.native_generator())
-        return NativeBGKCollision()
+        return NativeBGKCollision(index)

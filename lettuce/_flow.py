@@ -109,7 +109,6 @@ class Flow(ABC):
         "the flow class or the `boundaries` method is used"
         "which is deprecated and will be removed in a future version. "
         "Please use `pre_boundaries` or `post_boundaries` directly instead.",
-        DeprecationWarning,
         stacklevel=2
         )
         return self.boundaries

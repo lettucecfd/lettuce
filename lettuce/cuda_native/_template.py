@@ -13,10 +13,7 @@ ColumnLimit: 0
 MaxEmptyLinesToKeep: 1
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortLambdasOnASingleLine: Empty
-AlignConsecutiveAssignments:
-  Enabled: true
-  AcrossEmptyLines: true
-  AcrossComments: false
+AlignConsecutiveAssignments: true
 """,
 
     "lettuce_{name}/__init__.py": """

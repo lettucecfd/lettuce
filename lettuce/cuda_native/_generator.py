@@ -78,7 +78,8 @@ class Generator(DefaultCodeGeneration):
 
         if shutil.which('clang-format') is not None:
             for src in sources:
-                subprocess.run(['clang-format', '-i', f"-style=file:{generate_dir}/.clang-format", src], check=True)
+                # subprocess.run(['clang-format', '-i', f"-style=file:{generate_dir}/.clang-format", src], check=True)
+                subprocess.run(['clang-format', '-i', f"-style=file", src], check=True)
 
         return generate_dir
 

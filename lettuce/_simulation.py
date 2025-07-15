@@ -57,6 +57,7 @@ class Simulation:
         self.context = flow.context
         self.collision = collision
         self.collision_index = len(flow.pre_boundaries)
+        self.transformer = (flow.pre_boundaries or []) + [collision] + (flow.post_boundaries or [])
         self.reporter = reporter
         self.pre_boundaries = flow.pre_boundaries
         self.post_boundaries = flow.post_boundaries

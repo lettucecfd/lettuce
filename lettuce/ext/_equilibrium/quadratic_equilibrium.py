@@ -11,7 +11,6 @@ class QuadraticEquilibrium(Equilibrium):
     def __call__(self, flow: 'Flow', rho=None, u=None):
         rho = flow.rho() if rho is None else rho
         u = flow.u() if u is None else u
-
         exu = torch.tensordot(flow.torch_stencil.e, u, dims=1)
         uxu = torch.einsum("d...,d...->...", [u, u])
         feq = torch.einsum("q...,q...->q...",

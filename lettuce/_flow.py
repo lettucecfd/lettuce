@@ -68,7 +68,8 @@ class Flow(ABC):
     stencil: 'Stencil'
     torch_stencil: 'TorchStencil'
     equilibrium: 'Equilibrium'
-    boundaries: List['Boundary']
+    # pre_boundaries: List['Boundary']
+    # post_boundaries: List['Boundary']
     initialize_pressure: bool = False
     initialize_fneq: bool = False
 
@@ -94,7 +95,27 @@ class Flow(ABC):
         self.initialize()
 
     @property
-    @abstractmethod
+    # @abstractmethod
+    def pre_boundaries(self) -> List['Boundary']:
+        """boundaries"""
+        return []
+
+    @property
+    # @abstractmethod
+    def post_boundaries(self) -> List['Boundary']:
+        """boundaries"""
+        warnings.warn(
+        "This warning occurs because either post_boundaries is not defined within"
+        "the flow class or the `boundaries` method is used"
+        "which is deprecated and will be removed in a future version. "
+        "Please use `pre_boundaries` or `post_boundaries` directly instead.",
+        DeprecationWarning,
+        stacklevel=2
+        )
+        return self.boundaries
+
+    @property
+    # @abstractmethod
     def boundaries(self) -> List['Boundary']:
         """boundaries"""
         return []

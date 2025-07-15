@@ -21,11 +21,12 @@ class Generator(DefaultCodeGeneration):
     def __init__(self,
                  stencil: 'Stencil',
                  collision: 'NativeCollision',
-                 boundaries: Optional[List['NativeBoundary']] = None,
+                 pre_boundaries: Optional[List['NativeBoundary']] = None,
+                 post_boundaries: Optional[List['NativeBoundary']] = None,
                  equilibrium: Optional['NativeEquilibrium'] = None,
                  streaming_strategy=StreamingStrategy.POST_STREAMING):
 
-        transformer = [collision] + (boundaries or [])
+        transformer = (pre_boundaries or []) + [collision] + (post_boundaries or [])
         DefaultCodeGeneration.__init__(self, stencil, transformer, equilibrium, streaming_strategy)
 
     @property
@@ -35,10 +36,10 @@ class Generator(DefaultCodeGeneration):
     @cached_property
     def name(self):
         name = [self.stencil.__class__.__name__]
-        name += [self.collision.__class__.__name__ if self.collision else 'None']
+        # name += [self.collision.__class__.__name__ if self.collision else 'None']
         name += [self.streaming_strategy.name]
-        for b in self.boundaries:
-            name += [b.__class__.__name__]
+        for t in self.transformer:
+            name += [t.__class__.__name__]
         name += [self.version]
         return lettuce_hash(name)
 

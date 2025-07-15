@@ -79,6 +79,11 @@ class Context:
         return torch.zeros(size, *args, **kwargs, device=self.device,
                            dtype=(dtype or self.dtype))
 
+    def full_tensor(self, size: Union[List[int], torch.Size], value, *args,
+                    dtype=None, **kwargs) -> torch.Tensor:
+        return torch.full(size, value, *args, **kwargs, device=self.device,
+                           dtype=(dtype or self.dtype))
+
     def one_tensor(self, size: Union[List[int], torch.Size], *args, dtype=None,
                    **kwargs) -> torch.Tensor:
         return torch.ones(size, *args, **kwargs, device=self.device,
@@ -99,7 +104,7 @@ class Context:
 
         # Convert nested lists to NumPy array first
         if is_tensor:
-            return array
+            return array.to(*args, **kwargs, device=self.device, dtype=new_dtype)
 
         array = np.array(array)
         array = np.ascontiguousarray(array)

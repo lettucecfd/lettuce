@@ -48,13 +48,13 @@ class DefaultCodeGeneration(Registry):
 
         self._transformer_mask = len(transformer) > 1
 
-    @property
-    def collision(self) -> NativeCollision:
-        return cast(NativeCollision, self.transformer[0])
-
-    @property
-    def boundaries(self) -> List[NativeBoundary]:
-        return cast(List[NativeBoundary], self.transformer[1:])
+    # @property
+    # def collision(self) -> NativeCollision:
+    #     return cast(NativeCollision, self.transformer[0])
+    #
+    # @property
+    # def boundaries(self) -> List[NativeBoundary]:
+    #     return cast(List[NativeBoundary], self.transformer[1:])
 
     @cached
     def d(self) -> str:

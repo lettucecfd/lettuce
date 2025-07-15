@@ -156,7 +156,7 @@ class Simulation:
                 native_pre_boundaries.append(boundary.native_generator(i))
 
             native_post_boundaries = []
-            for i, boundary in enumerate(self.post_boundaries, start=len(pre_boundaries)+1):
+            for i, boundary in enumerate(self.post_boundaries, start=self.collision_index+1):
                 native_post_boundaries.append(boundary.native_generator(i))
 
             # begin generating cuda_native module from cuda_native components

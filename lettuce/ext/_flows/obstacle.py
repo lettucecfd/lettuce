@@ -96,6 +96,10 @@ class Obstacle(ExtFlow):
         u_char = self.units.characteristic_velocity_pu * self._unit_vector()
         u_char = append_axes(u_char, self.stencil.d)
         u = ~self.mask * u_char
+        u[0,2,:]=u[0,2,:]+np.random.rand((100))*.1
+        u[0,3,:]=u[0,2,:]+np.random.rand((100))*.1
+        u[1,2,:]=u[0,2,:]+np.random.rand((100))*.1
+        u[1,3,:]=u[0,2,:]+np.random.rand((100))*.1
         return p, u
 
     @property
@@ -114,8 +118,12 @@ class Obstacle(ExtFlow):
                                   characteristic_velocity_pu
                                   * self._unit_vector()
                                   ),
-            AntiBounceBackOutlet(self._unit_vector().tolist(),
-                                 self),
+            EquilibriumBoundaryPU(context=self.context,
+                                  mask=torch.abs(x) > x.max()- 1e-6,
+                                  velocity=self.units.
+                                  characteristic_velocity_pu
+                                           * self._unit_vector()
+                                  ),
             # EquilibriumOutletP(direction=self._unit_vector().tolist(),
             # self, rho_outlet=0),
             BounceBackBoundary(self.mask)

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "versioneer>=0.28"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lettuce"
+version = "0.2.3"
+description = "Lattice Boltzmann Python GPU"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "click==8.1.7",
+    "h5py==3.11.0",
+    "matplotlib==3.9.2",
+    "mmh3==4.1.0",
+    "numpy==2.1.0",
+    "packaging==24.1",
+    "pyevtk==1.6.0",
+    "pytest==8.3.2",
+    "setuptools==72.1.0",
+    "torch>=2.4.0",
+    "vtk>=9.5.0",
+]
+
+[project.scripts]
+lettuce = "lettuce.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/lettucecfd/lettuce"
+
+[tool.setuptools.packages.find]
+include = ["lettuce*"]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "lettuce/_version.py"
+versionfile_build = "lettuce/_version.py"
+tag_prefix = ""
+parentdir_prefix_version = "lettuce-"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true

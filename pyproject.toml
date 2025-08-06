@@ -22,7 +22,7 @@ dependencies = [
 #    "torch>=2.6.0",
 #    "vtk>=9.5.0",
     "click>=8.1.7",
-    "h5py>=3.11.0",
+    "h5py==3.11.0",
     "matplotlib>=3.9.2",
     "mmh3>=4.1.0",
     "numpy>=2.1.0",

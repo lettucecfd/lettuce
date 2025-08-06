@@ -40,10 +40,44 @@ versionfile_build = "lettuce/_version.py"
 tag_prefix = ""
 parentdir_prefix_version = "lettuce-"
 
+[project.optional-dependencies]
+cpu = [
+  "torch>=2.6.0",
+]
+cu124 = [
+  "torch>=2.6.0",
+]
+cu126 = [
+  "torch>=2.6.0",
+]
+
+[tool.uv]
+conflicts = [
+  [
+    { extra = "cpu" },
+    { extra = "cu124" },
+    { extra = "cu126" },
+  ],
+]
+
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    # Korrekte Marker, die an die Extra-Marker gebunden sind.
+    # macOS wird standardmäßig auf CPU gesetzt
+    { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32' or sys_platform == 'darwin'"},
+    { index = "pytorch-cu124", extra = "cu124", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
+    { index = "pytorch-cu126", extra = "cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cu126"

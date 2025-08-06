@@ -64,11 +64,15 @@ Installation
 
 * If you want to only **use** lettuce, run the installation (from the lettuce base directory!).::
 
-    uv pip install .´
+    uv sync
+
+* If you do not have access to a GPU, you can install the CPU-only version of lettuce by using the following command.::
+
+    uv sync --extra cpu
 
 * If you are a **developer**, add the changeable-installation-flag (`-e`)::
 
-    uv pip install -e .
+    uv sync --dev
 
 * Check out the convergence order, running on CPU::
 

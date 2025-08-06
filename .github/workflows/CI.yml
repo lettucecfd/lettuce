@@ -21,29 +21,43 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: ubuntu-latest, python-version: '3.12', torch-version: 'pytorch==2.6' }
+          # Teste auf Linux mit verschiedenen PyTorch-Versionen
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cpu' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu124' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu126' }
+
+          # Teste zusätzlich auf macOS mit der CPU-Version
+          - { os: macos-latest, python-version: '3.12', extra: 'cpu' }
 
     steps:
-
       - uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Install the project
+      - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --extra ${{ matrix.cfg.extra }}
 
-#      - name: Run tests
-#        shell: bash -el {0}
-#        run: uv run pytest tests
-
-      - name: Integration tests
+      - name: Run unit tests
         shell: bash -el {0}
         run: |
           source .venv/bin/activate
-          lettuce --no-cuda convergence --use-no-cuda_native
-          lettuce --no-cuda benchmark --use-no-cuda_native
+          uv run pytest tests
+
+      - name: Run integration tests
+        shell: bash -el {0}
+        run: |
+          source .venv/bin/activate
+          # Führe Integrationstests je nach extra aus
+          if [[ "${{ matrix.cfg.extra }}" == "cpu" ]]; then
+            lettuce --no-cuda convergence --use-no-cuda_native
+            lettuce --no-cuda benchmark --use-no-cuda_native
+          else
+            lettuce convergence
+            lettuce benchmark
+          fi
+
 
 #      - name: Setup Miniconda
 #        uses: conda-incubator/setup-miniconda@v3.0.4

@@ -10,17 +10,6 @@ readme = "README.md"
 requires-python = "==3.12"
 license = { text = "MIT" }
 dependencies = [
-#    "click==8.1.7",
-#    "h5py==3.11.0",
-#    "matplotlib==3.9.2",
-#    "mmh3==4.1.0",
-#    "numpy==2.1.0",
-#    "packaging==24.1",
-#    "pyevtk==1.6.0",
-#    "pytest==8.3.2",
-#    "setuptools==72.1.0",
-#    "torch>=2.6.0",
-#    "vtk>=9.5.0",
     "click>=8.1.7",
     "h5py==3.11.0",
     "matplotlib>=3.9.2",

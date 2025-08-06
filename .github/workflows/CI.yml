@@ -35,10 +35,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Install h5py separately to debug
-        if: runner.os == 'macOS'
-        shell: bash -el {0}
-        run: uv pip install "h5py==3.11.0"
+#      - name: Install h5py separately to debug
+#        if: runner.os == 'macOS'
+#        shell: bash -el {0}
+#        run: uv pip install "h5py==3.11.0"
 
       - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}

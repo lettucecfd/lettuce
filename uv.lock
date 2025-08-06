@@ -237,8 +237,8 @@ requires-dist = [
     { name = "pyevtk", specifier = "==1.6.0" },
     { name = "pytest", specifier = "==8.3.2" },
     { name = "setuptools", specifier = "==72.1.0" },
-    { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.4.0" },
-    { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu126" },
+    { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.6.0" },
+    { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cu126" },
     { name = "vtk", specifier = ">=9.5.0" },
 ]
 

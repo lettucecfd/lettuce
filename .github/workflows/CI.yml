@@ -32,7 +32,7 @@ jobs:
 
       - name: Install the project
         shell: bash -el {0}
-        run: uv pip install .
+        run: uv sync --locked --all-extras --dev
 
       - name: Run tests
         shell: bash -el {0}

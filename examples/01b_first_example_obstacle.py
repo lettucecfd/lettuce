@@ -2,7 +2,6 @@ import torch
 import lettuce as lt
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Rectangle
 
 """
 Context definitions.
@@ -12,7 +11,7 @@ float32 for single, float64 for double precision).
 Native CUDA is currently not supported for the anti-bounce-back outlet.
 """
 context = lt.Context(torch.device("cuda:0"), use_native=False)
-np.random.seed(0)
+
 """
 Flow definitions.
 
@@ -26,10 +25,10 @@ We need
     scale to physical units)
 to initialize the Obstacle flow object.
 """
-nx = 100
+nx = 200
 ny = 100
-Re = 6000
-Ma = 0.1
+Re = 300
+Ma = 0.01
 lx = 1
 
 flow = lt.Obstacle(context, [nx, ny], reynolds_number=Re, mach_number=Ma,
@@ -48,12 +47,7 @@ x, y = flow.grid
 r = .05*y.max()      # radius
 x_c = 0.3*x.max()   # center along x
 y_c = 0.5*y.max()   # center along y
-mask = np.bool(x)
-mask[:,:] = False
-mask[10:30,45:55] = True
-
 flow.mask = ((x - x_c) ** 2 + (y - y_c) ** 2) < (r ** 2)
-flow.mask = mask
 
 """
 To show 2D images, you need to rotate the outputs. This is because in lettuce,
@@ -94,8 +88,7 @@ simulation.reporter.append(energyreporter)
 Run num_steps iterations of the simulation.
 This can be done repeatedly (see 02_converging_flows.py).
 """
-mlups = simulation(num_steps=8700)
-mlups = simulation(num_steps=1)
+mlups = simulation(num_steps=4000)
 print("Performance in MLUPS:", mlups)
 
 """
@@ -107,29 +100,8 @@ Alternatively, the reporters can be drawn from the simulation.reporters list
 
 u = context.convert_to_ndarray(flow.u_pu)
 u_norm = np.linalg.norm(u, axis=0).transpose()
-fig, ax = plt.subplots()
-
-ax.imshow(u_norm, cmap="gray")
-ax.set_xticks([])
-ax.set_yticks([])
-
-# Define the rectangle properties
-rect_y = 45  # Starting x-coordinate
-rect_x = 10  # Starting y-coordinate
-rect_width = 20  # Width of the rectangle
-rect_height = 10  # Height of the rectangle
-
-# Create a Rectangle patch and add it to the plot
-rect = Rectangle((rect_x, rect_y), rect_width, rect_height,
-                 linewidth=1, edgecolor='black', facecolor='white', hatch="///")
-ax.add_patch(rect)
-
-# plt.title('Velocity after simulation with rectangle mask')
-# plt.colorbar()
-plt.savefig("Rectangle.pdf",
-            format='pdf',
-            bbox_inches='tight',
-            pad_inches=0.01,
-            transparent=False)
+plt.imshow(u_norm)
+plt.title('Velocity after simulation')
+plt.colorbar()
 plt.tight_layout()
 plt.show()

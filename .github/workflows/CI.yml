@@ -32,6 +32,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install HDF5 dependency on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install hdf5
+          echo "HDF5_DIR=$(brew --prefix hdf5)" >> $GITHUB_ENV
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 

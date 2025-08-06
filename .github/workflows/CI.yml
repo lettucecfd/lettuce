@@ -54,8 +54,8 @@ jobs:
             lettuce --no-cuda convergence --use-no-cuda_native
             lettuce --no-cuda benchmark --use-no-cuda_native
           else
-            lettuce convergence
-            lettuce benchmark
+            lettuce --no-cuda convergence --use-no-cuda_native
+            lettuce --no-cuda benchmark --use-no-cuda_native
           fi
 
 

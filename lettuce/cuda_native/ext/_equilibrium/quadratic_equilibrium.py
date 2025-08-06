@@ -1,4 +1,6 @@
+from lettuce.cuda_native import DefaultCodeGeneration
 from lettuce.cuda_native import NativeEquilibrium
+from lettuce.cuda_native import lettuce_hash
 
 __all__ = ['NativeQuadraticEquilibrium']
 
@@ -6,94 +8,43 @@ __all__ = ['NativeQuadraticEquilibrium']
 class NativeQuadraticEquilibrium(NativeEquilibrium):
 
     # noinspection PyMethodMayBeStatic
-    def generate_uxu(self, generator: 'Generator', u: str = None):
-        if u is None or u == 'u':
-            name = 'uxu'
-            u = 'u'
-        else:
-            name = f"uxu_{u}"
-        if not generator.registered(name):
-            generator.register(name)
-
-            global_buf = generator.append_global_buffer
-            global_buf('                        ')
-            global_buf(f"  const auto {name} =  ")
-            global_buf(f"      {u}[0] * {u}[0]  ")
-            global_buf(f"    + {u}[1] * {u}[1]  ", cond=generator.stencil.d > 1)
-            global_buf(f"    + {u}[2] * {u}[2]  ", cond=generator.stencil.d > 2)
-            global_buf('  ;                     ')
-            global_buf('                        ')
+    def uxu(self, reg: 'DefaultCodeGeneration', u: [str] = None) -> str:
+        u = u or [reg.kernel_u(d) for d in range(reg.stencil.d)]
+        # create unique variable per u
+        variable = f"uxu_{lettuce_hash(u)}"
+        code = '+'.join([f"{u[d]}*{u[d]}" for d in range(reg.stencil.d)])
+        return reg.pipes.variable('scalar_t', variable, code)
 
     # noinspection PyMethodMayBeStatic
-    def generate_exu(self, generator: 'Generator', u: str = None):
-        if u is None or u == 'u':
-            name = 'exu'
-            u = 'u'
-        else:
-            name = f"exu_{u}"
-        if not generator.registered(name):
-            generator.register(name)
-
-            global_buf = generator.append_global_buffer
-            global_buf(f"  scalar_t {name}[q];            ")
-            global_buf('  # pragma unroll                 ')
-            global_buf('  for (index_t i = 0; i < q; ++i) ')
-            global_buf('  {                               ')
-            global_buf(f"    {name}[i] =                  ")
-            global_buf(f"        e[i][0] * {u}[0]         ")
-            global_buf(f"      + e[i][1] * {u}[1]         ", cond=generator.stencil.d > 1)
-            global_buf(f"      + e[i][2] * {u}[2]         ", cond=generator.stencil.d > 2)
-            global_buf('    ;                             ')
-            global_buf('  }                               ')
+    def exu(self, reg: 'DefaultCodeGeneration', q: int, u: [str] = None) -> str:
+        u = u or [reg.kernel_u(d) for d in range(reg.stencil.d)]
+        # create unique variable per u
+        variable = f"exu_{q}_{lettuce_hash(u)}"
+        code = '+'.join([f"{reg.e(q, d)}*{u[d]}" for d in range(reg.stencil.d)])
+        return reg.pipes.variable('scalar_t', variable, code)
 
     # noinspection PyMethodMayBeStatic
-    def generate_cs_pow_two(self, generator: 'Generator'):
-        if not generator.registered('cs_pow_two'):
-            generator.register('cs_pow_two')
+    def cs_pow_two(self, _) -> str:
+        return 'static_cast<scalar_t>(1.0 / 3.0)'
 
-            generator.append_global_buffer('constexpr auto cs_pow_two = cs * cs;')
+    # noinspection PyMethodMayBeStatic
+    def two_cs_pow_two(self, _) -> str:
+        return 'static_cast<scalar_t>(2.0 / 3.0)'
 
-    def generate_two_cs_pow_two(self, generator: 'Generator'):
-        if not generator.registered('two_cs_pow_two<scalar_t>'):
-            generator.register('two_cs_pow_two<scalar_t>')
+    def f_eq(self, reg: 'DefaultCodeGeneration', q: int, rho: str = None, u: [str] = None):
+        rho = rho or reg.kernel_rho()
+        u = u or [reg.kernel_u(d) for d in range(reg.stencil.d)]
 
-            # dependencies
-            self.generate_cs_pow_two(generator)
+        # dependencies
+        uxu = self.uxu(reg, u)
+        exu_q = self.exu(reg, q, u)
+        cs_pow_two = self.cs_pow_two(reg)
+        two_cs_pow_two = self.two_cs_pow_two(reg)
 
-            # generate
-            generator.append_global_buffer('constexpr auto two_cs_pow_two = cs_pow_two + cs_pow_two;')
+        h = lettuce_hash([rho] + u)
+        variable_tmp = f"f_eq_{q}_{h}_tmp"
+        variable = f"f_eq_{q}_{h}"
 
-    def generate_f_eq(self, generator: 'Generator', rho: str = None, u: str = None):
-        if (rho is None or rho == 'rho') and (u is None or u == 'u'):
-            rho = 'rho'
-            u = 'u'
-            name = 'f_eq'
-            uxu = 'uxu'
-            exu = 'exu'
-        else:
-            rho = rho or "rho"
-            u = u or "u"
-            name = f"f_eq_{rho}_{u}"
-            if u == 'u':
-                uxu = 'uxu'
-                exu = 'exu'
-            else:
-                uxu = f"uxu_{u}"
-                exu = f"exu_{u}"
-        if not generator.registered(name):
-            generator.register(name)
-
-            # dependencies
-            self.generate_exu(generator, u)
-            self.generate_uxu(generator, u)
-            self.generate_cs_pow_two(generator)
-            self.generate_two_cs_pow_two(generator)
-
-            # generate
-            generator.append_global_buffer(f"  scalar_t {name}[q];                                                                                               ")
-            generator.append_global_buffer('# pragma unroll                                                                                                      ')
-            generator.append_global_buffer('  for (index_t i = 0; i < q; ++i)                                                                                    ')
-            generator.append_global_buffer('  {                                                                                                                  ')
-            generator.append_global_buffer(f"    scalar_t f_eq_tmp = {exu}[i] / cs_pow_two;                                                                      ")
-            generator.append_global_buffer(f"    {name}[i] = {rho} * w[i] * (({exu}[i] + {exu}[i] - {uxu}) / two_cs_pow_two + 0.5 * f_eq_tmp * f_eq_tmp + 1.0);  ")
-            generator.append_global_buffer('  }                                                                                                                  ')
+        reg.pipes.variable('scalar_t', variable_tmp, f"{exu_q}/{cs_pow_two}")
+        code = f"{rho}*{reg.w(q)}*(({exu_q}+{exu_q}-{uxu})/{two_cs_pow_two}+0.5*{variable_tmp}*{variable_tmp}+1.0)"
+        return reg.pipes.variable('scalar_t', variable, code)

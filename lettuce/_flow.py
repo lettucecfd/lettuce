@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import warnings
 
-from typing import Optional, List, Union, Callable, AnyStr
+from typing import Optional, List, Union, Callable
 from abc import ABC, abstractmethod
 
 from . import TorchStencil

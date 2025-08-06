@@ -108,7 +108,7 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
     if vtk_out:
         reporter.append(VTKReporter(interval=10))
 
-    simulation = Simulation(flow, collision, reporter)
+    simulation = Simulation(flow, collision, reporter, streaming_strategy=StreamingStrategy.PRE_STREAMING)
     mlups = simulation(num_steps=steps)
 
     # write profiling output
@@ -182,5 +182,7 @@ def convergence(ctx, use_cuda_native):
 
 if __name__ == "__main__":
     # convergence([], use_native=False)
-    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '100',
-                   '--resolution', '2048', '--use-no-cuda_native']))
+    #sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '100',
+    #               '--resolution', '2048', '--use-no-cuda_native']))
+    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '5000',
+                   '--resolution', '2048', '--use-cuda_native']))

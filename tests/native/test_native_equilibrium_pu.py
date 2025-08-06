@@ -2,14 +2,11 @@
 Test boundary conditions.
 """
 
+import pytest
+
 from lettuce import *
 from lettuce.ext import *
 from tests.conftest import DummyTGV
-
-import pytest
-
-import numpy as np
-import torch
 
 
 class my_equilibrium_boundary_mask(EquilibriumBoundaryPU):
@@ -50,8 +47,8 @@ def test_equilibrium_boundary_pu_native():
     # u = np.ones([2,1,1])
     # rho = np.ones([1,1])
 
-    boundary_native = my_equilibrium_boundary_mask(context_native, u, rho)
-    boundary_cpu = my_equilibrium_boundary_mask(context_cpu, u, rho)
+    boundary_native = my_equilibrium_boundary_mask(context_native, flow_native, u, rho)
+    boundary_cpu = my_equilibrium_boundary_mask(context_cpu, flow_cpu, u, rho)
     flow_native.boundaries.append(boundary_native)
     flow_cpu.boundaries.append(boundary_cpu)
 

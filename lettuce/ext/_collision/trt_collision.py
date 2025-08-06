@@ -29,5 +29,5 @@ class TRTCollision(Collision):
     def native_available(self) -> bool:
         return False
 
-    def native_generator(self) -> 'NativeCollision':
+    def native_generator(self, index: int) -> 'NativeCollision':
         pass

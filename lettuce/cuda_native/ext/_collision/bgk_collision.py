@@ -1,48 +1,35 @@
 from typing import Optional
 
-from ... import NativeCollision, NativeEquilibrium
+from lettuce.cuda_native import DefaultCodeGeneration, Parameter
+from ... import NativeCollision
 
 __all__ = ['NativeBGKCollision']
 
 
 class NativeBGKCollision(NativeCollision):
 
-    def __init__(self, force: Optional['NativeForce'] = None):
-        NativeCollision.__init__(self)
+    def __init__(self, index: int, force: Optional['NativeForce'] = None):
+        NativeCollision.__init__(self, index)
         self.force = force
 
     @staticmethod
-    def create(force: Optional['NativeForce'] = None):
+    def create(index: int, force: Optional['NativeForce'] = None):
         if force is None:
             return None
-        return NativeBGKCollision()
+        return NativeBGKCollision(index)
 
-    # noinspection PyMethodMayBeStatic
-    def generate_tau_inv(self, generator: 'Generator'):
-        tau_inv = f"tau_inv{hex(id(self))[2:]}"
+    def cuda_tau_inv(self, reg: 'DefaultCodeGeneration'):
+        variable = f"tau_inv{hex(id(self))[2:]}"
+        return reg.cuda_hook('1.0 / simulation.collision.tau', Parameter('double', variable))
 
-        if not generator.launcher_hooked(tau_inv):
-            buffer = generator.append_python_wrapper_before_buffer
+    def kernel_tau_inv(self, reg: 'DefaultCodeGeneration'):
+        variable = self.cuda_tau_inv(reg)
+        return reg.kernel_hook(f"static_cast<scalar_t>({variable})", Parameter('scalar_t', variable))
 
-            buffer('assert hasattr(simulation, \'collision\')')
-            buffer('assert hasattr(simulation.collision, \'tau\')')
+    def generate(self, reg: 'DefaultCodeGeneration'):
+        tau_inv = self.kernel_tau_inv(reg)
 
-            generator.launcher_hook(tau_inv, f"double {tau_inv}", tau_inv, '1./simulation.collision.tau')
-
-        if not generator.kernel_hooked(tau_inv):
-            generator.kernel_hook(tau_inv, f"scalar_t {tau_inv}", f"static_cast<scalar_t>({tau_inv})")
-
-        return tau_inv
-
-    def generate(self, generator: 'Generator'):
-        tau_inv = self.generate_tau_inv(generator)
-        generator.equilibrium.generate_f_eq(generator)
-
-        buffer = generator.append_pipeline_buffer
-        ncm = generator.support_no_collision_mask
-
-        buffer('if(no_collision_mask[node_index] == 0) {                       ', cond=ncm)
-        buffer('#pragma unroll                                                 ')
-        buffer('  for (index_t i = 0; i < q; ++i)                              ')
-        buffer(f"   f_reg[i] = f_reg[i] - ({tau_inv} * (f_reg[i] - f_eq[i]));  ")
-        buffer('}                                                              ', cond=ncm)
+        for q in range(reg.stencil.q):
+            f_q = reg.f_reg(q)
+            f_eq_q = reg.equilibrium.f_eq(reg, q)
+            reg.pipe.append(f"{f_q}={f_q}-({tau_inv}*({f_q}-{f_eq_q}));")

@@ -13,5 +13,5 @@ class NoCollision(Collision):
     def native_available(self) -> bool:
         return True
 
-    def native_generator(self) -> 'NativeCollision':
-        return NativeNoCollision()
+    def native_generator(self, index: int) -> 'NativeCollision':
+        return NativeNoCollision(index)

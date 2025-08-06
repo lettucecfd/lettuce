@@ -8,9 +8,9 @@ __all__ = ['NativeNoCollision']
 class NativeNoCollision(NativeCollision):
 
     @staticmethod
-    def create(force: Optional['NativeForce'] = None):
+    def create(index: int, force: None = None):
         assert force is None
-        return NativeNoCollision()
+        return NativeNoCollision(index)
 
-    def generate(self, generator: 'Generator'):
+    def generate(self, _):
         return

@@ -32,14 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install HDF5 dependency on macOS
-        if: runner.os == 'macOS'
-        run: |
-          brew install hdf5
-          echo "HDF5_DIR=$(brew --prefix hdf5)" >> $GITHUB_ENV
-
       - name: Install uv
         uses: astral-sh/setup-uv@v6
+
+      - name: Install h5py separately to debug
+        if: runner.os == 'macOS'
+        shell: bash -el {0}
+        run: uv pip install "h5py==3.11.0"
 
       - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}

@@ -8,9 +8,7 @@ on:
     branches:
       - "**"
   schedule:
-    # Nightly tests run on master by default:
-    #   Scheduled workflows run on the latest commit on the default or base branch.
-    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+
     - cron: "0 7 * * 1"
 
 
@@ -21,13 +19,10 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          # Teste auf Linux mit verschiedenen PyTorch-Versionen
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cpu' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu124' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu126' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu128' }
-
-          # Teste zusätzlich auf macOS mit der CPU-Version
           - { os: macos-latest, python-version: '3.12', extra: 'cpu' }
 
     steps:
@@ -39,7 +34,6 @@ jobs:
       - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}
         run: |
-          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126  
           uv sync --extra ${{ matrix.cfg.extra }}
 
       - name: Run unit tests
@@ -52,7 +46,6 @@ jobs:
         shell: bash -el {0}
         run: |
           source .venv/bin/activate
-          # Führe Integrationstests je nach extra aus
           if [[ "${{ matrix.cfg.extra }}" == "cpu" ]]; then
             lettuce --no-cuda convergence --use-no-cuda_native
             lettuce --no-cuda benchmark --use-no-cuda_native

@@ -45,13 +45,13 @@ cpu = [
   "torch>=2.6.0",
 ]
 cu124 = [
-  "torch>=2.7.*",
+  "torch<2.8",
 ]
 cu126 = [
-  "torch==2.7.*",
+  "torch<2.8",
 ]
 cu128 = [
-  "torch>=2.8.*",
+  "torch>=2.8",
 ]
 
 [tool.uv]

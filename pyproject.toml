@@ -7,7 +7,7 @@ name = "lettuce"
 version = "0.2.3"
 description = "Lattice Boltzmann Python GPU"
 readme = "README.md"
-requires-python = "==3.12"
+requires-python = "==3.12.*"
 license = { text = "MIT" }
 dependencies = [
     "click>=8.1.7",
@@ -50,9 +50,6 @@ cu124 = [
 cu126 = [
   "torch>=2.6.0",
 ]
-cu128 = [
-  "torch>=2.6.0",
-]
 
 [tool.uv]
 conflicts = [
@@ -60,7 +57,6 @@ conflicts = [
     { extra = "cpu" },
     { extra = "cu124" },
     { extra = "cu126" },
-    { extra = "cu128" },
   ],
 ]
 
@@ -71,7 +67,6 @@ torch = [
     { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32' or sys_platform == 'darwin'"},
     { index = "pytorch-cu124", extra = "cu124", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
     { index = "pytorch-cu126", extra = "cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
-    { index = "pytorch-cu128", extra = "cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'"},
 ]
 
 [[tool.uv.index]]
@@ -89,7 +84,3 @@ name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true

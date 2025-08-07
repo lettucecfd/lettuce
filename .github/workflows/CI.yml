@@ -25,6 +25,7 @@ jobs:
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cpu' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu124' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu126' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu128' }
 
           # Teste zusätzlich auf macOS mit der CPU-Version
           - { os: macos-latest, python-version: '3.12', extra: 'cpu' }

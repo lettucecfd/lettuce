@@ -25,6 +25,7 @@ jobs:
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cpu' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu124' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu126' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu128' }
 
           # Teste zusätzlich auf macOS mit der CPU-Version
           - { os: macos-latest, python-version: '3.12', extra: 'cpu' }
@@ -34,11 +35,6 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
-
-#      - name: Install h5py separately to debug
-#        if: runner.os == 'macOS'
-#        shell: bash -el {0}
-#        run: uv pip install "h5py==3.11.0"
 
       - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}
@@ -62,27 +58,3 @@ jobs:
             lettuce --no-cuda convergence --use-no-cuda_native
             lettuce --no-cuda benchmark --use-no-cuda_native
           fi
-
-
-#      - name: Setup Miniconda
-#        uses: conda-incubator/setup-miniconda@v3.0.4
-#        with:
-#          python-version: ${{ matrix.cfg.python-version }}
-#      - name: Install dependencies
-#        shell: bash -el {0}  # specifying shell to make sure the conda environment and installations are still active
-#        run: |
-#          conda install "${{ matrix.cfg.torch-version }}" -c pytorch -c nvidia
-#          conda install --file requirements.txt -c conda-forge -c pytorch -c nvidia
-#      - name: Install lettuce
-#        shell: bash -el {0}
-#        run: |
-#          pip install --use-pep517 .
-#      - name: Unit tests with pytest
-#        shell: bash -el {0}
-#        run: |
-#          pytest tests
-#      - name: Integration tests
-#        shell: bash -el {0}
-#        run: |
-#          lettuce --no-cuda convergence --use-no-cuda_native
-#          lettuce --no-cuda benchmark --use-no-cuda_native

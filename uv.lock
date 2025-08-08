@@ -2,19 +2,12 @@ version = 1
 revision = 2
 requires-python = "==3.12.*"
 resolution-markers = [
-    "(sys_platform == 'linux' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')",
-    "sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126'",
-    "(sys_platform == 'linux' and extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')",
-    "sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
-    "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')",
-    "sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
-    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
-    "extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
+    "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'",
+    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 conflicts = [[
     { package = "lettuce", extra = "cpu" },
     { package = "lettuce", extra = "cu124" },
-    { package = "lettuce", extra = "cu126" },
 ]]
 
 [[package]]
@@ -22,7 +15,7 @@ name = "click"
 version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/d3/f04c7bfcf5c1862a2a5b845c6b2b360488cf47af55dfa79c98f6a6bf98b5/click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de", size = 336121, upload-time = "2023-08-17T17:29:11.868Z" }
 wheels = [
@@ -176,24 +169,19 @@ dependencies = [
     { name = "pyevtk" },
     { name = "pytest" },
     { name = "setuptools" },
-    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "torch", version = "2.8.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32') or (sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
     { name = "vtk" },
 ]
 
 [package.optional-dependencies]
 cpu = [
-    { name = "torch", version = "2.8.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "torch", version = "2.8.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-7-lettuce-cpu') or (sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
 ]
 cu124 = [
-    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" } },
-]
-cu126 = [
-    { name = "torch", version = "2.8.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" } },
+    { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
+    { name = "torch", version = "2.8.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
 ]
 
 [package.metadata]
@@ -207,16 +195,15 @@ requires-dist = [
     { name = "pyevtk", specifier = ">=1.6.0" },
     { name = "pytest", specifier = ">=8.3.2" },
     { name = "setuptools", specifier = ">=72.1.0" },
-    { name = "torch", specifier = ">=2.4.0" },
-    { name = "torch", marker = "(sys_platform == 'darwin' and extra == 'cpu') or (sys_platform == 'linux' and extra == 'cpu') or (sys_platform == 'win32' and extra == 'cpu')", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "lettuce", extra = "cpu" } },
+    { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.4.0" },
+    { name = "torch", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu124" },
+    { name = "torch", marker = "(sys_platform == 'darwin' and extra == 'cpu') or (sys_platform == 'linux' and extra == 'cpu') or (sys_platform == 'win32' and extra == 'cpu')", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu124" },
+    { name = "torch", marker = "(sys_platform == 'darwin' and extra == 'cu124') or (sys_platform == 'linux' and extra == 'cu124') or (sys_platform == 'win32' and extra == 'cu124')", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu124" },
     { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'cpu'", specifier = ">=2.4.0" },
-    { name = "torch", marker = "(sys_platform == 'linux' and extra == 'cu124') or (sys_platform == 'win32' and extra == 'cu124')", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu124", conflict = { package = "lettuce", extra = "cu124" } },
-    { name = "torch", marker = "(sys_platform == 'linux' and extra == 'cu126') or (sys_platform == 'win32' and extra == 'cu126')", specifier = ">=2.4.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "lettuce", extra = "cu126" } },
-    { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32' and extra == 'cu124'", specifier = ">=2.4.0" },
-    { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32' and extra == 'cu126'", specifier = ">=2.4.0" },
+    { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'cu124'", specifier = ">=2.4.0" },
     { name = "vtk", specifier = ">=9.5.0" },
 ]
-provides-extras = ["cpu", "cu124", "cu126"]
+provides-extras = ["cpu", "cu124"]
 
 [[package]]
 name = "markupsafe"
@@ -325,9 +312,6 @@ wheels = [
 name = "nvidia-cublas-cu12"
 version = "12.4.5.8"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/7f/7fbae15a3982dc9595e49ce0f19332423b260045d0a6afe93cdbe2f1f624/nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0f8aa1706812e00b9f19dfe0cdb3999b092ccb8ca168c0db5b8ea712456fd9b3", size = 363333771, upload-time = "2024-06-18T19:28:09.881Z" },
     { url = "https://files.pythonhosted.org/packages/ae/71/1c91302526c45ab494c23f61c7a84aa568b8c1f9d196efa5993957faf906/nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl", hash = "sha256:2fc8da60df463fdefa81e323eef2e36489e1c94335b5358bcb38360adf75ac9b", size = 363438805, upload-time = "2024-04-03T20:57:06.025Z" },
@@ -335,25 +319,9 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cublas-cu12"
-version = "12.6.4.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/eb/ff4b8c503fa1f1796679dce648854d58751982426e4e4b37d6fce49d259c/nvidia_cublas_cu12-12.6.4.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08ed2686e9875d01b58e3cb379c6896df8e76c75e0d4a7f7dace3d7b6d9ef8eb", size = 393138322, upload-time = "2024-11-20T17:40:25.65Z" },
-    { url = "https://files.pythonhosted.org/packages/97/0d/f1f0cadbf69d5b9ef2e4f744c9466cb0a850741d08350736dfdb4aa89569/nvidia_cublas_cu12-12.6.4.1-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:235f728d6e2a409eddf1df58d5b0921cf80cfa9e72b9f2775ccb7b4a87984668", size = 390794615, upload-time = "2024-11-20T17:39:52.715Z" },
-    { url = "https://files.pythonhosted.org/packages/84/f7/985e9bdbe3e0ac9298fcc8cfa51a392862a46a0ffaccbbd56939b62a9c83/nvidia_cublas_cu12-12.6.4.1-py3-none-win_amd64.whl", hash = "sha256:9e4fa264f4d8a4eb0cdbd34beadc029f453b3bafae02401e999cf3d5a5af75f8", size = 434535301, upload-time = "2024-11-20T17:50:41.681Z" },
-]
-
-[[package]]
 name = "nvidia-cuda-cupti-cu12"
 version = "12.4.127"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/93/b5/9fb3d00386d3361b03874246190dfec7b206fd74e6e287b26a8fcb359d95/nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:79279b35cf6f91da114182a5ce1864997fd52294a87a16179ce275773799458a", size = 12354556, upload-time = "2024-06-18T19:30:40.546Z" },
     { url = "https://files.pythonhosted.org/packages/67/42/f4f60238e8194a3106d06a058d494b18e006c10bb2b915655bd9f6ea4cb1/nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:9dec60f5ac126f7bb551c055072b69d85392b13311fcc1bcda2202d172df30fb", size = 13813957, upload-time = "2024-04-03T20:55:01.564Z" },
@@ -361,27 +329,9 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cuda-cupti-cu12"
-version = "12.6.80"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/8b/2f6230cb715646c3a9425636e513227ce5c93c4d65823a734f4bb86d43c3/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:166ee35a3ff1587f2490364f90eeeb8da06cd867bd5b701bf7f9a02b78bc63fc", size = 8236764, upload-time = "2024-11-20T17:35:41.03Z" },
-    { url = "https://files.pythonhosted.org/packages/25/0f/acb326ac8fd26e13c799e0b4f3b2751543e1834f04d62e729485872198d4/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_aarch64.whl", hash = "sha256:358b4a1d35370353d52e12f0a7d1769fc01ff74a191689d3870b2123156184c4", size = 8236756, upload-time = "2024-10-01T16:57:45.507Z" },
-    { url = "https://files.pythonhosted.org/packages/49/60/7b6497946d74bcf1de852a21824d63baad12cd417db4195fc1bfe59db953/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:6768bad6cab4f19e8292125e5f1ac8aa7d1718704012a0e3272a6f61c4bce132", size = 8917980, upload-time = "2024-11-20T17:36:04.019Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/24/120ee57b218d9952c379d1e026c4479c9ece9997a4fb46303611ee48f038/nvidia_cuda_cupti_cu12-12.6.80-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a3eff6cdfcc6a4c35db968a06fcadb061cbc7d6dde548609a941ff8701b98b73", size = 8917972, upload-time = "2024-10-01T16:58:06.036Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/81/7796f096afaf726796b1b648f3bc80cafc61fe7f77f44a483c89e6c5ef34/nvidia_cuda_cupti_cu12-12.6.80-py3-none-win_amd64.whl", hash = "sha256:bbe6ae76e83ce5251b56e8c8e61a964f757175682bbad058b170b136266ab00a", size = 5724175, upload-time = "2024-10-01T17:09:47.955Z" },
-]
-
-[[package]]
 name = "nvidia-cuda-nvrtc-cu12"
 version = "12.4.127"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/aa/083b01c427e963ad0b314040565ea396f914349914c298556484f799e61b/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0eedf14185e04b76aa05b1fea04133e59f465b6f960c0cbf4e37c3cb6b0ea198", size = 24133372, upload-time = "2024-06-18T19:32:00.576Z" },
     { url = "https://files.pythonhosted.org/packages/2c/14/91ae57cd4db3f9ef7aa99f4019cfa8d54cb4caa7e00975df6467e9725a9f/nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a178759ebb095827bd30ef56598ec182b85547f1508941a3d560eb7ea1fbf338", size = 24640306, upload-time = "2024-04-03T20:56:01.463Z" },
@@ -389,25 +339,9 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cuda-nvrtc-cu12"
-version = "12.6.77"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/2f/72df534873235983cc0a5371c3661bebef7c4682760c275590b972c7b0f9/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5847f1d6e5b757f1d2b3991a01082a44aad6f10ab3c5c0213fa3e25bddc25a13", size = 23162955, upload-time = "2024-10-01T16:59:50.922Z" },
-    { url = "https://files.pythonhosted.org/packages/75/2e/46030320b5a80661e88039f59060d1790298b4718944a65a7f2aeda3d9e9/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:35b0cc6ee3a9636d5409133e79273ce1f3fd087abb0532d2d2e8fff1fe9efc53", size = 23650380, upload-time = "2024-10-01T17:00:14.643Z" },
-    { url = "https://files.pythonhosted.org/packages/f5/46/d3a1cdda8bb113c80f43a0a6f3a853356d487b830f3483f92d49ce87fa55/nvidia_cuda_nvrtc_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:f7007dbd914c56bd80ea31bc43e8e149da38f68158f423ba845fc3292684e45a", size = 39026742, upload-time = "2024-10-01T17:10:49.058Z" },
-]
-
-[[package]]
 name = "nvidia-cuda-runtime-cu12"
 version = "12.4.127"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a1/aa/b656d755f474e2084971e9a297def515938d56b466ab39624012070cb773/nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:961fe0e2e716a2a1d967aab7caee97512f71767f852f67432d572e36cb3a11f3", size = 894177, upload-time = "2024-06-18T19:32:52.877Z" },
     { url = "https://files.pythonhosted.org/packages/ea/27/1795d86fe88ef397885f2e580ac37628ed058a92ed2c39dc8eac3adf0619/nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:64403288fa2136ee8e467cdc9c9427e0434110899d07c779f25b5c068934faa5", size = 883737, upload-time = "2024-04-03T20:54:51.355Z" },
@@ -415,29 +349,11 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cuda-runtime-cu12"
-version = "12.6.77"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/ea/590b2ac00d772a8abd1c387a92b46486d2679ca6622fd25c18ff76265663/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6116fad3e049e04791c0256a9778c16237837c08b27ed8c8401e2e45de8d60cd", size = 908052, upload-time = "2024-11-20T17:35:19.905Z" },
-    { url = "https://files.pythonhosted.org/packages/b7/3d/159023799677126e20c8fd580cca09eeb28d5c5a624adc7f793b9aa8bbfa/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d461264ecb429c84c8879a7153499ddc7b19b5f8d84c204307491989a365588e", size = 908040, upload-time = "2024-10-01T16:57:22.221Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/23/e717c5ac26d26cf39a27fbc076240fad2e3b817e5889d671b67f4f9f49c5/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ba3b56a4f896141e25e19ab287cd71e52a6a0f4b29d0d31609f60e3b4d5219b7", size = 897690, upload-time = "2024-11-20T17:35:30.697Z" },
-    { url = "https://files.pythonhosted.org/packages/f0/62/65c05e161eeddbafeca24dc461f47de550d9fa8a7e04eb213e32b55cfd99/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a84d15d5e1da416dd4774cb42edf5e954a3e60cc945698dc1d5be02321c44dc8", size = 897678, upload-time = "2024-10-01T16:57:33.821Z" },
-    { url = "https://files.pythonhosted.org/packages/fa/76/4c80fa138333cc975743fd0687a745fccb30d167f906f13c1c7f9a85e5ea/nvidia_cuda_runtime_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:86c58044c824bf3c173c49a2dbc7a6c8b53cb4e4dca50068be0bf64e9dab3f7f", size = 891773, upload-time = "2024-10-01T17:09:26.362Z" },
-]
-
-[[package]]
 name = "nvidia-cudnn-cu12"
 version = "9.1.0.70"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 dependencies = [
-    { name = "nvidia-cublas-cu12", version = "12.4.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9f/fd/713452cd72343f682b1c7b9321e23829f00b842ceaedcda96e742ea0b0b3/nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl", hash = "sha256:165764f44ef8c61fcdfdfdbe769d687e06374059fbb388b6c89ecb0e28793a6f", size = 664752741, upload-time = "2024-04-22T15:24:15.253Z" },
@@ -445,30 +361,11 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cudnn-cu12"
-version = "9.10.2.21"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/41/e79269ce215c857c935fd86bcfe91a451a584dfc27f1e068f568b9ad1ab7/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:c9132cc3f8958447b4910a1720036d9eff5928cc3179b0a51fb6d167c6cc87d8", size = 705026878, upload-time = "2025-06-06T21:52:51.348Z" },
-    { url = "https://files.pythonhosted.org/packages/ba/51/e123d997aa098c61d029f76663dedbfb9bc8dcf8c60cbd6adbe42f76d049/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8", size = 706758467, upload-time = "2025-06-06T21:54:08.597Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/90/0bd6e586701b3a890fd38aa71c387dab4883d619d6e5ad912ccbd05bfd67/nvidia_cudnn_cu12-9.10.2.21-py3-none-win_amd64.whl", hash = "sha256:c6288de7d63e6cf62988f0923f96dc339cea362decb1bf5b3141883392a7d65e", size = 692992268, upload-time = "2025-06-06T21:55:18.114Z" },
-]
-
-[[package]]
 name = "nvidia-cufft-cu12"
 version = "11.2.1.3"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/8a/0e728f749baca3fbeffad762738276e5df60851958be7783af121a7221e7/nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5dad8008fc7f92f5ddfa2101430917ce2ffacd86824914c82e28990ad7f00399", size = 211422548, upload-time = "2024-06-18T19:33:39.396Z" },
@@ -477,39 +374,9 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cufft-cu12"
-version = "11.3.0.4"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/37/c50d2b2f2c07e146776389e3080f4faf70bcc4fa6e19d65bb54ca174ebc3/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d16079550df460376455cba121db6564089176d9bac9e4f360493ca4741b22a6", size = 200164144, upload-time = "2024-11-20T17:40:58.288Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/f5/188566814b7339e893f8d210d3a5332352b1409815908dad6a363dcceac1/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_aarch64.whl", hash = "sha256:8510990de9f96c803a051822618d42bf6cb8f069ff3f48d93a8486efdacb48fb", size = 200164135, upload-time = "2024-10-01T17:03:24.212Z" },
-    { url = "https://files.pythonhosted.org/packages/8f/16/73727675941ab8e6ffd86ca3a4b7b47065edcca7a997920b831f8147c99d/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ccba62eb9cef5559abd5e0d54ceed2d9934030f51163df018532142a8ec533e5", size = 200221632, upload-time = "2024-11-20T17:41:32.357Z" },
-    { url = "https://files.pythonhosted.org/packages/60/de/99ec247a07ea40c969d904fc14f3a356b3e2a704121675b75c366b694ee1/nvidia_cufft_cu12-11.3.0.4-py3-none-manylinux2014_x86_64.whl", hash = "sha256:768160ac89f6f7b459bee747e8d175dbf53619cfe74b2a5636264163138013ca", size = 200221622, upload-time = "2024-10-01T17:03:58.79Z" },
-    { url = "https://files.pythonhosted.org/packages/b4/38/36fd800cec8f6e89b7c1576edaaf8076e69ec631644cdbc1b5f2e2b5a9df/nvidia_cufft_cu12-11.3.0.4-py3-none-win_amd64.whl", hash = "sha256:6048ebddfb90d09d2707efb1fd78d4e3a77cb3ae4dc60e19aab6be0ece2ae464", size = 199356881, upload-time = "2024-10-01T17:13:01.861Z" },
-]
-
-[[package]]
-name = "nvidia-cufile-cu12"
-version = "1.11.1.6"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/66/cc9876340ac68ae71b15c743ddb13f8b30d5244af344ec8322b449e35426/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:cc23469d1c7e52ce6c1d55253273d32c565dd22068647f3aa59b3c6b005bf159", size = 1142103, upload-time = "2024-11-20T17:42:11.83Z" },
-    { url = "https://files.pythonhosted.org/packages/17/bf/cc834147263b929229ce4aadd62869f0b195e98569d4c28b23edc72b85d9/nvidia_cufile_cu12-1.11.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:8f57a0051dcf2543f6dc2b98a98cb2719c37d3cee1baba8965d57f3bbc90d4db", size = 1066155, upload-time = "2024-11-20T17:41:49.376Z" },
-]
-
-[[package]]
 name = "nvidia-curand-cu12"
 version = "10.3.5.147"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/80/9c/a79180e4d70995fdf030c6946991d0171555c6edf95c265c6b2bf7011112/nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_aarch64.whl", hash = "sha256:1f173f09e3e3c76ab084aba0de819c49e56614feae5c12f69883f4ae9bb5fad9", size = 56314811, upload-time = "2024-06-18T19:34:48.575Z" },
     { url = "https://files.pythonhosted.org/packages/8a/6d/44ad094874c6f1b9c654f8ed939590bdc408349f137f9b98a3a23ccec411/nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a88f583d4e0bb643c49743469964103aa59f7f708d862c3ddb0fc07f851e3b8b", size = 56305206, upload-time = "2024-04-03T20:58:08.722Z" },
@@ -517,31 +384,13 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-curand-cu12"
-version = "10.3.7.77"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/ac/36543605358a355632f1a6faa3e2d5dfb91eab1e4bc7d552040e0383c335/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:6e82df077060ea28e37f48a3ec442a8f47690c7499bff392a5938614b56c98d8", size = 56289881, upload-time = "2024-10-01T17:04:18.981Z" },
-    { url = "https://files.pythonhosted.org/packages/73/1b/44a01c4e70933637c93e6e1a8063d1e998b50213a6b65ac5a9169c47e98e/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:a42cd1344297f70b9e39a1e4f467a4e1c10f1da54ff7a85c12197f6c652c8bdf", size = 56279010, upload-time = "2024-11-20T17:42:50.958Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/aa/2c7ff0b5ee02eaef890c0ce7d4f74bc30901871c5e45dee1ae6d0083cd80/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:99f1a32f1ac2bd134897fc7a203f779303261268a65762a623bf30cc9fe79117", size = 56279000, upload-time = "2024-10-01T17:04:45.274Z" },
-    { url = "https://files.pythonhosted.org/packages/a6/02/5362a9396f23f7de1dd8a64369e87c85ffff8216fc8194ace0fa45ba27a5/nvidia_curand_cu12-10.3.7.77-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:7b2ed8e95595c3591d984ea3603dd66fe6ce6812b886d59049988a712ed06b6e", size = 56289882, upload-time = "2024-11-20T17:42:25.222Z" },
-    { url = "https://files.pythonhosted.org/packages/a9/a8/0cd0cec757bd4b4b4ef150fca62ec064db7d08a291dced835a0be7d2c147/nvidia_curand_cu12-10.3.7.77-py3-none-win_amd64.whl", hash = "sha256:6d6d935ffba0f3d439b7cd968192ff068fafd9018dbf1b85b37261b13cfc9905", size = 55783873, upload-time = "2024-10-01T17:13:30.377Z" },
-]
-
-[[package]]
 name = "nvidia-cusolver-cu12"
 version = "11.6.1.9"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 dependencies = [
-    { name = "nvidia-cublas-cu12", version = "12.4.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparse-cu12", version = "12.3.1.170", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvjitlink-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/46/6b/a5c33cf16af09166845345275c34ad2190944bcc6026797a39f8e0a282e0/nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d338f155f174f90724bbde3758b7ac375a70ce8e706d70b018dd3375545fc84e", size = 127634111, upload-time = "2024-06-18T19:35:01.793Z" },
@@ -550,34 +399,11 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cusolver-cu12"
-version = "11.7.1.2"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparse-cu12", version = "12.5.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/17/dbe1aa865e4fdc7b6d4d0dd308fdd5aaab60f939abfc0ea1954eac4fb113/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0ce237ef60acde1efc457335a2ddadfd7610b892d94efee7b776c64bb1cac9e0", size = 157833628, upload-time = "2024-10-01T17:05:05.591Z" },
-    { url = "https://files.pythonhosted.org/packages/f0/6e/c2cf12c9ff8b872e92b4a5740701e51ff17689c4d726fca91875b07f655d/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e9e49843a7707e42022babb9bcfa33c29857a93b88020c4e4434656a655b698c", size = 158229790, upload-time = "2024-11-20T17:43:43.211Z" },
-    { url = "https://files.pythonhosted.org/packages/9f/81/baba53585da791d043c10084cf9553e074548408e04ae884cfe9193bd484/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:6cf28f17f64107a0c4d7802be5ff5537b2130bfc112f25d5a30df227058ca0e6", size = 158229780, upload-time = "2024-10-01T17:05:39.875Z" },
-    { url = "https://files.pythonhosted.org/packages/7c/5f/07d0ba3b7f19be5a5ec32a8679fc9384cfd9fc6c869825e93be9f28d6690/nvidia_cusolver_cu12-11.7.1.2-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:dbbe4fc38ec1289c7e5230e16248365e375c3673c9c8bac5796e2e20db07f56e", size = 157833630, upload-time = "2024-11-20T17:43:16.77Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/53/fff50a0808df7113d77e3bbc7c2b7eaed6f57d5eb80fbe93ead2aea1e09a/nvidia_cusolver_cu12-11.7.1.2-py3-none-win_amd64.whl", hash = "sha256:6813f9d8073f555444a8705f3ab0296d3e1cb37a16d694c5fc8b862a0d8706d7", size = 149287877, upload-time = "2024-10-01T17:13:49.804Z" },
-]
-
-[[package]]
 name = "nvidia-cusparse-cu12"
 version = "12.3.1.170"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/96/a9/c0d2f83a53d40a4a41be14cea6a0bf9e668ffcf8b004bd65633f433050c0/nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_aarch64.whl", hash = "sha256:9d32f62896231ebe0480efd8a7f702e143c98cfaa0e8a76df3386c1ba2b54df3", size = 207381987, upload-time = "2024-06-18T19:35:32.989Z" },
@@ -586,30 +412,9 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cusparse-cu12"
-version = "12.5.4.2"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/eb/6681efd0aa7df96b4f8067b3ce7246833dd36830bb4cec8896182773db7d/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d25b62fb18751758fe3c93a4a08eff08effedfe4edf1c6bb5afd0890fe88f887", size = 216451147, upload-time = "2024-11-20T17:44:18.055Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/56/3af21e43014eb40134dea004e8d0f1ef19d9596a39e4d497d5a7de01669f/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7aa32fa5470cf754f72d1116c7cbc300b4e638d3ae5304cfa4a638a5b87161b1", size = 216451135, upload-time = "2024-10-01T17:06:03.826Z" },
-    { url = "https://files.pythonhosted.org/packages/06/1e/b8b7c2f4099a37b96af5c9bb158632ea9e5d9d27d7391d7eb8fc45236674/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:7556d9eca156e18184b94947ade0fba5bb47d69cec46bf8660fd2c71a4b48b73", size = 216561367, upload-time = "2024-11-20T17:44:54.824Z" },
-    { url = "https://files.pythonhosted.org/packages/43/ac/64c4316ba163e8217a99680c7605f779accffc6a4bcd0c778c12948d3707/nvidia_cusparse_cu12-12.5.4.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:23749a6571191a215cb74d1cdbff4a86e7b19f1200c071b3fcf844a5bea23a2f", size = 216561357, upload-time = "2024-10-01T17:06:29.861Z" },
-    { url = "https://files.pythonhosted.org/packages/45/ef/876ad8e4260e1128e6d4aac803d9d51baf3791ebdb4a9b8d9b8db032b4b0/nvidia_cusparse_cu12-12.5.4.2-py3-none-win_amd64.whl", hash = "sha256:4acb8c08855a26d737398cba8fb6f8f5045d93f82612b4cfd84645a2332ccf20", size = 213712630, upload-time = "2024-10-01T17:14:23.779Z" },
-]
-
-[[package]]
 name = "nvidia-cusparselt-cu12"
 version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/98/8e/675498726c605c9441cf46653bd29cb1b8666da1fb1469ffa25f67f20c58/nvidia_cusparselt_cu12-0.6.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:067a7f6d03ea0d4841c85f0c6f1991c5dda98211f6302cb83a4ab234ee95bef8", size = 149422781, upload-time = "2024-07-23T17:35:27.203Z" },
     { url = "https://files.pythonhosted.org/packages/78/a8/bcbb63b53a4b1234feeafb65544ee55495e1bb37ec31b999b963cbccfd1d/nvidia_cusparselt_cu12-0.6.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:df2c24502fd76ebafe7457dbc4716b2fec071aabaed4fb7691a201cde03704d9", size = 150057751, upload-time = "2024-07-23T02:35:53.074Z" },
@@ -617,48 +422,17 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-cusparselt-cu12"
-version = "0.7.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/b9/598f6ff36faaece4b3c50d26f50e38661499ff34346f00e057760b35cc9d/nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:8878dce784d0fac90131b6817b607e803c36e629ba34dc5b433471382196b6a5", size = 283835557, upload-time = "2025-02-26T00:16:54.265Z" },
-    { url = "https://files.pythonhosted.org/packages/56/79/12978b96bd44274fe38b5dde5cfb660b1d114f70a65ef962bcbbed99b549/nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f1bb701d6b930d5a7cea44c19ceb973311500847f81b634d802b7b539dc55623", size = 287193691, upload-time = "2025-02-26T00:15:44.104Z" },
-    { url = "https://files.pythonhosted.org/packages/2f/d8/a6b0d0d0c2435e9310f3e2bb0d9c9dd4c33daef86aa5f30b3681defd37ea/nvidia_cusparselt_cu12-0.7.1-py3-none-win_amd64.whl", hash = "sha256:f67fbb5831940ec829c9117b7f33807db9f9678dc2a617fbe781cac17b4e1075", size = 271020911, upload-time = "2025-02-26T00:14:47.204Z" },
-]
-
-[[package]]
 name = "nvidia-nccl-cu12"
 version = "2.21.5"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/99/12cd266d6233f47d00daf3a72739872bdc10267d0383508b0b9c84a18bb6/nvidia_nccl_cu12-2.21.5-py3-none-manylinux2014_x86_64.whl", hash = "sha256:8579076d30a8c24988834445f8d633c697d42397e92ffc3f63fa26766d25e0a0", size = 188654414, upload-time = "2024-04-03T15:32:57.427Z" },
-]
-
-[[package]]
-name = "nvidia-nccl-cu12"
-version = "2.27.3"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/7b/8354b784cf73b0ba51e566b4baba3ddd44fe8288a3d39ef1e06cd5417226/nvidia_nccl_cu12-2.27.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9ddf1a245abc36c550870f26d537a9b6087fb2e2e3d6e0ef03374c6fd19d984f", size = 322397768, upload-time = "2025-06-03T21:57:30.234Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/5b/4e4fff7bad39adf89f735f2bc87248c81db71205b62bcc0d5ca5b606b3c3/nvidia_nccl_cu12-2.27.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:adf27ccf4238253e0b826bce3ff5fa532d65fc42322c8bfdfaf28024c0fbe039", size = 322364134, upload-time = "2025-06-03T21:58:04.013Z" },
 ]
 
 [[package]]
 name = "nvidia-nvjitlink-cu12"
 version = "12.4.127"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/02/45/239d52c05074898a80a900f49b1615d81c07fceadd5ad6c4f86a987c0bc4/nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4abe7fef64914ccfa909bc2ba39739670ecc9e820c83ccc7a6ed414122599b83", size = 20552510, upload-time = "2024-06-18T20:20:13.871Z" },
     { url = "https://files.pythonhosted.org/packages/ff/ff/847841bacfbefc97a00036e0fce5a0f086b640756dc38caea5e1bb002655/nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:06b3b9b25bf3f8af351d664978ca26a16d2c5127dbd53c0497e28d1fb9611d57", size = 21066810, upload-time = "2024-04-03T20:59:46.957Z" },
@@ -666,44 +440,13 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-nvjitlink-cu12"
-version = "12.6.85"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/d7/c5383e47c7e9bf1c99d5bd2a8c935af2b6d705ad831a7ec5c97db4d82f4f/nvidia_nvjitlink_cu12-12.6.85-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl", hash = "sha256:eedc36df9e88b682efe4309aa16b5b4e78c2407eac59e8c10a6a47535164369a", size = 19744971, upload-time = "2024-11-20T17:46:53.366Z" },
-    { url = "https://files.pythonhosted.org/packages/31/db/dc71113d441f208cdfe7ae10d4983884e13f464a6252450693365e166dcf/nvidia_nvjitlink_cu12-12.6.85-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:cf4eaa7d4b6b543ffd69d6abfb11efdeb2db48270d94dfd3a452c24150829e41", size = 19270338, upload-time = "2024-11-20T17:46:29.758Z" },
-    { url = "https://files.pythonhosted.org/packages/89/76/93c1467b1387387440a4d25102d86b7794535449b689f8e2dc22c1c8ff7f/nvidia_nvjitlink_cu12-12.6.85-py3-none-win_amd64.whl", hash = "sha256:e61120e52ed675747825cdd16febc6a0730537451d867ee58bee3853b1b13d1c", size = 161908572, upload-time = "2024-11-20T17:52:40.124Z" },
-]
-
-[[package]]
 name = "nvidia-nvtx-cu12"
 version = "12.4.127"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/06/39/471f581edbb7804b39e8063d92fc8305bdc7a80ae5c07dbe6ea5c50d14a5/nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7959ad635db13edf4fc65c06a6e9f9e55fc2f92596db928d169c0bb031e88ef3", size = 100417, upload-time = "2024-06-18T20:16:22.484Z" },
     { url = "https://files.pythonhosted.org/packages/87/20/199b8713428322a2f22b722c62b8cc278cc53dffa9705d744484b5035ee9/nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:781e950d9b9f60d8241ccea575b32f5105a5baf4c2351cab5256a24869f12a1a", size = 99144, upload-time = "2024-04-03T20:56:12.406Z" },
     { url = "https://files.pythonhosted.org/packages/54/1b/f77674fbb73af98843be25803bbd3b9a4f0a96c75b8d33a2854a5c7d2d77/nvidia_nvtx_cu12-12.4.127-py3-none-win_amd64.whl", hash = "sha256:641dccaaa1139f3ffb0d3164b4b84f9d253397e38246a4f2f36728b48566d485", size = 66307, upload-time = "2024-04-03T21:02:01.959Z" },
-]
-
-[[package]]
-name = "nvidia-nvtx-cu12"
-version = "12.6.77"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b9/93/80f8a520375af9d7ee44571a6544653a176e53c2b8ccce85b97b83c2491b/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:f44f8d86bb7d5629988d61c8d3ae61dddb2015dee142740536bc7481b022fe4b", size = 90549, upload-time = "2024-11-20T17:38:17.387Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/53/36e2fd6c7068997169b49ffc8c12d5af5e5ff209df6e1a2c4d373b3a638f/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:adcaabb9d436c9761fca2b13959a2d237c5f9fd406c8e4b723c695409ff88059", size = 90539, upload-time = "2024-10-01T17:00:27.179Z" },
-    { url = "https://files.pythonhosted.org/packages/56/9a/fff8376f8e3d084cd1530e1ef7b879bb7d6d265620c95c1b322725c694f4/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b90bed3df379fa79afbd21be8e04a0314336b8ae16768b58f2d34cb1d04cd7d2", size = 89276, upload-time = "2024-11-20T17:38:27.621Z" },
-    { url = "https://files.pythonhosted.org/packages/9e/4e/0d0c945463719429b7bd21dece907ad0bde437a2ff12b9b12fee94722ab0/nvidia_nvtx_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:6574241a3ec5fdc9334353ab8c479fe75841dbe8f4532a8fc97ce63503330ba1", size = 89265, upload-time = "2024-10-01T17:00:38.172Z" },
-    { url = "https://files.pythonhosted.org/packages/f7/cd/98a447919d4ed14d407ac82b14b0a0c9c1dbfe81099934b1fc3bfd1e6316/nvidia_nvtx_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:2fb11a4af04a5e6c84073e6404d26588a34afd35379f0855a99797897efa75c0", size = 56434, upload-time = "2024-10-01T17:11:13.124Z" },
 ]
 
 [[package]]
@@ -769,7 +512,7 @@ name = "pytest"
 version = "8.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -814,11 +557,10 @@ name = "sympy"
 version = "1.13.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-    "sys_platform != 'linux' and sys_platform != 'win32'",
+    "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'",
 ]
 dependencies = [
-    { name = "mpmath", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "mpmath", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ca/99/5a5b6f19ff9f083671ddf7b9632028436167cd3d33e11015754e41b249a4/sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f", size = 7533040, upload-time = "2024-07-19T09:26:51.238Z" }
 wheels = [
@@ -830,15 +572,10 @@ name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "(sys_platform == 'linux' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')",
-    "sys_platform != 'linux' and sys_platform != 'win32' and extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126'",
-    "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')",
-    "sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
-    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
-    "extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126'",
+    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "mpmath" },
+    { name = "mpmath", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
@@ -850,31 +587,30 @@ name = "torch"
 version = "2.6.0+cu124"
 source = { registry = "https://download.pytorch.org/whl/cu124" }
 resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-    "sys_platform != 'linux' and sys_platform != 'win32'",
+    "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'",
 ]
 dependencies = [
-    { name = "filelock", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "fsspec", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "jinja2", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "networkx", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cublas-cu12", version = "12.4.5.8", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-cupti-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-nvrtc-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-runtime-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cudnn-cu12", version = "9.1.0.70", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cufft-cu12", version = "11.2.1.3", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-curand-cu12", version = "10.3.5.147", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusolver-cu12", version = "11.6.1.9", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparse-cu12", version = "12.3.1.170", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparselt-cu12", version = "0.6.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nccl-cu12", version = "2.21.5", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvjitlink-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvtx-cu12", version = "12.4.127", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "setuptools", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "sympy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "triton", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu124') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "typing-extensions", marker = "extra == 'extra-7-lettuce-cu124' or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
+    { name = "filelock", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "fsspec", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "jinja2", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "networkx", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "nvidia-cublas-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cudnn-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cufft-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-curand-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cusolver-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cusparselt-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-nccl-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "setuptools", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "sympy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
+    { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp312-cp312-linux_x86_64.whl", hash = "sha256:a393b506844035c0dac2f30ea8478c343b8e95a429f06f3b3cadfc7f53adb597" },
@@ -884,35 +620,18 @@ wheels = [
 [[package]]
 name = "torch"
 version = "2.8.0"
-source = { registry = "https://download.pytorch.org/whl/cpu" }
-resolution-markers = [
-    "sys_platform == 'darwin'",
-]
-dependencies = [
-    { name = "filelock", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "fsspec", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "jinja2", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "networkx", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "setuptools", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "typing-extensions", marker = "(sys_platform == 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:a47b7986bee3f61ad217d8a8ce24605809ab425baf349f97de758815edd2ef54" },
-]
-
-[[package]]
-name = "torch"
-version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
+]
 dependencies = [
-    { name = "filelock", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "fsspec", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "jinja2", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "networkx", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "setuptools", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
-    { name = "typing-extensions", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra != 'extra-7-lettuce-cu124' and extra != 'extra-7-lettuce-cu126')" },
+    { name = "filelock", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "fsspec", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "jinja2", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "networkx", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "setuptools", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
+    { name = "typing-extensions", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/0c/2fd4df0d83a495bb5e54dca4474c4ec5f9c62db185421563deeb5dabf609/torch-2.8.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:e2fab4153768d433f8ed9279c8133a114a034a61e77a3a104dcdf54388838705", size = 101906089, upload-time = "2025-08-06T14:53:52.631Z" },
@@ -922,90 +641,11 @@ wheels = [
 ]
 
 [[package]]
-name = "torch"
-version = "2.8.0+cpu"
-source = { registry = "https://download.pytorch.org/whl/cpu" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-    "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "jinja2", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "networkx", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'extra-7-lettuce-cpu') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-linux_s390x.whl", hash = "sha256:0e34e276722ab7dd0dffa9e12fe2135a9b34a0e300c456ed7ad6430229404eb5" },
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:610f600c102386e581327d5efc18c0d6edecb9820b4140d26163354a99cd800d" },
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:cb9a8ba8137ab24e36bf1742cb79a1294bd374db570f09fc15a5e1318160db4e" },
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-win_amd64.whl", hash = "sha256:2be20b2c05a0cce10430cc25f32b689259640d273232b2de357c35729132256d" },
-    { url = "https://download.pytorch.org/whl/cpu/torch-2.8.0%2Bcpu-cp312-cp312-win_arm64.whl", hash = "sha256:99fc421a5d234580e45957a7b02effbf3e1c884a5dd077afc85352c77bf41434" },
-]
-
-[[package]]
-name = "torch"
-version = "2.8.0+cu126"
-source = { registry = "https://download.pytorch.org/whl/cu126" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-    "sys_platform != 'linux' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "filelock", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "fsspec", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "jinja2", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "networkx", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cublas-cu12", version = "12.6.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-cupti-cu12", version = "12.6.80", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-nvrtc-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cuda-runtime-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cudnn-cu12", version = "9.10.2.21", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cufft-cu12", version = "11.3.0.4", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cufile-cu12", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-curand-cu12", version = "10.3.7.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusolver-cu12", version = "11.7.1.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparse-cu12", version = "12.5.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-cusparselt-cu12", version = "0.7.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nccl-cu12", version = "2.27.3", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvjitlink-cu12", version = "12.6.85", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "nvidia-nvtx-cu12", version = "12.6.77", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "setuptools", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "triton", version = "3.4.0", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (platform_machine != 'x86_64' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (sys_platform != 'linux' and extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-    { name = "typing-extensions", marker = "(extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra != 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra != 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://download.pytorch.org/whl/cu126/torch-2.8.0%2Bcu126-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:ce6e6a1f4803ad62d1fe51cec3fe5ca14bcd8bc7cace7b09d5590f8147fa16ad" },
-    { url = "https://download.pytorch.org/whl/cu126/torch-2.8.0%2Bcu126-cp312-cp312-win_amd64.whl", hash = "sha256:f6c79eac0018f9d131479ee1b7a68edb030619a316bfbc69275043aa4f338e4c" },
-]
-
-[[package]]
 name = "triton"
 version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/06/00/59500052cb1cf8cf5316be93598946bc451f14072c6ff256904428eaf03c/triton-3.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d9b215efc1c26fa7eefb9a157915c92d52e000d2bf83e5f69704047e63f125c", size = 253159365, upload-time = "2025-01-22T19:13:24.648Z" },
-]
-
-[[package]]
-name = "triton"
-version = "3.4.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'linux' or sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "setuptools", marker = "(sys_platform == 'linux' and extra == 'extra-7-lettuce-cu126') or (sys_platform == 'win32' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cu124' and extra == 'extra-7-lettuce-cu126') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu124') or (extra == 'extra-7-lettuce-cpu' and extra == 'extra-7-lettuce-cu126')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/66/b1eb52839f563623d185f0927eb3530ee4d5ffe9d377cdaf5346b306689e/triton-3.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:31c1d84a5c0ec2c0f8e8a072d7fd150cab84a9c239eaddc6706c081bfae4eb04", size = 155560068, upload-time = "2025-07-30T19:58:37.081Z" },
 ]
 
 [[package]]

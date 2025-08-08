@@ -41,8 +41,7 @@ jobs:
       - name: Run unit tests
         shell: bash -el {0}
         run: |
-          source .venv/bin/activate
-          uv run pytest tests
+          uv run --extra ${{ matrix.cfg.extra }} pytest tests
 
       - name: Run integration tests
         shell: bash -el {0}

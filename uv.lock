@@ -219,7 +219,7 @@ requires-dist = [
     { name = "pyevtk", specifier = ">=1.6.0" },
     { name = "pytest", specifier = ">=8.3.2" },
     { name = "setuptools", specifier = ">=72.1.0" },
-    { name = "torch", specifier = ">=2.4.0" },
+    { name = "torch", specifier = ">=2.6.0" },
     { name = "torch", marker = "(sys_platform == 'darwin' and extra == 'cpu') or (sys_platform == 'linux' and extra == 'cpu') or (sys_platform == 'win32' and extra == 'cpu')", specifier = ">=2.7.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "lettuce", extra = "cpu" } },
     { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32' and extra == 'cpu'", specifier = ">=2.7.0" },
     { name = "torch", marker = "(sys_platform == 'linux' and extra == 'cu124') or (sys_platform == 'win32' and extra == 'cu124')", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cu124", conflict = { package = "lettuce", extra = "cu124" } },

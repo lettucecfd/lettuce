@@ -19,7 +19,7 @@ dependencies = [
     "pyevtk>=1.6.0",
     "pytest>=8.3.2",
     "setuptools>=72.1.0",
-    "torch>=2.4.0",
+    "torch>=2.6.0",
     "vtk>=9.5.0",
 ]
 

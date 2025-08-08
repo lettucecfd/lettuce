@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies with ${{ matrix.cfg.extra }} extra
         shell: bash -el {0}
         run: |
-          uv sync 
+          uv sync --extra ${{ matrix.cfg.extra }}
 
       - name: Run unit tests
         shell: bash -el {0}

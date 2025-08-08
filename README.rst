@@ -66,11 +66,11 @@ Installation
 
     uv sync
 
-* If you do not have access to a GPU, you can install the CPU-only version of lettuce by using the following command.::
+* If you do not have access to a GPU or an older GPU, you can install the CPU-only version or older CUDA supported versions of lettuce by using the following commands. (cpu, cu124, cu126)::
 
     uv sync --extra cpu
 
-* If you are a **developer**, add the changeable-installation-flag (`-e`)::
+* If you are a **developer**, add the changeable-installation-flag (`--dev`)::
 
     uv sync --dev
 

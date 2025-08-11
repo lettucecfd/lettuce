@@ -60,8 +60,6 @@ Installation
 
 * The `pyproject.toml` file currently requires **CUDA 12.6**. If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee the maintenance for older CUDA versions.
 
-* **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
-
 * If you want to only **use** lettuce, run the installation (from the lettuce base directory!).::
 
     uv sync
@@ -78,7 +76,7 @@ Installation
 
     lettuce --no-cuda convergence
 
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit (see conda install command above).
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit.
 
 * Check out the performance, running on GPU::
 

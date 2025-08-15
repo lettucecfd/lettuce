@@ -93,7 +93,7 @@ pytest==8.3.2
     # via lettuce (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via matplotlib
-setuptools==72.1.0
+setuptools==80.9.0
     # via
     #   lettuce (pyproject.toml)
     #   torch

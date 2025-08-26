@@ -28,7 +28,7 @@ class EquilibriumBoundaryPU(Boundary):
         rho = flow.units.convert_pressure_pu_to_density_lu(self.pressure)
         u = flow.units.convert_velocity_to_lu(self.velocity)
         feq = flow.equilibrium(flow, rho, u)
-        feq = flow.einsum("q,q->q", [feq, torch.ones_like(flow.f)])
+        feq = torch.einsum("q...,q...->q...", [feq, torch.ones_like(flow.f)])
         return feq
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'

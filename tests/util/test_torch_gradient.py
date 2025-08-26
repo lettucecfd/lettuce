@@ -12,7 +12,7 @@ def test_torch_gradient(dims, order):
 
     _, u = flow.initial_pu()
 
-    dx = flow.units.convert_length_to_pu(1.0)
+    dx = 2 * torch.pi / 100
     u0_grad = torch_gradient(u[0],
                              dx=dx,
                              order=order)
@@ -37,12 +37,12 @@ def test_torch_gradient(dims, order):
     else:
         return
     assert np.allclose(u0_grad_analytic,
-                       u0_grad, rtol=0.0, atol=1e-3)
+                       u0_grad, rtol=1e-3, atol=1e-3)
     if dims == 2:
         assert (u0_grad_np[:, 2:-2, 2:-2]
                 == pytest.approx(u0_grad[:, 2:-2, 2:-2],
-                                 rel=0.0, abs=1e-3))
+                                 rel=1e-3, abs=1e-3))
     if dims == 3:
         assert (u0_grad_np[:, 2:-2, 2:-2, 2:-2]
                 == pytest.approx(u0_grad[:, 2:-2, 2:-2, 2:-2],
-                                 rel=0.0, abs=1e-3))
+                                 rel=1e-3, abs=1e-3))

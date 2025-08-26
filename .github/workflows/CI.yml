@@ -8,11 +8,11 @@ on:
     branches:
       - "**"
   schedule:
-    # Nightly tests run on master by default:
-    #   Scheduled workflows run on the latest commit on the default or base branch.
-    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+
     - cron: "0 7 * * 1"
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   test:
@@ -21,31 +21,36 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: ubuntu-latest, python-version: '3.10', torch-version: 'torch>=2.1' }
-          - { os: windows-latest, python-version: '3.10', torch-version: 'torch>=2.1' }
-          - { os: macos-latest, python-version: '3.10', torch-version: 'torch>=2.1' }
-          - { os: ubuntu-latest, python-version: '3.11', torch-version: 'torch>=2.1' }
-          - { os: windows-latest, python-version: '3.11', torch-version: 'torch>=2.1' }
-          - { os: macos-latest, python-version: '3.11', torch-version: 'torch>=2.1' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cpu' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu124' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu126' }
+          - { os: ubuntu-latest, python-version: '3.12', extra: 'cu128' }
+          - { os: macos-latest, python-version: '3.12', extra: 'cpu' }
 
     steps:
-
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.cfg.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.cfg.python-version }}
-      - name: Install dependencies
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies with ${{ matrix.cfg.extra }} extra
+        shell: bash -el {0}
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest "${{ matrix.cfg.torch-version }}" numpy==1.26.4 pyevtk h5py mmh3
-      - name: Install package
+          uv sync --extra ${{ matrix.cfg.extra }}
+
+      - name: Run unit tests
+        shell: bash -el {0}
         run: |
-          python setup.py install
-      - name: Unit tests with pytest
+          uv run --extra ${{ matrix.cfg.extra }} pytest tests
+
+      - name: Run integration tests
+        shell: bash -el {0}
         run: |
-          py.test tests
-      - name: Integration tests
-        run: |
-          lettuce --no-cuda convergence --use-no-cuda_native
-          lettuce --no-cuda benchmark --use-no-cuda_native
+          source .venv/bin/activate
+          if [[ "${{ matrix.cfg.extra }}" == "cpu" ]]; then
+            lettuce --no-cuda convergence --use-no-cuda_native
+            lettuce --no-cuda benchmark --use-no-cuda_native
+          else
+            lettuce --no-cuda convergence --use-no-cuda_native
+            lettuce --no-cuda benchmark --use-no-cuda_native
+          fi

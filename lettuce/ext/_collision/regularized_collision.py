@@ -35,8 +35,8 @@ class RegularizedCollision(Collision):
         pi_neq = flow.shear_tensor(flow.f - feq)
         cs4 = flow.stencil.cs ** 4
 
-        pi_neq = flow.einsum("qab,ab->q", [self.Q_matrix, pi_neq])
-        pi_neq = flow.einsum("q,q->q", [flow.torch_stencil.w, pi_neq])
+        pi_neq = torch.einsum("qab...,ab...->q...", [self.Q_matrix, pi_neq])
+        pi_neq = torch.einsum("q...,q...->q...", [flow.torch_stencil.w, pi_neq])
 
         fi1 = pi_neq / (2 * cs4)
         f = feq + (1. - 1. / self.tau) * fi1

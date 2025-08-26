@@ -1,3 +1,5 @@
+import torch
+
 from . import Force
 from lettuce.util import append_axes
 
@@ -14,11 +16,11 @@ class Guo(Force):
     def source_term(self, u):
         emu = append_axes(self.flow.torch_stencil.e,
                           self.flow.torch_stencil.d) - u
-        eu = self.flow.einsum("ib,b->i", [self.flow.torch_stencil.e, u])
-        eeu = self.flow.einsum("ia,i->ia", [self.flow.torch_stencil.e, eu])
+        eu = torch.einsum("ib,b...->i...", [self.flow.torch_stencil.e, u])
+        eeu = torch.einsum("ia,i...->ia...", [self.flow.torch_stencil.e, eu])
         emu_eeu = (emu / (self.flow.torch_stencil.cs ** 2)
                    + eeu / (self.flow.torch_stencil.cs ** 4))
-        emu_eeuF = self.flow.einsum("ia,a->i", [emu_eeu, self.acceleration])
+        emu_eeuF = torch.einsum("ia...,a->i...", [emu_eeu, self.acceleration])
         weemu_eeuF = (append_axes(self.flow.torch_stencil.w,
                                   self.flow.torch_stencil.d)
                       * emu_eeuF)

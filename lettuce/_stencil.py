@@ -1,5 +1,7 @@
 from abc import ABC
-from typing import List
+from typing import cast
+from functools import cached_property
+from typing import List, Literal
 
 import torch
 import numpy as np
@@ -16,12 +18,13 @@ class Stencil(ABC):
 
     cs: float = 1 / np.sqrt(3.0)
 
-    @property
-    def d(self):
+    @cached_property
+    def d(self) -> int:
+        assert len(self.e[0]) in [1, 2, 3]
         return len(self.e[0])
 
-    @property
-    def q(self):
+    @cached_property
+    def q(self) -> int:
         return len(self.e)
 
 
@@ -37,10 +40,11 @@ class TorchStencil:
         self.opposite = context.convert_to_tensor(stencil.opposite)
         self.e = context.convert_to_tensor(stencil.e)
 
-    @property
-    def d(self):
-        return self.e.shape[1]
+    @cached_property
+    def d(self) -> Literal[1, 2, 3]:
+        assert self.e.shape[1] in [1, 2, 3]
+        return cast(Literal[1, 2, 3], self.e.shape[1])
 
-    @property
-    def q(self):
+    @cached_property
+    def q(self) -> int:
         return self.e.shape[0]

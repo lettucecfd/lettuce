@@ -33,7 +33,9 @@ def test_force(ForceType, fix_device):
     u_sim = flow.u(acceleration=acceleration_lu)
     u_sim = flow.units.convert_velocity_to_pu(u_sim)
     _, u_ref = flow.analytic_solution()
-
+    # print(flow.boundaries)
+    # print(flow.pre_boundaries)
+    # print(flow.post_boundaries)
     fluidnodes = torch.eq(simulation.no_collision_mask, 0)
     # np.where(np.logical_not(flow.boundaries[0].mask.cpu()))
 

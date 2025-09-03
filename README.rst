@@ -39,66 +39,52 @@ Resources
 Getting Started
 ---------------
 
-To find some very simple examples of how to use lettuce, please have a look at the examples_. These will guide you through lettuce's main features. The simplest example is:
-
-https://github.com/lettucecfd/lettuce/blob/ef9830b59c6ad50e02fdf0ce24cc47ea520aa354/examples/00_simplest_TGV.py#L6-L21
-
-Please ensure you have Jupyter installed to run the Jupyter notebooks.
+To find some very simple examples of how to use lettuce, please have a look at the examples_. These will guide you through lettuce's main features. Please ensure you have Jupyter installed to run the Jupyter notebooks.
 
 .. _examples: https://github.com/lettucecfd/lettuce/tree/master/examples
 
 Installation
 ------------
 
-* Install the anaconda or miniconda package manager from https://www.anaconda.org
+* Install the uv package manager from https://docs.astral.sh/uv/
 
 * Clone this repository from github and change to it::
 
     git clone https://github.com/lettucecfd/lettuce
     cd lettuce
 
-* Update conda, create a new conda environment and activate it::
+* Create a new virtual environment and activate it::
 
-    conda update conda
-    conda create -n lettuce
-    conda activate lettuce
+    uv venv
+    source .venv/bin/activate
 
-* Follow the recommendations at https://pytorch.org/get-started/locally/ to install pytorch based on your GPU's CUDA version. You may need to install the nvidia toolkit. You may follow the instructions at https://developer.nvidia.com/cuda-downloads. You may need to check the compatibility of your NVIDIA driver with the desired CUDA version: https://docs.nvidia.com/deploy/cuda-compatibility/. To get your CUDA version, run::
+* The `pyproject.toml` file currently requires at least **CUDA 12.4** (we successfully tested CUDA 12.4, 12.6 and 12.8). If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee the maintenance for older CUDA versions.
 
-    nvcc --version
+* If you want to only **use** lettuce, run the installation (from the lettuce base directory!).::
 
-* For CUDA 12.1 (if supported by your GPU) use::
+    uv pip install .
 
-    conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia
+* If you do not have access to a GPU or an older GPU, you can install the CPU-only version or older CUDA supported versions of lettuce by using the following commands. (cpu, cu124, cu126)::
 
-* Install the remaining dependencies. _This will not include CUDA-support unless you installed `pytorch-cuda`!_::
-
-    conda activate lettuce
-    conda install --file requirements.txt -c pytorch -c nvidia -c conda-forge
-
-* **NOTE**: Sometimes, the installation does not properly set the `CUDA_HOME` variable. In this case, you may install `cudatoolkit` and set `CUDA_HOME` to the package directory (it should containa `/bin/nvcc/` subdirectory!).
-
-* If you want to only **use** lettuce, run the installation (from the lettuce base directory!). Ideally, use [PEP 517](https://peps.python.org/pep-0517/)::
-
-    pip install --use-pep517 .
+    uv pip install ".[cpu]"
 
 * If you are a **developer**, add the changeable-installation-flag (`-e`)::
 
-    pip install --use-pep517 -e .
+    uv pip install -e .
 
 * Check out the convergence order, running on CPU::
 
     lettuce --no-cuda convergence
 
-* Run the test cases::
-
-    pytest tests
-
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit (see conda install command above).
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit.
 
 * Check out the performance, running on GPU::
 
     lettuce benchmark
+
+* Run the test cases::
+
+    pytest tests
 
 Citation
 --------

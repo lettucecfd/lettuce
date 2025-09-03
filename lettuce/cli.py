@@ -79,9 +79,13 @@ def main(ctx, cuda, gpu_id, precision):
 @click.option("--use-cuda_native/--use-no-cuda_native",
               default=True,
               help="whether to use the cuda_native implementation or not.")
+@click.option("--streaming-strategy",
+              type=click.Choice(["PRE_STREAMING", "POST_STREAMING"]),
+              default="PRE_STREAMING",
+              help="Streaming strategy for the simulation (default=PRE_STREAMING).")
 @click.pass_context  # pass parameters to sub-commands
 def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
-              use_cuda_native):
+              use_cuda_native, streaming_strategy):
     """Run a short simulation and print performance in MLUPS.
     """
     # start profiling
@@ -108,7 +112,9 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
     if vtk_out:
         reporter.append(VTKReporter(interval=10))
 
-    simulation = Simulation(flow, collision, reporter)
+    selected_streaming_strategy = getattr(StreamingStrategy, streaming_strategy)
+
+    simulation = Simulation(flow, collision, reporter, streaming_strategy=selected_streaming_strategy)
     mlups = simulation(num_steps=steps)
 
     # write profiling output
@@ -120,8 +126,8 @@ def benchmark(ctx, steps, resolution, profile_out, flow, vtk_out,
         profile.dump_stats(profile_out)
         click.echo(f"Saved profiling information to {profile_out}.")
 
-    click.echo("Finished {} steps in {} bit precision. MLUPS: {:10.2f}".format(
-        steps, str(ctx.obj['dtype']).replace("torch.float", ""), mlups))
+    click.echo("Finished {} ({}, {}, {}) for {} steps in {} bit precision with {}. MLUPS: {:10.2f}".format(
+        flow.__class__.__name__, flow.stencil.__class__.__name__, ctx.obj['device'], use_cuda_native, steps, str(ctx.obj['dtype']).replace("torch.float", ""), streaming_strategy, mlups))
     return 0
 
 
@@ -182,5 +188,7 @@ def convergence(ctx, use_cuda_native):
 
 if __name__ == "__main__":
     # convergence([], use_native=False)
-    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '100',
-                   '--resolution', '2048', '--use-no-cuda_native']))
+    #sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '100',
+    #               '--resolution', '2048', '--use-no-cuda_native']))
+    sys.exit(main(['--cuda', '-p', 'single', 'benchmark', '--steps', '5000',
+                   '--resolution', '2048', '--use-cuda_native']))

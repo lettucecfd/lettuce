@@ -29,9 +29,9 @@ class DummyEquilibriumBoundary(EquilibriumBoundaryPU):
     #     m[..., :1] = True
     #     return m
 
-    def make_no_streaming_mask(self, shape: List[int], context: 'Context'
-                               ) -> Optional[torch.Tensor]:
+    def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         return context.one_tensor(shape, dtype=bool)
+
 
 
 def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
@@ -53,7 +53,7 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
         def boundaries(self) -> List['Boundary']:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
-            return [DummyEquilibriumBoundary(context=self.context,
+            return [DummyEquilibriumBoundary(context=self.context, flow=self,
                                              mask=m, velocity=velocity,
                                              pressure=pressure)]
 
@@ -96,7 +96,7 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
             return [DummyEquilibriumBoundary(
-                self.context, m, u, p)]
+                self.context, self, m, u, p)]
 
     flow_1 = DummyEQBC(context, resolution=16, reynolds_number=1,
                        mach_number=0.1, stencil=fix_stencil)
@@ -140,7 +140,7 @@ def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
         def boundaries(self) -> List[Boundary]:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
-            return [DummyEquilibriumBoundary(context=self.context,
+            return [DummyEquilibriumBoundary(flow=self, context=self.context,
                                              mask=m,
                                              velocity=self.context.
                                              convert_to_tensor(velocity),

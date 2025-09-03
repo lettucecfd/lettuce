@@ -26,7 +26,7 @@ class ObstaclePartially(lt.Obstacle):
         return
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         x = self.grid[0]
         return [
             lt.EquilibriumBoundaryPU(

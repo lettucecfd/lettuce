@@ -24,6 +24,8 @@ class BreakableSimulation(Simulation):
             self._report()
 
         while self.flow.i < num_steps:
+            # flow.i is used instead of _,
+            # because it is mutable by the reporter!
             self._collide_and_stream(self)
             self.flow.i += 1
             self._report()
@@ -43,7 +45,7 @@ class NaNReporter(Reporter):
     def __init__(self, interval=100, outdir=None, vtk=False):
         self.outdir = outdir
         self.vtk = vtk
-        self.name = 'NaN'
+        self.name = 'NaN'  # what is the name for?
         self.failed_iteration = None
         super().__init__(interval)
 

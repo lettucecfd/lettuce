@@ -50,7 +50,7 @@ def test_equilibrium_boundary_pu_algorithm(fix_stencil, fix_configuration):
 
     class DummyEQBC(TestFlow):
         @property
-        def boundaries(self) -> List['Boundary']:
+        def post_boundaries(self) -> List['Boundary']:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
             return [DummyEquilibriumBoundary(context=self.context, flow=self,
@@ -89,7 +89,7 @@ def test_equilibrium_boundary_pu_tgv(fix_stencil, fix_configuration):
 
     class DummyEQBC(TaylorGreenVortex):
         @property
-        def boundaries(self):
+        def post_boundaries(self):
             # u = self.context.one_tensor(self.stencil.d) * 0.1
             u = self.context.one_tensor(self.stencil.d) * 0.1
             p = 0  # self.context.zero_tensor([1, 1, 1])
@@ -137,7 +137,7 @@ def test_equilibrium_boundary_pu_native(fix_stencil_x_moment_dims, fix_dtype):
 
     class DummyEQBC(TestFlow):
         @property
-        def boundaries(self) -> List[Boundary]:
+        def post_boundaries(self) -> List[Boundary]:
             m = self.context.zero_tensor(self.resolution, dtype=bool)
             m[..., :1] = True
             return [DummyEquilibriumBoundary(flow=self, context=self.context,

@@ -4,34 +4,11 @@ from typing import List
 import torch
 import numpy as np
 
-from ... import Reporter, Simulation
+from ... import Reporter, Simulation, BreakableSimulation
 from .vtk_reporter import VTKReporter
 from timeit import default_timer as timer
 
-__all__ = ["NaNReporter", "HighMaReporter", "BreakableSimulation"]
-
-
-class BreakableSimulation(Simulation):
-    def __init__(self, flow: 'Flow', collision: 'Collision',
-                 reporter: List['Reporter']):
-        flow.context.use_native = False
-        super().__init__(flow, collision, reporter)
-
-    def __call__(self, num_steps: int):
-        beg = timer()
-
-        if self.flow.i == 0:
-            self._report()
-
-        while self.flow.i < num_steps:
-            # flow.i is used instead of _,
-            # because it is mutable by the reporter!
-            self._collide_and_stream(self)
-            self.flow.i += 1
-            self._report()
-
-        end = timer()
-        return num_steps * self.flow.rho().numel() / 1e6 / (end - beg)
+__all__ = ["NaNReporter", "HighMaReporter"]
 
 
 class NaNReporter(Reporter):
@@ -63,6 +40,8 @@ class NaNReporter(Reporter):
                     f'details!')
                 # telling simulation to abort simulation by setting i too high
                 simulation.flow.i = int(simulation.flow.i + 1e10)
+                # the 1e10 is "a lot", but in a very unlikely case of a very long simulation,
+                #  where num_steps >=1e10, this would not work...
 
     def outputs(self, simulation: 'Simulation'):
         if not os.path.exists(self.outdir):

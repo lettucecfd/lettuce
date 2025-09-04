@@ -75,7 +75,7 @@ class PoiseuilleFlow2D(ExtFlow):
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         mask = self.context.zero_tensor(self.resolution, dtype=bool)
         mask[:, [0, -1]] = True
         boundary = BounceBackBoundary(mask=mask)

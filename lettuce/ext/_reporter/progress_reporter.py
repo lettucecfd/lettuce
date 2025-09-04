@@ -1,7 +1,7 @@
 import os
 import datetime
 from timeit import default_timer as timer
-from ... import Reporter, Simulation
+from lettuce import Reporter, Simulation
 
 def append_txt_file(filename, line: str):
     ''' append a line to a file with an added linebreak'''
@@ -20,19 +20,20 @@ class ProgressReporter(Reporter):
 
     '''
 
-    def __init__(self, interval=1000, t_max=None, i_target=None, outdir=None, print_message=False, ckeckpoint=False):
+    def __init__(self, interval=1000, t_max=0, i_target=0, outdir=None, print_message=False, ckeckpoint=False):
         ## initialize local attributes...
         self.t_max = t_max
         self.i_start = 0
-        self.i_target = i_target  # should be equivalent to sim.num_steps
-        self.outdir= outdir
+        self.i_target = i_target # should be equivalent to sim.num_steps
+        self.outdir= str(outdir)
         self.print_message = print_message
         self.checkpoint = ckeckpoint
-        try:
-            os.makedirs(self.outdir)
-        except FileExistsError:
-            # directory already exists
-            pass
+        if self.outdir is not None:
+            try:
+                os.makedirs(self.outdir)
+            except FileExistsError:
+                # directory already exists
+                pass
         self.running = False
         self.t_start = 0  # mutability of this up for discussion for sims. started from a checkpoint
         self.t_elapsed = 0  # mutability of this up for discussion for sims. started from a checkpoint
@@ -71,7 +72,7 @@ class ProgressReporter(Reporter):
             else:
                 message = base_message
 
-            append_txt_file(self.outdir + "/watchdog_log.txt", message)
+            append_txt_file(self.outdir + "/progress_reporter_log.txt", message)
             if self.print_message:
                 print(message)
 
@@ -85,7 +86,7 @@ class ProgressReporter(Reporter):
         self.running = True
         self.t_start = timer()
         #print("starting timer")
-        print("-> WATCHDOG_REPORTER ACTIVE:\nt_start: " + str(self.t_start) 
+        print("-> PROGRESS_REPORTER ACTIVE:\nt_start: " + str(self.t_start)
               + ", interval: " + str(self.interval) + ", i_target: " + str(self.i_target))
         
         table_header = ("timestamp ".center(13)
@@ -100,10 +101,10 @@ class ProgressReporter(Reporter):
         if self.print_message:
             print(table_header)
         else:
-            print(f"print_message == False: see '{self.outdir}/watchdog_log.txt' for output")
+            print(f"print_message == False: see '{self.outdir}/progress_reporter_log.txt' for output")
 
-        append_txt_file(self.outdir+"/watchdog_log.txt",
+        append_txt_file(self.outdir+"/progress_reporter_log.txt",
                         "t_start: "+str(self.t_start)+", interval: "+str(self.interval)
                         +", i_target: "+str(self.i_target))
-        append_txt_file(self.outdir+"/watchdog_log.txt", table_header)
+        append_txt_file(self.outdir+"/progress_reporter_log.txt", table_header)
         # sizes: 13, 10, 7+2.(rjust10), 7+2.(rjust10), 1+6.(rjust10), 7+2.(rjust10), 7+2.(rjust15), 27

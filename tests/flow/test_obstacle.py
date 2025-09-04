@@ -2,7 +2,7 @@ from tests.conftest import *
 
 
 @pytest.mark.parametrize("stencil2d3d", [D2Q9(), D3Q27()])
-def test_divergence(stencil2d3d, fix_configuration):
+def test_obstacle(stencil2d3d, fix_configuration):
     device, dtype, use_native = fix_configuration
     context = Context(device=device, dtype=dtype, use_native=use_native)
 

@@ -105,7 +105,7 @@ class Obstacle(ExtFlow):
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         x = self.grid[0]
         return [
             EquilibriumBoundaryPU(flow=self, context=self.context,

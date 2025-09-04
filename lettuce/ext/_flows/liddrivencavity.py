@@ -49,7 +49,7 @@ class Cavity2D(ExtFlow):
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         x, *y = self.grid
         boundary = self.context.zero_tensor(x.shape, dtype=bool)
         top = self.context.zero_tensor(x.shape, dtype=bool)

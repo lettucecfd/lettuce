@@ -94,7 +94,7 @@ class TaylorGreenVortex(ExtFlow):
         return p, u
 
     @property
-    def boundaries(self) -> List['Boundary']:
+    def post_boundaries(self) -> List['Boundary']:
         return []
 
 

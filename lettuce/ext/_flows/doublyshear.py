@@ -76,5 +76,5 @@ class DoublyPeriodicShear2D(ExtFlow):
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         return []

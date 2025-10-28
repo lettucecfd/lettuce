@@ -60,23 +60,25 @@ Installation
 
 * The `pyproject.toml` file currently requires at least **CUDA 12.4** (we successfully tested CUDA 12.4, 12.6, 12.8 and 13.0). If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee the maintenance for older CUDA versions.
 
-* If you want to only **use** lettuce, run the installation (from the lettuce base directory!).::
+* Run the install command, depending on your needs (run one of the three options below):
 
-    uv pip install .
+        1. use lettuce (no development) with GPU support::
 
-* If you do not have access to a GPU or an older GPU, you can install the CPU-only version or older CUDA supported versions of lettuce by using the following commands. (cpu, cu124, cu126)::
+                uv pip install .
 
-    uv pip install ".[cpu]"
+        2. use lettuce (no development) with CPU only or specific older CUDA versions (if you do not have access to a GPU or an older GPU) use (cpu, cu124, cu126)::
 
-* If you are a **developer**, add the changeable-installation-flag (`-e`)::
+                uv pip install ".[cpu]"
 
-    uv pip install -e .
+        3. use and **develop** lettuce (code changes take effect in program execution): use the changeable-installation-flag (`-e`)::
+
+                uv pip install -e .
 
 * Check out the convergence order, running on CPU::
 
     lettuce --no-cuda convergence
 
-* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that cuda drivers are installed and compatible with the installed cudatoolkit.
+* For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that CUDA-capable GPU drivers are installed and compatible with the installed cudatoolkit (check cuda version number).
 
 * Check out the performance, running on GPU::
 

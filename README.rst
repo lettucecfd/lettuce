@@ -58,7 +58,7 @@ Installation
     uv venv
     source .venv/bin/activate
 
-* The `pyproject.toml` file currently requires at least **CUDA 12.4** (we successfully tested CUDA 12.4, 12.6 and 12.8). If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee the maintenance for older CUDA versions.
+* The `pyproject.toml` file currently requires at least **CUDA 12.4** (we successfully tested CUDA 12.4, 12.6, 12.8 and 13.0). If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee the maintenance for older CUDA versions.
 
 * If you want to only **use** lettuce, run the installation (from the lettuce base directory!).::
 

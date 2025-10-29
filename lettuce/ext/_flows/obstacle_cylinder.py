@@ -8,7 +8,7 @@ from . import ExtFlow
 from ... import UnitConversion, Context, Stencil, Equilibrium
 from ...util import append_axes
 from .. import (EquilibriumBoundaryPU, BounceBackBoundary,
-                EquilibriumOutletP, AntiBounceBackOutlet)
+                EquilibriumOutletP, AntiBounceBackOutlet, SolidBoundaryData, FullwayBounceBackBoundary, HalfwayBounceBackBoundary, LinearInterpolatedBounceBackBoundary)
 
 __all__ = ['ObstacleCylinder']
 
@@ -215,13 +215,196 @@ class ObstacleCylinder(ExtFlow):
                     u[0][1] = np.einsum('z,yz->yz', factor, u[0][1])
         return p, u
 
-    def make_solid_boundary_data(self):
+    def make_solid_boundary_data(self, x_center, y_center, radius):
+        pass
+        # NOT YET IMPLEMENTED; OCC-version for index lists
         # TODO: wo sollte das SolidBoundaryData Objekt definiert werden bzw. die Klasse definiert werden?
-        obstacle_solid_boudnary_data =
 
-        # OPTION 1: calculate directly from analytic function (old MP2 compact2)
-        # OPTION 2: calculate via OCC (Philipp) -> see house/MA
-        # OPTION 3 (FWBB, HWBB only): calculate from mask or only give mask...
+        # cylinder definitions:
+            # OPTION 1: calculate directly from analytic function -> see make_ibb_index_lists below
+            # OPTION 2: calculate via OCC (Philipp) -> see external house/MA
+            # OPTION 3 (FWBB, HWBB only): calculate from mask or only give mask...
+
+    def make_ibb_index_lists(self, x_center, y_center, radius):
+
+        # this method relies on self.obstacle_mask too!
+        f_index_lt = []  # indices of relevant populations (for bounce back and force-calculation) with d<=0.5
+        f_index_gt = []  # indices of relevant populations (for bounce back and force-calculation) with d>0.5
+        d_lt = []  # distances between node and boundary for d<0.5
+        d_gt = []  # distances between node and boundary for d>0.5
+
+        # searching boundary-fluid-interface and append indices to f_index, distance to boundary to d
+        if self.stencil.d == 2:
+            # TODO: the 2D and 3D options could be condensed/unified
+            nx, ny = self.resolution  # domain size in x and y
+            a, b = np.where(self.obstacle_mask)  # x- and y-index of boundaryTRUE nodes for iteration over boundary area
+
+            for p in range(0, len(a)):  # for all TRUE-nodes in boundary.mask
+                for i in range(0, self.stencil.q):  # for all stencil-directions c_i (lattice.stencil.e in lettuce)
+                    # check for boundary-nodes neighboring the domain-border.
+                    # ...they have to take the periodicity into account...
+                    border = np.zeros(self.stencil.d, dtype=int)
+
+                    if a[p] == 0 and self.stencil.e[i, 0] == -1:  # searching border on left [x]
+                        border[0] = -1
+                    elif a[p] == nx - 1 and self.stencil.e[i, 0] == 1:  # searching border on right [x]
+                        border[0] = 1
+
+                    if b[p] == 0 and self.stencil.e[i, 1] == -1:  # searching border on left [y]
+                        border[1] = -1
+                    elif b[p] == ny - 1 and self.stencil.e[i, 1] == 1:  # searching border on right [y]
+                        border[1] = 1
+
+                    try:  # try in case the neighboring cell does not exist (= an f pointing out of the simulation domain)
+                        if not self.obstacle_mask[a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                        b[p] + self.stencil.e[i, 1] - border[1] * ny]:
+                            # if the neighbour of p is False in the boundary.mask, p is a solid node, neighbouring a fluid node:
+                            # ...the direction pointing from the fluid neighbour to solid p is marked on the neighbour
+
+                            # calculate intersection point of boundary surface and link ->
+                            # ...calculate distance between fluid node and boundary surface on the link
+                            px = a[p] + self.stencil.e[i, 0] - border[0] * nx  # fluid node x-coordinate
+                            py = b[p] + self.stencil.e[i, 1] - border[1] * ny  # fluid node y-coordinate
+                            cx = self.stencil.e[
+                                self.stencil.opposite[i], 0]  # link-direction x to solid node
+                            cy = self.stencil.e[
+                                self.stencil.opposite[i], 1]  # link-direction y to solid node
+
+                            # pq-formula
+                            h1 = (px * cx + py * cy - cx * x_center - cy * y_center) / (cx * cx + cy * cy)  # p/2
+                            h2 = (px * px + py * py + x_center * x_center + y_center * y_center
+                                  - 2 * px * x_center - 2 * py * y_center - radius * radius) / (
+                                         cx * cx + cy * cy)  # q
+
+                            d1 = - h1 + np.sqrt(h1 * h1 - h2)
+                            d2 = - h1 - np.sqrt(h1 * h1 - h2)
+
+                            # distance from fluid node to the "true" boundary location
+                            # choose correct d and assign d and f_index
+                            if d1 <= 1 and np.isreal(d1):  # d should be between 0 and 1
+
+                                if d1 <= 0.5:
+                                    d_lt.append(d1)
+                                    f_index_lt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                else:  # d>0.5
+                                    d_gt.append(d1)
+                                    f_index_gt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+
+                            elif d2 <= 1 and np.isreal(d2):  # d should be between 0 and 1
+
+                                if d2 <= 0.5:
+                                    d_lt.append(d2)
+                                    f_index_lt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                else:  # d>0.5
+                                    d_gt.append(d2)
+                                    f_index_gt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                            else:  # neither d1 or d2 is real and between 0 and 1
+                                print("IBB WARNING: d1 is", d1, "; d2 is", d2, "for boundaryPoint x,y,ci", a[p],
+                                      b[p], self.stencil.e[i, 0], self.stencil.e[i, 1],
+                                      self.stencil.e[i, 2])
+                    except IndexError:
+                        pass  # just ignore this iteration since there is no neighbor there
+
+        if self.stencil.d == 3:  # like 2D, but in 3D...guess what...
+            nx, ny, nz = self.obstacle_mask.shape
+            a, b, c = np.where(self.obstacle_mask)
+
+            for p in range(0, len(a)):
+                for i in range(0, self.stencil.q):
+                    border = np.zeros(self.stencil.d, dtype=int)
+                    # x - direction
+                    if a[p] == 0 and self.stencil.e[i, 0] == -1:  # searching border on left
+                        border[0] = -1
+                    elif a[p] == nx - 1 and self.stencil.e[i, 0] == 1:  # searching border on right
+                        border[0] = 1
+                    # y - direction
+                    if b[p] == 0 and self.stencil.e[i, 1] == -1:  # searching border on left
+                        border[1] = -1
+                    elif b[p] == ny - 1 and self.stencil.e[i, 1] == 1:  # searching border on right
+                        border[1] = 1
+                    # z - direction
+                    if c[p] == 0 and self.stencil.e[i, 2] == -1:  # searching border on left
+                        border[2] = -1
+                    elif c[p] == nz - 1 and self.stencil.e[i, 2] == 1:  # searching border on right
+                        border[2] = 1
+
+                    try:  # try in case the neighboring cell does not exist (an f pointing out of simulation domain)
+                        if not self.obstacle_mask[a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                        b[p] + self.stencil.e[i, 1] - border[1] * ny,
+                        c[p] + self.stencil.e[i, 2] - border[2] * nz]:
+
+                            # calculate intersection point of boundary surface and link ->
+                            # ...calculate distance between fluid node and boundary surface on the link
+                            px = a[p] + self.stencil.e[i, 0] - border[0] * nx  # fluid node x-coordinate
+                            py = b[p] + self.stencil.e[i, 1] - border[1] * ny  # fluid node y-coordinate
+                            # Z-coordinate not needed for cylinder !
+
+                            cx = self.stencil.e[
+                                self.stencil.opposite[i], 0]  # link-direction x to solid node
+                            cy = self.stencil.e[
+                                self.stencil.opposite[i], 1]  # link-direction y to solid node
+                            # Z-coordinate not needed for cylinder !
+
+                            # pq-formula
+                            h1 = (px * cx + py * cy - cx * x_center - cy * y_center) / (cx * cx + cy * cy)  # p/2
+                            h2 = (px * px + py * py + x_center * x_center + y_center * y_center
+                                  - 2 * px * x_center - 2 * py * y_center - radius * radius) / (
+                                         cx * cx + cy * cy)  # q
+
+                            d1 = - h1 + np.sqrt(h1 * h1 - h2)
+                            d2 = - h1 - np.sqrt(h1 * h1 - h2)
+
+                            # print("xb,yb,i,d1,d2 xf, yf, cx, cy:", a[p], b[p], i, d1, d2, px, py, cx, cy)
+
+                            # distance from fluid node to the "true" boundary location
+                            # choose correct d and assign d and f_index
+                            if d1 <= 1 and np.isreal(d1):  # d should be between 0 and 1
+
+                                if d1 <= 0.5:
+                                    d_lt.append(d1)
+                                    f_index_lt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                else:  # d>0.5
+                                    d_gt.append(d1)
+                                    f_index_gt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+
+                            elif d2 <= 1 and np.isreal(d2):  # d should be between 0 and 1
+
+                                if d2 <= 0.5:
+                                    d_lt.append(d2)
+                                    f_index_lt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                else:  # d>0.5
+                                    d_gt.append(d2)
+                                    f_index_gt.append([self.stencil.opposite[i],
+                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                            else:  # neither d1 nor d2 is real and between 0 and 1
+                                print("IBB WARNING: d1 is", d1, "; d2 is", d2, "for boundaryPoint x,y,z,ci", a[p],
+                                      b[p], c[p], self.stencil.e[i, 0], self.stencil.e[i, 1],
+                                      self.stencil.e[i, 2])
+                    except IndexError:
+                        pass  # just ignore this iteration since there is no neighbor there
+
+        # output as np.array: f_index_lt, f_index_gt, d_lt, d_gt
+        return [f_index_lt, f_index_gt, d_lt, d_gt]
+
 
     @property
     def grid(self):
@@ -231,20 +414,26 @@ class ObstacleCylinder(ExtFlow):
 
     @property
     def boundaries(self):
+
+
+
         # inlet ("left side", x[0],y[1:-1], z[:])
         inlet_boundary = EquilibriumBoundaryPU(flow=self, context=self.context,
             mask=self.in_mask,
             velocity=self.u_inlet)  # (is this still true??): works with a 1 x D vector or an ny x D vector thanks to einsum-magic in EquilibriumBoundaryPU
 
-        # lateral walls ("top and bottom walls", x[:], y[0,-1], z[:])
+        # >>> lateral walls ("top and bottom walls", x[:], y[0,-1], z[:])
+        #TODO: implement lateral walls (top, bottom) for cylinder in channel (with or without wall friction)
+        #   - implementation depends on positional definition: mask or index-lists or solid_boundary_data object!
         lateral_boundary = None  # stays None if lateral_walls == 'periodic'
-        if self.lateral_walls == 'bounceback':
-            if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':  # use halfway bounce back
-                lateral_boundary = HalfwayBounceBackBoundary(self.wall_mask, self.units.lattice)
-            else:  # else use fullway bounce back
-                lateral_boundary = FullwayBounceBackBoundary(self.wall_mask, self.units.lattice)
-        elif self.lateral_walls == 'slip' or self.bc_type == 'SLIP':  # use slip-walöl (symmetry boundary)
-            lateral_boundary = SlipBoundary(self.wall_mask, self.units.lattice, 1)  # slip on x(z)-plane
+        # if self.lateral_walls == 'bounceback':
+        #     if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':  # use halfway bounce back
+        #         lateral_boundary = HalfwayBounceBackBoundary(self.wall_mask, self.units.lattice)
+        #     else:  # else use fullway bounce back
+        #         lateral_boundary = FullwayBounceBackBoundary(self.wall_mask, self.units.lattice)
+        # elif self.lateral_walls == 'slip' or self.bc_type == 'SLIP':  # use slip-walöl (symmetry boundary)
+        #     lateral_boundary = SlipBoundary(self.wall_mask, self.units.lattice, 1)  # slip on x(z)-plane
+        # <<<
 
         # outlet ("right side", x[-1],y[:], (z[:]))
         if self.units.lattice.D == 2:
@@ -256,35 +445,21 @@ class ObstacleCylinder(ExtFlow):
         obstacle_boundary = None
         # (!) the obstacle_boundary should alway be the last boundary in the list of boundaries to correctly calculate forces on the obstacle
 
-        #TODO: Wo sollte die "condition" bzw. die Maske bzw. der f_index bzw. die OCC-Berechnung beheimatet sein? Flow, Boundary, was eigenes?
-            # IDEE: SolidBoundaryData Objekt wird vom Flow berechnet und an die BBBC übergeben.
-                # ...Für FWBB oder HWBB würde aber auch eine Maske reichen...
-            # SOLID-Boundaries nach: object = Classname(Flow?, mask?, SolidBoundaryData?)
-        if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':
-            obstacle_boundary = HalfwayBounceBackBoundary(self.obstacle_mask, self.units.lattice)
+        solid_boundary_data = SolidBoundaryData()
+        solid_boundary_data.solid_mask = self.obstacle_mask
+
+        # index-lists for circular cylinder [f_index_lt, f_index_gt, d_lt, d_gt]
+        solid_boundary_data.f_index_lt, solid_boundary_data.f_index_gt, solid_boundary_data.d_lt, solid_boundary_data.dgt = self.make_ibb_index_lists(
+            x_center=self.x_pos, y_center=self.y_pos, radius=self.radius)
+
+        if self.bc_type == 'fwbb' or self.bc_type == 'FWBB':
+            obstacle_boundary = FullwayBounceBackBoundary(self.context, self, self.obstacle_mask) #TODO: add periodicity, global_solid_mask and calc_force
+        elif self.bc_type == 'hwbb' or self.bc_type == 'HWBB':
+            obstacle_boundary = HalfwayBounceBackBoundary(self.context, self, solid_boundary_data) #TODO: add periodicity, global_solid_mask and calc_force
         elif self.bc_type == 'ibb1' or self.bc_type == 'IBB1':
-            obstacle_boundary = InterpolatedBounceBackBoundary(self.obstacle_mask, self.units.lattice,
-                                                               x_center=(self.resolution[1] / 2 - 0.5),
-                                                               y_center=(self.resolution[1] / 2 - 0.5), radius=self.radius)
-        elif self.bc_type == 'ibb1c1':
-            obstacle_boundary = InterpolatedBounceBackBoundary_compact_v1(self.obstacle_mask, self.units.lattice,
-                                                               x_center=(self.resolution[1] / 2 - 0.5),
-                                                               y_center=(self.resolution[1] / 2 - 0.5), radius=self.radius)
-        elif self.bc_type == 'ibb1c2':
-            obstacle_boundary = InterpolatedBounceBackBoundary_compact_v2(self.obstacle_mask, self.units.lattice,
-                                                                          x_center=(self.resolution[1] / 2 - 0.5),
-                                                                          y_center=(self.resolution[1] / 2 - 0.5),
-                                                                          radius=self.radius)
-        elif self.bc_type == 'fwbbc':
-            obstacle_boundary = FullwayBounceBackBoundary_compact(self.obstacle_mask, self.units.lattice)
-        elif self.bc_type == 'hwbbc1':
-            obstacle_boundary = HalfwayBounceBackBoundary_compact_v1(self.obstacle_mask, self.units.lattice)
-        elif self.bc_type == 'hwbbc2':
-            obstacle_boundary = HalfwayBounceBackBoundary_compact_v2(self.obstacle_mask, self.units.lattice)
-        elif self.bc_type == 'hwbbc3':
-            obstacle_boundary = HalfwayBounceBackBoundary_compact_v3(self.obstacle_mask, self.units.lattice)
-        else:  # use Fullway Bounce Back
-            obstacle_boundary = FullwayBounceBackBoundary(self.obstacle_mask, self.units.lattice)
+            obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data, calc_force=True)
+        else:  # use basic mask Bounce Back
+            obstacle_boundary = BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
 
         if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list
             return [

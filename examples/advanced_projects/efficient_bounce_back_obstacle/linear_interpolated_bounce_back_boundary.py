@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from typing import List, Optional
-from ... import Boundary, Flow, Context
+from lettuce.lettuce import Boundary, Flow, Context
 from lettuce.lettuce.ext import SolidBoundaryData
 
 __all__ = ["LinearInterpolatedBounceBackBoundary"]

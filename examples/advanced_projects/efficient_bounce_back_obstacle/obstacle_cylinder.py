@@ -4,11 +4,12 @@ from typing import Union, List, Optional
 import numpy as np
 import torch
 
-from . import ExtFlow
-from ... import UnitConversion, Context, Stencil, Equilibrium
-from ...util import append_axes
-from .. import (EquilibriumBoundaryPU, BounceBackBoundary,
-                EquilibriumOutletP, AntiBounceBackOutlet, SolidBoundaryData, FullwayBounceBackBoundary, HalfwayBounceBackBoundary, LinearInterpolatedBounceBackBoundary)
+from lettuce.lettuce.ext._flows import ExtFlow
+from lettuce.lettuce import UnitConversion, Context, Stencil, Equilibrium
+from lettuce.lettuce.util import append_axes
+from lettuce.lettuce.ext import (EquilibriumBoundaryPU, BounceBackBoundary,
+                                 EquilibriumOutletP, AntiBounceBackOutlet)
+from lettuce.examples.advanced_projects.efficient_bounce_back_obstacle import SolidBoundaryData, FullwayBounceBackBoundary, HalfwayBounceBackBoundary, LinearInterpolatedBounceBackBoundary
 
 __all__ = ['ObstacleCylinder']
 
@@ -413,19 +414,18 @@ class ObstacleCylinder(ExtFlow):
         return np.meshgrid(*xyz, indexing='ij')  # meshgrid of x-, y- (und z-)values/indices
 
     @property
-    def boundaries(self):
-
-
+    def post_boundaries(self):
 
         # inlet ("left side", x[0],y[1:-1], z[:])
         inlet_boundary = EquilibriumBoundaryPU(flow=self, context=self.context,
             mask=self.in_mask,
             velocity=self.u_inlet)  # (is this still true??): works with a 1 x D vector or an ny x D vector thanks to einsum-magic in EquilibriumBoundaryPU
 
+        lateral_boundary = None  # stays None if lateral walls are not specified... (NOT IMPLEMENTED YET, see below)
         # >>> lateral walls ("top and bottom walls", x[:], y[0,-1], z[:])
         #TODO: implement lateral walls (top, bottom) for cylinder in channel (with or without wall friction)
         #   - implementation depends on positional definition: mask or index-lists or solid_boundary_data object!
-        lateral_boundary = None  # stays None if lateral_walls == 'periodic'
+        #
         # if self.lateral_walls == 'bounceback':
         #     if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':  # use halfway bounce back
         #         lateral_boundary = HalfwayBounceBackBoundary(self.wall_mask, self.units.lattice)
@@ -441,9 +441,24 @@ class ObstacleCylinder(ExtFlow):
         else:  # self.units.lattice.D == 3:
             outlet_boundary = EquilibriumOutletP(direction=[1, 0, 0], flow=self)  # outlet in positive x-direction
 
+        # create and return boundary-list
+        if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list
+            return [
+                inlet_boundary,
+                outlet_boundary,
+            ]
+        else:
+            return [
+                inlet_boundary,
+                outlet_boundary,
+                lateral_boundary,
+            ]
+
+    @property
+    def post_streaming_boundaries(self):
         # obstacle (for example: obstacle "cylinder" with radius centered at position x_pos, y_pos) -> to be set via obstacle_mask.setter
         obstacle_boundary = None
-        # (!) the obstacle_boundary should alway be the last boundary in the list of boundaries to correctly calculate forces on the obstacle
+        # (!) the obstacle_boundary should always be the last boundary in the list of boundaries to correctly calculate forces on the obstacle
 
         solid_boundary_data = SolidBoundaryData()
         solid_boundary_data.solid_mask = self.obstacle_mask
@@ -453,27 +468,18 @@ class ObstacleCylinder(ExtFlow):
             x_center=self.x_pos, y_center=self.y_pos, radius=self.radius)
 
         if self.bc_type == 'fwbb' or self.bc_type == 'FWBB':
-            obstacle_boundary = FullwayBounceBackBoundary(self.context, self, self.obstacle_mask) #TODO: add periodicity, global_solid_mask and calc_force
+            obstacle_boundary = FullwayBounceBackBoundary(self.context, self,
+                                                          self.obstacle_mask)  # TODO: add periodicity, global_solid_mask and calc_force
         elif self.bc_type == 'hwbb' or self.bc_type == 'HWBB':
-            obstacle_boundary = HalfwayBounceBackBoundary(self.context, self, solid_boundary_data) #TODO: add periodicity, global_solid_mask and calc_force
+            obstacle_boundary = HalfwayBounceBackBoundary(self.context, self,
+                                                          solid_boundary_data)  # TODO: add periodicity, global_solid_mask and calc_force
         elif self.bc_type == 'ibb1' or self.bc_type == 'IBB1':
-            obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data, calc_force=True)
+            obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data,
+                                                                     calc_force=True)
         else:  # use basic mask Bounce Back
             obstacle_boundary = BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
 
-        if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list
-            return [
-                inlet_boundary,
-                outlet_boundary,
-                obstacle_boundary
-            ]
-        else:
-            return [
-                inlet_boundary,
-                outlet_boundary,
-                lateral_boundary,
-                obstacle_boundary
-            ]
+        return [obstacle_boundary]
 
     def _unit_vector(self, i=0):
         return np.eye(self.units.lattice.D)[i]

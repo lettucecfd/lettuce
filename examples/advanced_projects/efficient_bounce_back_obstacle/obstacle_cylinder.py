@@ -42,6 +42,8 @@ class ObstacleCylinder(ExtFlow):
         <to fill>
         ----------
     """
+    # TODO: rewrite description above
+
     def __init__(self, context: Context, resolution: Union[int, List[int]],
                  reynolds_number, mach_number,
                  char_length_pu, char_length_lu, char_velocity_pu=1,

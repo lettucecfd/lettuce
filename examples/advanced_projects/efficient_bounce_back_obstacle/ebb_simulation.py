@@ -7,11 +7,10 @@ from timeit import default_timer as timer
 from typing import List, Optional
 from abc import ABC, abstractmethod
 
-from . import *
-from lettuce.lettuce.cuda_native import NativeCollision, Generator, StreamingStrategy
+from lettuce.cuda_native import NativeCollision, Generator, StreamingStrategy
 
-from lettuce.lettuce._simulation import *
-from lettuce.lettuce import Flow
+from lettuce._simulation import *
+from lettuce import Flow
 
 __all__ = ['EbbSimulation']
 

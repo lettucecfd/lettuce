@@ -4,11 +4,11 @@
 # IMPORT
 
 import lettuce as lt
-from .obstacle_cylinder import ObstacleCylinder
-from .ebb_simulation import EbbSimulation
+from obstacle_cylinder import ObstacleCylinder
+from ebb_simulation import EbbSimulation
 
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks
+#from scipy.signal import find_peaks
 
 import sys
 import warnings
@@ -34,6 +34,8 @@ import shutil
 from pyevtk.hl import imageToVTK
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
+from helperCode import Logger
+
 import pickle
 from copy import deepcopy
 from timeit import default_timer as timer
@@ -57,8 +59,8 @@ parser.add_argument("--outdir", default=os.getcwd(), type=str, help="directory t
 parser.add_argument("--outdir_data", default=None, type=str, help="directory to save large/many files to; if not set, everything os saved to outdir")
 
 # flow physics and geometry
-parser.add_argument("--re", default=200, type=float, help="Reynolds number")
-parser.add_argument("--ma", default=0.1, type=float, help="Mach number (should stay < 0.3, and < 0.1 for highest accuracy. low Ma can lead to instability because of round of errors ")
+parser.add_argument("--reynolds_number", default=200, type=float, help="Reynolds number")
+parser.add_argument("--mach_number", default=0.1, type=float, help="Mach number (should stay < 0.3, and < 0.1 for highest accuracy. low Ma can lead to instability because of round of errors ")
 parser.add_argument("--char_velocity_pu", default=1, type=float, help="characteristic velocity of the flow in physical units (PU)")
 
 parser.add_argument("--char_length_lu", default=1, type=int, help="characteristic length of the flow in lattice units. Number of gridpoints per diameter for a circular cylinder")
@@ -102,7 +104,7 @@ float_dtype = args["float_dtype"]
 t_sim_max = args["t_sim_max"]
 
 text_output_only = args["text_output_only"]
-no_data_flag = args["no_data_flag"]
+no_data_flag = args["no_data"]
 
 timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
 sim_id = str(timestamp) + "-" + name
@@ -141,7 +143,7 @@ sys.stdout = Logger(outdir)
 # PROCESS AND SET PARAMETERS
 
 # calc. relative starting point of peak_finding for Cd_mean Measurement to cut of any transients
-if args["re"] > 1000:
+if args["reynolds_number"] > 1000:
     periodic_start = 0.4
 else:
     periodic_start = 0.9
@@ -157,7 +159,7 @@ if args["domain_length_x_in_d"] is None or args["domain_length_x_in_d"] <=1 :
 else:
     domain_length_x_in_d = args["domain_length_x_in_d"]
 
-if args["domain_width_in_d"] is None:  # will be 2D
+if args["domain_width_z_in_d"] is None:  # will be 2D
     dims = 2
 else: # will be 3D
     dims = 3
@@ -218,6 +220,7 @@ elif float_dtype == "half" or float_dtype == "float16":
     float_dtype = torch.float16
 
 # OVERWRITE n_steps, if t_target is given
+n_steps = args["n_steps"]
 T_target = 0
 if args["t_target"] > 0:
     T_target = args["t_target"]
@@ -236,15 +239,25 @@ if args["eqlm"]:
 # #nan_reporter = args["nan_reporter"]
 
 ###
-context = lt.Context(default_device)
+print("initializing context")
+context = lt.Context(device=default_device, dtype=float_dtype,use_native=False)
 
+print("initializing flow")
 flow = ObstacleCylinder(context=context, resolution=resolution,
-                        reynolds_number=re, mach_number=ma,
-                        char_length_pu=, char_length_lu=, char_velocity_pu=,
-                        bc_type=, stencil=stencil, equilibrium=)
+                        reynolds_number=reynolds_number, mach_number=mach_number,
+                        char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
+                        bc_type=args["bbbc_type"], stencil=stencil)
 
-relaxation_parameter_tau = flow.units.relaxation_parameter_lu
-collision_operator = lt.BGKCollision(relaxation_parameter_tau)
+collision_operator = None
+if args["collision"].casefold() == "reg" or args["collision"].casefold() == "bgk_reg":
+    collision_operator = lt.RegularizedCollision(tau=flow.units.relaxation_parameter_lu)
+elif args["collision"].casefold() == "kbc":
+    if dims == 2:
+        collision_operator = lt.KBCCollision2D(tau=flow.units.relaxation_parameter_lu)
+    else:
+        collision_operator = lt.KBCCollision3D(tau=flow.units.relaxation_parameter_lu)
+else:  # default to bgk
+    collision_operator = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 
 #TODO reporter
 
@@ -255,7 +268,7 @@ simulation(num_steps=n_steps)
 
 # Process arguments and set parameters
 # - I/O: create timestamp, sim-ID, outdir (path) and outdir_data (path)
-# - flow physics: char_velocity, re, ma, density, presure, length, domain (resolution)
+# - flow physics: char_velocity, re, ma, density, pressure, length, domain (resolution)
 # - solver settings
 
 # save input parameters to file
@@ -285,7 +298,11 @@ simulation(num_steps=n_steps)
 
 # export stats
 
-# plotting and post processing
+# plotting and post-processing
 # - save data
 
-# reset lOGGER (!)
+# reset lLOGGER (!)
+
+## END OF SCRIPT
+print(f"\n♬ THE END ♬")
+sys.stdout = old_stdout

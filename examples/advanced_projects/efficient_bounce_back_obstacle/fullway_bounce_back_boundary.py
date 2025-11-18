@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from typing import List, Optional
-from lettuce.lettuce import Boundary, Flow, Context
+from lettuce import Boundary, Flow, Context
 
 __all__ = ["FullwayBounceBackBoundary"]
 

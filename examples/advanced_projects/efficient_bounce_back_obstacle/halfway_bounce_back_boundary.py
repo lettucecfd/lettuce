@@ -2,8 +2,8 @@ import torch
 import numpy as np
 
 from typing import List, Optional
-from lettuce.lettuce import Boundary, Flow, Context
-from lettuce.lettuce.ext import SolidBoundaryData
+from lettuce import Boundary, Flow, Context
+from solid_boundary_data import SolidBoundaryData
 
 __all__ = ["HalfwayBounceBackBoundary"]
 

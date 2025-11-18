@@ -4,12 +4,12 @@ from typing import Union, List, Optional
 import numpy as np
 import torch
 
-from lettuce.lettuce.ext._flows import ExtFlow
-from lettuce.lettuce import UnitConversion, Context, Stencil, Equilibrium
-from lettuce.lettuce.util import append_axes
-from lettuce.lettuce.ext import (EquilibriumBoundaryPU, BounceBackBoundary,
+from lettuce.ext._flows import ExtFlow
+from lettuce import UnitConversion, Context, Stencil, Equilibrium
+from lettuce.util import append_axes
+from lettuce.ext import (EquilibriumBoundaryPU, BounceBackBoundary,
                                  EquilibriumOutletP, AntiBounceBackOutlet)
-from lettuce.examples.advanced_projects.efficient_bounce_back_obstacle import SolidBoundaryData, FullwayBounceBackBoundary, HalfwayBounceBackBoundary, LinearInterpolatedBounceBackBoundary
+from examples.advanced_projects.efficient_bounce_back_obstacle import SolidBoundaryData, FullwayBounceBackBoundary, HalfwayBounceBackBoundary, LinearInterpolatedBounceBackBoundary
 
 __all__ = ['ObstacleCylinder']
 
@@ -59,10 +59,7 @@ class ObstacleCylinder(ExtFlow):
         self.resolution = self.make_resolution(resolution, stencil) # shape in LU, if only INT, a cube shaped domain is assumed
         self.char_velocity_pu = char_velocity_pu
 
-        # initialize super class with unit conversion, equilibrium, context etc.
-        ExtFlow.__init__(self, context, resolution, reynolds_number,
-                         mach_number, stencil, equilibrium)
-            # UnitConversion: defined below unter make_units(), executed by ExtFlow; flow object gets units-attibute!
+
 
         # flow and boundary settings
         self.perturb_init = perturb_init  # toggle: introduce asymmetry in initial solution to trigger v'Karman Vortex Street
@@ -72,9 +69,16 @@ class ObstacleCylinder(ExtFlow):
 
         # initialize masks (init with zeros)
         self.solid_mask = np.zeros(shape=self.resolution, dtype=bool)  # marks all solid nodes (obstacle, walls, ...)
-        self.in_mask = np.zeros(self.grid[0].shape, dtype=bool)  # marks all inlet nodes
         self.wall_mask = np.zeros_like(self.solid_mask)  # marks lateral (top+bottom) walls
         self._obstacle_mask = np.zeros_like(self.solid_mask)  # marks all obstacle nodes (for fluid-solid-force_calc.)
+
+        # initialize super class with unit conversion, equilibrium, context etc.
+        ExtFlow.__init__(self, context, resolution, reynolds_number,
+                         mach_number, stencil, equilibrium)
+        # UnitConversion: defined below unter make_units(), executed by ExtFlow; flow object gets units-attibute!
+
+        self.in_mask = np.zeros(self.grid[0].shape, dtype=bool)  # marks all inlet nodes
+
 
         # cylinder geometry in LU (1-based indexing!)
         self.x_offset = x_offset
@@ -85,9 +89,9 @@ class ObstacleCylinder(ExtFlow):
 
         # MESHGRID of x, y, (z) index (LU)
         xyz = tuple(np.linspace(1, n, n) for n in self.resolution)  # Tupel of index-lists (1-n (one-based!))
-        if self.units.lattice.D == 2:
+        if self.stencil.d == 2:
             x_lu, y_lu = np.meshgrid(*xyz, indexing='ij')  # meshgrid of x-, y-index
-        elif self.units.lattice.D == 3:
+        elif self.stencil.d == 3:
             x_lu, y_lu, z_lu = np.meshgrid(*xyz, indexing='ij')  # meshgrid of x-, y- and z-index
         else:
             x_lu, y_lu, z_lu = 1,1,1
@@ -124,11 +128,11 @@ class ObstacleCylinder(ExtFlow):
             parabola_y[:, 1:-1] = - 1.5 * np.array(self.u_inlet).max() * y_coordinates[1:-1] * (
                         y_coordinates[1:-1] - ny) * 1 / (ny / 2) ** 2  # parabolic velocity profile
             # scale with 1.5 to achieve a mean velocity of u_char! -> DIFFERENT FROM cylinder2D and cylinder3D (!)
-            if self.units.lattice.D == 2:
+            if self.stencil.d == 2:
                 # in 2D u1 needs Dimension 1 x ny (!)
                 velocity_y = np.zeros_like(parabola_y)  # y-velocities = 0
                 self.u_inlet = np.stack([parabola_y, velocity_y], axis=0)  # stack/pack u-field
-            elif self.units.lattice.D == 3:
+            elif self.stencil.d == 3:
                 ones_z = np.ones(nz)
                 parabola_yz = parabola_y[:, :, np.newaxis] * ones_z
                 parabola_yz_zeros = np.zeros_like(parabola_yz)
@@ -165,7 +169,7 @@ class ObstacleCylinder(ExtFlow):
     def initial_pu(self):
         p = np.zeros_like(self.grid[0], dtype=float)[None, ...]
         u_max_pu = self.units.characteristic_velocity_pu * self._unit_vector()
-        u_max_pu = append_axes(u_max_pu, self.units.lattice.D)
+        u_max_pu = append_axes(u_max_pu, self.stencil.d)
         self.solid_mask[np.where(self.obstacle_mask)] = 1  # This line is needed, because the obstacle_mask.setter does not define the solid_mask properly (see above) #OLD
         ### initial velocity field: "u_init"-parameter
         # 0: uniform u=0
@@ -180,9 +184,9 @@ class ObstacleCylinder(ExtFlow):
                 # multiply parabolic profile with every column of the velocity field:
                 y_coordinates = np.linspace(0, ny, ny)
                 ux_factor[1:-1] = - y_coordinates[1:-1] * (y_coordinates[1:-1] - ny) * 1 / (ny / 2) ** 2
-                if self.units.lattice.D == 2:
+                if self.stencil.d == 2:
                     u = np.einsum('k,ijk->ijk', ux_factor, u)
-                elif self.units.lattice.D == 3:
+                elif self.stencil.d == 3:
                     u = np.einsum('k,ijkl->ijkl', ux_factor, u)
             else:  # lateral_walls == periodic or slip
                 # initial velocity u_PU=1 on every fluid node
@@ -196,9 +200,9 @@ class ObstacleCylinder(ExtFlow):
                 # add perturbation for small velocities
                 #OLD 2D: u[0][1] += np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 1.0
                 amplitude_y = np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 0.1
-                if self.units.lattice.D == 2:
+                if self.stencil.d == 2:
                     u[0][1] += amplitude_y
-                elif self.units.lattice.D == 3:
+                elif self.stencil.d == 3:
                     nz = self.grid[0][2].shape[2]
                     plane_yz = np.ones_like(u[0, 1])  # plane of ones
                     u[0][1] = np.einsum('y,yz->yz', amplitude_y, plane_yz)  # plane of amplitude in y
@@ -208,9 +212,9 @@ class ObstacleCylinder(ExtFlow):
                 # multiply scaled down perturbation if velocity field is already near u_char
                 #OLD 2D: u[0][1] *= 1 + np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * 0.3
                 factor = 1 + np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * 0.1
-                if self.units.lattice.D == 2:
+                if self.stencil.d == 2:
                     u[0][1] *= factor
-                elif self.units.lattice.D == 3:
+                elif self.stencil.d == 3:
                     nz = self.grid[0][2].shape[1]
                     plane_yz = np.ones_like(u[0, 1, :, :])
                     u[0][1] = np.einsum('y,yz->yz', factor, u[0][1])
@@ -438,9 +442,9 @@ class ObstacleCylinder(ExtFlow):
         # <<<
 
         # outlet ("right side", x[-1],y[:], (z[:]))
-        if self.units.lattice.D == 2:
+        if self.stencil.d == 2:
             outlet_boundary = EquilibriumOutletP(direction=[1, 0], flow=self)  # outlet in positive x-direction
-        else:  # self.units.lattice.D == 3:
+        else:  # self.stencil.d == 3:
             outlet_boundary = EquilibriumOutletP(direction=[1, 0, 0], flow=self)  # outlet in positive x-direction
 
         # create and return boundary-list
@@ -484,4 +488,4 @@ class ObstacleCylinder(ExtFlow):
         return [obstacle_boundary]
 
     def _unit_vector(self, i=0):
-        return np.eye(self.units.lattice.D)[i]
+        return np.eye(self.stencil.d)[i]

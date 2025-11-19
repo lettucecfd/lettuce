@@ -254,7 +254,7 @@ print("-> initializing flow...")
 flow = ObstacleCylinder(context=context, resolution=resolution,
                         reynolds_number=reynolds_number, mach_number=mach_number,
                         char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
-                        bc_type=args["bbbc_type"], stencil=stencil)
+                        bc_type=str(args["bbbc_type"]), stencil=stencil)
 
 print("-> initializing collision operator...")
 collision_operator = None
@@ -282,6 +282,7 @@ fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 fig.subplots_adjust(right=0.85)
 u = flow.u_pu.cpu().numpy()
 print("Max Velocity:", u.max())
+im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask.T), origin="lower")
 im2 = axes[1].imshow(u[0, ...].T, origin="lower")
 cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
 fig.colorbar(im2, cax=cbar_ax)

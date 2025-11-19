@@ -141,8 +141,7 @@ class FullwayBounceBackBoundary(Boundary):
             self.f_index_fwbb[:, 3]], self.flow.stencil.e[self.f_index_fwbb[:, 0]])
 
     def make_no_collision_mask(self, f_shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
-        assert self.mask.shape == f_shape[1:]
-        return self.context.convert_to_tensor(self.mask)
+        return self.context.convert_to_tensor(self.mask, dtype=bool)
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         pass

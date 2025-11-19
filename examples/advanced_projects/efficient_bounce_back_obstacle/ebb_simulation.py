@@ -26,12 +26,27 @@ class EbbSimulation(Simulation):
         else:
             self.post_streaming_boundaries = []
 
+        # adjust No_collision_ and no_streaming_mask for use of post_streaming_boundaries (!)
+        if len(self.post_streaming_boundaries) > 0:
+            for i, boundary in enumerate(self.post_streaming_boundaries, start=self.collision_index + 1 + len(self.post_boundaries)):
+                print("nCM making: i, boundary = ", i, boundary)
+                print("collision index is:", self.collision_index)
+                ncm = boundary.make_no_collision_mask(
+                    [it for it in self.flow.f.shape[1:]], context=self.context)
+                if ncm is not None:
+                    self.no_collision_mask[ncm] = i
+                nsm = boundary.make_no_streaming_mask(
+                    [it for it in self.flow.f.shape], context=self.context)
+                if nsm is not None:
+                    self.no_streaming_mask |= nsm
+
         # get indices of post_streaming_boundaries, that need f_collided to be stored
         self.store_f_collided_post_streaming_boundaries_index = []
-
         for i, boundary in enumerate(self.post_streaming_boundaries):
             if hasattr(boundary, "store_f_collided"):
                 self.store_f_collided_post_streaming_boundaries_index.append(i)
+            if hasattr(boundary, "initialize_f_collided"):
+                boundary.initialize_f_collided()
 
         # redefine collide_and_stream() to include the storage of f_collided for use in post_streaming_boundaries
         def collide_and_stream(*_, **__):

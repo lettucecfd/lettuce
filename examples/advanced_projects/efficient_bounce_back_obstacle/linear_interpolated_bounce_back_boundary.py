@@ -32,7 +32,9 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
             self.calc_force = True
         else:
             self.calc_force = False
+        #TODO: this if-statement with NONE and TRUE is wrong. When calc_force=False, it triggers calc_force=TRUE (!)
 
+        print("IBB: calc force is:", self.calc_force)
         # convert relevant tensors:
         ### TODO: fix batch-index-datatype...?
         self.f_index_lt = torch.tensor(solid_boundary_data.f_index_lt, device=self.context.device, dtype=torch.int64)  # the batch-index has to be integer
@@ -99,22 +101,22 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         if self.calc_force:
             self.calc_force_on_boundary(flow.f)
 
-    def make_no_streaming_mask(self, shape, context: Context):
-        assert self.mask.shape == shape[1:]  # all dimensions of f except the 0th (q)
+    def make_no_streaming_mask(self, f_shape, context: Context):
         # no_stream_mask has to be dimensions: (q,x,y,z) (z optional), but CAN be (x,y,z) (z optional).
         # ...in the latter case, torch.where broadcasts the mask to (q,x,y,z), so ALL q populations of a lattice-node are marked equally
         # return torch.tensor(self.mask, dtype=torch.bool)
-        return self.context.convert_to_tensor(self.mask)
+        return self.context.convert_to_tensor(self.mask, dtype=bool)
 
-    def make_no_collision_mask(self, shape, context: Context):
+    def make_no_collision_mask(self, f_shape, context: Context):
         # INFO: pay attention to the initialization of observable/moment-fields (u, rho,...) on the boundary nodes,
         # ...in the initial solution of your flow, especially if visualization or post-processing uses the field-values
         # ...in the whole domain (including the boundary region)!
-        assert self.mask.shape == shape[1:]
+
         # return torch.tensor(self.mask, dtype=torch.bool)  # self.context.convert_to_tensor(self.mask)
-        return self.context.convert_to_tensor(self.mask)
+        return self.context.convert_to_tensor(self.mask, dtype=bool)
 
     def calc_force_on_boundary(self, f_bounced):
+        #TODO: is not working in NEW lettuce
         ### force = e * (f_collided + f_bounced[opp.])
         if self.flow.stencil.d == 2:
             self.force_sum = torch.einsum('i..., id -> d',
@@ -146,58 +148,58 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                             self.flow.stencil.e[self.f_index_gt[:, 0]].float())
 
     # TODO: find a way to use pre- and post-Streaming Populations for bounce...
-    def store_f_collided(self, f_collided):
-        for f_index_lgt, f_collided_lgt in zip([self.f_index_lt, self.f_index_gt],
-                                               [self.f_collided_lt, self.f_collided_gt]):
-            if len(f_index_lgt) != 0:
-                for d in range(self.flow.stencil.d):
-                    indices = [f_index_lgt[:, 0],  # q
-                               f_index_lgt[:, 1],  # x
-                               f_index_lgt[:, 2]]  # y
-                    if self.flow.stencil.d == 3:
-                        indices.append(f_index_lgt[:, 3])
-                    f_collided_lgt[:, 0] = torch.clone(f_collided[indices])
-                    indices[0] = self.opposite_tensor[f_index_lgt[:, 0]]
-                    f_collided_lgt[:, 1] = torch.clone(f_collided[indices])
-        # TODO: compare performance of THIS to original hardcoded "store_f_collided()" of IBB1, see below
-
-    # >>> OLD version "semi hardcoded"
     # def store_f_collided(self, f_collided):
-    #     if self.flow.stencil.d == 2:
-    #         if len(self.f_collided_lt) != 0:
-    #             self.f_collided_lt[:, 0] = torch.clone(f_collided[self.f_index_lt[:, 0],  # q
-    #                                                           self.f_index_lt[:, 1],  # x
-    #                                                           self.f_index_lt[:, 2]])  # y
-    #             self.f_collided_lt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_lt[:,0]],  # q
-    #                                                           self.f_index_lt[:, 1],  # x
-    #                                                           self.f_index_lt[:, 2]])  # y
-    #         if len(self.f_collided_gt) != 0:
-    #             self.f_collided_gt[:, 0] = torch.clone(f_collided[self.f_index_gt[:, 0],  # q
-    #                                                           self.f_index_gt[:, 1],  # x
-    #                                                           self.f_index_gt[:, 2]])  # y
-    #             self.f_collided_gt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_gt[:,0]],  # q
-    #                                                           self.f_index_gt[:, 1],  # x
-    #                                                           self.f_index_gt[:, 2]])  # y
-    #     if self.flow.stencil.d == 3:
-    #         if len(self.f_collided_lt) != 0:
-    #             self.f_collided_lt[:, 0] = torch.clone(f_collided[self.f_index_lt[:, 0],  # q
-    #                                                           self.f_index_lt[:, 1],  # x
-    #                                                           self.f_index_lt[:, 2],  # y
-    #                                                           self.f_index_lt[:, 3]])  # z
-    #             self.f_collided_lt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_lt[:,0]],  # q
-    #                                                           self.f_index_lt[:, 1],  # x
-    #                                                           self.f_index_lt[:, 2],  # y
-    #                                                           self.f_index_lt[:, 3]])  # z
-    #         if len(self.f_collided_gt) != 0:
-    #             self.f_collided_gt[:, 0] = torch.clone(f_collided[self.f_index_gt[:, 0],  # q
-    #                                                               self.f_index_gt[:, 1],  # x
-    #                                                               self.f_index_gt[:, 2],  # y
-    #                                                               self.f_index_gt[:, 3]])  # z
-    #             self.f_collided_gt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_gt[:, 0]],  # q
-    #                                                               self.f_index_gt[:, 1],  # x
-    #                                                               self.f_index_gt[:, 2],  # y
-    #                                                               self.f_index_gt[:, 3]])  # z
-    # <<< OLD version "semi hardcoded"
+    #     for f_index_lgt, f_collided_lgt in zip([self.f_index_lt, self.f_index_gt],
+    #                                            [self.f_collided_lt, self.f_collided_gt]):
+    #         if len(f_index_lgt) != 0:
+    #             for d in range(self.flow.stencil.d):
+    #                 indices = [f_index_lgt[:, 0],  # q
+    #                            f_index_lgt[:, 1],  # x
+    #                            f_index_lgt[:, 2]]  # y
+    #                 if self.flow.stencil.d == 3:
+    #                     indices.append(f_index_lgt[:, 3])
+    #                 f_collided_lgt[:, 0] = torch.clone(f_collided[indices])
+    #                 indices[0] = self.opposite_tensor[f_index_lgt[:, 0]]
+    #                 f_collided_lgt[:, 1] = torch.clone(f_collided[indices])
+    #     # TODO: compare performance of THIS to original hardcoded "store_f_collided()" of IBB1, see below
+
+    #>>> OLD version "semi hardcoded"
+    def store_f_collided(self, f_collided):
+        if self.flow.stencil.d == 2:
+            if len(self.f_collided_lt) != 0:
+                self.f_collided_lt[:, 0] = torch.clone(f_collided[self.f_index_lt[:, 0],  # q
+                                                              self.f_index_lt[:, 1],  # x
+                                                              self.f_index_lt[:, 2]])  # y
+                self.f_collided_lt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_lt[:,0]],  # q
+                                                              self.f_index_lt[:, 1],  # x
+                                                              self.f_index_lt[:, 2]])  # y
+            if len(self.f_collided_gt) != 0:
+                self.f_collided_gt[:, 0] = torch.clone(f_collided[self.f_index_gt[:, 0],  # q
+                                                              self.f_index_gt[:, 1],  # x
+                                                              self.f_index_gt[:, 2]])  # y
+                self.f_collided_gt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_gt[:,0]],  # q
+                                                              self.f_index_gt[:, 1],  # x
+                                                              self.f_index_gt[:, 2]])  # y
+        if self.flow.stencil.d == 3:
+            if len(self.f_collided_lt) != 0:
+                self.f_collided_lt[:, 0] = torch.clone(f_collided[self.f_index_lt[:, 0],  # q
+                                                              self.f_index_lt[:, 1],  # x
+                                                              self.f_index_lt[:, 2],  # y
+                                                              self.f_index_lt[:, 3]])  # z
+                self.f_collided_lt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_lt[:,0]],  # q
+                                                              self.f_index_lt[:, 1],  # x
+                                                              self.f_index_lt[:, 2],  # y
+                                                              self.f_index_lt[:, 3]])  # z
+            if len(self.f_collided_gt) != 0:
+                self.f_collided_gt[:, 0] = torch.clone(f_collided[self.f_index_gt[:, 0],  # q
+                                                                  self.f_index_gt[:, 1],  # x
+                                                                  self.f_index_gt[:, 2],  # y
+                                                                  self.f_index_gt[:, 3]])  # z
+                self.f_collided_gt[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index_gt[:, 0]],  # q
+                                                                  self.f_index_gt[:, 1],  # x
+                                                                  self.f_index_gt[:, 2],  # y
+                                                                  self.f_index_gt[:, 3]])  # z
+    #<<< OLD version "semi hardcoded"
 
     # TODO: find a way to use pre- and post-Streaming Populations for bounce...
     def initialize_f_collided(self):

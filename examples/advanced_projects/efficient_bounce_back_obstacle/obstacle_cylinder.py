@@ -195,7 +195,7 @@ class ObstacleCylinder(ExtFlow):
         ### perturb initial velocity field-symmetry (in y and z) to trigger 'von Karman' vortex street
         if self.perturb_init:  # perturb initial solution in y
             # overlays a sine-wave on the second column of nodes x_lu=1 (index 1)
-            ny = self.grid[0][1].shape[1]
+            ny = self.grid[1].shape[1]
             if u.max() < 0.5 * self.units.characteristic_velocity_pu:
                 # add perturbation for small velocities
                 #OLD 2D: u[0][1] += np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 1.0
@@ -203,7 +203,7 @@ class ObstacleCylinder(ExtFlow):
                 if self.stencil.d == 2:
                     u[0][1] += amplitude_y
                 elif self.stencil.d == 3:
-                    nz = self.grid[0][2].shape[2]
+                    nz = self.grid[2].shape[2]
                     plane_yz = np.ones_like(u[0, 1])  # plane of ones
                     u[0][1] = np.einsum('y,yz->yz', amplitude_y, plane_yz)  # plane of amplitude in y
                     amplitude_z = np.sin(np.linspace(0, nz, nz) / nz * 2 * np.pi) * self.units.characteristic_velocity_pu * 0.1  # amplitude in z
@@ -215,7 +215,7 @@ class ObstacleCylinder(ExtFlow):
                 if self.stencil.d == 2:
                     u[0][1] *= factor
                 elif self.stencil.d == 3:
-                    nz = self.grid[0][2].shape[1]
+                    nz = self.grid[2].shape[1]
                     plane_yz = np.ones_like(u[0, 1, :, :])
                     u[0][1] = np.einsum('y,yz->yz', factor, u[0][1])
                     factor = 1 + np.sin(np.linspace(0, nz, nz) / nz * 2 * np.pi) * 0.1  # pertubation in z-direction
@@ -252,30 +252,28 @@ class ObstacleCylinder(ExtFlow):
                     # ...they have to take the periodicity into account...
                     border = np.zeros(self.stencil.d, dtype=int)
 
-                    if a[p] == 0 and self.stencil.e[i, 0] == -1:  # searching border on left [x]
+                    if a[p] == 0 and self.stencil.e[i][0] == -1:  # searching border on left [x]
                         border[0] = -1
-                    elif a[p] == nx - 1 and self.stencil.e[i, 0] == 1:  # searching border on right [x]
+                    elif a[p] == nx - 1 and self.stencil.e[i][0] == 1:  # searching border on right [x]
                         border[0] = 1
 
-                    if b[p] == 0 and self.stencil.e[i, 1] == -1:  # searching border on left [y]
+                    if b[p] == 0 and self.stencil.e[i][1] == -1:  # searching border on left [y]
                         border[1] = -1
-                    elif b[p] == ny - 1 and self.stencil.e[i, 1] == 1:  # searching border on right [y]
+                    elif b[p] == ny - 1 and self.stencil.e[i][1] == 1:  # searching border on right [y]
                         border[1] = 1
 
                     try:  # try in case the neighboring cell does not exist (= an f pointing out of the simulation domain)
-                        if not self.obstacle_mask[a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                        b[p] + self.stencil.e[i, 1] - border[1] * ny]:
+                        if not self.obstacle_mask[a[p] + self.stencil.e[i][0] - border[0] * nx,
+                        b[p] + self.stencil.e[i][1] - border[1] * ny]:
                             # if the neighbour of p is False in the boundary.mask, p is a solid node, neighbouring a fluid node:
                             # ...the direction pointing from the fluid neighbour to solid p is marked on the neighbour
 
                             # calculate intersection point of boundary surface and link ->
                             # ...calculate distance between fluid node and boundary surface on the link
-                            px = a[p] + self.stencil.e[i, 0] - border[0] * nx  # fluid node x-coordinate
-                            py = b[p] + self.stencil.e[i, 1] - border[1] * ny  # fluid node y-coordinate
-                            cx = self.stencil.e[
-                                self.stencil.opposite[i], 0]  # link-direction x to solid node
-                            cy = self.stencil.e[
-                                self.stencil.opposite[i], 1]  # link-direction y to solid node
+                            px = a[p] + self.stencil.e[i][0] - border[0] * nx  # fluid node x-coordinate
+                            py = b[p] + self.stencil.e[i][1] - border[1] * ny  # fluid node y-coordinate
+                            cx = self.stencil.e[self.stencil.opposite[i]][ 0]  # link-direction x to solid node
+                            cy = self.stencil.e[self.stencil.opposite[i]][ 1]  # link-direction y to solid node
 
                             # pq-formula
                             h1 = (px * cx + py * cy - cx * x_center - cy * y_center) / (cx * cx + cy * cy)  # p/2
@@ -293,30 +291,30 @@ class ObstacleCylinder(ExtFlow):
                                 if d1 <= 0.5:
                                     d_lt.append(d1)
                                     f_index_lt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny])
                                 else:  # d>0.5
                                     d_gt.append(d1)
                                     f_index_gt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny])
 
                             elif d2 <= 1 and np.isreal(d2):  # d should be between 0 and 1
 
                                 if d2 <= 0.5:
                                     d_lt.append(d2)
                                     f_index_lt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny])
                                 else:  # d>0.5
                                     d_gt.append(d2)
                                     f_index_gt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny])
                             else:  # neither d1 or d2 is real and between 0 and 1
                                 print("IBB WARNING: d1 is", d1, "; d2 is", d2, "for boundaryPoint x,y,ci", a[p],
-                                      b[p], self.stencil.e[i, 0], self.stencil.e[i, 1],
-                                      self.stencil.e[i, 2])
+                                      b[p], self.stencil.e[i][0], self.stencil.e[i][1],
+                                      self.stencil.e[i][2])
                     except IndexError:
                         pass  # just ignore this iteration since there is no neighbor there
 
@@ -328,36 +326,36 @@ class ObstacleCylinder(ExtFlow):
                 for i in range(0, self.stencil.q):
                     border = np.zeros(self.stencil.d, dtype=int)
                     # x - direction
-                    if a[p] == 0 and self.stencil.e[i, 0] == -1:  # searching border on left
+                    if a[p] == 0 and self.stencil.e[i][0] == -1:  # searching border on left
                         border[0] = -1
-                    elif a[p] == nx - 1 and self.stencil.e[i, 0] == 1:  # searching border on right
+                    elif a[p] == nx - 1 and self.stencil.e[i][0] == 1:  # searching border on right
                         border[0] = 1
                     # y - direction
-                    if b[p] == 0 and self.stencil.e[i, 1] == -1:  # searching border on left
+                    if b[p] == 0 and self.stencil.e[i][1] == -1:  # searching border on left
                         border[1] = -1
-                    elif b[p] == ny - 1 and self.stencil.e[i, 1] == 1:  # searching border on right
+                    elif b[p] == ny - 1 and self.stencil.e[i][1] == 1:  # searching border on right
                         border[1] = 1
                     # z - direction
-                    if c[p] == 0 and self.stencil.e[i, 2] == -1:  # searching border on left
+                    if c[p] == 0 and self.stencil.e[i][2] == -1:  # searching border on left
                         border[2] = -1
-                    elif c[p] == nz - 1 and self.stencil.e[i, 2] == 1:  # searching border on right
+                    elif c[p] == nz - 1 and self.stencil.e[i][2] == 1:  # searching border on right
                         border[2] = 1
 
                     try:  # try in case the neighboring cell does not exist (an f pointing out of simulation domain)
-                        if not self.obstacle_mask[a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                        b[p] + self.stencil.e[i, 1] - border[1] * ny,
-                        c[p] + self.stencil.e[i, 2] - border[2] * nz]:
+                        if not self.obstacle_mask[a[p] + self.stencil.e[i][0] - border[0] * nx,
+                        b[p] + self.stencil.e[i][1] - border[1] * ny,
+                        c[p] + self.stencil.e[i][2] - border[2] * nz]:
 
                             # calculate intersection point of boundary surface and link ->
                             # ...calculate distance between fluid node and boundary surface on the link
-                            px = a[p] + self.stencil.e[i, 0] - border[0] * nx  # fluid node x-coordinate
-                            py = b[p] + self.stencil.e[i, 1] - border[1] * ny  # fluid node y-coordinate
+                            px = a[p] + self.stencil.e[i][0] - border[0] * nx  # fluid node x-coordinate
+                            py = b[p] + self.stencil.e[i][1] - border[1] * ny  # fluid node y-coordinate
                             # Z-coordinate not needed for cylinder !
 
                             cx = self.stencil.e[
-                                self.stencil.opposite[i], 0]  # link-direction x to solid node
+                                self.stencil.opposite[i]][ 0]  # link-direction x to solid node
                             cy = self.stencil.e[
-                                self.stencil.opposite[i], 1]  # link-direction y to solid node
+                                self.stencil.opposite[i]][ 1]  # link-direction y to solid node
                             # Z-coordinate not needed for cylinder !
 
                             # pq-formula
@@ -378,34 +376,34 @@ class ObstacleCylinder(ExtFlow):
                                 if d1 <= 0.5:
                                     d_lt.append(d1)
                                     f_index_lt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
-                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i][2] - border[2] * nz])
                                 else:  # d>0.5
                                     d_gt.append(d1)
                                     f_index_gt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
-                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i][2] - border[2] * nz])
 
                             elif d2 <= 1 and np.isreal(d2):  # d should be between 0 and 1
 
                                 if d2 <= 0.5:
                                     d_lt.append(d2)
                                     f_index_lt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
-                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i][2] - border[2] * nz])
                                 else:  # d>0.5
                                     d_gt.append(d2)
                                     f_index_gt.append([self.stencil.opposite[i],
-                                                            a[p] + self.stencil.e[i, 0] - border[0] * nx,
-                                                            b[p] + self.stencil.e[i, 1] - border[1] * ny,
-                                                            c[p] + self.stencil.e[i, 2] - border[2] * nz])
+                                                            a[p] + self.stencil.e[i][0] - border[0] * nx,
+                                                            b[p] + self.stencil.e[i][1] - border[1] * ny,
+                                                            c[p] + self.stencil.e[i][2] - border[2] * nz])
                             else:  # neither d1 nor d2 is real and between 0 and 1
                                 print("IBB WARNING: d1 is", d1, "; d2 is", d2, "for boundaryPoint x,y,z,ci", a[p],
-                                      b[p], c[p], self.stencil.e[i, 0], self.stencil.e[i, 1],
-                                      self.stencil.e[i, 2])
+                                      b[p], c[p], self.stencil.e[i][0], self.stencil.e[i][1],
+                                      self.stencil.e[i][2])
                     except IndexError:
                         pass  # just ignore this iteration since there is no neighbor there
 
@@ -452,6 +450,7 @@ class ObstacleCylinder(ExtFlow):
             return [
                 inlet_boundary,
                 outlet_boundary,
+                BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
             ]
         else:
             return [

@@ -41,7 +41,7 @@ from copy import deepcopy
 from timeit import default_timer as timer
 from collections import Counter
 
-warnings.simplefilter("ignore") # todo: is this needed?
+#warnings.simplefilter("ignore") # todo: is this needed?
 
 # ARGUMENT PARSING: this scipt is supposed to be called with arguments, detailling all simulation- and system-parameters
 
@@ -77,7 +77,6 @@ parser.add_argument("--n_steps", default=100000, type=int, help="number of steps
 parser.add_argument("--t_target", default=0, type=float, help="time in PU to simulate, t_start will be calculated by PU/LU-conversion of step_start")
 parser.add_argument("--collision", default="bgk", type=str, choices=["kbc", "bgk", "reg", 'reg', "bgk_reg", 'kbc', 'bgk', 'bgk_reg'], help="collision operator (bgk, kbc, reg)")
 parser.add_argument("--stencil", default="D3Q27", choices=['D2Q9', 'D3Q15', 'D3Q19', 'D3Q27'], help="stencil (D2Q9, D3Q27, D3Q19, D3Q15), IMPORTANT: should match number of dimensions infered from domain_width! Otherwise default D2Q9 or D3Q27 will be chosen for 2D and 3D respectively")
-#TODO: check dimension and stencil match, OR: issue warning, choose stencil matching domain width
 parser.add_argument("--eqlm", action="store_true", help="use Equilibium LessMemory to save ~20% on GPU VRAM, sacrificing ~2% performance")
 parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1, fwbbc, hwbbc2, ibb1c2) for the solid obstacle")
 
@@ -90,11 +89,16 @@ parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (
 #TODO: add highMa reporter
 
 # put arguments in dictionary
+print("SCRIPT: Writing arguments to dictionary...")
 args = vars(parser.parse_args())
+
+# print all arguments
+print(f"SCRIPT: Input arguments are: \n{args}\n")
 
 ###########################################################
 
 # CREATE timestamp, sim-ID, outdir and outdir_data
+print("SCRIPT: Creating timestamt, simulation ID and creating output directory...")
 name = args["name"]
 outdir = args["outdir"]
 outdir_data = args["outdir_data"]
@@ -117,31 +121,30 @@ outdir = outdir+"/"+sim_id  # adding individal sim-ID to outdir path to get indi
 outdir_data = outdir_data+"/"+sim_id
 if not os.path.exists(outdir_data):
     os.makedirs(outdir_data) # create output dir for large/many files, if specified
-    print(f"Outdir_DATA/simID = {outdir}/{sim_id}")
-
-# print all arguments
-print(f"Input arguments: {args}")
+print(f"outdir_DATA/simID = {outdir}/{sim_id}")
 
 # save input arguments/parameters to file in outdir:
+print(f"SCRIPT: Writing input parameters to file: {outdir}/input_parameters.txt")
 output_file = open(outdir+"/input_parameters.txt", "a")
 for key in args:
     output_file.write('{:30s} {:30s}\n'.format(str(key), str(args[key])))
 output_file.close()
 
 ### SAVE SCRIPT: save this script to outdir
-print(f"\nSaving simulation script to outdir...")
+print(f"SCRIPT: Saving simulation script to outdir...")
 temp_script_name = sim_id + "_" + os.path.basename(__file__)
 shutil.copy(__file__, outdir+"/"+temp_script_name)
-print(f"Saved simulation script to '{str(outdir+'/'+temp_script_name)}'")
+print(f"-> Saved simulation script to '{str(outdir+'/'+temp_script_name)}'")
 
 # START LOGGER -> get all terminal output into file
-old_stdout = sys.stdout
-sys.stdout = Logger(outdir)
+# print(f"SCRIPT: Starting stdout-LOGGER (see outdir for log file)")
+# old_stdout = sys.stdout
+# sys.stdout = Logger(outdir)
 
 #####################################
 
 # PROCESS AND SET PARAMETERS
-
+print(f"SCRIPT: Processing parameters...")
 # calc. relative starting point of peak_finding for Cd_mean Measurement to cut of any transients
 if args["reynolds_number"] > 1000:
     periodic_start = 0.4
@@ -163,10 +166,9 @@ if args["domain_width_z_in_d"] is None:  # will be 2D
     dims = 2
 else: # will be 3D
     dims = 3
-
-    if args["domain_width_in_d"] <= 1/args["char_length_lu"] : # if less than 1 lattice node
+    if args["domain_width_z_in_d"] <= 1/args["char_length_lu"] : # if less than 1 lattice node
         domain_width_z_in_d = 1/args["char_length_lu"] # set to 1 lattice node
-        print("(!) setting domain_width_in_d to 1 lattice node")
+        print("(!) domain_width_z_in_d is less than 1 lattice node: setting domain_width_in_d to 1 lattice node")
 
 # if DpY is even, resulting GPD can't be odd for symmetrical cylinder and domain
 # ...if DpY is even, GPD will be corrected to be even for symmetrical cylinder
@@ -196,7 +198,7 @@ if dims == 2:
     if args["stencil"] == "D2Q9":
         stencil = lt.D2Q9()
     else:
-        print("WARNING: wrong stencil choice for 2D simulation, D2Q9 is used")
+        print("(!) WARNING: wrong stencil choice for 2D simulation, D2Q9 is used")
         stencil= lt.D2Q9()
 else:
     resolution = [domain_length_x_in_d * char_length_lu, domain_height_y_in_d * char_length_lu, domain_width_z_in_d * char_length_lu]
@@ -208,7 +210,7 @@ else:
     elif args["stencil"] == "D3Q27":
         stencil = lt.D3Q27()
     else:
-        print("WARNING: wrong stencil choice for 3D simulation, D3Q27 is used")
+        print("(!) WARNING: wrong stencil choice for 3D simulation, D3Q27 is used")
         stencil = lt.D3Q27()
 
 # read dtype
@@ -221,10 +223,14 @@ elif float_dtype == "half" or float_dtype == "float16":
 
 # OVERWRITE n_steps, if t_target is given
 n_steps = args["n_steps"]
-T_target = 0
+t_target = args["t_target"]
 if args["t_target"] > 0:
-    T_target = args["t_target"]
-    n_steps = int(T_target * ((char_length_lu) / char_length_pu) * (char_velocity_pu / (mach_number * 1 / np.sqrt(3))))
+    n_steps = int(t_target * ((char_length_lu) / char_length_pu) * (char_velocity_pu / (mach_number * 1 / np.sqrt(3))))
+else:
+    t_target = t_target / (char_length_lu/char_length_pu * char_velocity_pu/(mach_number*1/np.sqrt(3)))
+
+print(f"\n(INFO) parameters set for simulation of {n_steps} steps, representing {t_target:.3f} seconds [PU]!\n")
+
 
 # check EQLM parameter
 if args["eqlm"]:
@@ -238,16 +244,19 @@ if args["eqlm"]:
 # cuda_device = args["default_device"]
 # #nan_reporter = args["nan_reporter"]
 
+print("SCRIPT: initializing solver components...")
+
 ###
-print("initializing context")
+print("-> initializing context...")
 context = lt.Context(device=default_device, dtype=float_dtype,use_native=False)
 
-print("initializing flow")
+print("-> initializing flow...")
 flow = ObstacleCylinder(context=context, resolution=resolution,
                         reynolds_number=reynolds_number, mach_number=mach_number,
                         char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
                         bc_type=args["bbbc_type"], stencil=stencil)
 
+print("-> initializing collision operator...")
 collision_operator = None
 if args["collision"].casefold() == "reg" or args["collision"].casefold() == "bgk_reg":
     collision_operator = lt.RegularizedCollision(tau=flow.units.relaxation_parameter_lu)
@@ -259,12 +268,33 @@ elif args["collision"].casefold() == "kbc":
 else:  # default to bgk
     collision_operator = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 
+print("-> initializing reporters...")
 #TODO reporter
 
+print("\nSCRIPT: initializing simulation object...")
 simulation = EbbSimulation(flow, collision_operator,reporter=[])
 
-
+print(f"\nSCRIPT: running simulation for {n_steps} steps...")
 simulation(num_steps=n_steps)
+
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+fig.subplots_adjust(right=0.85)
+u = flow.u_pu.cpu().numpy()
+print("Max Velocity:", u.max())
+im2 = axes[1].imshow(u[0, ...].T, origin="lower")
+cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
+fig.colorbar(im2, cax=cbar_ax)
+fig.show()
+
+
+## END OF SCRIPT
+print(f"\n♬ THE END ♬")
+# sys.stdout = old_stdout
+
+
+################################################################
+# script components below...
 
 # Process arguments and set parameters
 # - I/O: create timestamp, sim-ID, outdir (path) and outdir_data (path)
@@ -301,8 +331,4 @@ simulation(num_steps=n_steps)
 # plotting and post-processing
 # - save data
 
-# reset lLOGGER (!)
-
-## END OF SCRIPT
-print(f"\n♬ THE END ♬")
-sys.stdout = old_stdout
+# reset LOGGER (!)

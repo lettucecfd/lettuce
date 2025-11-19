@@ -26,7 +26,7 @@ class FullwayBounceBackBoundary(Boundary):
 
         if calc_force is not None:
             self.force_sum = torch.zeros_like(self.context.convert_to_tensor(
-                self.context.stencil.e[0]))  # summed force vector on all boundary nodes, in D dimensions (x,y,(z))
+                self.flow.stencil.e[0]))  # summed force vector on all boundary nodes, in D dimensions (x,y,(z))
             self.calc_force = True
         else:
             self.calc_force = False
@@ -48,19 +48,19 @@ class FullwayBounceBackBoundary(Boundary):
                     # check for boundary-nodes neighboring the domain-border.
                     # ...they have to take the periodicity into account...
                     border = np.zeros(self.flow.stencil.d, dtype=int)
-                    if ix_sp[sp_index] == 0 and self.context.stencil.e[q_index, 0] == -1 and periodicity[0]:  # searching border on left
+                    if ix_sp[sp_index] == 0 and self.flow.stencil.e[q_index][ 0] == -1 and periodicity[0]:  # searching border on left
                         border[0] = -1
-                    elif ix_sp[sp_index] == nx - 1 and self.flow.stencil.e[q_index, 0] == 1 and periodicity[0]:  # searching border on right
+                    elif ix_sp[sp_index] == nx - 1 and self.flow.stencil.e[q_index][ 0] == 1 and periodicity[0]:  # searching border on right
                         border[0] = 1
-                    if iy_sp[sp_index] == 0 and self.context.stencil.e[q_index, 1] == -1 and periodicity[1]:  # searching border on left
+                    if iy_sp[sp_index] == 0 and self.flow.stencil.e[q_index][ 1] == -1 and periodicity[1]:  # searching border on left
                         border[1] = -1
-                    elif iy_sp[sp_index] == ny - 1 and self.flow.stencil.e[q_index, 1] == 1 and periodicity[1]:  # searching border on right
+                    elif iy_sp[sp_index] == ny - 1 and self.flow.stencil.e[q_index][ 1] == 1 and periodicity[1]:  # searching border on right
                         border[1] = 1
                     try:  # try in case the neighboring cell does not exist (= an f pointing out of the simulation domain)
-                        if (not mask[ix_sp[sp_index] + self.context.stencil.e[q_index, 0] - border[0]*nx,
-                                    iy_sp[sp_index] + self.context.stencil.e[q_index, 1] - border[1]*ny]
-                                and not other_solid_bc_mask[ix_sp[sp_index] + self.context.stencil.e[q_index, 0] - border[0]*nx,
-                                    iy_sp[sp_index] + self.context.stencil.e[q_index, 1] - border[1]*ny]):
+                        if (not mask[ix_sp[sp_index] + self.flow.stencil.e[q_index][ 0] - border[0]*nx,
+                                    iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1]*ny]
+                                and not other_solid_bc_mask[ix_sp[sp_index] + self.flow.stencil.e[q_index][ 0] - border[0]*nx,
+                                    iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1]*ny]):
                             # if the neighbour of sp_index is False in the boundary.mask, sp_index is ix_sp solid node, neighbouring ix_sp fluid node:
                             # ...the direction pointing from the fluid neighbour to solid sp_index is marked on the solid sp_index
 
@@ -74,38 +74,38 @@ class FullwayBounceBackBoundary(Boundary):
             for sp_index in range(0, len(ix_sp)):
                 for q_index in range(0, self.flow.stencil.q):
                     border = np.zeros(self.flow.stencil.d, dtype=int)
-                    if ix_sp[sp_index] == 0 and self.context.stencil.e[q_index, 0] == -1 and periodicity[0]:  # searching border on left
+                    if ix_sp[sp_index] == 0 and self.flow.stencil.e[q_index][ 0] == -1 and periodicity[0]:  # searching border on left
                         border[0] = -1
-                    elif ix_sp[sp_index] == nx - 1 and self.flow.stencil.e[q_index, 0] == 1 and periodicity[0]:  # searching border on right
+                    elif ix_sp[sp_index] == nx - 1 and self.flow.stencil.e[q_index][ 0] == 1 and periodicity[0]:  # searching border on right
                         border[0] = 1
-                    if iy_sp[sp_index] == 0 and self.context.stencil.e[q_index, 1] == -1 and periodicity[1]:  # searching border on left
+                    if iy_sp[sp_index] == 0 and self.flow.stencil.e[q_index][ 1] == -1 and periodicity[1]:  # searching border on left
                         border[1] = -1
-                    elif iy_sp[sp_index] == ny - 1 and self.flow.stencil.e[q_index, 1] == 1 and periodicity[1]:  # searching border on right
+                    elif iy_sp[sp_index] == ny - 1 and self.flow.stencil.e[q_index][ 1] == 1 and periodicity[1]:  # searching border on right
                         border[1] = 1
-                    if iz_sp[sp_index] == 0 and self.context.stencil.e[q_index, 2] == -1 and periodicity[2]:  # searching border on left
+                    if iz_sp[sp_index] == 0 and self.flow.stencil.e[q_index][ 2] == -1 and periodicity[2]:  # searching border on left
                         border[2] = -1
-                    elif iz_sp[sp_index] == nz - 1 and self.flow.stencil.e[q_index, 2] == 1 and periodicity[2]:  # searching border on right
+                    elif iz_sp[sp_index] == nz - 1 and self.flow.stencil.e[q_index][ 2] == 1 and periodicity[2]:  # searching border on right
                         border[2] = 1
                     try:  # try in case the neighboring cell does not exist (and f pointing out of simulation domain)
-                        if (not mask[ix_sp[sp_index] + self.context.stencil.e[q_index, 0] - border[0] * nx,
-                                    iy_sp[sp_index] + self.context.stencil.e[q_index, 1] - border[1] * ny,
-                                    iz_sp[sp_index] + self.context.stencil.e[q_index, 2] - border[2] * nz]
-                                and not other_solid_bc_mask[ix_sp[sp_index] + self.context.stencil.e[q_index, 0] - border[0] * nx,
-                                                            iy_sp[sp_index] + self.context.stencil.e[q_index, 1] - border[1] * ny,
-                                                            iz_sp[sp_index] + self.context.stencil.e[q_index, 2] - border[2] * nz]):
+                        if (not mask[ix_sp[sp_index] + self.flow.stencil.e[q_index][ 0] - border[0] * nx,
+                                    iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1] * ny,
+                                    iz_sp[sp_index] + self.flow.stencil.e[q_index][ 2] - border[2] * nz]
+                                and not other_solid_bc_mask[ix_sp[sp_index] + self.flow.stencil.e[q_index][ 0] - border[0] * nx,
+                                                            iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1] * ny,
+                                                            iz_sp[sp_index] + self.flow.stencil.e[q_index][ 2] - border[2] * nz]):
                             self.f_index_fwbb.append([self.flow.stencil.opposite[q_index], ix_sp[sp_index], iy_sp[sp_index], iz_sp[sp_index]])
                     except IndexError:
                         pass  # just ignore this iteration since there is no neighbor there
 
-        self.f_index_fwbb = torch.tensor(np.array(self.f_index_fwbb), device=self.flow.stencil.device, dtype=torch.int64) # the batch-index has to be integer
-        #PHILIPP_occ_angepasst? self.f_index = torch.tensor(self.f_index, device=self.flow.stencil.device, dtype=torch.int64)  # the batch-index has to be integer
-        self.opposite_tensor = torch.tensor(self.flow.stencil.opposite, device=self.flow.stencil.device,
+        self.f_index_fwbb = torch.tensor(np.array(self.f_index_fwbb), device=flow.context.device, dtype=torch.int64) # the batch-index has to be integer
+        #PHILIPP_occ_angepasst? self.f_index = torch.tensor(self.f_index, device=flow.context.device, dtype=torch.int64)  # the batch-index has to be integer
+        self.opposite_tensor = torch.tensor(self.flow.stencil.opposite, device=flow.context.device,
                                             dtype=torch.int64)  # batch-index has to be ix_sp tensor
 
 
     def __call__(self, flow):
         # FULLWAY-BBBC: inverts populations on all boundary nodes
-
+        print("FWBB call")
         # calc force on boundary:#
         if self.calc_force:
             self.calc_force_on_boundary(flow.f)
@@ -113,6 +113,7 @@ class FullwayBounceBackBoundary(Boundary):
         # f = torch.where(self.mask, f[self.flow.stencil.opposite], f)
 
         if self.flow.stencil.d == 2:
+            print("FWBB call, dim 2")
             flow.f[self.opposite_tensor[self.f_index_fwbb[:, 0]],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2]] = flow.f[self.f_index_fwbb[:, 0],
@@ -126,6 +127,7 @@ class FullwayBounceBackBoundary(Boundary):
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2],
             self.f_index_fwbb[:, 3]]
+        print("FWBB call, DONE")
 
     def calc_force_on_boundary(self, f):
         if self.flow.stencil.d == 2:

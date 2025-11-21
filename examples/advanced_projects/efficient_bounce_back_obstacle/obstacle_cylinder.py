@@ -59,33 +59,35 @@ class ObstacleCylinder(ExtFlow):
         self.resolution = self.make_resolution(resolution, stencil) # shape in LU, if only INT, a cube shaped domain is assumed
         self.char_velocity_pu = char_velocity_pu
 
+        print("OBST_Cylinder: self.resolution=", self.resolution)
 
 
         # flow and boundary settings
-        self.perturb_init = perturb_init  # toggle: introduce asymmetry in initial solution to trigger v'Karman Vortex Street
-        self.u_init = u_init  # toggle: initial solution velocity profile type
+        self.perturb_init = perturb_init    # toggle: introduce asymmetry in initial solution to trigger v'Karman Vortex Street
+        self.u_init = u_init                # toggle: initial solution velocity profile type
         self.lateral_walls = lateral_walls  # toggle: lateral walls to be bounce back (bounceback), slip wall (slip) or periodic (periodic)
-        self.bc_type = bc_type  # toggle: bounce back algorithm: halfway (hwbb),  fullway (fwbb), linearly interpolated (ibb1)
+        self.bc_type = bc_type              # toggle: bounce back algorithm: halfway (hwbb),  fullway (fwbb), linearly interpolated (ibb1)
 
         # initialize masks (init with zeros)
         self.solid_mask = np.zeros(shape=self.resolution, dtype=bool)  # marks all solid nodes (obstacle, walls, ...)
-        self.wall_mask = np.zeros_like(self.solid_mask)  # marks lateral (top+bottom) walls
-        self._obstacle_mask = np.zeros_like(self.solid_mask)  # marks all obstacle nodes (for fluid-solid-force_calc.)
+        self.wall_mask = np.zeros_like(self.solid_mask)                # marks lateral (top+bottom) walls
+        self._obstacle_mask = np.zeros_like(self.solid_mask)           # marks all obstacle nodes (for fluid-solid-force_calc.)
 
         # initialize super class with unit conversion, equilibrium, context etc.
         ExtFlow.__init__(self, context, resolution, reynolds_number,
                          mach_number, stencil, equilibrium)
         # UnitConversion: defined below unter make_units(), executed by ExtFlow; flow object gets units-attibute!
 
-        self.in_mask = np.zeros(self.grid[0].shape, dtype=bool)  # marks all inlet nodes
+        self.in_mask = np.zeros(self.grid[0].shape, dtype=bool)       # marks all inlet nodes
 
 
-        # cylinder geometry in LU (1-based indexing!)
+        # cylinder geometry in LU
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.radius = char_length_lu / 2
-        self.y_pos = self.resolution[1] / 2 + 0.5 + self.y_offset  # y_position of cylinder-center in 1-based indexing
-        self.x_pos = self.y_pos + self.x_offset  # keep symmetry of cylinder in x and y direction
+        self.radius_lu = char_length_lu / 2
+        #todo: das PLUS hier ist ein Problem!
+        self.y_pos_lu = self.resolution[1] / 2 + 0.5 + self.y_offset  # y_position of cylinder-center in 1-based indexing
+        self.x_pos_lu = self.y_pos_lu + self.x_offset  # keep symmetry of cylinder in x and y direction
 
         # MESHGRID of x, y, (z) index (LU)
         xyz = tuple(np.linspace(1, n, n) for n in self.resolution)  # Tupel of index-lists (1-n (one-based!))
@@ -99,9 +101,11 @@ class ObstacleCylinder(ExtFlow):
 
         # BASIC mask-Version of circular cylinder.
         #TODO: Options for obstacle def: 1) basic mask (no interpolation), 2) IBB-index and mask, 3) OCC-enabled
-        condition = np.sqrt((x_lu - self.x_pos) ** 2 + (y_lu - self.y_pos) ** 2) < self.radius
+        condition = np.sqrt((x_lu - self.x_pos_lu) ** 2 + (y_lu - self.y_pos_lu) ** 2) < self.radius_lu
         self.obstacle_mask[np.where(condition)] = 1
         self.solid_mask[np.where(condition)] = 1
+
+        print("OBST_Cylinder: x_pos, y_pos, radius:", self.x_pos_lu, self.y_pos_lu, self.radius_lu)
 
         # MASKS for solid boundaries (lateral walls, obstacle, solid (= obstacle and walls), inlet)
         # (INFO): indexing doesn't need z-Index for 3D, everything is broadcasted along z!
@@ -148,7 +152,7 @@ class ObstacleCylinder(ExtFlow):
             characteristic_velocity_pu=self.char_velocity_pu
         )
 
-    # gibt immer N-dimensional zurück! (flow.resolution darf auch n int sein, dann wird kubisch angenommen)
+    # gibt immer N-dimensional zurück! (flow.resolution darf auch ein int sein, dann wird quadratisch/kubisch angenommen)
     def make_resolution(self, resolution: Union[int, List[int]],
                         stencil: Optional['Stencil'] = None) -> List[int]:
         if isinstance(resolution, int):
@@ -243,7 +247,7 @@ class ObstacleCylinder(ExtFlow):
         # searching boundary-fluid-interface and append indices to f_index, distance to boundary to d
         if self.stencil.d == 2:
             # TODO: the 2D and 3D options could be condensed/unified
-            nx, ny = self.resolution  # domain size in x and y
+            nx, ny = self.obstacle_mask.shape  # domain size in x and y
             a, b = np.where(self.obstacle_mask)  # x- and y-index of boundaryTRUE nodes for iteration over boundary area
 
             for p in range(0, len(a)):  # for all TRUE-nodes in boundary.mask
@@ -313,8 +317,7 @@ class ObstacleCylinder(ExtFlow):
                                                             b[p] + self.stencil.e[i][1] - border[1] * ny])
                             else:  # neither d1 or d2 is real and between 0 and 1
                                 print("IBB WARNING: d1 is", d1, "; d2 is", d2, "for boundaryPoint x,y,ci", a[p],
-                                      b[p], self.stencil.e[i][0], self.stencil.e[i][1],
-                                      self.stencil.e[i][2])
+                                      b[p], self.stencil.e[i][0], self.stencil.e[i][1])
                     except IndexError:
                         pass  # just ignore this iteration since there is no neighbor there
 
@@ -352,10 +355,8 @@ class ObstacleCylinder(ExtFlow):
                             py = b[p] + self.stencil.e[i][1] - border[1] * ny  # fluid node y-coordinate
                             # Z-coordinate not needed for cylinder !
 
-                            cx = self.stencil.e[
-                                self.stencil.opposite[i]][ 0]  # link-direction x to solid node
-                            cy = self.stencil.e[
-                                self.stencil.opposite[i]][ 1]  # link-direction y to solid node
+                            cx = self.stencil.e[self.stencil.opposite[i]][0]  # link-direction x to solid node
+                            cy = self.stencil.e[self.stencil.opposite[i]][1]  # link-direction y to solid node
                             # Z-coordinate not needed for cylinder !
 
                             # pq-formula
@@ -469,8 +470,9 @@ class ObstacleCylinder(ExtFlow):
         solid_boundary_data.solid_mask = self.obstacle_mask
 
         # index-lists for circular cylinder [f_index_lt, f_index_gt, d_lt, d_gt]
+        # [np.array(f_index_lt), np.array(f_index_gt), np.array(d_lt), np.array(d_gt)]
         solid_boundary_data.f_index_lt, solid_boundary_data.f_index_gt, solid_boundary_data.d_lt, solid_boundary_data.d_gt = self.make_ibb_index_lists(
-            x_center=self.x_pos, y_center=self.y_pos, radius=self.radius)
+            x_center=self.x_pos_lu-1, y_center=self.y_pos_lu-1, radius=self.radius_lu)
 
         print("CYLINDER: the bc_type was given as:", self.bc_type)
         if self.bc_type.casefold() == 'fwbb' or self.bc_type == 'FWBB':

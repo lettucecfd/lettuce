@@ -20,7 +20,7 @@ class EbbSimulation(Simulation):
         flow.context.use_native = False
         super().__init__(flow, collision, reporter)
 
-        if hasattr(flow, 'post_streaming_boundaries'):
+        if hasattr(flow.__class__, 'post_streaming_boundaries'):
             # list of boundaries that are applied AFTER the streaming step
             self.post_streaming_boundaries = flow.post_streaming_boundaries
         else:
@@ -43,9 +43,9 @@ class EbbSimulation(Simulation):
         # get indices of post_streaming_boundaries, that need f_collided to be stored
         self.store_f_collided_post_streaming_boundaries_index = []
         for i, boundary in enumerate(self.post_streaming_boundaries):
-            if hasattr(boundary, "store_f_collided"):
+            if hasattr(boundary.__class__, "store_f_collided"):
                 self.store_f_collided_post_streaming_boundaries_index.append(i)
-            if hasattr(boundary, "initialize_f_collided"):
+            if hasattr(boundary.__class__, "initialize_f_collided"):
                 boundary.initialize_f_collided()
 
         # redefine collide_and_stream() to include the storage of f_collided for use in post_streaming_boundaries

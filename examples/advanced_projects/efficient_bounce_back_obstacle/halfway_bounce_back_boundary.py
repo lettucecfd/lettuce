@@ -9,7 +9,7 @@ __all__ = ["HalfwayBounceBackBoundary"]
 
 class HalfwayBounceBackBoundary(Boundary):
 
-    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData = None, global_solid_mask=None, periodicity: tuple[bool,...] = None, calc_force=None):
+    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData, global_solid_mask=None, periodicity: tuple[bool,...] = None, calc_force=None):
 
         self.context = context
         self.flow = flow
@@ -36,10 +36,13 @@ class HalfwayBounceBackBoundary(Boundary):
 
         # combine f_index_lt and f_index_gt to self.f_index
         if (hasattr(solid_boundary_data, "f_index_gt") or hasattr(solid_boundary_data, "f_index_lt")) and len(solid_boundary_data.f_index_lt.shape) == len(solid_boundary_data.f_index_gt.shape):  # if solid_boundary_data contains batch_indices, use them
+            print("HWBB: SBD has got attributs f_index_gt and f_index_lt!")
             self.f_index = np.concatenate((solid_boundary_data.f_index_lt, solid_boundary_data.f_index_gt), axis=0)
         elif hasattr(solid_boundary_data, "f_index_gt") and solid_boundary_data.f_index_lt.shape[0] == 0:
+            print("HWBB: SBD has got attributf_index_gt (NO f_index_lt)!")
             self.f_index = solid_boundary_data.f_index_gt
         elif hasattr(solid_boundary_data, "f_index_lt") and solid_boundary_data.f_index_gt.shape[0] == 0:
+            print("HWBB: SBD has got attributf_index_lt (NO f_index_gt)!")
             self.f_index = solid_boundary_data.f_index_lt
         else:  #else do ghetto-neighbour_search below
             print("(INFO) HWBB didn't find solid_boundary_data, doing legacy neighbour_search on mask...")

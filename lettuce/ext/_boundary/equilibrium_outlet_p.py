@@ -65,23 +65,22 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
         other = [slice(None)] + self.neighbor
         rho = flow.rho()
         u = flow.u()
-        rho_w = self.rho_outlet * torch.ones_like(rho[here])
-        u_w = u[other]
+        rho_w = self.rho_outlet * torch.ones_like(rho[tuple(here)])
+        u_w = u[tuple(other)]
         feq = flow.f
-        feq[here] = flow.equilibrium(flow, rho_w[..., None], u_w[..., None])[
+        feq[tuple(here)] = flow.equilibrium(flow, rho_w[..., None], u_w[..., None])[
             ..., 0]
         return torch.einsum("q...,q...->q...", [feq, torch.ones_like(flow.f)])
 
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:
         no_streaming_mask = context.zero_tensor(shape, dtype=bool)
-        no_streaming_mask[[np.setdiff1d(np.arange(shape[0]), self.velocities)]
-                          + self.index] = 1
+        no_streaming_mask[tuple([np.setdiff1d(np.arange(shape[0]), self.velocities)] + self.index)] = 1
         return no_streaming_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):
         no_collision_mask = context.zero_tensor(shape, dtype=torch.bool)
-        no_collision_mask[self.index] = 1
+        no_collision_mask[tuple(self.index)] = 1
         return no_collision_mask
 
     def native_available(self) -> bool:

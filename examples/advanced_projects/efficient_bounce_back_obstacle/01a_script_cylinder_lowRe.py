@@ -26,6 +26,8 @@ import numpy as np
 ## OLD from lettuce.max import draw_circular_mask
 
 import torch
+torch.autograd.set_detect_anomaly(True)
+
 import time
 import datetime
 import os
@@ -65,9 +67,9 @@ parser.add_argument("--char_velocity_pu", default=1, type=float, help="character
 
 parser.add_argument("--char_length_lu", default=1, type=int, help="characteristic length of the flow in lattice units. Number of gridpoints per diameter for a circular cylinder")
 parser.add_argument("--char_length_pu", default=1, type=float, help="characteristic length of the flow in physical units. Diameter of the cylinder in PU")
-parser.add_argument("--domain_length_x_in_d", default=None, help="domain length in x-direction (direction of flow) in number of cylinder-diameters")
-parser.add_argument("--domain_height_y_in_d", default=None, help="domain height in y-direction (orthogonal to flow and cylinder axis) in number of cylinder-diameters")
-parser.add_argument("--domain_width_z_in_d", default=None, help="domain width in z-direction (orthogonal to flow, parallel to cylinder axis) in number of cylinder-diameters; IMPORTANT: if not set, 2D-Simulation is performed")
+parser.add_argument("--domain_length_x_in_d", default=None, type=float, help="domain length in x-direction (direction of flow) in number of cylinder-diameters")
+parser.add_argument("--domain_height_y_in_d", default=None, type=float,help="domain height in y-direction (orthogonal to flow and cylinder axis) in number of cylinder-diameters")
+parser.add_argument("--domain_width_z_in_d", default=None, type=float,help="domain width in z-direction (orthogonal to flow, parallel to cylinder axis) in number of cylinder-diameters; IMPORTANT: if not set, 2D-Simulation is performed")
 
 parser.add_argument("--perturb_init", action='store_true', help="perturb initial velocity profile to trigger vortex shedding")
 parser.add_argument("--u_init_condition", default=0, type=int, help="initial velocity field: # 0: uniform u=0, # 1: uniform u=1, # 2: parabolic, amplitude u_char_lu (similar to poiseuille-flow)")
@@ -98,7 +100,7 @@ print(f"SCRIPT: Input arguments are: \n{args}\n")
 ###########################################################
 
 # CREATE timestamp, sim-ID, outdir and outdir_data
-print("SCRIPT: Creating timestamt, simulation ID and creating output directory...")
+print("SCRIPT: Creating timestamp, simulation ID and creating output directory...")
 name = args["name"]
 outdir = args["outdir"]
 outdir_data = args["outdir_data"]
@@ -169,6 +171,8 @@ else: # will be 3D
     if args["domain_width_z_in_d"] <= 1/args["char_length_lu"] : # if less than 1 lattice node
         domain_width_z_in_d = 1/args["char_length_lu"] # set to 1 lattice node
         print("(!) domain_width_z_in_d is less than 1 lattice node: setting domain_width_in_d to 1 lattice node")
+    else:
+        domain_width_z_in_d = args["domain_width_z_in_d"]
 
 # if DpY is even, resulting GPD can't be odd for symmetrical cylinder and domain
 # ...if DpY is even, GPD will be corrected to be even for symmetrical cylinder
@@ -193,7 +197,7 @@ u_init_condition = args["u_init_condition"]
 
 # calculate lu-domain-resolution, total number of gridpoints and check correct stencil
 if dims == 2:
-    resolution = [domain_length_x_in_d * char_length_lu, domain_height_y_in_d * char_length_lu]
+    resolution = [int(domain_length_x_in_d * char_length_lu), int(domain_height_y_in_d * char_length_lu)]
     number_of_gridpoints = char_length_lu ** 2 * domain_length_x_in_d * domain_height_y_in_d
     if args["stencil"] == "D2Q9":
         stencil = lt.D2Q9()
@@ -201,7 +205,7 @@ if dims == 2:
         print("(!) WARNING: wrong stencil choice for 2D simulation, D2Q9 is used")
         stencil= lt.D2Q9()
 else:
-    resolution = [domain_length_x_in_d * char_length_lu, domain_height_y_in_d * char_length_lu, domain_width_z_in_d * char_length_lu]
+    resolution = [int(domain_length_x_in_d * char_length_lu), int(domain_height_y_in_d * char_length_lu), int(domain_width_z_in_d * char_length_lu)]
     number_of_gridpoints = char_length_lu ** 3 * domain_length_x_in_d * domain_height_y_in_d * domain_width_z_in_d
     if args["stencil"] == "D3Q15":
         stencil = lt.D3Q15()
@@ -271,22 +275,40 @@ else:  # default to bgk
 print("-> initializing reporters...")
 #TODO reporter
 
+# VTK Reporter -> visualization
+if True:
+    vtk_reporter = lt.VTKReporter(interval=1, filename_base=outdir_data+"/vtk/out")
+    # export obstacle
+    mask_dict = dict()
+    if dims ==2:
+        mask_dict["mask"] = flow.obstacle_mask[...,None].astype(int)
+    else:
+        mask_dict["mask"] = flow.obstacle_mask.astype(int)
+    imageToVTK(
+        path=outdir_data+"/vtk/obstacle_point",
+        pointData=mask_dict,
+    )
+    imageToVTK(
+        path=outdir_data+"/vtk/obstacle_cell",
+        cellData=mask_dict,
+    )
+
 print("\nSCRIPT: initializing simulation object...")
-simulation = EbbSimulation(flow, collision_operator,reporter=[])
+simulation = EbbSimulation(flow, collision_operator,reporter=[vtk_reporter])
 
 print(f"\nSCRIPT: running simulation for {n_steps} steps...")
 simulation(num_steps=n_steps)
 
-
-fig, axes = plt.subplots(1, 2, figsize=(10, 3))
-fig.subplots_adjust(right=0.85)
-u = flow.u_pu.cpu().numpy()
-print("Max Velocity:", u.max())
-im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask.T), origin="lower")
-im2 = axes[1].imshow(u[0, ...].T, origin="lower")
-cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
-fig.colorbar(im2, cax=cbar_ax)
-fig.show()
+if dims == 2:
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+    fig.subplots_adjust(right=0.85)
+    u = flow.u_pu.cpu().numpy()
+    print("Max Velocity:", u.max())
+    im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask.T), origin="lower")
+    im2 = axes[1].imshow(u[0, ...].T, origin="lower")
+    cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
+    fig.colorbar(im2, cax=cbar_ax)
+    fig.show()
 
 
 ## END OF SCRIPT

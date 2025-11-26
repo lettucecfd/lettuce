@@ -25,7 +25,7 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         self.flow = flow
 
         self.mask = solid_boundary_data.solid_mask
-        self.solid_mask = solid_boundary_data.solid_mask
+        # self.solid_mask = solid_boundary_data.solid_mask
         if calc_force is not None:
             self.force_sum = torch.zeros_like(self.context.convert_to_tensor(
                 self.flow.stencil.e[0]))  # summed force vector on all boundary nodes, in D dimensions (x,y,(z))
@@ -43,6 +43,7 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         self.d_lt = self.context.convert_to_tensor(solid_boundary_data.d_lt)
         self.d_gt = self.context.convert_to_tensor(solid_boundary_data.d_gt)
         self.opposite_tensor = torch.tensor(self.flow.stencil.opposite, device=self.context.device, dtype=torch.int64)  # batch-index has to be a tensor
+        # TODO: exchange for flow.torch_tencil.opposite
 
         self.f_collided_lt = None
         self.f_collided_gt = None
@@ -124,13 +125,13 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                               self.opposite_tensor[self.f_index_lt[:, 0]],
                                               self.f_index_lt[:, 1],
                                               self.f_index_lt[:, 2]],
-                                          self.flow.stencil.e[self.f_index_lt[:, 0]].float()) \
+                                          self.flow.torch_stencil.e[self.f_index_lt[:, 0]]) \
                              + torch.einsum('i..., id -> d',
                                             self.f_collided_gt[:, 0] + f_bounced[
                                                 self.opposite_tensor[self.f_index_gt[:, 0]],
                                                 self.f_index_gt[:, 1],
                                                 self.f_index_gt[:, 2]],
-                                            self.flow.stencil.e[self.f_index_gt[:, 0]].float())
+                                            self.flow.torch_stencil.e[self.f_index_gt[:, 0]])
         if self.flow.stencil.d == 3:
             self.force_sum = torch.einsum('i..., id -> d',
                                           self.f_collided_lt[:, 0] + f_bounced[
@@ -138,14 +139,14 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                               self.f_index_lt[:, 1],
                                               self.f_index_lt[:, 2],
                                               self.f_index_lt[:, 3]],
-                                          self.flow.stencil.e[self.f_index_lt[:, 0]].float()) \
+                                          self.flow.torch_stencil.e[self.f_index_lt[:, 0]]) \
                              + torch.einsum('i..., id -> d',
                                             self.f_collided_gt[:, 0] + f_bounced[
                                                 self.opposite_tensor[self.f_index_gt[:, 0]],
                                                 self.f_index_gt[:, 1],
                                                 self.f_index_gt[:, 2],
                                                 self.f_index_gt[:, 3]],
-                                            self.flow.stencil.e[self.f_index_gt[:, 0]].float())
+                                            self.flow.torch_stencil.e[self.f_index_gt[:, 0]])
 
     # TODO: find a way to use pre- and post-Streaming Populations for bounce...
     # def store_f_collided(self, f_collided):

@@ -50,6 +50,7 @@ class ObstacleCylinder(ExtFlow):
                  lateral_walls='periodic', bc_type='fwbb',
                  perturb_init=True, u_init=0,
                  x_offset=0, y_offset=0,
+                 calc_force_coefficients=False,
                  stencil: Optional[Stencil] = None,
                  equilibrium: Optional[Equilibrium] = None):
 
@@ -67,6 +68,9 @@ class ObstacleCylinder(ExtFlow):
         self.u_init = u_init                # toggle: initial solution velocity profile type
         self.lateral_walls = lateral_walls  # toggle: lateral walls to be bounce back (bounceback), slip wall (slip) or periodic (periodic)
         self.bc_type = bc_type              # toggle: bounce back algorithm: halfway (hwbb),  fullway (fwbb), linearly interpolated (ibb1)
+
+        self.calc_force_coefficients = calc_force_coefficients
+        self.periodicity = (False, False, True if len(self.resolution) == 3 else None)
 
         # initialize masks (init with zeros)
         self.solid_mask = np.zeros(shape=self.resolution, dtype=bool)  # marks all solid nodes (obstacle, walls, ...)
@@ -477,14 +481,14 @@ class ObstacleCylinder(ExtFlow):
         print("CYLINDER: the bc_type was given as:", self.bc_type)
         if self.bc_type.casefold() == 'fwbb' or self.bc_type == 'FWBB':
             obstacle_boundary = FullwayBounceBackBoundary(self.context, self,
-                                                          self.obstacle_mask)  # TODO: add periodicity, global_solid_mask and calc_force
+                                                          self.obstacle_mask, periodicity = self.periodicity, calc_force=self.calc_force_coefficients)
         elif self.bc_type.casefold() == 'hwbb' or self.bc_type == 'HWBB':
             obstacle_boundary = HalfwayBounceBackBoundary(self.context, self,
-                                                          solid_boundary_data)  # TODO: add periodicity, global_solid_mask and calc_force
+                                                          solid_boundary_data, periodicity = self.periodicity, calc_force=self.calc_force_coefficients)
         elif self.bc_type.casefold() == 'ibb1' or self.bc_type == 'IBB1':
-            obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data)
+            obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data, calc_force=self.calc_force_coefficients)
         else:  # use basic mask Bounce Back
-            print("OBSTACLE CYLINDER - WARNING: bc_type can't be interpreted...")
+            print("OBSTACLE CYLINDER - WARNING: bc_type can't be interpreted... - will fall back to using BounceBackBoundary")
             obstacle_boundary = BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
 
         return [obstacle_boundary]

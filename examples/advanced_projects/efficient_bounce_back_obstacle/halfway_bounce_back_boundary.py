@@ -9,13 +9,13 @@ __all__ = ["HalfwayBounceBackBoundary"]
 
 class HalfwayBounceBackBoundary(Boundary):
 
-    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData, global_solid_mask=None, periodicity: tuple[bool,...] = None, calc_force=None):
+    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData, global_solid_mask=None, periodicity: tuple[bool,bool,bool|None] = None, calc_force=None):
 
         self.context = context
         self.flow = flow
 
         self.mask = solid_boundary_data.solid_mask
-        self.solid_mask = solid_boundary_data.solid_mask
+        # self.solid_mask = solid_boundary_data.solid_mask
 
         # global_solid_mask to filter out all "fake" fluid neighbors, which are outside this HWBB but not in the fluid region
         if global_solid_mask is None:
@@ -138,11 +138,11 @@ class HalfwayBounceBackBoundary(Boundary):
         # bounce (invert populations on fluid nodes neighboring solid nodes)
         # f = torch.where(self.f_mask[self.flow.stencil.opposite], f_collided[self.flow.stencil.opposite], f)
 
-        if self.flow.stencil.d == 2:
+        if self.flow.torch_stencil.d == 2:
             flow.f[self.opposite_tensor[self.f_index[:, 0]],
               self.f_index[:, 1],
               self.f_index[:, 2]] = self.f_collided[:, 0]
-        if self.flow.stencil.d == 3:
+        if self.flow.torch_stencil.d == 3:
             flow.f[self.opposite_tensor[self.f_index[:, 0]],
               self.f_index[:, 1],
               self.f_index[:, 2],
@@ -167,18 +167,20 @@ class HalfwayBounceBackBoundary(Boundary):
         # calculate force on boundary by momentum exchange method (MEA, MEM) according to Kruger et al., 2017, pp.215-217:
         # momentum (f_i*c_i - f_i_opposite*c_i_opposite = 2*f_i*c_i for a resting boundary) is summed for all...
         # ...populations pointing at the surface of the boundary
-        self.force_sum = 2 * torch.einsum('i..., id -> d', self.f_collided[:, 0], self.flow.stencil.e[self.f_index[:, 0]])
+        self.force_sum = 2 * torch.einsum('i..., id -> d', self.f_collided[:, 0], self.flow.torch_stencil.e[self.f_index[:, 0]])
+        #TODO: muss stencil.e noch als torch-tensor gespeihert werden, damit das hier schnell läuft?
+        #TODO: kann man den einfach konstant rausschreiben? dann muss das nicht ausgewertet werden... @(FWBB, @HWBB, @IBB)
 
     #TODO: find a way to use pre- and post-Streaming Populations for bounce...
     def store_f_collided(self, f_collided):
-        if self.flow.stencil.d == 2:
+        if self.flow.torch_stencil.d == 2:
             self.f_collided[:, 0] = torch.clone(f_collided[self.f_index[:, 0],  # q
             self.f_index[:, 1],  # x
             self.f_index[:, 2]])  # y
             self.f_collided[:, 1] = torch.clone(f_collided[self.opposite_tensor[self.f_index[:, 0]],  # q
             self.f_index[:, 1],  # x
             self.f_index[:, 2]])  # y
-        if self.flow.stencil.d == 3:
+        if self.flow.torch_stencil.d == 3:
             self.f_collided[:, 0] = torch.clone(f_collided[self.f_index[:, 0],  # q
             self.f_index[:, 1],  # x
             self.f_index[:, 2],  # y

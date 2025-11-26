@@ -8,12 +8,12 @@ __all__ = ["FullwayBounceBackBoundary"]
 
 class FullwayBounceBackBoundary(Boundary):
 
-    def __init__(self, context, flow, mask, global_solid_mask=None, periodicity: tuple[bool,...] = None, calc_force=None):
+    def __init__(self, context, flow, mask, global_solid_mask=None, periodicity: tuple[bool,bool,bool|None] = None, calc_force=None):
         self.context = context
         self.flow = flow
 
         self.mask = mask
-        self.solid_mask = mask
+        # self.solid_mask = mask
 
         if periodicity is None:
             periodicity = (False, False, False if self.flow.stencil.d == 3 else None)
@@ -26,7 +26,7 @@ class FullwayBounceBackBoundary(Boundary):
 
         if calc_force is not None:
             self.force_sum = torch.zeros_like(self.context.convert_to_tensor(
-                self.flow.stencil.e[0]))  # summed force vector on all boundary nodes, in D dimensions (x,y,(z))
+                self.flow.torch_stencil.e[0]))  # summed force vector on all boundary nodes, in D dimensions (x,y,(z))
             self.calc_force = True
         else:
             self.calc_force = False
@@ -112,14 +112,14 @@ class FullwayBounceBackBoundary(Boundary):
         # bounce (invert populations on boundary nodes)
         # f = torch.where(self.mask, f[self.flow.stencil.opposite], f)
 
-        if self.flow.stencil.d == 2:
+        if self.flow.torch_stencil.d == 2:
             print("FWBB call, dim 2")
             flow.f[self.opposite_tensor[self.f_index_fwbb[:, 0]],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2]] = flow.f[self.f_index_fwbb[:, 0],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2]]
-        if self.flow.stencil.d == 3:
+        if self.flow.torch_stencil.d == 3:
             flow.f[self.opposite_tensor[self.f_index_fwbb[:, 0]],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2],
@@ -130,15 +130,15 @@ class FullwayBounceBackBoundary(Boundary):
         print("FWBB call, DONE")
 
     def calc_force_on_boundary(self, f):
-        if self.flow.stencil.d == 2:
+        if self.flow.torch_stencil.d == 2:
             self.force_sum = 2 * torch.einsum('i..., id -> d', f[self.f_index_fwbb[:, 0],
             self.f_index_fwbb[:, 1],
-            self.f_index_fwbb[:, 2]], self.flow.stencil.e[self.f_index_fwbb[:, 0]])
-        if self.flow.stencil.d == 3:
+            self.f_index_fwbb[:, 2]], self.flow.torch_stencil.e[self.f_index_fwbb[:, 0]])
+        if self.flow.torch_stencil.d == 3:
             self.force_sum = 2 * torch.einsum('i..., id -> d', f[self.f_index_fwbb[:, 0],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2],
-            self.f_index_fwbb[:, 3]], self.flow.stencil.e[self.f_index_fwbb[:, 0]])
+            self.f_index_fwbb[:, 3]], self.flow.torch_stencil.e[self.f_index_fwbb[:, 0]])
 
     def make_no_collision_mask(self, f_shape: List[int], context: 'Context') -> Optional[torch.Tensor]:
         return self.context.convert_to_tensor(self.mask, dtype=bool)

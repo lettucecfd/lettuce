@@ -89,7 +89,6 @@ class ObstacleCylinder(ExtFlow):
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.radius_lu = char_length_lu / 2
-        #todo: das PLUS hier ist ein Problem!
         self.y_pos_lu = self.resolution[1] / 2 + 0.5 + self.y_offset  # y_position of cylinder-center in 1-based indexing
         self.x_pos_lu = self.y_pos_lu + self.x_offset  # keep symmetry of cylinder in x and y direction
 
@@ -177,7 +176,8 @@ class ObstacleCylinder(ExtFlow):
         p = np.zeros_like(self.grid[0], dtype=float)[None, ...]
         u_max_pu = self.units.characteristic_velocity_pu * self._unit_vector()
         u_max_pu = append_axes(u_max_pu, self.stencil.d)
-        self.solid_mask[np.where(self.obstacle_mask)] = 1  # TODO: is this line needed? OLD: # This line is needed, because the obstacle_mask.setter does not define the solid_mask properly (see above) #OLD
+       #OLD? self.solid_mask[np.where(self.obstacle_mask)] = 1  # TODO: is this line needed? OLD: # This line is needed, because the obstacle_mask.setter does not define the solid_mask properly (see above) #OLD
+
         ### initial velocity field: "u_init"-parameter
         # 0: uniform u=0
         # 1: uniform u=1 or parabolic (depends on lateral_walls -> bounceback => parabolic; slip, periodic => uniform)
@@ -229,7 +229,7 @@ class ObstacleCylinder(ExtFlow):
 
     def make_solid_boundary_data(self, x_center, y_center, radius):
         pass
-        # NOT YET IMPLEMENTED; OCC-version for index lists
+        # NOT YET IMPLEMENTED; OCC-version for index lists; CURRENTLY only make_ibb_index_lists is used with analytic function (see below)
         # TODO: wo sollte das SolidBoundaryData Objekt definiert werden bzw. die Klasse definiert werden?
 
         # cylinder definitions:
@@ -415,7 +415,6 @@ class ObstacleCylinder(ExtFlow):
 
     @property
     def grid(self):
-        # THIS IS NOT USED AT THE MOMENT. QUESTION: SHOULD THIS BE ONE- OR ZERO-BASED? Indexing or "node-number"?
         xyz = tuple(self.units.convert_length_to_pu(np.linspace(0, n, n)) for n in self.resolution)  # tuple of lists of x,y,(z)-values/indices
         return np.meshgrid(*xyz, indexing='ij')  # meshgrid of x-, y- (und z-)values/indices
 
@@ -425,21 +424,7 @@ class ObstacleCylinder(ExtFlow):
         # inlet ("left side", x[0],y[1:-1], z[:])
         inlet_boundary = EquilibriumBoundaryPU(flow=self, context=self.context,
             mask=self.in_mask,
-            velocity=self.u_inlet)  # (is this still true??): works with a 1 x D vector or an ny x D vector thanks to einsum-magic in EquilibriumBoundaryPU
-
-        lateral_boundary = None  # stays None if lateral walls are not specified... (NOT IMPLEMENTED YET, see below)
-        # >>> lateral walls ("top and bottom walls", x[:], y[0,-1], z[:])
-        #TODO: implement lateral walls (top, bottom) for cylinder in channel (with or without wall friction)
-        #   - implementation depends on positional definition: mask or index-lists or solid_boundary_data object!
-        #
-        # if self.lateral_walls == 'bounceback':
-        #     if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':  # use halfway bounce back
-        #         lateral_boundary = HalfwayBounceBackBoundary(self.wall_mask, self.units.lattice)
-        #     else:  # else use fullway bounce back
-        #         lateral_boundary = FullwayBounceBackBoundary(self.wall_mask, self.units.lattice)
-        # elif self.lateral_walls == 'slip' or self.bc_type == 'SLIP':  # use slip-walöl (symmetry boundary)
-        #     lateral_boundary = SlipBoundary(self.wall_mask, self.units.lattice, 1)  # slip on x(z)-plane
-        # <<<
+            velocity=self.u_inlet)
 
         # outlet ("right side", x[-1],y[:], (z[:]))
         if self.stencil.d == 2:
@@ -448,21 +433,33 @@ class ObstacleCylinder(ExtFlow):
             outlet_boundary = EquilibriumOutletP(direction=[1, 0, 0], flow=self)  # outlet in positive x-direction
 
         # create and return boundary-list
-        if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list
-            return [
-                inlet_boundary,
-                outlet_boundary,
-                #BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask,dtype=bool))
-            ]
-        else:
-            return [
-                inlet_boundary,
-                outlet_boundary,
-                lateral_boundary,
-            ]
+        return [
+            inlet_boundary,
+            outlet_boundary,
+        ]
 
     @property
     def post_streaming_boundaries(self):
+        # LATERAL WALLS (optional)
+        lateral_boundary = None  # stays None if lateral walls are not specified... (NOT IMPLEMENTED YET, see below)
+        # >>> lateral walls ("top and bottom walls", x[:], y[0,-1], z[:])
+
+        if self.lateral_walls == 'bounceback':
+            if self.bc_type == 'hwbb' or self.bc_type == 'HWBB':  # use halfway bounce back
+                print(
+                    "(!) OBST. CYLINDER: lateral walls can currenlty only be FWBB, HWBB requirest Solid Boundary Data which is not implemented yet for lateral walls!")
+                lateral_boundary = FullwayBounceBackBoundary(self.context, self, self.wall_mask,
+                                                             periodicity=self.periodicity)
+                # TODO (low prio): implement ibb- and hwbb-option for lateral walls
+            else:  # else use fullway bounce back
+                lateral_boundary = FullwayBounceBackBoundary(self.context, self, self.wall_mask,
+                                                             periodicity=self.periodicity)
+        elif self.lateral_walls == 'slip' or self.bc_type == 'SLIP':  # use slip-wall (symmetry boundary)
+            print("(!) OBST. CYLINDER: lateral walls can currenlty only be FWBB, slip boundary is not implemented yet!")
+            lateral_boundary = FullwayBounceBackBoundary(self.context, self, self.wall_mask,
+                                                         periodicity=self.periodicity)
+            # TODO (low prio): implement slip-option for lateral walls
+
         # obstacle (for example: obstacle "cylinder" with radius centered at position x_pos, y_pos) -> to be set via obstacle_mask.setter
         obstacle_boundary = None
         # (!) the obstacle_boundary should always be the last boundary in the list of boundaries to correctly calculate forces on the obstacle
@@ -487,7 +484,17 @@ class ObstacleCylinder(ExtFlow):
             print("OBSTACLE CYLINDER - WARNING: bc_type can't be interpreted... - will fall back to using BounceBackBoundary")
             obstacle_boundary = BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
 
-        return [obstacle_boundary]
+        # create and return boundary-list
+        if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list
+            return [
+                obstacle_boundary
+            ]
+        else:
+            return [
+                lateral_boundary,
+                obstacle_boundary
+            ]
+        #OLD: return [obstacle_boundary]
 
     def _unit_vector(self, i=0):
         return np.eye(self.stencil.d)[i]

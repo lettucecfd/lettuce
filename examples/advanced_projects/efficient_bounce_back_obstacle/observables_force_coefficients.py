@@ -22,7 +22,7 @@ class DragCoefficient(Observable):
         self.solid_mask = solid_mask
         self.area_lu = area_pu * (self.flow.units.characteristic_length_lu/self.flow.units.characteristic_length_pu) ** (self.flow.stencil.d-1) # cross-sectional area of obstacle in LU (! lengthdimension in 2D -> area-dimension = self.lattice.D-1)
         self.nan_tensor = self.context.convert_to_tensor(torch.nan)
-        self.solid_mask = self.context.convert_to_tensor(self.solid_mask)
+        self.solid_mask = self.context.convert_to_tensor(self.solid_mask, dtype=bool)
 
     def __call__(self, f: torch.Tensor = None):
         #OLD rho = torch.mean(self.lattice.rho(f[:, 0, ...]))  # simple rho_mean, including the boundary region
@@ -47,7 +47,7 @@ class LiftCoefficient(Observable):
         self.solid_mask = solid_mask
         self.area_lu = area_pu * (self.flow.units.characteristic_length_lu/self.flow.units.characteristic_length_pu) ** (self.flow.stencil.d-1) # cross-sectional area of obstacle in LU (! lengthdimension in 2D -> area-dimension = self.lattice.D-1)
         self.nan_tensor = self.context.convert_to_tensor(torch.nan)
-        self.solid_mask = self.context.convert_to_tensor(self.solid_mask)
+        self.solid_mask = self.context.convert_to_tensor(self.solid_mask, dtype=bool)
 
     def __call__(self, f: torch.Tensor = None):
         #OLD rho = torch.mean(self.lattice.rho(f[:, 0, ...]))  # simple rho_mean, including the boundary region

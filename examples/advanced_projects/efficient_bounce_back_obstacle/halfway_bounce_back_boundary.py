@@ -132,7 +132,6 @@ class HalfwayBounceBackBoundary(Boundary):
 
     def __call__(self, flow):
         # calc force on boundary:
-        print("calling HWBB")
         if self.calc_force:
             self.calc_force_on_boundary()
         # bounce (invert populations on fluid nodes neighboring solid nodes)

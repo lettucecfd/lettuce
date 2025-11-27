@@ -74,6 +74,7 @@ parser.add_argument("--domain_width_z_in_d", default=None, type=float,help="doma
 
 parser.add_argument("--perturb_init", action='store_true', help="perturb initial velocity profile to trigger vortex shedding")
 parser.add_argument("--u_init_condition", default=0, type=int, help="initial velocity field: # 0: uniform u=0, # 1: uniform u=1, # 2: parabolic, amplitude u_char_lu (similar to poiseuille-flow)")
+parser.add_argument("--lateral_walls", default='periodic', help="OPTIONS: 'periodic' or 'bounceback'; add lateral walls, converting the flow to a cylinder in a channel. The velocity profile will be adjusted to be parabolic!")
 
 # additional:
 # - char_density (PU house)
@@ -89,6 +90,7 @@ parser.add_argument("--eqlm", action="store_true", help="use Equilibium LessMemo
 parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1, fwbbc, hwbbc2, ibb1c2) for the solid obstacle")
 
 # reporter and observable settings
+parser.add_argument("--vtk3D", action='store_true', help="output 3D vtk files")
 #TODO: add vtk reporter (fps_pu, interval_lu,
 # - 3D full
 # - 2D slice normal (x,y,z)
@@ -259,7 +261,7 @@ t_target = args["t_target"]
 if args["t_target"] > 0:
     n_steps = int(t_target * ((char_length_lu) / char_length_pu) * (char_velocity_pu / (mach_number * 1 / np.sqrt(3))))
 else:
-    t_target = t_target / (char_length_lu/char_length_pu * char_velocity_pu/(mach_number*1/np.sqrt(3)))
+    t_target = n_steps / (char_length_lu/char_length_pu * char_velocity_pu/(mach_number*1/np.sqrt(3)))
 
 print(f"\n(INFO) parameters set for simulation of {n_steps} steps, representing {t_target:.3f} seconds [PU]!\n")
 
@@ -281,7 +283,7 @@ print("-> initializing flow...")
 flow = ObstacleCylinder(context=context, resolution=resolution,
                         reynolds_number=reynolds_number, mach_number=mach_number,
                         char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
-                        bc_type=str(args["bbbc_type"]), stencil=stencil, calc_force_coefficients=True)
+                        bc_type=str(args["bbbc_type"]), stencil=stencil, calc_force_coefficients=True, lateral_walls=args["lateral_walls"])
 
 print("-> initializing collision operator...")
 collision_operator = None
@@ -304,10 +306,10 @@ print("-> initializing reporters...")
 
 # DRAG and LIFT Force Cefficients and respective reporters:
 cylinder_cross_sectional_area = flow.char_length_pu if dims==2 else flow.char_length_pu*domain_width_z_in_d
-DragObservable = DragCoefficient(flow, simulation.post_streaming_boundaries[0], solid_mask=simulation.post_streaming_boundaries[0].mask, area_pu=cylinder_cross_sectional_area)
+DragObservable = DragCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
 DragReporter = lt.ObservableReporter(DragObservable, interval=1, out=None)
 simulation.reporter.append(DragReporter)
-LiftObservable = LiftCoefficient(flow, simulation.post_streaming_boundaries[0], solid_mask=simulation.post_streaming_boundaries[0].mask, area_pu=cylinder_cross_sectional_area)
+LiftObservable = LiftCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
 LiftReporter = lt.ObservableReporter(LiftObservable, interval=1, out=None)
 simulation.reporter.append(LiftReporter)
 
@@ -319,7 +321,7 @@ simulation.reporter.append(LiftReporter)
 # TODO: Progress-Reporter
 
 # VTK Reporter -> visualization
-if True:
+if args["vtk3D"]:
     vtk_reporter = lt.VTKReporter(interval=1, filename_base=outdir_data+"/vtk/out")
     # export obstacle
     mask_dict = dict()

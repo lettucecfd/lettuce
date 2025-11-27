@@ -56,7 +56,9 @@ class Simulation:
         self.flow.collision = collision
         self.context = flow.context
         self.collision = collision
-        self.collision_index = len(flow.pre_boundaries)
+        self.collision_index = len(flow.pre_boundaries)  # an index of type int; index of the collision-substep: 
+                     # boundaries and collision can be seen as a list of substeps: for example example [boundary0, boundary1, collision_index=2, boundary_3], 
+                     # ...in which boundary0 and boundary1 are pre_boundaries and boundary3 is a post_boundary -> see comments below
         self.transformer = (flow.pre_boundaries or []) + [collision] + (flow.post_boundaries or [])
         self.reporter = reporter
         self.pre_boundaries = flow.pre_boundaries
@@ -69,21 +71,23 @@ class Simulation:
 
         # if there are no boundaries
         # leave the masks uninitialised
-        self.no_collision_mask = None
-        self.no_streaming_mask = None
+        self.no_collision_mask = None  # will mark all nodes on which collision is not applied. 
+                     # ...This is technically NOT a boolean mask, but an int field with indices of boundaries and the collision-substep (see collision_index and pre_/post_boundaries)
+                     # All nodes that are marked with the value of self.collision_index will have collision applied.
+        self.no_streaming_mask = None  # boolean mask that will mark all nodes where populations will not be altered during streaming-substep
 
         # else initialise the masks
         # based on the boundaries masks
 
         if len(self.pre_boundaries) + len(self.post_boundaries) > 0:
 
-            # fill masks with value of self.collision_index (= number of pre-boundaries)
+            # fill masks with value of self.collision_index (= number of pre_boundaries);
             self.no_collision_mask = self.context.full_tensor(
                 flow.resolution, self.collision_index, dtype=torch.uint8)
             self.no_streaming_mask = self.context.full_tensor(
                 [flow.stencil.q, *flow.resolution], self.collision_index, dtype=torch.uint8)
 
-            # iterate over pre-boundaries
+            # iterate over pre_boundaries
             for i, boundary in enumerate(self.pre_boundaries):
                 # if the i-th boundary returns a non-None no_collision_mask,
                 # ...write its index (i) to every entry in the global no_collision_mask
@@ -101,7 +105,7 @@ class Simulation:
                     self.no_streaming_mask |= nsm
 
             # iterate over post-boundaries
-            # ...(similar to pre-b., but start with index collision_index+1)
+            # ...(similar to pre-b., but start with index collision_index+1); results in the numbering (example): [0: pre_boundary0, 1: pre_boundary1,2: collision_index, 3: post_boundary0, 4: post_boundary1]
             for i, boundary in enumerate(self.post_boundaries,start=self.collision_index+1):
                 ncm = boundary.make_no_collision_mask(
                     [it for it in self.flow.f.shape[1:]], context=self.context)
@@ -222,8 +226,8 @@ class Simulation:
         return self.flow.f
 
     def _collide(self):
-        # runs collision and all pre- and post-boundaries (which are pre- or post-collision, but pre-streaming)
-        if self.no_collision_mask is None:  # COLLISION EVERYWHERE
+        # runs collision and all pre_ and post_boundaries (which are pre- or post-COLLISION, but pre-STREAMING)
+        if self.no_collision_mask is None:  # COLLIDE EVERYWHERE
             # run pre-boundaries
             for boundary in self.pre_boundaries:
                 self.flow.f = boundary(self.flow)
@@ -232,19 +236,19 @@ class Simulation:
             # run post-boundaries
             for boundary in self.post_boundaries:
                 self.flow.f = boundary(self.flow)
-        else:  # SELECTIVE COLLISION (no_collision_mask (which is not a boolean mask!))
-            # boundary-indices in no_collision_mask:
-                # pre_boundaries have indices: 0 to len(pre_boundaries)-1
-                # collision_index: len(pre_boundaries)
-                # post_boundaries have indices: len(pre_boundaries)+1 to len(pre_boundaries)+len(post_boundaries)
+        else:  # SELECTIVE COLLISION (according to no_collision_mask (which is not a boolean mask! see definition/initiatlization above))
+            # INFO: boundary-indices in no_collision_mask:
+                # ...pre_boundaries have indices: 0 to len(pre_boundaries)-1
+                # ...collision_index: len(pre_boundaries)
+                # ...post_boundaries have indices: len(pre_boundaries)+1 to len(pre_boundaries)+len(post_boundaries)
             # run pre-boundaries
             for i, boundary in enumerate(self.pre_boundaries):
-                # where the collision-int equals the boundary-index, apply the boundary, everywhere else, do nothing
+                # where the collision-int equals the boundary-index, apply the boundary, everywhere else: do nothing
                 torch.where(torch.eq(self.no_collision_mask, i),
                             boundary(self.flow), self.flow.f, out=self.flow.f)
             # run collision
             # ... where the collision-int equals the number of pre-boundaries,
-            # ...apply collision, everywhere else, do nothing
+            # ...apply collision, everywhere else: do nothing
             torch.where(torch.eq(self.no_collision_mask, self.collision_index),
                         self.collision(self.flow), self.flow.f,
                         out=self.flow.f)

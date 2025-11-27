@@ -105,7 +105,6 @@ class FullwayBounceBackBoundary(Boundary):
 
     def __call__(self, flow):
         # FULLWAY-BBBC: inverts populations on all boundary nodes
-        print("FWBB call")
         # calc force on boundary:#
         if self.calc_force:
             self.calc_force_on_boundary(flow.f)
@@ -113,7 +112,6 @@ class FullwayBounceBackBoundary(Boundary):
         # f = torch.where(self.mask, f[self.flow.stencil.opposite], f)
 
         if self.flow.torch_stencil.d == 2:
-            print("FWBB call, dim 2")
             flow.f[self.opposite_tensor[self.f_index_fwbb[:, 0]],
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2]] = flow.f[self.f_index_fwbb[:, 0],
@@ -127,7 +125,6 @@ class FullwayBounceBackBoundary(Boundary):
             self.f_index_fwbb[:, 1],
             self.f_index_fwbb[:, 2],
             self.f_index_fwbb[:, 3]]
-        print("FWBB call, DONE")
 
     def calc_force_on_boundary(self, f):
         if self.flow.torch_stencil.d == 2:

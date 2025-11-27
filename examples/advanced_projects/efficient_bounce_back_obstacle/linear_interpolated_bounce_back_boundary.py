@@ -49,6 +49,8 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         self.f_collided_gt = None
         # will be populated in initialize_f_collided() method
 
+        #TODO: remove old/deprecated Code/comments below
+
         # DEPRECATED: got moved to method initialize f_collided
         # f_collided_lt = torch.zeros_like(self.d_lt)  # float-tensor with number of (x_b nodes with d<=0.5) values
         # f_collided_gt = torch.zeros_like(self.d_gt)  # float-tensor with number of (x_b nodes with d>0.5) values
@@ -117,7 +119,7 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         return self.context.convert_to_tensor(self.mask, dtype=bool)
 
     def calc_force_on_boundary(self, f_bounced):
-        #TODO: is not working in NEW lettuce
+        # (!) THIS version should be more efficient (because vectorized) than one with a for-loop
         ### force = e * (f_collided + f_bounced[opp.])
         if self.flow.stencil.d == 2:
             self.force_sum = torch.einsum('i..., id -> d',
@@ -202,7 +204,7 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                                                   self.f_index_gt[:, 3]])  # z
     #<<< OLD version "semi hardcoded"
 
-    # TODO: find a way to use pre- and post-Streaming Populations for bounce...
+    # TODO: is there an efficient way to run ibb as a pre-collision or post-collision boundary in the new lettuce timestep? (regarding new lettuce 2025+)
     def initialize_f_collided(self):
         f_collided_lt = torch.zeros_like(self.d_lt)  # float-tensor with number of (x_b nodes with d<=0.5) values
         f_collided_gt = torch.zeros_like(self.d_gt)  # float-tensor with number of (x_b nodes with d>0.5) values

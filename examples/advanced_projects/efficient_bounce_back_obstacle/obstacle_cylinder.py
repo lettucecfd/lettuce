@@ -172,13 +172,12 @@ class ObstacleCylinder(ExtFlow):
     def obstacle_mask(self, m):
         assert isinstance(m, np.ndarray) and m.shape == self.resolution
         self._obstacle_mask = m.astype(bool)
-        # self.solid_mask[np.where(self._obstacle_mask)] = 1  # (!) this line is not doing what it should! solid_mask is now defined in the initial solution (see below)!
 
     def initial_pu(self):
         p = np.zeros_like(self.grid[0], dtype=float)[None, ...]
         u_max_pu = self.units.characteristic_velocity_pu * self._unit_vector()
         u_max_pu = append_axes(u_max_pu, self.stencil.d)
-        self.solid_mask[np.where(self.obstacle_mask)] = 1  # This line is needed, because the obstacle_mask.setter does not define the solid_mask properly (see above) #OLD
+        self.solid_mask[np.where(self.obstacle_mask)] = 1  # TODO: is this line needed? OLD: # This line is needed, because the obstacle_mask.setter does not define the solid_mask properly (see above) #OLD
         ### initial velocity field: "u_init"-parameter
         # 0: uniform u=0
         # 1: uniform u=1 or parabolic (depends on lateral_walls -> bounceback => parabolic; slip, periodic => uniform)
@@ -206,7 +205,6 @@ class ObstacleCylinder(ExtFlow):
             ny = self.grid[1].shape[1]
             if u.max() < 0.5 * self.units.characteristic_velocity_pu:
                 # add perturbation for small velocities
-                #OLD 2D: u[0][1] += np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 1.0
                 amplitude_y = np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * self.units.characteristic_velocity_pu * 0.1
                 if self.stencil.d == 2:
                     u[0][1] += amplitude_y
@@ -218,7 +216,6 @@ class ObstacleCylinder(ExtFlow):
                     u[0][1] += np.einsum('z,yz->yz', amplitude_z, plane_yz)
             else:
                 # multiply scaled down perturbation if velocity field is already near u_char
-                #OLD 2D: u[0][1] *= 1 + np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * 0.3
                 factor = 1 + np.sin(np.linspace(0, ny, ny) / ny * 2 * np.pi) * 0.1
                 if self.stencil.d == 2:
                     u[0][1] *= factor
@@ -226,7 +223,7 @@ class ObstacleCylinder(ExtFlow):
                     nz = self.grid[2].shape[1]
                     plane_yz = np.ones_like(u[0, 1, :, :])
                     u[0][1] = np.einsum('y,yz->yz', factor, u[0][1])
-                    factor = 1 + np.sin(np.linspace(0, nz, nz) / nz * 2 * np.pi) * 0.1  # pertubation in z-direction
+                    factor = 1 + np.sin(np.linspace(0, nz, nz) / nz * 2 * np.pi) * 0.1  # perturbation in z-direction
                     u[0][1] = np.einsum('z,yz->yz', factor, u[0][1])
         return p, u
 
@@ -473,8 +470,7 @@ class ObstacleCylinder(ExtFlow):
         solid_boundary_data = SolidBoundaryData()
         solid_boundary_data.solid_mask = self.obstacle_mask
 
-        # index-lists for circular cylinder [f_index_lt, f_index_gt, d_lt, d_gt]
-        # [np.array(f_index_lt), np.array(f_index_gt), np.array(d_lt), np.array(d_gt)]
+        # load index-lists for circular cylinder into SBD object [f_index_lt, f_index_gt, d_lt, d_gt]:
         solid_boundary_data.f_index_lt, solid_boundary_data.f_index_gt, solid_boundary_data.d_lt, solid_boundary_data.d_gt = self.make_ibb_index_lists(
             x_center=self.x_pos_lu-1, y_center=self.y_pos_lu-1, radius=self.radius_lu)
 

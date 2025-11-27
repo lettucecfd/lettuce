@@ -9,5 +9,5 @@ __all__ = [
     'BounceBackBoundary',
     'EquilibriumBoundaryPU',
     'EquilibriumOutletP',
-    'PartiallySaturatedBC',
+    'PartiallySaturatedBC'
 ]

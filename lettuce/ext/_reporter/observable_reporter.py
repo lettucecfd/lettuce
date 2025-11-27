@@ -179,7 +179,8 @@ class ObservableReporter(Reporter):
         self.observable = observable
         self.out = [] if out is None else out
         self._parameter_name = observable.__class__.__name__
-        print('steps    ', 'time    ', self._parameter_name)
+        if out is not None:
+            print('steps    ', 'time    ', self._parameter_name)
 
     def __call__(self, simulation: 'Simulation'):
         if simulation.flow.i % self.interval == 0:

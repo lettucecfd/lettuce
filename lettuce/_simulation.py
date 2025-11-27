@@ -57,8 +57,10 @@ class Simulation:
         self.context = flow.context
         self.collision = collision
         self.collision_index = len(flow.pre_boundaries)  # an index of type int; index of the collision-substep: 
-                     # boundaries and collision can be seen as a list of substeps: for example example [boundary0, boundary1, collision_index=2, boundary_3], 
-                     # ...in which boundary0 and boundary1 are pre_boundaries and boundary3 is a post_boundary -> see comments below
+                     # boundaries and collision can be seen as a list of substeps: 
+                     # ...for example example: [boundary0, boundary1, collision_index=2, boundary_3], 
+                     # ...in which boundary0 and boundary1 are pre_boundaries and boundary3 is a post_boundary 
+                     # -> see comments under method _collide() below
         self.transformer = (flow.pre_boundaries or []) + [collision] + (flow.post_boundaries or [])
         self.reporter = reporter
         self.pre_boundaries = flow.pre_boundaries
@@ -72,9 +74,11 @@ class Simulation:
         # if there are no boundaries
         # leave the masks uninitialised
         self.no_collision_mask = None  # will mark all nodes on which collision is not applied. 
-                     # ...This is technically NOT a boolean mask, but an int field with indices of boundaries and the collision-substep (see collision_index and pre_/post_boundaries)
+                     # ...This is technically NOT a boolean mask, but an int field with indices of boundaries 
+                     # ...and the collision-substep (see collision_index and pre_/post_boundaries)
                      # All nodes that are marked with the value of self.collision_index will have collision applied.
-        self.no_streaming_mask = None  # boolean mask that will mark all nodes where populations will not be altered during streaming-substep
+        self.no_streaming_mask = None  # boolean mask that will mark all nodes where populations 
+                     # ...will not be altered during streaming-substep
 
         # else initialise the masks
         # based on the boundaries masks
@@ -105,7 +109,9 @@ class Simulation:
                     self.no_streaming_mask |= nsm
 
             # iterate over post-boundaries
-            # ...(similar to pre-b., but start with index collision_index+1); results in the numbering (example): [0: pre_boundary0, 1: pre_boundary1,2: collision_index, 3: post_boundary0, 4: post_boundary1]
+            # ...(similar to pre-b., but start with index collision_index+1); 
+            # ...results in the numbering (example): 
+            # ...[0: pre_boundary0, 1: pre_boundary1,2: collision_index, 3: post_boundary0, 4: post_boundary1]
             for i, boundary in enumerate(self.post_boundaries,start=self.collision_index+1):
                 ncm = boundary.make_no_collision_mask(
                     [it for it in self.flow.f.shape[1:]], context=self.context)
@@ -226,7 +232,8 @@ class Simulation:
         return self.flow.f
 
     def _collide(self):
-        # runs collision and all pre_ and post_boundaries (which are pre- or post-COLLISION, but pre-STREAMING)
+        # runs collision and all pre_ and post_boundaries 
+        # ...(which are pre- or post-COLLISION, but pre-STREAMING)
         if self.no_collision_mask is None:  # COLLIDE EVERYWHERE
             # run pre-boundaries
             for boundary in self.pre_boundaries:
@@ -236,7 +243,8 @@ class Simulation:
             # run post-boundaries
             for boundary in self.post_boundaries:
                 self.flow.f = boundary(self.flow)
-        else:  # SELECTIVE COLLISION (according to no_collision_mask (which is not a boolean mask! see definition/initiatlization above))
+        else:  # SELECTIVE COLLISION (according to no_collision_mask 
+               # ...(which is not a boolean mask! see definition/initiatlization above))
             # INFO: boundary-indices in no_collision_mask:
                 # ...pre_boundaries have indices: 0 to len(pre_boundaries)-1
                 # ...collision_index: len(pre_boundaries)

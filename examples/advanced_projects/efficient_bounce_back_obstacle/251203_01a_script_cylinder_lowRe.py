@@ -33,7 +33,6 @@ from observables_force_coefficients import DragCoefficient, LiftCoefficient
 
 # AUX. CODE
 from helperCode import Logger
-from data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries
 
 # import pickle
 # from copy import deepcopy
@@ -370,7 +369,7 @@ print("steps to simulate", t_target, " (t_target, PU) seconds:",
 ##################################################
 # RUN SIMULATION:
 print(f"\n#################################################")
-print(f"\nSCRIPT: running simulation for {n_steps} steps...\n")
+print(f"\nSCRIPT: running simulation for {n_steps} steps...")
 print(f"#################################################\n")
 t_start = time.time()
 mlups = simulation(num_steps=n_steps)
@@ -415,7 +414,7 @@ if not no_data_flag:
 fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 fig.subplots_adjust(right=0.85)
 u = flow.u_pu.cpu().numpy()
-print("\nMax Velocity:", u.max())
+print("Max Velocity:", u.max())
 if dims == 2:
     im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask.T), origin="lower")
     im2 = axes[1].imshow(u[0, ...].T, origin="lower")
@@ -428,40 +427,183 @@ fig.show()
 
 ##################################################
 # PROCESS DATA: calculate and SAVE OBSERVABLES AND PLOTS:
-print("\nSCRIPT: processing, plotting and saving data...\n")
 
-# DRAG
-drag_timeseries = np.array(np.array(DragReporter.out))
-plot_force_coefficient(drag_timeseries, ylabel="Coefficient of Drag $C_{D}$", ylim=(0.5, 1.6),
-                       secax_functions_tuple=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu), filenamebase=outdir_data+"/drag")
-drag_prominence = ((abs(drag_timeseries.max()) - abs(drag_timeseries.min())) / 2)
-drag_stats = analyze_periodic_timeseries(drag_timeseries, periodic_start_rel=0.5, prominence=drag_prominence,name="drag", verbose=True, pu_per_step=flow.units.convert_time_to_pu(1), outdir=outdir_data)
-#TODO: check if prominence with (asb(max) - abs(min))/2 works for both lift and drag
-print(f"DRAG STATS:") #\n{drag_stats}")
-for key, value in drag_stats.items():
-    print(f"{key:<20} = {str(value)}")
+# COEFF. OF DRAG
+try:
+    try:
+        drag_coefficient = np.array(DragReporter.out)
+        fig, ax = plt.subplots(constrained_layout=True)
+        ax.plot(drag_coefficient[:, 1], drag_coefficient[:, 2])
+        ax.set_xlabel("physical time / s")
+        ax.set_ylabel("Coefficient of Drag Cd")
+        ax.set_ylim((0.5, 1.6))  # change y-limits
+        secax = ax.secondary_xaxis('top', functions=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu))
+        secax.set_xlabel("timestep (simulation time / LU)")
+    except:
+        print("(!) drag_plotting didn't work...'")
 
-# STATS ARE: {"mean_simple": mean_simple, "mean_periodcorrected": mean_periodcorrected, "min_simple": min_simple,
-#             "max_simple": max_simple, "max_mean": max_mean, "min_mean": min_mean,
-#             "frequency_fit": frequency_fit, "frequency_fft": freq_peak, "fft_resolution": freq_res}
+    if not no_data_flag:
+        try:
+            plt.savefig(outdir_data + "/drag_coefficient.png")
+        except:
+            print("(!) saving 'drag_coefficient.png' failed!")
+        try:
+            np.savetxt(outdir_data + "/drag_coefficient.txt", drag_coefficient,
+                       header="stepLU  |  timePU  |  Cd  FROM str(timestamp)")
+        except:
+            print("(!) saving drag_timeseries failed!")
+    ax.set_ylim((drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2].min() * 0.5,
+                 drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2].max() * 1.2))
+    if not no_data_flag:
+        try:
+            plt.savefig(outdir_data + "/drag_coefficient_adjusted.png")
+        except:
+            print("(!) saving drag_coefficient_adjusted.png failed!")
+    plt.close()
+except:
+    print("(!) analysing drag_coefficient didn't work'")
 
-print("\n")
+# peak finder: try calculating the mean drag coefficient from an integer number of periods, if a clear periodic signal is found
+try:
+    values = drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2]
 
-# LIFT
-lift_timeseries = np.array(np.array(LiftReporter.out))
-plot_force_coefficient(lift_timeseries, ylabel="Coefficient of Lift$C_{L}$", ylim=(-1.1, 1.1),
-                       secax_functions_tuple=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu), filenamebase=outdir_data+"/lift")
-lift_prominence = ((abs(lift_timeseries.max()) - abs(lift_timeseries.min())) / 2)
-lift_stats = analyze_periodic_timeseries(lift_timeseries, periodic_start_rel=0.5, prominence=lift_prominence,name="lift", verbose=True, pu_per_step=flow.units.convert_time_to_pu(1), outdir=outdir_data)
-print(f"LIFT STATS:") #\n {lift_stats}")
-for key, value in lift_stats.items():
-    print(f"{key:<20} = {str(value)}")
+    peaks_max = find_peaks(values, prominence=((values.max() - values.min()) / 2))
+    peaks_min = find_peaks(-values, prominence=((values.max() - values.min()) / 2))
+    if peaks_min[0].shape[0] - peaks_max[0].shape[0] > 0:
+        peak_number = peaks_max[0].shape[0]
+    else:
+        peak_number = peaks_min[0].shape[0]
 
-# STROUHAL number
-# f = Strouhal for St=f*D/U and D=U=1 in PU
-print("Strouhal number is: ", lift_stats["frequency_fit"] * flow.char_length_pu/flow.char_velocity_pu)
+    if peaks_min[0][0] < peaks_max[0][0]:
+        first_peak = peaks_min[0][0]
+        last_peak = peaks_max[0][peak_number - 1]
+    else:
+        first_peak = peaks_max[0][0]
+        last_peak = peaks_min[0][peak_number - 1]
 
+    drag_mean = values[first_peak:last_peak].mean()
+    drag_mean_simple = values.mean()
 
+    print("Cd, simple mean:     ", drag_mean_simple)
+    print("Cd, peak_finder mean:", drag_mean)
+
+    # PLOT PEAK-FINDING:
+    drag_stepsLU = drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 0]
+    peak_max_y = values[peaks_max[0]]
+    peak_max_x = drag_stepsLU[peaks_max[0]]
+    peak_min_y = values[peaks_min[0]]
+    peak_min_x = drag_stepsLU[peaks_min[0]]
+
+    plt.plot(drag_stepsLU, values)
+    plt.scatter(peak_max_x[:peak_number], peak_max_y[:peak_number])
+    plt.scatter(peak_min_x[:peak_number], peak_min_y[:peak_number])
+    plt.scatter(drag_stepsLU[first_peak], values[first_peak])
+    plt.scatter(drag_stepsLU[last_peak], values[last_peak])
+    plt.savefig(outdir_data +  "/drag_coefficient_peakfinder.png")
+    peakfinder = True
+except:  # if signal is not sinusoidal enough, calculate only simple mean value
+    print(
+        "peak-finding didn't work... probably no significant peaks visible (Re<46?), or periodic region not reached (T too small)")
+    values = drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2]
+    drag_mean_simple = values.mean()
+    peakfinder = False
+    print("Cd, simple mean:", drag_mean_simple)
+try:
+    plt.close()
+except:
+    pass
+
+# LIFT COEFFICIENT
+try:
+    lift_coefficient = np.array(LiftReporter.out)
+    fig, ax = plt.subplots(constrained_layout=True)
+    ax.plot(lift_coefficient[:, 1], lift_coefficient[:, 2])
+    ax.set_xlabel("physical time / s")
+    ax.set_ylabel("Coefficient of Lift Cl")
+    ax.set_ylim((-1.1, 1.1))
+
+    secax = ax.secondary_xaxis('top', functions=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu))
+    secax.set_xlabel("timesteps (simulation time / LU)")
+    if not no_data_flag:
+        try:
+            plt.savefig(outdir_data + "/lift_coefficient.png")
+        except:
+            print("(!) saving lift_coefficient.png didn't work!")
+        try:
+            np.savetxt(outdir_data + "/lift_coefficient.txt", lift_coefficient,
+                       header="stepLU  |  timePU  |  Cl  FROM str(timestamp)")
+        except:
+            print("(!) saving lift_timeline didn't work!")
+    Cl_min = lift_coefficient[int(lift_coefficient[:, 2].shape[0] * periodic_start):, 2].min()
+    Cl_max = lift_coefficient[int(lift_coefficient[:, 2].shape[0] * periodic_start):, 2].max()
+    print("Cl_peaks: \nmin", Cl_min, "\nmax", Cl_max)
+    plt.close()
+except:
+    print("(!) analysing lift_coefficient didn't work!")
+
+#############################################
+# plot DRAG and LIFT together:
+try:
+    fig, ax = plt.subplots(layout="constrained")
+    drag_ax = ax.plot(drag_coefficient[:, 1], drag_coefficient[:, 2], color="tab:blue", label="Drag")
+    ax.set_xlabel("physical time / s")
+    ax.set_ylabel("Coefficient of Drag Cd")
+    ax.set_ylim((0.5, 1.6))
+
+    secax = ax.secondary_xaxis('top', functions=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu))
+    secax.set_xlabel("timesteps (simulation time / LU)")
+
+    ax2 = ax.twinx()
+    lift_ax = ax2.plot(lift_coefficient[:, 1], lift_coefficient[:, 2], color="tab:orange", label="Lift")
+    ax2.set_ylabel("Coefficient of Lift Cl")
+    ax2.set_ylim((-1.1, 1.1))
+
+    fig.legend(loc="upper left", bbox_to_anchor=(0, 1), bbox_transform=ax.transAxes)
+
+    if not no_data_flag:
+        try:
+            plt.savefig(outdir_data + "/dragAndLift_coefficient.png")
+        except:
+            print("(!) saving dragAndLift_coefficient.png didn't work!")
+            plt.close()
+except:
+    print("(!) plotting drag and lift together didn't work!")
+
+#####################################################
+# STROUHAL number: (only makes sense for Re>46 and if periodic state is reached)
+try:
+    ### prototyped fft for frequency detection and calculation of strouhal-number
+    # ! Drag_frequency is 2* Strouhal-Freq. Lift-freq. is Strouhal-Freq.
+
+    X = np.fft.fft(lift_coefficient[:, 2])  # fft result (amplitudes)
+    N = len(X)  # number of freqs
+    n = np.arange(N)  # freq index
+    T = N * flow.units.convert_time_to_pu(1)  # total time measured (T_PU)
+    freq = n / T  # frequencies (x-axis of spectrum)
+
+    plt.figure()
+    plt.stem(freq, np.abs(X), 'b', markerfmt=" ", basefmt="-b")  # plot spectrum |X|(f)
+    plt.xlabel("Freq (Hz)")
+    plt.ylabel("FFT Amplitude |X(freq)|")
+    plt.xlim(0, 1)
+    # print("max. Amplitude np.abx(X).max():", np.abs(X).max())   # for debugging
+    plt.ylim(0, np.abs(X[:int(X.shape[0] * 0.5)]).max())  # ylim, where highes peak is on left half of full spectrum
+
+    if not no_data_flag:
+        plt.savefig(outdir_data + "/fft_Cl.png")
+
+    freq_res = freq[1] - freq[0]  # frequency-resolution
+    X_abs = np.abs(X[:int(X.shape[0] * 0.4)])  # get |X| Amplitude for left half of full spectrum
+    freq_peak = freq[np.argmax(X_abs)]  # find frequency with the highest amplitude
+    print("Frequency Peak:", freq_peak, "+-", freq_res, "Hz")
+    # f = Strouhal for St=f*D/U and D=U=1 in PU
+except:
+    print("fft for Strouhal didn't work")
+    freq_res = 0
+    freq_peak = 0
+plt.close()
+
+# TODO: calc St from f when: f = Strouhal for St=f*D/U and D=U=1 in PU
 
 
 # EXPORT OBSERVABLES:
@@ -473,38 +615,37 @@ if not no_data_flag:
     output_file.close()
 
     # TODO: make this optional...
-    if False:
-        try:
-            ### list present torch tensors:
-            output_file = open(outdir_data +  "/" + timestamp + "_GPU_list_of_tensors.txt", "a")
-            total_bytes = 0
-            import gc
+    try:
+        ### list present torch tensors:
+        output_file = open(outdir_data +  "/" + timestamp + "_GPU_list_of_tensors.txt", "a")
+        total_bytes = 0
+        import gc
 
-            for obj in gc.get_objects():
-                try:
-                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                        output_file.write("\n" + str(obj.size()) + ", " + str(obj.nelement() * obj.element_size()))
-                        total_bytes = total_bytes + obj.nelement() * obj.element_size()
-                except:
-                    pass
-            # output_file.write("\n\ntotal bytes for tensors:"+str(total_bytes))
-            output_file.close()
+        for obj in gc.get_objects():
+            try:
+                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                    output_file.write("\n" + str(obj.size()) + ", " + str(obj.nelement() * obj.element_size()))
+                    total_bytes = total_bytes + obj.nelement() * obj.element_size()
+            except:
+                pass
+        # output_file.write("\n\ntotal bytes for tensors:"+str(total_bytes))
+        output_file.close()
 
-            ### count occurence of tensors in list of tensors:
-            from collections import Counter
+        ### count occurence of tensors in list of tensors:
+        from collections import Counter
 
-            my_file = open(outdir_data +  "/" + timestamp + "_GPU_list_of_tensors.txt", "r")
-            data = my_file.read()
-            my_file.close()
-            data_into_list = data.split("\n")
-            c = Counter(data_into_list)
-            output_file = open(outdir_data +  "/" + timestamp + "_GPU_counted_tensors.txt", "a")
-            for k, v in c.items():
-                output_file.write("type,size,bytes: {}, number: {}\n".format(k, v))
-            output_file.write("\ntotal bytes for tensors:" + str(total_bytes))
-            output_file.close()
-        except:
-            print("(!) counting tensors didn't work!")
+        my_file = open(outdir_data +  "/" + timestamp + "_GPU_list_of_tensors.txt", "r")
+        data = my_file.read()
+        my_file.close()
+        data_into_list = data.split("\n")
+        c = Counter(data_into_list)
+        output_file = open(outdir_data +  "/" + timestamp + "_GPU_counted_tensors.txt", "a")
+        for k, v in c.items():
+            output_file.write("type,size,bytes: {}, number: {}\n".format(k, v))
+        output_file.write("\ntotal bytes for tensors:" + str(total_bytes))
+        output_file.close()
+    except:
+        print("(!) counting tensors didn't work!")
 
 # TODO: cleanup of parms, stats, obs...
 # output parameters, stats and observables
@@ -554,22 +695,23 @@ if not no_data_flag:
     output_file.write("\ntotal current RAM usage [MB]: " + str(round(ram.used / (1024 * 1024), 2)) + " of " + str(round(ram.total / (1024 * 1024), 2)) + " MB")
 
     output_file.write("\n\n###   OBSERVABLES   ###")
-    output_file.write("\nCoefficient of drag between " + str(round(drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1), 1], 2)) + " s and " + str(round(drag_timeseries[int(drag_timeseries.shape[0] - 1), 1], 2)) + " s:")
-    output_file.write("\nCd_mean, simple      = " + str(drag_stats["mean_simple"]))
-    output_file.write("\nCd_mean, peak_finder = " + str(drag_stats["mean_periodcorrected"]))
+    output_file.write("\nCoefficient of drag between " + str(round(drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1), 1], 2)) + " s and " + str(round(drag_coefficient[int(drag_coefficient.shape[0] - 1), 1], 2)) + " s:")
+    output_file.write("\nCd_mean, simple      = " + str(drag_mean_simple))
+    if peakfinder:
+        output_file.write("\nCd_mean, peak_finder = " + str(drag_mean))
+    else:
+        output_file.write("\nnoPeaksFound")
     output_file.write(
-        "\nCd_min = " + str(drag_stats["min_mean"] if drag_stats["min_mean"] is not None else drag_stats["min_simple"]))
+        "\nCd_min = " + str(drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2].min()))
     output_file.write(
-        "\nCd_max = " + str(drag_stats["max_mean"] if drag_stats["max_mean"] is not None else drag_stats["max_simple"]))
+        "\nCd_max = " + str(drag_coefficient[int(drag_coefficient.shape[0] * periodic_start - 1):, 2].max()))
     output_file.write("\n")
     output_file.write("\nCoefficient of lift:")
-    output_file.write("\nCl_min = " + str(lift_stats["min_mean"] if lift_stats["min_mean"] is not None else lift_stats["min_simple"]))
-    output_file.write("\nCl_max = " + str(lift_stats["max_mean"] if lift_stats["max_mean"] is not None else lift_stats["max_simple"]))
+    output_file.write("\nCl_min = " + str(Cl_min))
+    output_file.write("\nCl_max = " + str(Cl_max))
     output_file.write("\n")
     output_file.write("\nStrouhal number:")
-    output_file.write("\nFFT: St +- df = " + str(lift_stats["frequency_fft"]) + " +- " + str(lift_stats["fft_resolution"]) + " Hz")
-    output_file.write(
-        "\nSINE-FIT: St = " + str(lift_stats["frequency_fit"]))
+    output_file.write("\nSt +- df = " + str(freq_peak) + " +- " + str(freq_res) + " Hz")
     output_file.write("\n")
     output_file.close()
 

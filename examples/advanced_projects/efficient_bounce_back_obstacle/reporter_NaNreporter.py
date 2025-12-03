@@ -2,8 +2,12 @@
 
 import torch
 import numpy as np
+import os
 
-from lettuce import Reporter, Simulation
+from typing import List
+
+from lettuce._simulation import Reporter, Simulation
+from lettuce.ext._reporter import VTKReporter
 from ebb_simulation import EbbSimulation
 
 class NaNReporter(Reporter):
@@ -34,6 +38,7 @@ class NaNReporter(Reporter):
                     f'{simulation.flow.i}. See log in {self.outdir} for '
                     f'details!')
                 # telling simulation to abort simulation by setting i too high
+                #TODO: works only with BREAKABLE SIMULATION with a while-loop...
                 simulation.flow.i = int(simulation.flow.i + 1e10)
                 # the 1e10 is "a lot", but in a very unlikely case of a very long simulation,
                 #  where num_steps >=1e10, this would not work...

@@ -251,7 +251,6 @@ class Simulation:
 class BreakableSimulation(Simulation):
     def __init__(self, flow: 'Flow', collision: 'Collision',
                  reporter: List['Reporter']):
-        flow.context.use_native = False
         super().__init__(flow, collision, reporter)
 
     def __call__(self, num_steps: int):

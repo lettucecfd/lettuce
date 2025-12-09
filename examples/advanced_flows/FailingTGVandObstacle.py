@@ -25,7 +25,7 @@ simulation(10000)
 print(f"Failed after {nan_reporter.failed_iteration} iterations")
 
 flow = lt.Obstacle(
-    lt.Context(dtype=torch.float64),
+    lt.Context(dtype=torch.float64,use_native=False),
     resolution=[32, 32],
     reynolds_number=100,
     mach_number=0.01,

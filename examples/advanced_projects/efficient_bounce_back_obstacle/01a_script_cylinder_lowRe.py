@@ -13,10 +13,8 @@ import warnings
 import os
 import psutil
 import shutil
-import traceback
 
 import matplotlib.pyplot as plt
-from scipy.signal import find_peaks
 
 import time
 import datetime
@@ -33,14 +31,8 @@ from observables_force_coefficients import DragCoefficient, LiftCoefficient
 
 # AUX. CODE
 from helperCode import Logger
-from data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries
+from data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries, draw_circular_mask
 
-# import pickle
-# from copy import deepcopy
-# from timeit import default_timer as timer
-# from collections import Counter
-
-#? warnings.simplefilter("ignore") # todo: is this needed?
 
 ####################
 # ARGUMENT PARSING: this script is supposed to be called with arguments, detailing all simulation- and system-parameters
@@ -72,11 +64,6 @@ parser.add_argument("--domain_width_z_in_d", default=None, type=float,help="doma
 parser.add_argument("--perturb_init", action='store_true', help="perturb initial velocity profile to trigger vortex shedding")
 parser.add_argument("--u_init_condition", default=0, type=int, help="initial velocity field: # 0: uniform u=0, # 1: uniform u=1, # 2: parabolic, amplitude u_char_lu (similar to poiseuille-flow)")
 parser.add_argument("--lateral_walls", default='periodic', help="OPTIONS: 'periodic' or 'bounceback'; add lateral walls, converting the flow to a cylinder in a channel. The velocity profile will be adjusted to be parabolic!")
-
-#TODO additional physics and flow-parameters:
-# - char_density (PU house)
-# - char_pressure
-# - vicsosity PU (house,
 
 # LBM solver settings
 parser.add_argument("--n_steps", default=100000, type=int, help="number of steps to simulate, overwritten by t_target, if t_target is >0")
@@ -117,7 +104,7 @@ parser.add_argument("--vtk3D", action='store_true', help="output 3D vtk files")
 # - print 2D-slice with mask(s)
 # - parameters SIMULATED (before sim())
 # - 2D slice last frame
-# - output condensed observables (drag, lift, strouhal) to file... @MP2
+# - output condensed observables (drag, lift, Strouhal) to file...
 # - stats and performance (end)
 
 
@@ -149,12 +136,17 @@ sim_id = str(timestamp) + "-" + name
 
 os.makedirs(outdir+"/"+sim_id) # create output dir
 print(f"outdir/simID = {outdir}/{sim_id}")
-if outdir_data is None: # save data to regular outdir, if data-dir is not specified
+
+# save data to regular outdir, if data-dir is not specified
+if outdir_data is None:
     outdir_data = outdir
-outdir = outdir+"/"+sim_id  # adding individal sim-ID to outdir path to get individual DIR per simulation
+
+# adding individal sim-ID to outdir path to get individual DIR per simulation
+outdir = outdir+"/"+sim_id
 outdir_data = outdir_data+"/"+sim_id
 if not os.path.exists(outdir_data):
-    os.makedirs(outdir_data) # create output dir for large/many files, if specified
+    # create output dir for large/many files, if specified
+    os.makedirs(outdir_data)
 print(f"outdir_DATA/simID = {outdir}/{sim_id}")
 
 # save input arguments/parameters to file in outdir:
@@ -182,7 +174,8 @@ print(f"SCRIPT: Processing parameters...")
 # calc. relative starting point of peak_finding for Cd_mean Measurement to cut of any transients
 #TODO: take absolute PU-time values here:
 # - periodic_start_Re100_PU ~= 75-100 seconds
-# - periodic_start hängt von Einschwingzeit ab! Diese hängt von der Domänengröße ab!
+# - the start of the periodic region depends on the time the flow needs
+#   to sattle.. This time is also dependent on the domain size!
 if args["reynolds_number"] > 1000:
     periodic_start = 0.4
 else:
@@ -195,7 +188,8 @@ else:
     domain_height_y_in_d = args["domain_height_y_in_d"]
 
 if args["domain_length_x_in_d"] is None or args["domain_length_x_in_d"] <=1 :
-    domain_length_x_in_d = 2 * domain_height_y_in_d # D/X = domain length in X- / flow-direction
+    # D/X = domain length in X- / flow-direction
+    domain_length_x_in_d = 2 * domain_height_y_in_d
 else:
     domain_length_x_in_d = args["domain_length_x_in_d"]
 
@@ -203,9 +197,11 @@ if args["domain_width_z_in_d"] is None:  # will be 2D
     dims = 2
 else: # will be 3D
     dims = 3
-    if args["domain_width_z_in_d"] <= 1/args["char_length_lu"] : # if less than 1 lattice node
-        domain_width_z_in_d = 1/args["char_length_lu"] # set to 1 lattice node
-        print("(!) domain_width_z_in_d is less than 1 lattice node: setting domain_width_z_in_d to 1 lattice node")
+    if args["domain_width_z_in_d"] <= 1/args["char_length_lu"] :
+        # if less than 1 lattice node... ->set to 1 lattice node
+        domain_width_z_in_d = 1/args["char_length_lu"]
+        print("(!) domain_width_z_in_d is less than 1 lattice node: "
+              "setting domain_width_z_in_d to 1 lattice node")
     else:
         domain_width_z_in_d = args["domain_width_z_in_d"]
 
@@ -218,8 +214,10 @@ if domain_height_y_in_d % 2 == 0 and args["char_length_lu"] % 2 != 0:
     gpd_correction = True  # gpd will be corrected
     gpd_setup = args["char_length_lu"]  # store old gpd for output
     char_length_lu = int(gpd_setup / 2) * 2  # make gpd even
-    print("(!) domain_height_y_ind_d (DpY) is even, gridpoints per diameter (GPD, char_length_lu) will be set to" + str(
-        char_length_lu) + ". Use odd domain_height_Y_in_D (DpY) to enable use of odd GPD (char_length_lu)!")
+    print("(!) domain_height_y_ind_d (DpY) is even, "
+          "gridpoints per diameter (GPD, char_length_lu) will be set to"
+          + str(char_length_lu) + ". Use odd domain_height_Y_in_D (DpY) "
+                                  "to enable use of odd GPD (char_length_lu)!")
 else:
     char_length_lu = args["char_length_lu"]
 
@@ -233,7 +231,8 @@ u_init_condition = args["u_init_condition"]
 
 # calculate lu-domain-resolution, total number of gridpoints and check correct stencil
 if dims == 2:
-    resolution = [int(domain_length_x_in_d * char_length_lu), int(domain_height_y_in_d * char_length_lu)]
+    resolution = [int(domain_length_x_in_d * char_length_lu),
+                  int(domain_height_y_in_d * char_length_lu)]
     number_of_gridpoints = char_length_lu ** 2 * domain_length_x_in_d * domain_height_y_in_d
     if args["stencil"] == "D2Q9":
         stencil = lt.D2Q9()
@@ -241,7 +240,9 @@ if dims == 2:
         print("(!) WARNING: wrong stencil choice for 2D simulation, D2Q9 is used")
         stencil= lt.D2Q9()
 else:
-    resolution = [int(domain_length_x_in_d * char_length_lu), int(domain_height_y_in_d * char_length_lu), int(domain_width_z_in_d * char_length_lu)]
+    resolution = [int(domain_length_x_in_d * char_length_lu),
+                  int(domain_height_y_in_d * char_length_lu),
+                  int(domain_width_z_in_d * char_length_lu)]
     number_of_gridpoints = char_length_lu ** 3 * domain_length_x_in_d * domain_height_y_in_d * domain_width_z_in_d
     if args["stencil"] == "D3Q15":
         stencil = lt.D3Q15()
@@ -285,10 +286,10 @@ print("-> initializing context...")
 context = lt.Context(device=default_device, dtype=float_dtype,use_native=False)
 
 print("-> initializing flow...")
-flow = ObstacleCylinder(context=context, resolution=resolution,
+flow = ObstacleCylinder(context=context, resolution=resolution, stencil=stencil,
                         reynolds_number=reynolds_number, mach_number=mach_number,
                         char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
-                        bc_type=str(args["bbbc_type"]), stencil=stencil, calc_force_coefficients=True, lateral_walls=args["lateral_walls"])
+                        bc_type=str(args["bbbc_type"]), calc_force_coefficients=True, lateral_walls=args["lateral_walls"])
 
 print("-> initializing collision operator...")
 collision_operator = None
@@ -311,9 +312,11 @@ print("-> initializing reporters...")
 
 # DRAG and LIFT Force Coefficients and respective reporters:
 cylinder_cross_sectional_area = flow.char_length_pu if dims==2 else flow.char_length_pu*domain_width_z_in_d
+
 DragObservable = DragCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
 DragReporter = lt.ObservableReporter(DragObservable, interval=1, out=None)
 simulation.reporter.append(DragReporter)
+
 LiftObservable = LiftCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
 LiftReporter = lt.ObservableReporter(LiftObservable, interval=1, out=None)
 simulation.reporter.append(LiftReporter)
@@ -352,7 +355,7 @@ if args["vtk3D"]:
 
 
 # DRAW CYLINDER-MASK in 2D (xy-plane)
-# TODO: port draw_circular_mask function from MP2/Paper to helperCode.py
+draw_circular_mask(flow, flow.char_length_lu, filebase=outdir_data, output_data=True)
 
 ##################################################
 # PRINT PARAMETERS prior to simulation:
@@ -432,28 +435,45 @@ print("\nSCRIPT: processing, plotting and saving data...\n")
 
 # DRAG
 drag_timeseries = np.array(np.array(DragReporter.out))
-plot_force_coefficient(drag_timeseries, ylabel="Coefficient of Drag $C_{D}$", ylim=(0.5, 1.6),
-                       secax_functions_tuple=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu), filenamebase=outdir_data+"/drag")
-drag_prominence = ((abs(drag_timeseries.max()) - abs(drag_timeseries.min())) / 2)
-drag_stats = analyze_periodic_timeseries(drag_timeseries, periodic_start_rel=0.5, prominence=drag_prominence,name="drag", verbose=True, pu_per_step=flow.units.convert_time_to_pu(1), outdir=outdir_data)
-#TODO: check if prominence with (asb(max) - abs(min))/2 works for both lift and drag
+plot_force_coefficient(drag_timeseries, ylabel="Coefficient of Drag $C_{D}$",
+                       ylim=(0.5, 1.6),
+                       secax_functions_tuple=(flow.units.convert_time_to_lu,
+                                              flow.units.convert_time_to_pu),
+                       filenamebase=outdir_data+"/drag", periodic_start=periodic_start, adjust_ylim=True)
+#OLD: drag_prominence = ((abs(drag_timeseries[2].max()) - abs(drag_timeseries[2].min())) * 0.5)
+drag_stats = analyze_periodic_timeseries(drag_timeseries, periodic_start_rel=0.5,
+                                         name="drag", verbose=True,
+                                         pu_per_step=flow.units.convert_time_to_pu(1),
+                                         outdir=outdir_data)
+
 print(f"DRAG STATS:") #\n{drag_stats}")
 for key, value in drag_stats.items():
     print(f"{key:<20} = {str(value)}")
 
-# STATS ARE: {"mean_simple": mean_simple, "mean_periodcorrected": mean_periodcorrected, "min_simple": min_simple,
-#             "max_simple": max_simple, "max_mean": max_mean, "min_mean": min_mean,
-#             "frequency_fit": frequency_fit, "frequency_fft": freq_peak, "fft_resolution": freq_res}
+# STATS ARE: {"mean_simple": mean_simple,
+#             "mean_periodcorrected": mean_periodcorrected,
+#             "min_simple": min_simple,
+#             "max_simple": max_simple,
+#             "max_mean": max_mean,
+#             "min_mean": min_mean,
+#             "frequency_fit": frequency_fit,
+#             "frequency_fft": freq_peak,
+#             "fft_resolution": freq_res}
 
 print("\n")
 
 # LIFT
 lift_timeseries = np.array(np.array(LiftReporter.out))
 plot_force_coefficient(lift_timeseries, ylabel="Coefficient of Lift$C_{L}$", ylim=(-1.1, 1.1),
-                       secax_functions_tuple=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu), filenamebase=outdir_data+"/lift")
-lift_prominence = ((abs(lift_timeseries.max()) - abs(lift_timeseries.min())) / 2)
-lift_stats = analyze_periodic_timeseries(lift_timeseries, periodic_start_rel=0.5, prominence=lift_prominence,name="lift", verbose=True, pu_per_step=flow.units.convert_time_to_pu(1), outdir=outdir_data)
-print(f"LIFT STATS:") #\n {lift_stats}")
+                       secax_functions_tuple=(flow.units.convert_time_to_lu,
+                                              flow.units.convert_time_to_pu),
+                       filenamebase=outdir_data+"/lift", periodic_start=periodic_start)
+#OLD: lift_prominence = ((abs(lift_timeseries[2].max()) - abs(lift_timeseries[2].min())) * 0.5)
+lift_stats = analyze_periodic_timeseries(lift_timeseries, periodic_start_rel=0.5,
+                                         name="lift",
+                                         verbose=True, pu_per_step=flow.units.convert_time_to_pu(1),
+                                         outdir=outdir_data)
+print(f"LIFT STATS:")
 for key, value in lift_stats.items():
     print(f"{key:<20} = {str(value)}")
 
@@ -596,7 +616,6 @@ sys.stdout = old_stdout
 # start logger
 
 # DEFINE AUXILIARY methods (or load from other helper-file)
-
 
 # SETUP SIMULATOR
 # - stencil (infer dim from stencil), dtype, equilibrium,

@@ -1,5 +1,6 @@
 # THIS FILE CONTAINS THE UTILITIES TO PROCESS AND PLOT THE REPORTED DATA FROM THE CYLINDER-SIMULATION
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Any
@@ -154,11 +155,14 @@ def analyze_periodic_timeseries(data_array: np.ndarray, periodic_start_rel: floa
 
         mean_periodcorrected = values_periodic[first_peak:last_peak].mean()
     except Exception as e:
-        print(f"(WARNING!) peak finding for {name} didn't work... See Python Stack Trace below:")
-        print("\n--- Python Stack Trace ---")
-        full_trace = traceback.format_exc()
-        print(full_trace)
-        print("--------------------------\n")
+        print(f"(WARNING!) peak finding for {name} didn't work... This might just be because there is no converged periodic region!")
+        if verbose:
+            print("Analyze Periodic Timeseries (verbose):-> see Python Stack Trace below:")
+
+            print("\n--- Python Stack Trace ---")
+            full_trace = traceback.format_exc()
+            print(full_trace)
+            print("--------------------------\n")
 
     mean_simple = values_periodic.mean()
     min_simple = values_periodic.min()
@@ -235,9 +239,7 @@ def draw_circular_mask(flow, gridpoints_per_diameter, output_data=False,
                        filebase=".", print_data=False):
     ### calculate and export 2D obstacle_mask as .png
     grid_x = gridpoints_per_diameter + 2
-    if output_data:
-        output_file = open(filebase + "/obstacle_mask_info.txt", "a")
-        output_file.write("GPD = " + str(gridpoints_per_diameter) + "\n")
+
     if print_data:
         print("GPD = " + str(gridpoints_per_diameter))
     # define radius and position for a symmetrical circular Cylinder-Obstacle
@@ -322,6 +324,8 @@ def draw_circular_mask(flow, gridpoints_per_diameter, output_data=False,
         a)  # area in LU = number of nodes, because every node has a cell of 1LU x 1LU around it
 
     if output_data:
+        output_file = open(filebase + "/obstacle_mask_info.txt", "a")
+        output_file.write("GPD = " + str(gridpoints_per_diameter) + "\n")
         output_file.write(
             "\nr_rel_mean: " + str(sum(radii_relative) / len(radii_relative)))
         output_file.write("\nrq_rel_mean: " + str(
@@ -387,351 +391,515 @@ def draw_circular_mask(flow, gridpoints_per_diameter, output_data=False,
     else:
         plt.close()
 
+class ProfilePlotter:
+    
+    def __init__(self, flow, output_path, reference_data_path, i_timeseries, u_timeseries1, u_timeseries2, u_timeseries3):
+        self.flow = flow
+        self.output_path = output_path
+        self.i_timeseries = i_timeseries
+        self.u_timeseries1 = u_timeseries1
+        self.u_timeseries2 = u_timeseries2
+        self.u_timeseries3 = u_timeseries3
+
+        os.makedirs(self.output_path + "/ProfileReporter_Data/")
+        
+        self.import_profile_reference_data(reference_data_path)
+    
+    def import_profile_reference_data(self, data_path):
+        # import reference data: (data is: first column Y/D, second column u_d/u_char)
+
+        # ux
+        self.p1_LS1993_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos1_LS1993.csv', delimiter=';')
+        self.p2_LS1993_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos2_LS1993.csv', delimiter=';')
+        self.p3_LS1993_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos3_LS1993.csv', delimiter=';')
+
+        self.p1_KM2000_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos1_KM2000.csv', delimiter=';')
+        self.p2_KM2000_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos2_KM2000.csv', delimiter=';')
+        self.p3_KM2000_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos3_KM2000.csv', delimiter=';')
+
+        self.p1_WR2008_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos1_WR2008.csv', delimiter=';')
+        self.p2_WR2008_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos2_WR2008.csv', delimiter=';')
+        self.p3_WR2008_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos3_WR2008.csv', delimiter=';')
+
+        self.p1_DI2018_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos1_DI2018.csv', delimiter=';')
+        self.p2_DI2018_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos2_DI2018.csv', delimiter=';')
+        self.p3_DI2018_ux = np.genfromtxt(
+            data_path + 'Fig09_ux_profile_pos3_DI2018.csv', delimiter=';')
+
+        # uy
+        self.p1_LS1993_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos1_LS1993.csv', delimiter=';')
+        self.p2_LS1993_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos2_LS1993.csv', delimiter=';')
+        self.p3_LS1993_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos3_LS1993.csv', delimiter=';')
+
+        self.p1_KM2000_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos1_KM2000.csv', delimiter=';')
+        self.p2_KM2000_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos2_KM2000.csv', delimiter=';')
+        self.p3_KM2000_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos3_KM2000.csv', delimiter=';')
+
+        self.p1_WR2008_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos1_WR2008.csv', delimiter=';')
+        self.p2_WR2008_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos2_WR2008.csv', delimiter=';')
+        self.p3_WR2008_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos3_WR2008.csv', delimiter=';')
+
+        self.p1_DI2018_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos1_DI2018.csv', delimiter=';')
+        self.p2_DI2018_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos2_DI2018.csv', delimiter=';')
+        self.p3_DI2018_uy = np.genfromtxt(
+            data_path + 'Fig10_uy_profile_pos3_DI2018.csv', delimiter=';')
+
+        # uxux
+        self.p1_DI2018_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos1_DI2018.csv', delimiter=';')
+        self.p1_KM2000_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos1_KM2000.csv', delimiter=';')
+        self.p1_R2016_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos1_R2016.csv', delimiter=';')
+        self.p2_BM1994_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos2_BM1994.csv', delimiter=';')
+        self.p2_DI2018_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos2_DI2018.csv', delimiter=';')
+        self.p2_KM2000_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos2_KM2000.csv', delimiter=';')
+        self.p2_LS1993_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos2_LS1993.csv', delimiter=';')
+        self.p2_R2016_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos2_R2016.csv', delimiter=';')
+        self.p3_DI2018_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos3_DI2018.csv', delimiter=';')
+        self.p3_KM2000_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos3_KM2000.csv', delimiter=';')
+        self.p3_R2016_uxux = np.genfromtxt(
+            data_path + 'Fig11_uxux_profile_pos3_R2016.csv', delimiter=';')
+
+        # uyuy
+        self.p1_DI2018_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos1_DI2018.csv', delimiter=';')
+        self.p1_R2016_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos1_R2016.csv', delimiter=';')
+        self.p2_BM1994_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos2_BM1994.csv', delimiter=';')
+        self.p2_DI2018_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos2_DI2018.csv', delimiter=';')
+        self.p2_LS1993_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos2_LS1993.csv', delimiter=';')
+        self.p2_R2016_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos2_R2016.csv', delimiter=';')
+        self.p3_DI2018_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos3_DI2018.csv', delimiter=';')
+        self.p3_R2016_uyuy = np.genfromtxt(
+            data_path + 'Fig12_uyuy_profile_pos3_R2016.csv', delimiter=';')
+
+        # uxuy
+        self.p1_BM1994_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos1_BM1994.csv', delimiter=';')
+        self.p1_DI2018_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos1_DI2018.csv', delimiter=';')
+        self.p1_R2016_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos1_R2016.csv', delimiter=';')
+        self.p2_BM1994_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos2_BM1994.csv', delimiter=';')
+        self.p2_DI2018_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos2_DI2018.csv', delimiter=';')
+        self.p2_LS1993_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos2_LS1993.csv', delimiter=';')
+        self.p2_R2016_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos2_R2016.csv', delimiter=';')
+        self.p3_BM1994_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos3_BM1994.csv', delimiter=';')
+        self.p3_DI2018_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos3_DI2018.csv', delimiter=';')
+        self.p3_R2016_uxuy = np.genfromtxt(
+            data_path + 'Fig13_uxuy_profile_pos3_R2016.csv', delimiter=';')
+
+    def process_data(self, save=False):
+        # CALCULATE remporal velocity averages
+        avg_u1_temporal = np.mean(np.array(self.u_timeseries1), axis=0)
+        avg_u2_temporal = np.mean(np.array(self.u_timeseries2), axis=0)
+        avg_u3_temporal = np.mean(np.array(self.u_timeseries3), axis=0)
+
+        self.avg_u1_x = avg_u1_temporal[0]
+        self.avg_u1_y = avg_u1_temporal[1]
+
+        self.avg_u2_x = avg_u2_temporal[0]
+        self.avg_u2_y = avg_u2_temporal[1]
+
+        self.avg_u3_x = avg_u3_temporal[0]
+        self.avg_u3_y = avg_u3_temporal[1]
+        
+        if save:
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos1" + "_t-avg.npy", avg_u1_temporal)
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos2" + "_t-avg.npy", avg_u2_temporal)
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos3" + "_t-avg.npy", avg_u3_temporal)
+
+        # Y_inD for y-axis and plotting
+        self.y_in_D = (np.arange(self.avg_u1_x.shape[
+                                     0]) + 1 - self.flow.y_pos_lu) / self.flow.char_length_lu  # y/D for figure
+        if save:
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_YinD.npy",
+                self.y_in_D)
+
+        # CALCULATE turbulent reynolds stresses
+        # diff between timeseries and time_average -> u'
+        u1_diff = self.u_timeseries1 - avg_u1_temporal
+        u2_diff = self.u_timeseries2 - avg_u2_temporal
+        u3_diff = self.u_timeseries3 - avg_u3_temporal
+
+        # square of diff -> u'^2
+        u1_diff_sq = u1_diff ** 2
+        u2_diff_sq = u2_diff ** 2
+        u3_diff_sq = u3_diff ** 2
+
+        # ux'*uy'
+        u1_diff_xy = u1_diff[:, 0, :] * u1_diff[:, 1, :]
+        u2_diff_xy = u2_diff[:, 0, :] * u2_diff[:, 1, :]
+        u3_diff_xy = u3_diff[:, 0, :] * u3_diff[:, 1, :]
+
+        # time_average of u'² and ux'uy'
+        self.u1_diff_sq_mean = np.mean(u1_diff_sq, axis=0)  # time average
+        self.u2_diff_sq_mean = np.mean(u2_diff_sq, axis=0)  # time average
+        self.u3_diff_sq_mean = np.mean(u3_diff_sq, axis=0)  # time average
+        self.u1_diff_xy_mean = np.mean(u1_diff_xy, axis=0)  # time average
+        self.u2_diff_xy_mean = np.mean(u2_diff_xy, axis=0)  # time average
+        self.u3_diff_xy_mean = np.mean(u3_diff_xy, axis=0)  # time average
+
+        if save:  # save reynolds stresses
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_1_ReStress_x.npy",
+                np.array([self.y_in_D, self.u1_diff_sq_mean[0]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_2_ReStress_x.npy",
+                np.array([self.y_in_D, self.u2_diff_sq_mean[0]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_3_ReStress_x.npy",
+                np.array([self.y_in_D, self.u3_diff_sq_mean[0]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_1_ReStress_y.npy",
+                np.array([self.y_in_D, self.u1_diff_sq_mean[1]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_2_ReStress_y.npy",
+                np.array([self.y_in_D, self.u2_diff_sq_mean[1]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_3_ReStress_y.npy",
+                np.array([self.y_in_D, self.u3_diff_sq_mean[1]]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_1_ReShearStress.npy",
+                np.array([self.y_in_D, self.u1_diff_xy_mean]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_2_ReShearStress.npy",
+                np.array([self.y_in_D, self.u2_diff_xy_mean]))
+            np.save(
+                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_3_ReShearStress.npy",
+                np.array([self.y_in_D, self.u3_diff_xy_mean]))
+
+    def save_timeseries_to_files(self, basepath):
+        # timeseries (i)    
+        np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "_timeseries_steps.npy", np.array(self.i_timeseries))
+        #timeseries (u)
+        np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos1" + "_timeseries_data.npy", np.array(self.u_timeseries1))
+        np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos2" + "_timeseries_data.npy", np.array(self.u_timeseries2))
+        np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
+                + "pos3" + "_timeseries_data.npy", np.array(self.u_timeseries3))
+
+    def plot_velocity_profiles(self, show_reference = False, save = False):
+        cm = 1 / 2.54
+        
+        if not show_reference:
+            # PLOT ux
+            fig, (ax_ux, ax_uy) = plt.subplots(1, 2, constrained_layout=True,
+                                               figsize=(30 * cm, 10 * cm))
+            ax_ux.plot(self.y_in_D, self.avg_u1_x, self.y_in_D, self.avg_u2_x, self.y_in_D, self.avg_u3_x)
+            ax_ux.set_xlabel("y/D")
+            ax_ux.set_ylabel(r"$\bar{u}_{x}$/$u_{char}$")
+            ax_ux.legend(["x/D = 1.06", "x/D = 1.54", "x/D = 2.02"])
+    
+            # PLOT uy
+            ax_uy.plot(self.y_in_D, self.avg_u1_y, self.y_in_D, self.avg_u2_y, self.y_in_D, self.avg_u3_y)
+            ax_uy.set_xlabel("y/D")
+            ax_uy.set_ylabel(r"$\bar{u}_{y}$/$u_{char}$")
+            ax_uy.legend(["x/D = 1.06", "x/D = 1.54", "x/D = 2.02"])
+            
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_velocity_noReference.png")
+                plt.close()
+            else:
+                plt.show()
+        else:
+            # PLOT ux against references
+            fig, ax = plt.subplots(constrained_layout=True)
+            my_data = ax.plot(self.y_in_D, self.avg_u1_x, self.y_in_D, self.avg_u2_x - 1, self.y_in_D, self.avg_u3_x - 2)
+            plt.setp(my_data, ls="-", lw=1, marker="", color="red", label="lettuce")
+            ref_LS = ax.plot(self.p1_LS1993_ux[:, 0], self.p1_LS1993_ux[:, 1],
+                             self.p2_LS1993_ux[:, 0], self.p2_LS1993_ux[:, 1],
+                             self.p3_LS1993_ux[:, 0],
+                             self.p3_LS1993_ux[:, 1])
+            plt.setp(ref_LS, ls="", lw=1, marker="s", fillstyle='none',
+                     color="k", label="Lorenco & Shih (1993)")
+            ref_KM = ax.plot(self.p1_KM2000_ux[:, 0], self.p1_KM2000_ux[:, 1],
+                             self.p2_KM2000_ux[:, 0], self.p2_KM2000_ux[:, 1],
+                             self.p3_KM2000_ux[:, 0],
+                             self.p3_KM2000_ux[:, 1])
+            plt.setp(ref_KM, ls="dotted", lw=1.5, marker="", color="k",
+                     label="Kravchenko & Moin (2000)")
+            ref_WR = ax.plot(self.p1_WR2008_ux[:, 0], self.p1_WR2008_ux[:, 1],
+                             self.p2_WR2008_ux[:, 0], self.p2_WR2008_ux[:, 1],
+                             self.p3_WR2008_ux[:, 0],
+                             self.p3_WR2008_ux[:, 1])
+            plt.setp(ref_WR, ls="dashdot", lw=1.5, marker="", color="k",
+                     label="Wissink & Rodi (2008)")
+            ref_DI = ax.plot(self.p1_DI2018_ux[:, 0], self.p1_DI2018_ux[:, 1],
+                             self.p2_DI2018_ux[:, 0], self.p2_DI2018_ux[:, 1],
+                             self.p3_DI2018_ux[:, 0],
+                             self.p3_DI2018_ux[:, 1])
+            plt.setp(ref_DI, ls="--", lw=1.5, marker="", color="tab:blue",
+                     label="Di Ilio et al. (2018)")
+            ax.set_xlabel("y/D")
+            ax.set_ylabel(r"$\bar{u}_{x}$/$u_{char}$")
+            ax.set_ylim((-2.5, +2))
+            ax.set_xlim((-3, 3))
+            ax.legend(handles=[my_data[0], ref_LS[0], ref_KM[0], ref_WR[0],
+                               ref_DI[0]], loc='best')
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_ux_withReference.png")
+                plt.close()
+            else:
+                plt.show()
+
+            # PLOT uy against references
+            fig, ax = plt.subplots(constrained_layout=True)
+            my_data = ax.plot(self.y_in_D, self.avg_u1_y, self.y_in_D, self.avg_u2_y - 1, self.y_in_D,
+                              self.avg_u3_y - 2)
+            plt.setp(my_data, ls="-", lw=1, marker="", color="red",
+                     label="lettuce")
+            ref_LS = ax.plot(self.p1_LS1993_uy[:, 0], self.p1_LS1993_uy[:, 1],
+                             self.p2_LS1993_uy[:, 0], self.p2_LS1993_uy[:, 1],
+                             self.p3_LS1993_uy[:, 0],
+                             self.p3_LS1993_uy[:, 1])
+            plt.setp(ref_LS, ls="", lw=1, marker="s", fillstyle='none',
+                     color="k", label="Lorenco & Shih (1993)")
+            ref_KM = ax.plot(self.p1_KM2000_uy[:, 0], self.p1_KM2000_uy[:, 1],
+                             self.p2_KM2000_uy[:, 0], self.p2_KM2000_uy[:, 1],
+                             self.p3_KM2000_uy[:, 0],
+                             self.p3_KM2000_uy[:, 1])
+            plt.setp(ref_KM, ls="dotted", lw=1.5, marker="", color="k",
+                     label="Kravchenko & Moin (2000)")
+            ref_WR = ax.plot(self.p1_WR2008_uy[:, 0], self.p1_WR2008_uy[:, 1],
+                             self.p2_WR2008_uy[:, 0], self.p2_WR2008_uy[:, 1],
+                             self.p3_WR2008_uy[:, 0],
+                             self.p3_WR2008_uy[:, 1])
+            plt.setp(ref_WR, ls="dashdot", lw=1.5, marker="", color="k",
+                     label="Wissink & Rodi (2008)")
+            ref_DI = ax.plot(self.p1_DI2018_uy[:, 0], self.p1_DI2018_uy[:, 1],
+                             self.p2_DI2018_uy[:, 0], self.p2_DI2018_uy[:, 1],
+                             self.p3_DI2018_uy[:, 0],
+                             self.p3_DI2018_uy[:, 1])
+            plt.setp(ref_DI, ls="--", lw=1.5, marker="", color="tab:blue",
+                     label="Di Ilio et al. (2018)")
+            ax.set_xlabel("y/D")
+            ax.set_ylabel(r"$\bar{u}_{y}$/$u_{char}$")
+            ax.set_ylim((-2.5, +1.5))
+            ax.set_xlim((-3, 3))
+            ax.legend(handles=[my_data[0], ref_LS[0], ref_KM[0], ref_WR[0],
+                               ref_DI[0]], loc='best')
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uy_withReference.png")
+                plt.close()
+            else:
+                plt.show()
+        
+    def plot_reynolds_stress_profiles(self, show_reference=False, save=False):
+        cm = 1 / 2.54
+        if not show_reference:
+            fig, (ax_xx, ax_yy, ax_xy) = plt.subplots(1, 3,
+                                                      figsize=(40 * cm, 10 * cm),
+                                                      constrained_layout=True)
+            ax_xx.plot(self.y_in_D, self.u1_diff_sq_mean[0], self.y_in_D, self.u2_diff_sq_mean[0],
+                       self.y_in_D, self.u3_diff_sq_mean[0])
+            ax_xx.set_xlabel("y/D")
+            ax_xx.set_ylabel(r"$\overline{u_{x}'u_{x}'}$/$u_{char}^2$")
+            ax_xx.legend(["x/D = 1.06", "x/D = 1.54", "x/D = 2.02"])
+    
+            ax_yy.plot(self.y_in_D, self.u1_diff_sq_mean[1], self.y_in_D, self.u2_diff_sq_mean[1],
+                       self.y_in_D, self.u3_diff_sq_mean[1])
+            ax_yy.set_xlabel("y/D")
+            ax_yy.set_ylabel(r"$\overline{u_{y}'u_{y}'}$/$u_{char}^2$")
+            ax_yy.legend(["x/D = 1.06", "x/D = 1.54", "x/D = 2.02"])
+    
+            ax_xy.plot(self.y_in_D, self.u1_diff_xy_mean, self.y_in_D, self.u2_diff_xy_mean, self.y_in_D,
+                       self.u3_diff_xy_mean)
+            ax_xy.set_xlabel("y/D")
+            ax_xy.set_ylabel(r"$\overline{u_{x}'u_{y}'}$/$u_{char}^2$")
+            ax_xy.legend(["x/D = 1.06", "x/D = 1.54", "x/D = 2.02"])
+    
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_reynoldsStresses_noReference.png")
+                plt.close()
+            else:
+                plt.show()
+        else:
+            # plot reynolds stresses against reference
+            # uxux - streamwise
+            fig, ax = plt.subplots(constrained_layout=True)
+            my_data = ax.plot(self.y_in_D, self.u1_diff_sq_mean[0], self.y_in_D,
+                              self.u2_diff_sq_mean[0] - 0.5, self.y_in_D,
+                              self.u3_diff_sq_mean[0] - 1)
+            plt.setp(my_data, ls="-", lw=1, marker="", color="red",
+                     label="lettuce")
+            ref_LS = ax.plot(self.p2_LS1993_uxux[:, 0], self.p2_LS1993_uxux[:, 1])
+            plt.setp(ref_LS, ls="", lw=1, marker="s", fillstyle='none',
+                     color="k", label="Lorenco & Shih (1993)")
+            ref_R = ax.plot(self.p1_R2016_uxux[:, 0], self.p1_R2016_uxux[:, 1],
+                            self.p3_R2016_uxux[:, 0], self.p3_R2016_uxux[:, 1],
+                            self.p3_R2016_uxux[:, 0], self.p3_R2016_uxux[:, 1])
+            plt.setp(ref_R, ls="--", lw=1.5, marker="", color="k",
+                     label="Rajani et al. (2016)")
+            ref_KM = ax.plot(self.p1_KM2000_uxux[:, 0], self.p1_KM2000_uxux[:, 1],
+                             self.p2_KM2000_uxux[:, 0], self.p2_KM2000_uxux[:, 1],
+                             self.p3_KM2000_uxux[:, 0], self.p3_KM2000_uxux[:, 1])
+            plt.setp(ref_KM, ls="dotted", lw=1.5, marker="", color="k",
+                     label="Kravchenko & Moin (2000)")
+            ref_BM = ax.plot(self.p2_BM1994_uxux[:, 0], self.p2_BM1994_uxux[:, 1])
+            plt.setp(ref_BM, ls="dashdot", lw=1.5, marker="", color="k",
+                     label="Beaudan & Moin (1994)")
+            ref_DI = ax.plot(self.p1_DI2018_uxux[:, 0], self.p1_DI2018_uxux[:, 1],
+                             self.p2_DI2018_uxux[:, 0], self.p2_DI2018_uxux[:, 1],
+                             self.p3_DI2018_uxux[:, 0], self.p3_DI2018_uxux[:, 1])
+            plt.setp(ref_DI, ls="--", lw=1.5, marker="", color="tab:blue",
+                     label="Di Ilio et al. (2018)")
+            ax.set_xlabel("y/D")
+            ax.set_ylabel(r"$\overline{u_{x}'u_{x}'}$/$u_{char}^2$")
+            ax.set_ylim((-1.2, 0.8))
+            ax.set_xlim((-3, 3))
+            ax.legend(
+                handles=[my_data[0], ref_LS[0], ref_R[0], ref_KM[0], ref_BM[0],
+                         ref_DI[0]], loc='best')
+
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uxux_withReference.png")
+                plt.close()
+            else:
+                plt.show()
+
+            # uyuy - cross-stream
+            fig, ax = plt.subplots(constrained_layout=True)
+            my_data = ax.plot(self.y_in_D, self.u1_diff_sq_mean[1], self.y_in_D,
+                              self.u2_diff_sq_mean[1] - 0.5, self.y_in_D,
+                              self.u3_diff_sq_mean[1] - 1)
+            plt.setp(my_data, ls="-", lw=1, marker="", color="red",
+                     label="lettuce")
+            ref_BM = ax.plot(self.p2_BM1994_uyuy[:, 0], self.p2_BM1994_uyuy[:, 1])
+            plt.setp(ref_BM, ls="dashdot", lw=1.5, marker="", color="k",
+                     label="Beaudan & Moin (1994)")
+            ref_LS = ax.plot(self.p2_LS1993_uyuy[:, 0], self.p2_LS1993_uyuy[:, 1])
+            plt.setp(ref_LS, ls="", lw=1, marker="s", fillstyle='none',
+                     color="k", label="Lorenco & Shih (1993)")
+            ref_R = ax.plot(self.p1_R2016_uyuy[:, 0], self.p1_R2016_uyuy[:, 1],
+                            self.p3_R2016_uyuy[:, 0], self.p3_R2016_uyuy[:, 1],
+                            self.p3_R2016_uyuy[:, 0], self.p3_R2016_uyuy[:, 1])
+            plt.setp(ref_R, ls="--", lw=1.5, marker="", color="k",
+                     label="Rajani et al. (2016)")
+            ref_DI = ax.plot(self.p1_DI2018_uyuy[:, 0], self.p1_DI2018_uyuy[:, 1],
+                             self.p2_DI2018_uyuy[:, 0], self.p2_DI2018_uyuy[:, 1],
+                             self.p3_DI2018_uyuy[:, 0], self.p3_DI2018_uyuy[:, 1])
+            plt.setp(ref_DI, ls="--", lw=1.5, marker="", color="tab:blue",
+                     label="Di Ilio et al. (2018)")
+            ax.set_xlabel("y/D")
+            ax.set_ylabel(r"$\overline{u_{y}'u_{y}'}$/$u_{char}^2$")
+            ax.set_ylim((-1.2, 0.8))
+            ax.set_xlim((-3, 3))
+            ax.legend(handles=[my_data[0], ref_BM[0], ref_LS[0], ref_R[0],
+                               ref_DI[0]], loc='best')
+
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uyuy_withReference.png")
+                plt.close()
+            else:
+                plt.show()
+
+            # uxuy - Reynolds shear stress
+            fig, ax = plt.subplots(constrained_layout=True)
+            my_data = ax.plot(self.y_in_D, self.u1_diff_xy_mean, self.y_in_D,
+                              self.u2_diff_xy_mean - 0.5, self.y_in_D,
+                              self.u3_diff_xy_mean - 1)
+            plt.setp(my_data, ls="-", lw=1, marker="", color="red",
+                     label="lettuce")
+            ref_BM = ax.plot(self.p2_BM1994_uxuy[:, 0], self.p2_BM1994_uxuy[:, 1])
+            plt.setp(ref_BM, ls="dashdot", lw=1.5, marker="", color="k",
+                     label="Beaudan & Moin (1994)")
+            ref_LS = ax.plot(self.p2_LS1993_uxuy[:, 0], self.p2_LS1993_uxuy[:, 1])
+            plt.setp(ref_LS, ls="", lw=1, marker="s", fillstyle='none',
+                     color="k", label="Lorenco & Shih (1993)")
+            ref_R = ax.plot(self.p1_R2016_uxuy[:, 0], self.p1_R2016_uxuy[:, 1],
+                            self.p3_R2016_uxuy[:, 0], self.p3_R2016_uxuy[:, 1],
+                            self.p3_R2016_uxuy[:, 0], self.p3_R2016_uxuy[:, 1])
+            plt.setp(ref_R, ls="--", lw=1.5, marker="", color="k",
+                     label="Rajani et al. (2016)")
+            ref_DI = ax.plot(self.p1_DI2018_uxuy[:, 0], self.p1_DI2018_uxuy[:, 1],
+                             self.p2_DI2018_uxuy[:, 0], self.p2_DI2018_uxuy[:, 1],
+                             self.p3_DI2018_uxuy[:, 0], self.p3_DI2018_uxuy[:, 1])
+            plt.setp(ref_DI, ls="--", lw=1.5, marker="", color="tab:blue",
+                     label="Di Ilio et al. (2018)")
+            ax.set_xlabel("y/D")
+            ax.set_ylabel(r"$\overline{u_{x}'u_{y}'}$/$u_{char}^2$")
+            ax.set_ylim((-1.2, 0.8))
+            ax.set_xlim((-3, 3))
+            ax.legend(handles=[my_data[0], ref_BM[0], ref_LS[0], ref_R[0],
+                               ref_DI[0]], loc='best')
+
+            if save:
+                plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uxuy_withReference.png")
+                plt.close()
+            else:
+                plt.show()
+        
+        
+# PLOTTING
+    # speichere u-profile
+    # speichere y_in_D-Achse
+    # ux ohne REF
+    # uy ohne ref
+    # ux MIT REF
+    # uy mit REF
+    # BERECHNE turbuklente REynolds spannungen
+    # SPEICHERE REyynolds-spannungen
+    # plotte xx, yy, xy spannungen
+    # speichere plot
+    # plotte reynoldssüannungen gegen reference
+
+################################################################
+
 # SNIP: MP2 fit sinewave to Cl for better frequency-measurement)
 ### FIT SINEWAVE to converged Cl to get better St-measurement
 # 1. get converged lift-curve
 # 2. fit sinewave with starting-freq 0.2
 # 3. store freq
 
-# PLOT FORCE COEFFICIENTs together! -> im Skript
-
-# u-PROFILES
-
-#######################################
-
-### load reference data from diIlio_path:
-# avg_u_start = 0.5
-# diIlio_path = "../literature/DiIlio_2018/"
-#
-# # import reference data: (data is: first collumn Y/D, second column u_d/u_char)
-# # ux
-# p1_LS1993_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos1_LS1993.csv', delimiter=';')
-# p2_LS1993_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos2_LS1993.csv', delimiter=';')
-# p3_LS1993_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos3_LS1993.csv', delimiter=';')
-#
-# p1_KM2000_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos1_KM2000.csv', delimiter=';')
-# p2_KM2000_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos2_KM2000.csv', delimiter=';')
-# p3_KM2000_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos3_KM2000.csv', delimiter=';')
-#
-# p1_WR2008_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos1_WR2008.csv', delimiter=';')
-# p2_WR2008_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos2_WR2008.csv', delimiter=';')
-# p3_WR2008_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos3_WR2008.csv', delimiter=';')
-#
-# p1_DI2018_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos1_DI2018.csv', delimiter=';')
-# p2_DI2018_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos2_DI2018.csv', delimiter=';')
-# p3_DI2018_ux = np.genfromtxt(diIlio_path + 'Fig09_ux_profile_pos3_DI2018.csv', delimiter=';')
-#
-# # uy
-# p1_LS1993_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos1_LS1993.csv', delimiter=';')
-# p2_LS1993_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos2_LS1993.csv', delimiter=';')
-# p3_LS1993_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos3_LS1993.csv', delimiter=';')
-#
-# p1_KM2000_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos1_KM2000.csv', delimiter=';')
-# p2_KM2000_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos2_KM2000.csv', delimiter=';')
-# p3_KM2000_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos3_KM2000.csv', delimiter=';')
-#
-# p1_WR2008_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos1_WR2008.csv', delimiter=';')
-# p2_WR2008_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos2_WR2008.csv', delimiter=';')
-# p3_WR2008_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos3_WR2008.csv', delimiter=';')
-#
-# p1_DI2018_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos1_DI2018.csv', delimiter=';')
-# p2_DI2018_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos2_DI2018.csv', delimiter=';')
-# p3_DI2018_uy = np.genfromtxt(diIlio_path + 'Fig10_uy_profile_pos3_DI2018.csv', delimiter=';')
-#
-# # uxux
-# p1_DI2018_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos1_DI2018.csv', delimiter=';')
-# p1_KM2000_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos1_KM2000.csv', delimiter=';')
-# p1_R2016_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos1_R2016.csv', delimiter=';')
-# p2_BM1994_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos2_BM1994.csv', delimiter=';')
-# p2_DI2018_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos2_DI2018.csv', delimiter=';')
-# p2_KM2000_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos2_KM2000.csv', delimiter=';')
-# p2_LS1993_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos2_LS1993.csv', delimiter=';')
-# p2_R2016_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos2_R2016.csv', delimiter=';')
-# p3_DI2018_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos3_DI2018.csv', delimiter=';')
-# p3_KM2000_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos3_KM2000.csv', delimiter=';')
-# p3_R2016_uxux = np.genfromtxt(diIlio_path + 'Fig11_uxux_profile_pos3_R2016.csv', delimiter=';')
-#
-# # uyuy
-# p1_DI2018_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos1_DI2018.csv', delimiter=';')
-# p1_R2016_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos1_R2016.csv', delimiter=';')
-# p2_BM1994_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos2_BM1994.csv', delimiter=';')
-# p2_DI2018_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos2_DI2018.csv', delimiter=';')
-# p2_LS1993_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos2_LS1993.csv', delimiter=';')
-# p2_R2016_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos2_R2016.csv', delimiter=';')
-# p3_DI2018_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos3_DI2018.csv', delimiter=';')
-# p3_R2016_uyuy = np.genfromtxt(diIlio_path + 'Fig12_uyuy_profile_pos3_R2016.csv', delimiter=';')
-#
-# # uxuy
-# p1_BM1994_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos1_BM1994.csv', delimiter=';')
-# p1_DI2018_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos1_DI2018.csv', delimiter=';')
-# p1_R2016_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos1_R2016.csv', delimiter=';')
-# p2_BM1994_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos2_BM1994.csv', delimiter=';')
-# p2_DI2018_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos2_DI2018.csv', delimiter=';')
-# p2_LS1993_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos2_LS1993.csv', delimiter=';')
-# p2_R2016_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos2_R2016.csv', delimiter=';')
-# p3_BM1994_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos3_BM1994.csv', delimiter=';')
-# p3_DI2018_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos3_DI2018.csv', delimiter=';')
-# p3_R2016_uxuy = np.genfromtxt(diIlio_path + 'Fig13_uxuy_profile_pos3_R2016.csv', delimiter=';')
-#
-# # plot 2x (CO) FIGURES: 5 AvgProfiles (for 10 GPD each) + 1 Legend
-#
-# gpds = np.arange(24,44,2)
-# bc = "ibb1"
-#
-# color_list = list(matplotlib.colors.TABLEAU_COLORS.keys())
-# colormap = plt.cm.coolwarm#viridis # cmaps: viridis, plasma, inferno, magma, cividis, (tab10)
-# color_index_list = np.linspace(0,1,10)
-# x_tick_list = np.arange(-3,3+1,1)
-# alpha_value = 0.7
-#
-# #paths_dict[bc+"_"+co+"_GPD"+str(gpd)]  # contains full path
-# with matplotlib.rc_context({'lines.linewidth': 0.5,'font.size': 5}):
-#     for co in cos:
-#         fig, axs = plt.subplots(3,2, sharex=True, figsize=(3.4876, 3.4876))  # 5 AvgProfiles + 1 Legend in last
-#
-#         if co == "reg":
-#             co_label = "REG"
-#         elif co == "kbc":
-#             co_label = "KBC"
-#         legend_elements=[]
-#         color_index = 0
-#         for gpd in gpds:
-#             # LOAD DATA FROM SIM
-#             avg_u1 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_t-avg.npy")
-#             avg_u2 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_t-avg.npy")
-#             avg_u3 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_t-avg.npy")
-#
-#             avg_u1_x = avg_u1[0]  # u_x component over y at pos 1
-#             avg_u2_x = avg_u2[0]  # u_x component over y at pos 2
-#             avg_u3_x = avg_u3[0]  # u_x component over y at pos 3
-#
-#             avg_u1_y = avg_u1[1]  # u_y component over y at pos 1
-#             avg_u2_y = avg_u2[1]  # u_y component over y at pos 2
-#             avg_u3_y = avg_u3[1]  # u_y component over y at pos 3
-#
-#             y_in_D = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_YinD.npy")
-#
-#             u1_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReStress_x.npy") # contains y_in_D (index 0) and data (index 1)
-#             u2_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReStress_x.npy")
-#             u3_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReStress_x.npy")
-#             u1_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReStress_y.npy")
-#             u2_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReStress_y.npy")
-#             u3_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReStress_y.npy")
-#
-#             u1_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReShearStress.npy")
-#             u2_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReShearStress.npy")
-#             u3_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReShearStress.npy")
-#
-#             # PLOT DATA IN FIGURE
-#             axs[0,0].plot(y_in_D, avg_u1_x, y_in_D, avg_u2_x - 1, y_in_D, avg_u3_x - 2, color=colormap(color_index_list[color_index]))
-#             axs[0,1].plot(y_in_D, avg_u1_y, y_in_D, avg_u2_y - 1, y_in_D, avg_u3_y - 2, color=colormap(color_index_list[color_index]))
-#             axs[1,0].plot(u1_diff_sq_mean_x[0],u1_diff_sq_mean_x[1], u2_diff_sq_mean_x[0], u2_diff_sq_mean_x[1]-0.5, u3_diff_sq_mean_x[0],u3_diff_sq_mean_x[1]-1, color=colormap(color_index_list[color_index]))
-#             axs[1,1].plot(u1_diff_sq_mean_y[0],u1_diff_sq_mean_y[1], u2_diff_sq_mean_y[0], u2_diff_sq_mean_y[1]-0.5, u3_diff_sq_mean_y[0],u3_diff_sq_mean_y[1]-1, color=colormap(color_index_list[color_index]))
-#             axs[2,0].plot(u1_diff_xy_mean[0], u1_diff_xy_mean[1], u2_diff_xy_mean[0], u2_diff_xy_mean[1]-0.5, u3_diff_xy_mean[0], u3_diff_xy_mean[1]-1, color=colormap(color_index_list[color_index]))
-#
-#             # set invisible point for legend entry:
-#             axs[2,1].plot(-1000,-1000, color=colormap(color_index_list[color_index]),
-#                           #label="GPD "+str(gpd))
-#                           label=str(gpd))
-#             legend_elements.append(matplotlib.lines.Line2D([0],[0], color=colormap(color_index_list[color_index]), lw=1, label=str(gpd)))
-#             color_index = color_index+1
-#
-#         for ax in axs.flat:
-#             ax.set_xticks(ticks=x_tick_list)
-#
-#         axs[0,0].set_ylabel(r"$\bar{u}_{x}$/$u_{char}$")
-#         axs[0,0].set_ylim([-2.5, +2])
-#         axs[0,0].set_xlim([-3, 3])
-#         axs[0,0].set_yticks(ticks=[-2,-1,0,1,2])
-#         axs[0,0].set_yticks(ticks=[-2.5,-1.5,-0.5,0.5,1.5,2.5], minor=True)
-#         # axs[0,0].text(-2.8, 1.3, "X/D = 1.06", fontsize=4.5)
-#         # axs[0,0].text(-2.8, 0.3, "X/D = 1.54", fontsize=4.5)
-#         # axs[0,0].text(-2.8, -0.7, "X/D = 1.54", fontsize=4.5)
-#
-#         axs[0,1].set_ylabel(r"$\bar{u}_{y}$/$u_{char}$")
-#         axs[0,1].set_ylim([-2.5, +0.5])
-#         axs[0,1].set_xlim([-3, 3])
-#         axs[0,1].set_yticks(ticks=[-2,-1,0])
-#         axs[0,1].set_yticks(ticks=[-2.5,-1.5,-0.5, 0.5], minor=True)
-#
-#         axs[1,0].set_ylabel(r"$\overline{u_{x}'u_{x}'}$/$u_{char}^2$")
-#         axs[1,0].set_ylim([-1.2, 0.3])
-#         axs[1,0].set_xlim([-3, 3])
-#         axs[1,0].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[1,1].set_ylabel(r"$\overline{u_{y}'u_{y}'}$/$u_{char}^2$")
-#         axs[1,1].set_ylim([-1.2, 0.3])
-#         axs[1,1].set_xlim([-3, 3])
-#         axs[1,1].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[2,0].set_xlabel("y/D")
-#         axs[2,0].set_ylabel(r"$\overline{u_{x}'u_{y}'}$/$u_{char}^2$")
-#         axs[2,0].set_ylim([-1.2, 0.2])
-#         axs[2,0].set_xlim([-3, 3])
-#         axs[2,0].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[2,1].set_xlabel("y/D")
-#         axs[2,1].set_ylim([0, 1])
-#         axs[2,1].tick_params(left=False, labelleft=False)
-#         axs[2,1].legend(handles=legend_elements,edgecolor="white",ncol=2, loc="lower left")
-#         axs[2,1].text(-2.7,0.85,"Collision operator: "+co_label)
-#         axs[2,1].text(-2.7,0.63,"Resolution in GPD:")
-#
-#         plt.savefig("../plots/3D_Re3900_AvgProfile_GPD_"+co+".png")
-#
-#         # ax.set_xlabel("y/D")
-#         # ax.set_ylabel(r"$\bar{u}_{x}$/$u_{char}$")
-#         # ax.set_ylim([-2.5, +2])
-#         # ax.set_xlim([-3, 3])
-#
-#         # ax.set_xlabel("y/D")
-#         # ax.set_ylabel(r"$\bar{u}_{y}$/$u_{char}$")
-#         # ax.set_ylim([-2.5, +1.5])
-#         # ax.set_xlim([-3, 3])
-#
-#         # ax.set_xlabel("y/D")
-#         # ax.set_ylabel(r"$\overline{u_{x}'u_{x}'}$/$u_{char}^2$")
-#         # ax.set_ylim([-1.2, 0.8])
-#         # ax.set_xlim([-3, 3])
-#
-#         # ax.set_xlabel("y/D")
-#         # ax.set_ylabel(r"$\overline{u_{y}'u_{y}'}$/$u_{char}^2$")
-#         # ax.set_ylim([-1.2, 0.8])
-#         # ax.set_xlim([-3, 3])
-#
-#         # ax.set_xlabel("y/D")
-#         # ax.set_ylabel(r"$\overline{u_{x}'u_{y}'}$/$u_{char}^2$")
-#         # ax.set_ylim([-1.2, 0.8])
-#         # ax.set_xlim([-3, 3])
-#
-#
-#
-# ### highest Res for both CO against literature
-# gpd=42
-# with matplotlib.rc_context({'lines.linewidth': 0.5,'font.size': 5, 'lines.markersize': 1.2, 'lines.markeredgewidth': 0.3}):
-#     for co in cos:
-#         fig, axs = plt.subplots(3,2, sharex=True, figsize=(3.4876, 3.4876))  # 5 AvgProfiles + 1 Legend in last
-#
-#         if co == "reg":
-#             co_label = "REG"
-#         elif co == "kbc":
-#             co_label = "KBC"
-#
-#         # LOAD DATA FROM SIM
-#         avg_u1 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_t-avg.npy")
-#         avg_u2 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_t-avg.npy")
-#         avg_u3 = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_t-avg.npy")
-#
-#         avg_u1_x = avg_u1[0]  # u_x component over y at pos 1
-#         avg_u2_x = avg_u2[0]  # u_x component over y at pos 2
-#         avg_u3_x = avg_u3[0]  # u_x component over y at pos 3
-#
-#         avg_u1_y = avg_u1[1]  # u_y component over y at pos 1
-#         avg_u2_y = avg_u2[1]  # u_y component over y at pos 2
-#         avg_u3_y = avg_u3[1]  # u_y component over y at pos 3
-#
-#         y_in_D = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_YinD.npy")
-#
-#         u1_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReStress_x.npy") # contains y_in_D (index 0) and data (index 1)
-#         u2_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReStress_x.npy")
-#         u3_diff_sq_mean_x = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReStress_x.npy")
-#         u1_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReStress_y.npy")
-#         u2_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReStress_y.npy")
-#         u3_diff_sq_mean_y = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReStress_y.npy")
-#
-#         u1_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_1_ReShearStress.npy")
-#         u2_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_2_ReShearStress.npy")
-#         u3_diff_xy_mean = np.load(paths_dict[bc+"_"+co+"_GPD"+str(gpd)][0]+"/AvgVelocity_Data" + "/AvgVelocity_3_ReShearStress.npy")
-#
-#         # PLOT DATA IN FIGURE
-#         my_data = axs[0,0].plot(y_in_D, avg_u1_x, y_in_D, avg_u2_x - 1, y_in_D, avg_u3_x - 2, color="red", label="present")
-#         ref_LS = axs[0,0].plot(p1_LS1993_ux[:, 0], p1_LS1993_ux[:, 1], p2_LS1993_ux[:, 0], p2_LS1993_ux[:, 1], p3_LS1993_ux[:, 0],
-#                          p3_LS1993_ux[:, 1], marker="s", fillstyle='none', color="k", label="Lorenco & Shih (1993)")
-#         ref_KM = axs[0,0].plot(p1_KM2000_ux[:, 0], p1_KM2000_ux[:, 1], p2_KM2000_ux[:, 0], p2_KM2000_ux[:, 1], p3_KM2000_ux[:, 0],
-#                          p3_KM2000_ux[:, 1], ls="dotted", marker="", color="k", label="Kravchenko & Moin (2000)")
-#         ref_WR = axs[0,0].plot(p1_WR2008_ux[:, 0], p1_WR2008_ux[:, 1], p2_WR2008_ux[:, 0], p2_WR2008_ux[:, 1], p3_WR2008_ux[:, 0],
-#                          p3_WR2008_ux[:, 1], ls="dashdot", marker="", color="k", label="Wissink & Rodi (2008)")
-#         ref_DI = axs[0,0].plot(p1_DI2018_ux[:, 0], p1_DI2018_ux[:, 1], p2_DI2018_ux[:, 0], p2_DI2018_ux[:, 1], p3_DI2018_ux[:, 0],
-#                          p3_DI2018_ux[:, 1], ls="--", marker="", color="tab:blue", label="Di Ilio et al. (2018)")
-#
-#         axs[0,1].plot(y_in_D, avg_u1_y, y_in_D, avg_u2_y - 1, y_in_D, avg_u3_y - 2, color="red", label="present")
-#         ref_LS = axs[0,1].plot(p1_LS1993_uy[:, 0], p1_LS1993_uy[:, 1], p2_LS1993_uy[:, 0], p2_LS1993_uy[:, 1], p3_LS1993_uy[:, 0],
-#                      p3_LS1993_uy[:, 1], ls="",marker="s", fillstyle='none', color="k", label="Lorenco & Shih (1993)")
-#         ref_KM = axs[0,1].plot(p1_KM2000_uy[:, 0], p1_KM2000_uy[:, 1], p2_KM2000_uy[:, 0], p2_KM2000_uy[:, 1], p3_KM2000_uy[:, 0],
-#                          p3_KM2000_uy[:, 1], ls="dotted", marker="", color="k", label="Kravchenko & Moin (2000)")
-#         ref_WR = axs[0,1].plot(p1_WR2008_uy[:, 0], p1_WR2008_uy[:, 1], p2_WR2008_uy[:, 0], p2_WR2008_uy[:, 1], p3_WR2008_uy[:, 0],
-#                          p3_WR2008_uy[:, 1], ls="dashdot",  marker="", color="k", label="Wissink & Rodi (2008)")
-#         ref_DI = axs[0,1].plot(p1_DI2018_uy[:, 0], p1_DI2018_uy[:, 1], p2_DI2018_uy[:, 0], p2_DI2018_uy[:, 1], p3_DI2018_uy[:, 0],
-#                          p3_DI2018_uy[:, 1], ls="--", marker="", color="tab:blue", label="Di Ilio et al. (2018)")
-#
-#         axs[1,0].plot(u1_diff_sq_mean_x[0],u1_diff_sq_mean_x[1], u2_diff_sq_mean_x[0], u2_diff_sq_mean_x[1]-0.5, u3_diff_sq_mean_x[0],u3_diff_sq_mean_x[1]-1, color="red", label="present")
-#         ref_LS = axs[1,0].plot(p2_LS1993_uxux[:, 0], p2_LS1993_uxux[:, 1], ls="", marker="s", fillstyle='none', color="k", label="Lorenco & Shih (1993)")
-#         ref_R = axs[1,0].plot(p1_R2016_uxux[:, 0], p1_R2016_uxux[:, 1], p3_R2016_uxux[:, 0], p3_R2016_uxux[:, 1],
-#                         p3_R2016_uxux[:, 0], p3_R2016_uxux[:, 1], ls="--", marker="", color="k", label="Rajani et al. (2016)")
-#         ref_KM = axs[1,0].plot(p1_KM2000_uxux[:, 0], p1_KM2000_uxux[:, 1], p2_KM2000_uxux[:, 0], p2_KM2000_uxux[:, 1],
-#                          p3_KM2000_uxux[:, 0], p3_KM2000_uxux[:, 1], ls="dotted", marker="", color="k", label="Kravchenko & Moin (2000)")
-#         ref_BM = axs[1,0].plot(p2_BM1994_uxux[:, 0], p2_BM1994_uxux[:, 1], ls="--", marker="", color="g", label="Beaudan & Moin (1994)")
-#         ref_DI = axs[1,0].plot(p1_DI2018_uxux[:, 0], p1_DI2018_uxux[:, 1], p2_DI2018_uxux[:, 0], p2_DI2018_uxux[:, 1],
-#                          p3_DI2018_uxux[:, 0], p3_DI2018_uxux[:, 1], ls="--", marker="", color="tab:blue", label="Di Ilio et al. (2018)")
-#
-#         axs[1,1].plot(u1_diff_sq_mean_y[0],u1_diff_sq_mean_y[1], u2_diff_sq_mean_y[0], u2_diff_sq_mean_y[1]-0.5, u3_diff_sq_mean_y[0],u3_diff_sq_mean_y[1]-1, color="red", label="present")
-#         ref_BM = axs[1,1].plot(p2_BM1994_uyuy[:, 0], p2_BM1994_uyuy[:, 1], ls="--", marker="", color="g", label="Beaudan & Moin (1994)")
-#         ref_LS = axs[1,1].plot(p2_LS1993_uyuy[:, 0], p2_LS1993_uyuy[:, 1], ls="", marker="s", fillstyle='none', color="k", label="Lorenco & Shih (1993)")
-#         ref_R = axs[1,1].plot(p1_R2016_uyuy[:, 0], p1_R2016_uyuy[:, 1], p3_R2016_uyuy[:, 0], p3_R2016_uyuy[:, 1],
-#                         p3_R2016_uyuy[:, 0], p3_R2016_uyuy[:, 1], ls="--", marker="", color="k", label="Rajani et al. (2016)")
-#         ref_DI = axs[1,1].plot(p1_DI2018_uyuy[:, 0], p1_DI2018_uyuy[:, 1], p2_DI2018_uyuy[:, 0], p2_DI2018_uyuy[:, 1],
-#                          p3_DI2018_uyuy[:, 0], p3_DI2018_uyuy[:, 1], ls="--", marker="", color="tab:blue", label="Di Ilio et al. (2018)")
-#
-#         axs[2,0].plot(u1_diff_xy_mean[0], u1_diff_xy_mean[1], u2_diff_xy_mean[0], u2_diff_xy_mean[1]-0.5, u3_diff_xy_mean[0], u3_diff_xy_mean[1]-1, color="red", label="present")
-#         ref_BM = axs[2,0].plot(p2_BM1994_uxuy[:, 0], p2_BM1994_uxuy[:, 1], ls="--", marker="", color="g", label="Beaudan & Moin (1994)")
-#         ref_LS = axs[2,0].plot(p2_LS1993_uxuy[:, 0], p2_LS1993_uxuy[:, 1], ls="", marker="s", fillstyle='none', color="k", label="Lorenco & Shih (1993)")
-#         ref_R = axs[2,0].plot(p1_R2016_uxuy[:, 0], p1_R2016_uxuy[:, 1], p3_R2016_uxuy[:, 0], p3_R2016_uxuy[:, 1],
-#                         p3_R2016_uxuy[:, 0], p3_R2016_uxuy[:, 1], ls="--", marker="", color="k", label="Rajani et al. (2016)")
-#         ref_DI = axs[2,0].plot(p1_DI2018_uxuy[:, 0], p1_DI2018_uxuy[:, 1], p2_DI2018_uxuy[:, 0], p2_DI2018_uxuy[:, 1],
-#                          p3_DI2018_uxuy[:, 0], p3_DI2018_uxuy[:, 1], ls="--", marker="", color="tab:blue", label="Di Ilio et al. (2018)")
-#
-#         # set invisible point for legend entry:
-#         axs[2,1].legend(handles=[my_data[0], ref_LS[0], ref_KM[0], ref_WR[0], ref_DI[0], ref_R[0], ref_BM[0]],edgecolor="white", loc="lower center", fontsize=4.5)
-#         color_index = color_index+1
-#
-#         for ax in axs.flat:
-#             ax.set_xticks(ticks=x_tick_list)
-#
-#         axs[0,0].set_ylabel(r"$\bar{u}_{x}$/$u_{char}$")
-#         axs[0,0].set_ylim([-2.5, +2])
-#         axs[0,0].set_xlim([-3, 3])
-#         axs[0,0].set_yticks(ticks=[-2,-1,0,1,2])
-#         axs[0,0].set_yticks(ticks=[-2.5,-1.5,-0.5,0.5,1.5,2.5], minor=True)
-#         # axs[0,0].text(-2.8, 1.3, "X/D = 1.06", fontsize=4.5)
-#         # axs[0,0].text(-2.8, 0.3, "X/D = 1.54", fontsize=4.5)
-#         # axs[0,0].text(-2.8, -0.7, "X/D = 1.54", fontsize=4.5)
-#
-#         axs[0,1].set_ylabel(r"$\bar{u}_{y}$/$u_{char}$")
-#         axs[0,1].set_ylim([-2.5, +0.5])
-#         axs[0,1].set_xlim([-3, 3])
-#         axs[0,1].set_yticks(ticks=[-2,-1,0])
-#         axs[0,1].set_yticks(ticks=[-2.5,-1.5,-0.5, 0.5], minor=True)
-#
-#         axs[1,0].set_ylabel(r"$\overline{u_{x}'u_{x}'}$/$u_{char}^2$")
-#         axs[1,0].set_ylim([-1.2, 0.3])
-#         axs[1,0].set_xlim([-3, 3])
-#         axs[1,0].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[1,1].set_ylabel(r"$\overline{u_{y}'u_{y}'}$/$u_{char}^2$")
-#         axs[1,1].set_ylim([-1.2, 0.3])
-#         axs[1,1].set_xlim([-3, 3])
-#         axs[1,1].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[2,0].set_xlabel("y/D")
-#         axs[2,0].set_ylabel(r"$\overline{u_{x}'u_{y}'}$/$u_{char}^2$")
-#         axs[2,0].set_ylim([-1.2, 0.2])
-#         axs[2,0].set_xlim([-3, 3])
-#         axs[2,0].set_yticks(ticks=[-1,-0.5,0])
-#
-#         axs[2,1].set_xlabel("y/D")
-#         axs[2,1].tick_params(left=False, labelleft=False)
-#         axs[2,1].set_ylim([0, 1])
-#         #axs[2,1].text(-0.8,0.8,co_label, fontsize=11)
-#         axs[2,1].text(-2.7,0.85,"Collision operator: "+co_label)
-#
-#         plt.savefig("../plots/3D_Re3900_AvgProfile_vsLit_"+co+".png")
+# OPTIONAL: PLOT FORCE COEFFICIENTs together! -> im Skript

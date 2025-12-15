@@ -75,7 +75,7 @@ parser.add_argument("--collision", default="bgk", type=str, choices=["kbc", "bgk
 parser.add_argument("--stencil", default="D3Q27", choices=['D2Q9', 'D3Q15', 'D3Q19', 'D3Q27'], help="stencil (D2Q9, D3Q27, D3Q19, D3Q15), IMPORTANT: should match number of dimensions inferred from domain_width! Otherwise default D2Q9 or D3Q27 will be chosen for 2D and 3D respectively")
 parser.add_argument("--eqlm", action="store_true", help="use Equilibium LessMemory to save ~20% on GPU VRAM, sacrificing ~2% performance")
 #TODO: how to use EQLM in lettuce 2025?
-parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1, fwbbc, hwbbc2, ibb1c2) for the solid obstacle")
+parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1) for the solid obstacle")
 
 # reporter and observable settings
 parser.add_argument("--periodic_region_start_relative", default=None, type=float, help="RELATIVE (0.0-1.0) assumed start of the periodic region for measurement of temporal and spacial averaging of observables (drag, lift , velocity profiles...)")
@@ -107,30 +107,27 @@ parser.add_argument("--vtk_slice2D_step_end", type=int)
 parser.add_argument("--vtk_slice2D_t_start", type=float)
 parser.add_argument("--vtk_slice2D_t_end", type=float)
 
-#TODO: add NAN reporter (on/off, interval,...)
-#TODO: add watchdog reporter (on/off, interval,...)
-#TODO: add highMa reporter (on/off, interval,...)
+#TODO (optional): add NAN reporter (on/off, interval,...)
+#TODO (optional): add watchdog reporter (on/off, interval,...)
+#TODO (optional): add highMa reporter (on/off, interval,...)
 
-#TODO: add 2D-mp4-reporter... (fps_video, number of frames OR fps_pu)
+#TODO (optional): add 2D-mp4-reporter... (fps_video, number of frames OR fps_pu)
 
 # Checkpointing
-# TODO: add checkpointing-utilities (read, write)
-# - is NOT implemented in lettuce 2025 atm.
-# - checkpoint IN path
-# - checkpoint OUT path (if only one is given, take this one for both)
-# - checkpoint i_start, t_start?,
+# TODO (optional): add checkpointing-utilities (read, write):
+''' Checkpointing is NOT implemented in lettuce 2025 at the moment.
+It was present in lettuce 0.2.3
+Relevant parameters and functionalities would/could include:
+ - checkpoint IN path (where to READ a checkpoint from)
+ - checkpoint OUT path (where to WRITE a checkpoint to)
+ - checkpoint i_start, or t_start (which timestep (in LU or PU) 
+ does the checkpoint correspond to.
+ - should stuff continue on, or start from 0? (observables, time (step number),
+ statistics (mean, max, min of observables etc.)  
+'''
 
+# for debugging purposes:
 parser.add_argument("--count_tensors", action="store_true", help="(for debugging: count all tensors, their sizes and memory consumption on the GPU, to find memory leaks")
-
-
-###########################################################
-# OUTPUTS:
-# - parameters INPUT
-# - print 2D-slice with mask(s)
-# - parameters SIMULATED (before sim())
-# - 2D slice last frame
-# - output condensed observables (drag, lift, Strouhal) to file...
-# - stats and performance (end)
 
 
 ###########################################################
@@ -223,9 +220,13 @@ else: # will be 3D
         domain_width_z_in_d = args["domain_width_z_in_d"]
 
 # CORRECT GPT for symmetry:
-# if DpY is even, resulting GPD can't be odd for symmetrical cylinder and domain
-# ...if DpY is even, GPD will be corrected to be even for symmetrical cylinder
-# ...(!) use odd DpY to use odd GPD!
+'''
+if D/Y (height of the domain in number of cylinder diameters) is even, 
+the resulting GPD (gridpoints per diemeter) can't be odd for a symmetrical 
+cylinder and symmetrical domain!
+ - if D/Y is even, GPD will be corrected to be even for symmetrical cylinder
+ => use odd D/Y value to use an odd GPD value!
+'''
 gpd_correction = False
 if domain_height_y_in_d % 2 == 0 and args["char_length_lu"] % 2 != 0:
     gpd_correction = True  # gpd will be corrected
@@ -246,7 +247,8 @@ mach_number = args["mach_number"]
 perturb_init = args["perturb_init"]
 u_init_condition = args["u_init_condition"]
 
-# calculate lu-domain-resolution, total number of gridpoints and check correct stencil
+# calculate lu-domain-resolution,
+# ...total number of gridpoints and check correct stencil
 if dims == 2:
     resolution = [int(domain_length_x_in_d * char_length_lu),
                   int(domain_height_y_in_d * char_length_lu)]
@@ -260,7 +262,8 @@ else:
     resolution = [int(domain_length_x_in_d * char_length_lu),
                   int(domain_height_y_in_d * char_length_lu),
                   int(domain_width_z_in_d * char_length_lu)]
-    number_of_gridpoints = char_length_lu ** 3 * domain_length_x_in_d * domain_height_y_in_d * domain_width_z_in_d
+    number_of_gridpoints = (char_length_lu ** 3 * domain_length_x_in_d
+                            * domain_height_y_in_d * domain_width_z_in_d)
     if args["stencil"] == "D3Q15":
         stencil = lt.D3Q15()
     elif args["stencil"] == "D3Q19":
@@ -283,14 +286,21 @@ elif float_dtype == "half" or float_dtype == "float16":
 n_steps = args["n_steps"]
 t_target = args["t_target"]
 if args["t_target"] > 0:
-    n_steps = int(t_target * (char_length_lu / char_length_pu) * (char_velocity_pu / (mach_number * 1 / np.sqrt(3))))
+    n_steps = int(t_target * (char_length_lu / char_length_pu)
+                  * (char_velocity_pu / (mach_number * 1 / np.sqrt(3))))
 else:
-    t_target = n_steps / (char_length_lu/char_length_pu * char_velocity_pu/(mach_number*1/np.sqrt(3)))
+    t_target = n_steps / (char_length_lu/char_length_pu
+                          * char_velocity_pu/(mach_number*1/np.sqrt(3)))
 
-# calc. relative starting point of peak_finding for Cd_mean Measurement to cut of any transients
-# - periodic_start_Re100_PU ~= 75-100 seconds
-# - the start of the periodic region depends on the time the flow needs
-#   to sattle.. This time is also dependent on the domain size!
+# calculate relative starting point for observables that are calculated over a
+# ...temporally converged or periodic region:
+'''
+- the temporal beginning of the periodic region depends on the time the flow 
+needs to converge into - for example - a von Karman vortex street. 
+ => This time is also dependent on the domain size!
+EXAMPLE: For an Re=100 in a reasonable domain size, the flow needs 
+         t_PU = 75-100 seconds to reach it's periodic state
+'''
 #TODO (optional): change periodic_start parameter to abs. step-number, instead of relative start:
 # - ease of use for reporters and processing
 # - no round-off error in preocessing LU-parameter, if set
@@ -298,7 +308,8 @@ if args["periodic_region_start_lu"] is not None and args["periodic_region_start_
     periodic_start = args["periodic_region_start_lu"] / n_steps
 elif args["periodic_region_start_pu"] is not None and args["periodic_region_start_pu"] >= 0:
     periodic_start = args["periodic_region_start_pu"] / t_target
-elif args["periodic_region_start_relative"] is not None and args["periodic_region_start_relative"] >= 0 and args["periodic_region_start_relative"] < 1.0:
+elif (args["periodic_region_start_relative"] is not None and
+      0 <= args["periodic_region_start_relative"] < 1.0):
     periodic_start = args["periodic_region_start_relative"]
 else:
     if args["reynolds_number"] > 1000:
@@ -311,34 +322,43 @@ if args["eqlm"]:
     # TODO: use EQLM ( QuadraticEquilibriumLessMemory() ) how is this used in new lettuce?
     pass
 
-print(f"\n(INFO) parameters set for simulation of {n_steps} steps, representing {t_target:.3f} seconds [PU]!\n")
+# print temporal parameters: steps, T_PU
+print(f"\n(INFO) parameters set for simulation of {n_steps} steps, "
+      f"representing {t_target:.3f} seconds [PU]!\n")
 
 ###########################################
+# INITIALIZE SOLVER COMPONENTS
 
 print("SCRIPT: initializing solver components...")
 
-###
+# CONTEXT
 print("-> initializing context...")
 context = lt.Context(device=default_device, dtype=float_dtype,use_native=False)
 
+# FLOW
 print("-> initializing flow...")
 flow = ObstacleCylinder(context=context, resolution=resolution, stencil=stencil,
                         reynolds_number=reynolds_number, mach_number=mach_number,
-                        char_length_pu=char_length_pu, char_length_lu=char_length_lu, char_velocity_pu=char_velocity_pu,
-                        bc_type=str(args["bbbc_type"]), calc_force_coefficients=True, lateral_walls=args["lateral_walls"])
+                        char_length_pu=char_length_pu, char_length_lu=char_length_lu,
+                        char_velocity_pu=char_velocity_pu,
+                        bc_type=str(args["bbbc_type"]), calc_force_coefficients=True,
+                        lateral_walls=args["lateral_walls"])
 
+# COLLISION OPERATOR
 print("-> initializing collision operator...")
 collision_operator = None
 if args["collision"].casefold() == "reg" or args["collision"].casefold() == "bgk_reg":
     collision_operator = lt.RegularizedCollision(tau=flow.units.relaxation_parameter_lu)
 elif args["collision"].casefold() == "kbc":
-    if dims == 2:
-        collision_operator = lt.KBCCollision2D(tau=flow.units.relaxation_parameter_lu)
-    else:
-        collision_operator = lt.KBCCollision3D(tau=flow.units.relaxation_parameter_lu)
+    # if dims == 2:
+    #     collision_operator = lt.KBCCollision2D(tau=flow.units.relaxation_parameter_lu)
+    # else:
+    #     collision_operator = lt.KBCCollision3D(tau=flow.units.relaxation_parameter_lu)
+    collision_operator = lt.KBCCollision(tau=flow.units.relaxation_parameter_lu)
 else:  # default to bgk
     collision_operator = lt.BGKCollision(tau=flow.units.relaxation_parameter_lu)
 
+# SIMULATION
 print("\nSCRIPT: initializing simulation object...")
 simulation = EbbSimulation(flow, collision_operator,reporter=[])
 
@@ -346,51 +366,60 @@ simulation = EbbSimulation(flow, collision_operator,reporter=[])
 # REPORTERS: initialize and append to simulation.reporter
 print("-> initializing reporters...")
 
-# DRAG and LIFT Force Coefficients and respective reporters:
-cylinder_cross_sectional_area = flow.char_length_pu if dims==2 else flow.char_length_pu*domain_width_z_in_d
+# DRAG and LIFT (Force Coefficients) and respective reporters:
+cylinder_cross_sectional_area = flow.char_length_pu if dims==2 else (
+        flow.char_length_pu*domain_width_z_in_d)
 
-DragObservable = DragCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
+DragObservable = DragCoefficient(flow, simulation.post_streaming_boundaries[-1],
+                                 solid_mask=simulation.post_streaming_boundaries[-1].mask,
+                                 area_pu=cylinder_cross_sectional_area)
 DragReporter = lt.ObservableReporter(DragObservable, interval=1, out=None)
 simulation.reporter.append(DragReporter)
 
-LiftObservable = LiftCoefficient(flow, simulation.post_streaming_boundaries[-1], solid_mask=simulation.post_streaming_boundaries[-1].mask, area_pu=cylinder_cross_sectional_area)
+LiftObservable = LiftCoefficient(flow, simulation.post_streaming_boundaries[-1],
+                                 solid_mask=simulation.post_streaming_boundaries[-1].mask,
+                                 area_pu=cylinder_cross_sectional_area)
 LiftReporter = lt.ObservableReporter(LiftObservable, interval=1, out=None)
 simulation.reporter.append(LiftReporter)
 
 # VELOCITY- and REYNOLDS-STRESS profiles over space and time:
 if args["calc_u_profiles"]:
     # define positions
-    position_1 = flow.x_pos_lu - 0.5 + 1.06 * flow.radius_lu * 2  # int(round(flow.x_pos + 1.06 * flow.radius * 2 , 0))
-    position_2 = flow.x_pos_lu - 0.5 + 1.54 * flow.radius_lu * 2  # int(round(flow.x_pos + 1.54 * flow.radius * 2 , 0))
-    position_3 = flow.x_pos_lu - 0.5 + 2.02 * flow.radius_lu * 2  # int(round(flow.x_pos + 2.02 * flow.radius * 2 , 0))
+    position_1 = flow.x_pos_lu - 0.5 + 1.06 * flow.radius_lu * 2
+    position_2 = flow.x_pos_lu - 0.5 + 1.54 * flow.radius_lu * 2
+    position_3 = flow.x_pos_lu - 0.5 + 2.02 * flow.radius_lu * 2
     print("ProfileReporters at x-positions:" + " p1: " + str(position_1) + " p2:  " + str(
         position_2) + " p3:  " + str(position_3))
 
     # create and append profileReporters
-    ProfileReporter1 = ProfileReporter(flow=flow, interval=1, position_lu=position_1, i_start= int(n_steps * periodic_start))
+    ProfileReporter1 = ProfileReporter(flow=flow, interval=1, position_lu=position_1,
+                                       i_start= int(n_steps * periodic_start))
     simulation.reporter.append(ProfileReporter1)
-    ProfileReporter2 = ProfileReporter(flow=flow, interval=1, position_lu=position_2, i_start= int(n_steps * periodic_start))
+    ProfileReporter2 = ProfileReporter(flow=flow, interval=1, position_lu=position_2,
+                                       i_start= int(n_steps * periodic_start))
     simulation.reporter.append(ProfileReporter2)
-    ProfileReporter3 = ProfileReporter(flow=flow, interval=1, position_lu=position_3, i_start= int(n_steps * periodic_start))
+    ProfileReporter3 = ProfileReporter(flow=flow, interval=1, position_lu=position_3,
+                                       i_start= int(n_steps * periodic_start))
     simulation.reporter.append(ProfileReporter3)
 
 # NAN REPORTER (if nan detected -> stop simulation)
-# TODO: add NaN reporter
+# TODO (optional): add NaN reporter (see PR for that topic)
 # - NEEDS breakable simulation (!) -> while loop. see ISSUE/Pull-request...
 
-# HighMa Reporter (if Ma>0.3 retected -> report and/or stop simulation)
-# TODO: HighMa Reporter
+# HighMa Reporter (if Ma>0.3 detected -> report and/or stop simulation)
+# TODO (optional): HighMa Reporter
 
 # Watchdog/Progress-Reporter
-# TODO: Progress-Reporter
+# TODO (optional): Progress-Reporter
 
-# VTK Reporter -> visualization
+# VTK Reporter: for visualization etc.
 
-# BASIC lettuce vtk output
+# BASIC lettuce vtk output (see also: advanced vtk reporter below)
 if args["vtk_full_basic"]:
-    vtk_reporter = lt.VTKReporter(interval=args["vtk_full_basic_interval"], filename_base=outdir_data+"/vtk/out")
+    vtk_reporter = lt.VTKReporter(interval=args["vtk_full_basic_interval"],
+                                  filename_base=outdir_data+"/vtk/out")
 
-    # export obstacle
+    # export obstacle mask for visualization
     mask_dict = dict()
     if dims ==2:
         mask_dict["mask"] = flow.obstacle_mask[...,None].astype(int)
@@ -444,7 +473,8 @@ if args["vtk_3D"] and dims == 3:
                                   filename_base=outdir_data + "/vtk/out",
                                   imin=vtk_3d_i_start, imax=vtk_3d_i_end)
     simulation.reporter.append(vtk_3d_reporter)
-    vtk_3d_reporter.output_mask(flow.solid_mask, outdir_data + "/vtk", "solid_mask", point=True)
+    vtk_3d_reporter.output_mask(flow.solid_mask, outdir_data + "/vtk", "solid_mask",
+                                point=True)
 
 
 # slice2D (2D slice at Z/2)
@@ -463,7 +493,7 @@ if args["vtk_slice2D"]:
     elif args["vtk_slice2D_step_end"] is not None and args["vtk_slice2D_step_end"] > 0:
         vtk_slice2d_i_end = int(args["vtk_slice2D_step_end"])
     else:
-        vtk_slice2d_i_end = n_steps  # Q: must this be target?
+        vtk_slice2d_i_end = n_steps
 
     if args["vtk_slice2D_t_interval"] is not None and args["vtk_slice2D_t_interval"] > 0:
         vtk_slice2d_interval = int(flow.units.convert_time_to_lu(args["vtk_slice2D_t_interval"]))
@@ -478,39 +508,50 @@ if args["vtk_slice2D"]:
         vtk_slice2d_interval = 1
 
     if args["vtk_slice2D"]:
-        vtk_domainSlice_reporter = VTKsliceReporter( flow,
-                                                       interval=int(vtk_slice2d_interval),
-                                                       filename_base=outdir_data + "/vtk/slice_domain/slice_domain",
-                                                       sliceXY=([0,resolution[0]-1],[0,resolution[1]-1]),
-                                                       sliceZ=int(resolution[2]/2),
-                                                       imin=vtk_slice2d_i_start, imax=vtk_slice2d_i_end)
+        vtk_domainSlice_reporter = VTKsliceReporter(flow,
+                               interval=int(vtk_slice2d_interval),
+                               filename_base=outdir_data + "/vtk/slice_domain/slice_domain",
+                               sliceXY=([0,resolution[0]-1],[0,resolution[1]-1]),
+                               sliceZ=int(resolution[2]/2),
+                               imin=vtk_slice2d_i_start, imax=vtk_slice2d_i_end)
         simulation.reporter.append(vtk_domainSlice_reporter)
 
 
 # DRAW CYLINDER-MASK in 2D (xy-plane)
-draw_circular_mask(flow, flow.char_length_lu, filebase=outdir_data, output_data=True)
+try:
+    draw_circular_mask(flow, flow.char_length_lu, filebase=outdir_data, output_data=True)
+except:
+    print("(!) Drawing of circular cylinder mask did not work...")
 
 ##################################################
-# PRINT PARAMETERS prior to simulation:
+# PRINT relevant PARAMETERS prior to simulation:
 print(f"\nSCRIPT: spacial and temporal dimensions:")
 print("domain shape (LU):", flow.resolution)
 print("t_target (PU) with", n_steps, "steps (LU):",
-      round(n_steps * (flow.char_length_pu / flow.char_length_lu) * (mach_number * 1 / np.sqrt(3) / flow.char_velocity_pu), 3),
+      round(n_steps * (flow.char_length_pu / flow.char_length_lu)
+            * (mach_number * 1 / np.sqrt(3) / flow.char_velocity_pu), 3),
       "seconds")
 print("steps to simulate 1 second PU:",
-      round((flow.char_length_lu / flow.char_length_pu) * (flow.char_velocity_pu / (mach_number * 1 / np.sqrt(3))), 3), "steps")
-print(f"steps to simulate {t_target:.3f} (t_target, PU) seconds: {t_target * round((flow.char_length_lu / flow.char_length_pu) * (flow.char_velocity_pu / (mach_number * 1 / np.sqrt(3))), 3):.3f} steps")
+      round((flow.char_length_lu / flow.char_length_pu)
+            * (flow.char_velocity_pu / (mach_number * 1 / np.sqrt(3))), 3), "steps")
+print(f"steps to simulate {t_target:.3f} (t_target, PU) seconds: {t_target 
+       * round((flow.char_length_lu / flow.char_length_pu) 
+               * (flow.char_velocity_pu / (mach_number * 1 / np.sqrt(3))), 3):.3f} steps")
 
 ##################################################
 # RUN SIMULATION:
 print(f"\n#################################################")
-print(f"\nSCRIPT ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}): running simulation for {n_steps} steps...\n")
+print(f"\nSCRIPT ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}): "
+      f"running simulation for {n_steps} steps...\n")
 print(f"#################################################\n")
+
 t_start = time.time()
 mlups = simulation(num_steps=n_steps)
 t_end = time.time()
 runtime = t_end - t_start
-print(f"***** SIMULATION FINISHED AT {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} *****\n")
+
+print(f"***** SIMULATION FINISHED AT "
+      f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} *****\n")
 
 ##################################################
 # OUTPUT STATS:
@@ -518,15 +559,20 @@ print(f"### STATS ###")
 print(f"MLUPS: {mlups:.3f}")
 print(f"simulated PU-Time: {flow.units.convert_time_to_pu(n_steps)} seconds")
 print("simulated LU-steps: ", n_steps)
-print(f"runtime (WALLTIME) of simulation(num_steps): {runtime:.3f} seconds (= ", round(runtime / 60, 2), "minutes )")
+print(f"runtime (WALLTIME) of simulation(num_steps): "
+      f"{runtime:.3f} seconds (= ", round(runtime / 60, 2), "minutes )")
 print("")
+# GPU VRAM
 print("### HARDWARE UTILIZATION ###")
-print(f"current GPU VRAM (MB) usage: {torch.cuda.memory_allocated(device=context.device)/1024/1024:.3f}")
-print(f"max. GPU VRAM (MB) usage: {torch.cuda.max_memory_allocated(device=context.device)/1024/1024:.3f}")
-
+print(f"current GPU VRAM (MB) usage: "
+      f"{torch.cuda.memory_allocated(device=context.device)/1024/1024:.3f}")
+print(f"max. GPU VRAM (MB) usage: "
+      f"{torch.cuda.max_memory_allocated(device=context.device)/1024/1024:.3f}")
+# CPU
 [cpuLoad1, cpuLoad5, cpuLoad15] = [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
-print("CPU % avg. over last 1 min, 5 min, 15 min; ", round(cpuLoad1, 2), round(cpuLoad5, 2), round(cpuLoad15, 2))
-
+print("CPU % avg. over last 1 min, 5 min, 15 min; ",
+      round(cpuLoad1, 2), round(cpuLoad5, 2), round(cpuLoad15, 2))
+# RAM
 ram = psutil.virtual_memory()
 print("current total RAM usage [MB]: " + str(round(ram.used / (1024 * 1024), 2)) + " of " + str(
     round(ram.total / (1024 * 1024), 2)) + " MB")
@@ -537,7 +583,8 @@ if not no_data_flag:
     output_file.write("DATA for " + timestamp)
     output_file.write("\n\n###   SIM-STATS  ###")
     output_file.write(
-        f"\nruntime: {runtime:.3f} seconds (= {round(runtime / 60, 2)} min = {round(runtime / 3600, 2)} h)")
+        f"\nruntime: {runtime:.3f} seconds (= {round(runtime / 60, 2)} "
+        f"min = {round(runtime / 3600, 2)} h)")
     output_file.write("\nMLUPS = " + str(mlups))
     output_file.write("\n")
     output_file.write("\nVRAM_current [MB] = " + str(
@@ -555,35 +602,23 @@ if not no_data_flag:
         round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024,
               2)) + " MB")
     output_file.close()
-    # output_file = open(outdir_data + "/" + timestamp + "_stats.txt", "a")
-    # output_file.write("DATA for " + timestamp)
-    # output_file.write("\n\n###   SIM-STATS  ###")
-    # output_file.write("\nruntime = " + str(runtime) + " seconds (=" + str(runtime / 60) + " minutes)")
-    # output_file.write("\nMLUPS = " + str(mlups))
-    # output_file.write("\n")
-    # output_file.write("\nVRAM_current [MB] = " + str(torch.cuda.memory_allocated(context.device) / 1024 / 1024))
-    # output_file.write("\nVRAM_peak [MB] = " + str(torch.cuda.max_memory_allocated(context.device) / 1024 / 1024))
-    # output_file.write("\n")
-    # output_file.write("\nCPU load % avg. over last 1, 5, 15 min: " + str(round(cpuLoad1, 2)) + " %, " + str(round(cpuLoad5, 2)) + " %, " + str(round(cpuLoad15, 2)) + " %")
-    # output_file.write("\ntotal current RAM usage [MB]: " + str(round(ram.used / (1024 * 1024), 2)) + " of " + str(round(ram.total / (1024 * 1024), 2)) + " MB")
-    # output_file.close()
 
 ##################################################
 # PLOTTING 2D IMAGE of VELOCITY
 fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 fig.subplots_adjust(right=0.85)
 u = flow.u_pu.cpu().numpy()
-#print("\nMax Velocity:", u.max())
-if dims == 2:
+if dims == 2: # 2D
     im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask.T), origin="lower")
     im2 = axes[1].imshow(u[0, ...].T, origin="lower")
-else:
-    im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask[:, :, int(flow.solid_mask.shape[2] / 2)].T), origin="lower")
+else: # 3D
+    im1 = axes[0].imshow(context.convert_to_ndarray(flow.solid_mask[:, :,
+            int(flow.solid_mask.shape[2] / 2)].T), origin="lower")
     im2 = axes[1].imshow(u[0, ...][:, :, int(flow.solid_mask.shape[2] / 2)].T, origin="lower")
 cbar_ax = fig.add_axes((0.88, 0.15, 0.04, 0.7))
 fig.colorbar(im2, cax=cbar_ax)
-fig.show()
-#TODO: plot image of pressure
+plt.show()
+#TODO (optional): plot image of pressure
 
 ##################################################
 # PROCESS DATA: calculate and SAVE OBSERVABLES AND PLOTS:
@@ -595,8 +630,8 @@ plot_force_coefficient(drag_timeseries, ylabel="Coefficient of Drag $C_{D}$",
                        ylim=(0.5, 1.6),
                        secax_functions_tuple=(flow.units.convert_time_to_lu,
                                               flow.units.convert_time_to_pu),
-                       filenamebase=outdir_data+"/drag", periodic_start=periodic_start, adjust_ylim=True)
-#OLD: drag_prominence = ((abs(drag_timeseries[2].max()) - abs(drag_timeseries[2].min())) * 0.5)
+                       filenamebase=outdir_data+"/drag", periodic_start=periodic_start,
+                       adjust_ylim=True)
 drag_stats = analyze_periodic_timeseries(drag_timeseries, periodic_start_rel=0.5,
                                          name="drag", verbose=True,
                                          pu_per_step=flow.units.convert_time_to_pu(1),
@@ -605,18 +640,19 @@ drag_stats = analyze_periodic_timeseries(drag_timeseries, periodic_start_rel=0.5
 print(f"DRAG STATS:") #\n{drag_stats}")
 for key, value in drag_stats.items():
     print(f"{key:<20} = {str(value)}")
-
-# STATS ARE: {"mean_simple": mean_simple,
-#             "mean_periodcorrected": mean_periodcorrected,
-#             "min_simple": min_simple,
-#             "max_simple": max_simple,
-#             "max_mean": max_mean,
-#             "min_mean": min_mean,
-#             "frequency_fit": frequency_fit,
-#             "frequency_fft": freq_peak,
-#             "fft_resolution": freq_res}
-
 print("")
+'''
+reminder:
+ STATS ARE: {"mean_simple": mean_simple,
+             "mean_periodcorrected": mean_periodcorrected,
+             "min_simple": min_simple,
+             "max_simple": max_simple,
+             "max_mean": max_mean,
+             "min_mean": min_mean,
+             "frequency_fit": frequency_fit,
+             "frequency_fft": freq_peak,
+             "fft_resolution": freq_res}
+'''
 
 # LIFT
 lift_timeseries = np.array(np.array(LiftReporter.out))
@@ -636,19 +672,22 @@ for key, value in lift_stats.items():
 # plot DRAG and LIFT together:
 try:
     fig, ax = plt.subplots(layout="constrained")
-    drag_ax = ax.plot(drag_timeseries[:, 1], drag_timeseries[:, 2], color="tab:blue", label="Drag")
+    drag_ax = ax.plot(drag_timeseries[:, 1], drag_timeseries[:, 2], color="tab:blue",
+                      label="Drag")
     ax.set_xlabel("physical time / s")
     ax.set_ylabel("Coefficient of Drag $C_{D}$")
-    ylim_adjusted = (drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1):, 2].min() * 0.5,
-              drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1):, 2].max() * 1.2)
-    #ax.set_ylim((0.5, 1.6))
+    ylim_adjusted = (drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1):, 2].min()
+                     * 0.5, drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1):,
+                     2].max() * 1.2)
     ax.set_ylim(ylim_adjusted)
 
-    secax = ax.secondary_xaxis('top', functions=(flow.units.convert_time_to_lu, flow.units.convert_time_to_pu))
+    secax = ax.secondary_xaxis('top', functions=(flow.units.convert_time_to_lu,
+                                                 flow.units.convert_time_to_pu))
     secax.set_xlabel("timesteps (simulation time / LU)")
 
     ax2 = ax.twinx()
-    lift_ax = ax2.plot(lift_timeseries[:, 1], lift_timeseries[:, 2], color="tab:orange", label="Lift")
+    lift_ax = ax2.plot(lift_timeseries[:, 1], lift_timeseries[:, 2], color="tab:orange",
+                       label="Lift")
     ax2.set_ylabel("Coefficient of Lift $C_{L}$")
     ax2.set_ylim((-1.1, 1.1))
 
@@ -665,7 +704,8 @@ except:
 
 # STROUHAL number
 # f = Strouhal for St=f*D/U and D=U=1 in PU
-print("Strouhal number is: ", lift_stats["frequency_fit"] * flow.char_length_pu/flow.char_velocity_pu)
+print("Strouhal number is: ", lift_stats["frequency_fit"]
+      * flow.char_length_pu/flow.char_velocity_pu)
 
 # AVERAGE VELOCITY and REYNOLDS STRESS PROFILES
 if args["calc_u_profiles"] and args["profile_reference_path"] is not None:
@@ -699,11 +739,11 @@ if not no_data_flag:
             for obj in gc.get_objects():
                 try:
                     if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                        output_file.write("\n" + str(obj.size()) + ", " + str(obj.nelement() * obj.element_size()))
+                        output_file.write("\n" + str(obj.size()) + ", "
+                                          + str(obj.nelement() * obj.element_size()))
                         total_bytes = total_bytes + obj.nelement() * obj.element_size()
                 except:
                     pass
-            # output_file.write("\n\ntotal bytes for tensors:"+str(total_bytes))
             output_file.close()
 
             ### count occurence of tensors in list of tensors:
@@ -722,8 +762,8 @@ if not no_data_flag:
         except:
             print("(!) counting tensors didn't work!")
 
-# TODO: cleanup of parms, stats, obs...
-# output parameters, stats and observables
+############################################
+# OUTPUT parameters, stats and observables
 if not no_data_flag:
     output_file = open(outdir_data +  "/" + timestamp + "_parms_stats_obs.txt", "a")
     output_file.write("DATA for " + timestamp)
@@ -732,26 +772,15 @@ if not no_data_flag:
     output_file.write("\n{:30s} {:30s}".format("Ma", str(mach_number)))
     output_file.write("\n{:30s} {:30s}".format("n_steps", str(n_steps)))
     output_file.write("\n{:30s} {:30s}".format("t_target [s]", str(t_target)))
-    output_file.write("\n{:30s} {:30s}".format("gridpoints_per_diameter (GPD)", str(flow.char_length_lu)))
+    output_file.write("\n{:30s} {:30s}".format("gridpoints_per_diameter (GPD)",
+                                               str(flow.char_length_lu)))
     if gpd_correction:
-        output_file.write("\n(!) gpd was corrected from: " + str(gpd_setup) + " to " + str(
-            flow.char_length_lu) + " because D/Y is even")
+        output_file.write("\n(!) gpd was corrected from: " + str(gpd_setup) + " to "
+                          + str(flow.char_length_lu) + " because D/Y is even")
     output_file.write("\nDpX (D/X) = ".ljust(31) + str(domain_length_x_in_d))
     output_file.write("\nDpY (D/Y) = ".ljust(31) + str(domain_height_y_in_d))
     if flow.stencil.d == 3:
         output_file.write("\nDpZ (D/Z) = ".ljust(31) + str(domain_width_z_in_d))
-
-    #output_file.write("\nn_steps = " + str(n_steps))
-    # output_file.write("\nT_target = " + str(flow.units.convert_time_to_pu(n_steps)) + " seconds")
-    # output_file.write("\ngridpoints_per_diameter (gpd) = " + str(flow.char_length_lu))
-    # if gpd_correction:
-    #     output_file.write("\ngpd was corrected from: " + str(gpd_setup) + " to " + str(
-    #         flow.char_length_lu) + " because D/Y is even")
-    # output_file.write("\nDpX (D/X) = " + str(domain_length_x_in_d))
-    # output_file.write("\nDpY (D/Y) = " + str(domain_height_y_in_d))
-    # if flow.stencil.d == 3:
-    #     output_file.write("\nDpZ (D/Z) = " + str(domain_width_z_in_d))
-
     output_file.write("\nshape_LU: ".ljust(31) + str(flow.resolution))
     output_file.write(("\ntotal_number_of_gridpoints: ".ljust(31) + str(flow.rho(flow.f).numel())))
     output_file.write("\nbc_type = ".ljust(31) + str())
@@ -760,43 +789,65 @@ if not no_data_flag:
     output_file.write("\ncollision = ".ljust(31) + str(collision_operator))
     output_file.write("\n")
     # output_file.write("\nMa = " + str(mach_number))
-    output_file.write("\nrelaxation parameter tau [LU]".ljust(31) + str(flow.units.relaxation_parameter_lu))
-    output_file.write("\ngrid_reynolds_number (Re_g) = ".ljust(31) + str(flow.units.characteristic_velocity_lu/((1 / np.sqrt(3.0))**2 * (flow.units.relaxation_parameter_lu - 0.5))))
+    output_file.write("\nrelaxation parameter tau [LU]".ljust(31)
+                      + str(flow.units.relaxation_parameter_lu))
+    output_file.write("\ngrid_reynolds_number (Re_g) = ".ljust(31)
+                      + str(flow.units.characteristic_velocity_lu/
+                            ((1 / np.sqrt(3.0))**2 * (flow.units.relaxation_parameter_lu - 0.5))))
     output_file.write("\n")
-    output_file.write("\ncylinder diameter PU = ".ljust(31) + str(flow.units.characteristic_length_pu))
-    output_file.write("\ncharacteristic velocity PU = ".ljust(31) + str(flow.units.characteristic_velocity_pu))
-#    output_file.write("\nu_init = " + str(u_init))
+    output_file.write("\ncylinder diameter PU = ".ljust(31)
+                      + str(flow.units.characteristic_length_pu))
+    output_file.write("\ncharacteristic velocity PU = ".ljust(31)
+                      + str(flow.units.characteristic_velocity_pu))
     output_file.write("\nperturb_init = ".ljust(31) + str(perturb_init))
     output_file.write("\n")
-#    output_file.write("\noutput_vtk = " + str(output_vtk))
-#    output_file.write("\nvtk_fps = " + str(vtk_fps))
 
     output_file.write("\n\n###   SIM-STATS  ###")
-    output_file.write("\nruntime = ".ljust(31) + str(runtime) + " seconds (=" + str(runtime / 60) + " minutes)")
+    output_file.write("\nruntime = ".ljust(31) + str(runtime)
+                      + " seconds (=" + str(runtime / 60) + " minutes)")
     output_file.write("\nMLUPS = ".ljust(31) + str(mlups))
     output_file.write("\n")
 
-    output_file.write("\nVRAM_current [MB] = ".ljust(31) + str(torch.cuda.memory_allocated(context.device) / 1024 / 1024))
-    output_file.write("\nVRAM_peak [MB] = ".ljust(31) + str(torch.cuda.max_memory_allocated(context.device) / 1024 / 1024))
+    output_file.write("\nVRAM_current [MB] = ".ljust(31)
+                      + str(torch.cuda.memory_allocated(context.device) / 1024 / 1024))
+    output_file.write("\nVRAM_peak [MB] = ".ljust(31)
+                      + str(torch.cuda.max_memory_allocated(context.device) / 1024 / 1024))
     output_file.write("\n")
-    output_file.write("\nCPU load % avg. over last 1, 5, 15 min: ".ljust(31) + str(round(cpuLoad1, 2)) + " %, " + str(round(cpuLoad5, 2)) + " %, " + str(round(cpuLoad15, 2)) + " %")
-    output_file.write("\ntotal current RAM usage [MB]: ".ljust(31) + str(round(ram.used / (1024 * 1024), 2)) + " of " + str(round(ram.total / (1024 * 1024), 2)) + " MB")
+    output_file.write("\nCPU load % avg. over last 1, 5, 15 min: ".ljust(31)
+                      + str(round(cpuLoad1, 2)) + " %, " + str(round(cpuLoad5, 2))
+                      + " %, " + str(round(cpuLoad15, 2)) + " %")
+    output_file.write("\ntotal current RAM usage [MB]: ".ljust(31)
+                      + str(round(ram.used / (1024 * 1024), 2)) + " of "
+                      + str(round(ram.total / (1024 * 1024), 2)) + " MB")
 
     output_file.write("\n\n###   OBSERVABLES   ###")
-    output_file.write("\nCoefficient of drag between " + str(round(drag_timeseries[int(drag_timeseries.shape[0] * periodic_start - 1), 1], 2)) + " s and " + str(round(drag_timeseries[int(drag_timeseries.shape[0] - 1), 1], 2)) + " s:")
-    output_file.write("\nCd_mean, simple      = ".ljust(31) + str(drag_stats["mean_simple"]))
-    output_file.write("\nCd_mean, peak_finder = ".ljust(31) + str(drag_stats["mean_periodcorrected"]))
+    output_file.write("\nCoefficient of drag between "
+                      + str(round(drag_timeseries[int(drag_timeseries.shape[0]
+                                                      * periodic_start - 1), 1], 2)) + " s and "
+                      + str(round(drag_timeseries[int(drag_timeseries.shape[0] - 1), 1], 2))
+                      + " s:")
+    output_file.write("\nCd_mean, simple      = ".ljust(31)
+                      + str(drag_stats["mean_simple"]))
+    output_file.write("\nCd_mean, peak_finder = ".ljust(31)
+                      + str(drag_stats["mean_periodcorrected"]))
     output_file.write(
-        "\nCd_min = ".ljust(31) + str(drag_stats["min_mean"] if drag_stats["min_mean"] is not None else drag_stats["min_simple"]))
+        "\nCd_min = ".ljust(31) + str(drag_stats["min_mean"] if drag_stats["min_mean"] is not None
+                                      else drag_stats["min_simple"]))
     output_file.write(
-        "\nCd_max = ".ljust(31) + str(drag_stats["max_mean"] if drag_stats["max_mean"] is not None else drag_stats["max_simple"]))
+        "\nCd_max = ".ljust(31) + str(drag_stats["max_mean"] if drag_stats["max_mean"] is not None
+                                      else drag_stats["max_simple"]))
     output_file.write("\n")
     output_file.write("\nCoefficient of lift:")
-    output_file.write("\nCl_min = ".ljust(31) + str(lift_stats["min_mean"] if lift_stats["min_mean"] is not None else lift_stats["min_simple"]))
-    output_file.write("\nCl_max = ".ljust(31) + str(lift_stats["max_mean"] if lift_stats["max_mean"] is not None else lift_stats["max_simple"]))
+    output_file.write("\nCl_min = ".ljust(31) + str(lift_stats["min_mean"]
+                                                    if lift_stats["min_mean"] is not None
+                                                    else lift_stats["min_simple"]))
+    output_file.write("\nCl_max = ".ljust(31) + str(lift_stats["max_mean"]
+                                                    if lift_stats["max_mean"] is not None
+                                                    else lift_stats["max_simple"]))
     output_file.write("\n")
     output_file.write("\nStrouhal number:")
-    output_file.write("\nFFT: St +- df = " + str(lift_stats["frequency_fft"]) + " +- " + str(lift_stats["fft_resolution"]) + " Hz")
+    output_file.write("\nFFT: St +- df = " + str(lift_stats["frequency_fft"]) + " +- "
+                      + str(lift_stats["fft_resolution"]) + " Hz")
     output_file.write(
         "\nSINE-FIT: St = " + str(lift_stats["frequency_fit"]))
     output_file.write("\n")
@@ -809,67 +860,48 @@ output_file.write('\n')
 output_file.write('\n{:30s} {:30s}'.format("Ma", str(reynolds_number)))
 output_file.write('\n{:30s} {:30s}'.format("Re", str(mach_number)))
 output_file.write('\n')
-output_file.write('\n{:30s} {:30s}'.format("Relaxation Parameter LU", str(flow.units.relaxation_parameter_lu)))
-output_file.write('\n{:30s} {:30s}'.format("l_char_LU", str(flow.units.characteristic_length_lu)))
-output_file.write('\n{:30s} {:30s}'.format("u_char_LU", str(flow.units.characteristic_velocity_lu)))
-output_file.write('\n{:30s} {:30s}'.format("viscosity_LU", str(flow.units.viscosity_lu)))
-output_file.write('\n{:30s} {:30s}'.format("p_char_LU", str(flow.units.characteristic_pressure_lu)))
-output_file.write('\n{:30s} {:30s}'.format("rho_char_LU", str(flow.units.characteristic_density_lu)))
+output_file.write('\n{:30s} {:30s}'.format("Relaxation Parameter LU",
+                                           str(flow.units.relaxation_parameter_lu)))
+output_file.write('\n{:30s} {:30s}'.format("l_char_LU",
+                                           str(flow.units.characteristic_length_lu)))
+output_file.write('\n{:30s} {:30s}'.format("u_char_LU",
+                                           str(flow.units.characteristic_velocity_lu)))
+output_file.write('\n{:30s} {:30s}'.format("viscosity_LU",
+                                           str(flow.units.viscosity_lu)))
+output_file.write('\n{:30s} {:30s}'.format("p_char_LU",
+                                           str(flow.units.characteristic_pressure_lu)))
+output_file.write('\n{:30s} {:30s}'.format("rho_char_LU",
+                                           str(flow.units.characteristic_density_lu)))
 output_file.write('\n')
-output_file.write('\n{:30s} {:30s}'.format("l_char_PU", str(flow.units.characteristic_length_pu)))
-output_file.write('\n{:30s} {:30s}'.format("u_char_PU", str(flow.units.characteristic_velocity_pu)))
-output_file.write('\n{:30s} {:30s}'.format("viscosity_PU", str(flow.units.viscosity_pu)))
-output_file.write('\n{:30s} {:30s}'.format("p_char_PU", str(flow.units.characteristic_pressure_pu)))
-output_file.write('\n{:30s} {:30s}'.format("rho_char_PU", str(flow.units.characteristic_density_pu)))
+output_file.write('\n{:30s} {:30s}'.format("l_char_PU",
+                                           str(flow.units.characteristic_length_pu)))
+output_file.write('\n{:30s} {:30s}'.format("u_char_PU",
+                                           str(flow.units.characteristic_velocity_pu)))
+output_file.write('\n{:30s} {:30s}'.format("viscosity_PU",
+                                           str(flow.units.viscosity_pu)))
+output_file.write('\n{:30s} {:30s}'.format("p_char_PU",
+                                           str(flow.units.characteristic_pressure_pu)))
+output_file.write('\n{:30s} {:30s}'.format("rho_char_PU",
+                                           str(flow.units.characteristic_density_pu)))
 output_file.write('\n')
-output_file.write('\n{:30s} {:30s}'.format("grid reynolds number Re_g", str(flow.units.characteristic_velocity_lu/((1 / np.sqrt(3.0))**2 * (flow.units.relaxation_parameter_lu - 0.5)))))
-output_file.write('\n{:30s} {:30s}'.format("flow through time PU [s]", str(domain_length_x_in_d*flow.units.characteristic_length_pu/flow.units.characteristic_velocity_pu)))
-output_file.write('\n{:30s} {:30s}'.format("flow through time LU", str(domain_length_x_in_d*flow.units.characteristic_length_lu/flow.units.characteristic_velocity_lu)))
+output_file.write('\n{:30s} {:30s}'.format("grid reynolds number Re_g",
+                                           str(flow.units.characteristic_velocity_lu/
+                                               ((1 / np.sqrt(3.0))**2
+                                                * (flow.units.relaxation_parameter_lu - 0.5)))))
+output_file.write('\n{:30s} {:30s}'.format("flow through time PU [s]",
+                                           str(domain_length_x_in_d
+                                               *flow.units.characteristic_length_pu/
+                                               flow.units.characteristic_velocity_pu)))
+output_file.write('\n{:30s} {:30s}'.format("flow through time LU",
+                                           str(domain_length_x_in_d
+                                               *flow.units.characteristic_length_lu/
+                                               flow.units.characteristic_velocity_lu)))
 output_file.write('\n')
 output_file.close()
 
 ## END OF SCRIPT
 print(f"\n♬ THE END ♬")
 
-# reset stdout (from LOGGER, see above)
+# reset stdout (from LOGGER, see above (beginning))
 sys.stdout = old_stdout
 
-
-################################################################
-# script components below...
-
-# Process arguments and set parameters
-# - I/O: create timestamp, sim-ID, outdir (path) and outdir_data (path)
-# - flow physics: char_velocity, re, ma, density, pressure, length, domain (resolution)
-# - solver settings
-
-# save input parameters to file
-
-# save this script to outdir for later reference
-
-# start logger
-
-# DEFINE AUXILIARY methods (or load from other helper-file)
-
-# SETUP SIMULATOR
-# - stencil (infer dim from stencil), dtype, equilibrium,
-# - calculate obstacle geometry and domain constraints
-
-# save geometry input to file
-
-# flow, collision,...classes
-
-# (opt.) plot stuff (velocity, geometry etc.)
-
-# initialize REPORTERS
-
-# RUN SIMULATION
-
-# print stats
-
-# export stats
-
-# plotting and post-processing
-# - save data
-
-# reset LOGGER (!)

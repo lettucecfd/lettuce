@@ -481,8 +481,9 @@ class ObstacleCylinder(ExtFlow):
         elif self.bc_type.casefold() == 'ibb1' or self.bc_type == 'IBB1':
             obstacle_boundary = LinearInterpolatedBounceBackBoundary(self.context, self, solid_boundary_data, calc_force=self.calc_force_coefficients)
         else:  # use basic mask Bounce Back
-            print("OBSTACLE CYLINDER - WARNING: bc_type can't be interpreted... - will fall back to using BounceBackBoundary")
-            obstacle_boundary = BounceBackBoundary(self.context.convert_to_tensor(self.obstacle_mask))
+            print("OBSTACLE CYLINDER - WARNING: bc_type can't be interpreted... - will fall back to using FullwayBounceBackBoundary")
+            obstacle_boundary = FullwayBounceBackBoundary(self.context, self,
+                                                          self.obstacle_mask, periodicity = self.periodicity, calc_force=self.calc_force_coefficients)
 
         # create and return boundary-list
         if lateral_boundary is None:  # if lateral boundary is periodic...don't include the lateral_boundary object in the boundaries-list

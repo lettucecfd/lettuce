@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 from examples.advanced_projects.efficient_bounce_back_obstacle.obstacle_cylinder import ObstacleCylinder
-from lettuce import Reporter, Flow, Observable
+from lettuce import Flow, Observable
 
 __all__ = ['DragCoefficient', 'LiftCoefficient']
 

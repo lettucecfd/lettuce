@@ -222,7 +222,7 @@ else: # will be 3D
     else:
         domain_width_z_in_d = args["domain_width_z_in_d"]
 
-# CORRECT GPT for symmetry:
+# CORRECT GPD for symmetry:
 '''
 if D/Y (height of the domain in number of cylinder diameters) is even, 
 the resulting GPD (gridpoints per diemeter) can't be odd for a symmetrical 

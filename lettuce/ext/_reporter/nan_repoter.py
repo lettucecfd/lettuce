@@ -40,6 +40,7 @@ class NaNReporter(Reporter):
                     f'details!')
                 # telling simulation to abort simulation by setting i too high
                 simulation.flow.i = int(simulation.flow.i + 1e10)
+                # TODO: maybe make this more robust with a failed-flag in simulation and not rely on flow.i to be high/low?
                 # the 1e10 is "a lot", but in a very unlikely case of a very long simulation,
                 #  where num_steps >=1e10, this would not work...
 
@@ -61,7 +62,7 @@ class NaNReporter(Reporter):
             my_file.write("\n")
         if len(self.failed_locations_list(simulation)) >= 100:
             my_file.write(f"(!) {self.name} detected for more "
-                          f"than 100 values. Showing only first "
+                          f"than 100 values. Showing only top "
                           f"100 values\n")
 
         my_file.close()
@@ -102,32 +103,6 @@ class NaNReporter(Reporter):
     def show_max(self, my_file, simulation: 'Simulation'):
         pass
 
-
-def unravel_index(indices: torch.Tensor, shape: tuple[int, ...],
-                  ) -> torch.Tensor:
-    r"""Converts flat indices into unraveled coordinates in a target shape.
-
-    This is a `torch` implementation of `numpy.unravel_index`.
-
-    Args:
-        indices: A tensor of (flat) indices, (*, N).
-        shape: The targeted shape, (D,).
-
-    Returns:
-        The unraveled coordinates, (*, N, D).
-    """
-
-    coord = []
-
-    for dim in reversed(shape):
-        coord.append(indices % dim)
-        indices = indices // dim
-
-    coord = torch.stack(coord[::-1], dim=-1)
-
-    return coord
-
-
 class HighMaReporter(NaNReporter):
     """reports any Ma>0.3 and aborts the simulation"""
     def __init__(self, interval=100, outdir=None, vtk=False):
@@ -138,14 +113,15 @@ class HighMaReporter(NaNReporter):
         u = simulation.flow.u()
         ma = torch.norm(u, dim=0)/simulation.flow.stencil.cs
         index_max = torch.argmax(ma)
-        index_max = unravel_index(index_max, ma.shape)
+        index_max = torch.unravel_index(index_max, ma.shape)
         ma = simulation.context.convert_to_ndarray(ma)
         max_ma = ma[
             index_max[0],
             index_max[1],
             index_max[2] if simulation.flow.stencil.d == 3 else None]
+        index_max_list = [i.item() for i in index_max]
         my_file.write(
-            f"Max. Ma{str(index_max.tolist())} = {max_ma}\n\n")
+            f"Max. Ma{str(index_max_list)} = {max_ma}\n\n")
 
     def locations_string(self, simulation: 'Simulation') -> List[str]:
         locations = ["x"]
@@ -176,16 +152,45 @@ class HighMaReporter(NaNReporter):
             return np.stack(failed_locations_list, axis=-1)[:100]
         return np.stack(failed_locations_list, axis=-1)
 
-    def first_100(self, simulation: 'Simulation'):
-        u = simulation.flow.u()
-        ma = torch.norm(u, dim=0)/simulation.flow.stencil.cs
-        ma = simulation.context.convert_to_ndarray(ma)
-        flat_fails = ma.ravel()
-        k = 100
-        indices = np.argpartition(-flat_fails, k)[:k]
-        top_values = flat_fails[indices]
-        sorted_indices = indices[np.argsort(-top_values)]
-        failed_locations_list = np.array(
-            np.unravel_index(sorted_indices,
-                             self.fails(simulation).shape))
-        return failed_locations_list[:100]
+    def outputs(self, simulation: 'Simulation'):
+        if not os.path.exists(self.outdir):
+            os.mkdir(self.outdir)
+
+        my_file = open(f"{self.outdir}/{self.name}_reporter.txt",
+                       "w")
+        self.show_max(my_file, simulation)
+        my_file.write(f"(!) {self.name} detected at \n")
+
+        for location in self.locations_string(simulation):
+            my_file.write(f"{location:6}   ")
+        my_file.write("\n")
+        for fail in self.failed_locations_list(simulation):
+            for fail_dim in fail:
+                my_file.write(f"{fail_dim:6}  ")
+            my_file.write("\n")
+        if len(self.failed_locations_list(simulation)) >= 100:
+            my_file.write(f"(!) {self.name} detected for more "
+                          f"than 100 values. Showing only top "
+                          f"100 values\n")
+
+        my_file.close()
+
+        # write vtk output with u and p fields
+        if self.vtk:
+            vtkreporter = VTKReporter(
+                1, filename_base=self.outdir + f"/{self.name}_fail")
+            vtkreporter(simulation)
+
+    # def first_100(self, simulation: 'Simulation'):
+    #     u = simulation.flow.u()
+    #     ma = torch.norm(u, dim=0)/simulation.flow.stencil.cs
+    #     ma = simulation.context.convert_to_ndarray(ma)
+    #     flat_fails = ma.ravel()
+    #     k = 100
+    #     indices = np.argpartition(-flat_fails, k)[:k]
+    #     top_values = flat_fails[indices]
+    #     sorted_indices = indices[np.argsort(-top_values)]
+    #     failed_locations_list = np.array(
+    #         np.unravel_index(sorted_indices,
+    #                          self.fails(simulation).shape))
+    #     return failed_locations_list[:100]

@@ -1,5 +1,7 @@
 """
-This file showcases interrupting a TGV simulation using a reporter.
+This file showcases:
+ a) interrupting a TGV simulation using a reporter that detects NaN in f
+ b) interrupting an obstacle simulation using a reporter that detects Ma > 0.3
 """
 
 import torch
@@ -9,14 +11,16 @@ import os
 if not os.path.exists("./data"):
     os.mkdir("./data")
 
+# a) unstable TGV, that causes NaN values in f, which are detected by the NaN
+# ... reporter, who interrupts the simulation.
 flow = lt.TaylorGreenVortex(
     lt.Context(dtype=torch.float64),
-    resolution=32,
+    resolution=5,
     reynolds_number=30000,
     mach_number=0.3,
     stencil=lt.D2Q9
 )
-nan_reporter = lt.NaNReporter(100, outdir="./data/nan_reporter", vtk=True)
+nan_reporter = lt.NaNReporter(100, outdir="./data/nan_reporter", vtk_out=True)
 simulation = lt.BreakableSimulation(
     flow=flow,
     collision=lt.BGKCollision(tau=flow.units.relaxation_parameter_lu),
@@ -24,6 +28,9 @@ simulation = lt.BreakableSimulation(
 simulation(10000)
 print(f"Failed after {nan_reporter.failed_iteration} iterations")
 
+############################################
+# b) unstable obstacle flow,m that causes high Ma values (Ma > 0.3), which are
+# ... detected by the HighMa reporter, who interrupts the simulation.
 flow = lt.Obstacle(
     lt.Context(dtype=torch.float64,use_native=False),
     resolution=[32, 32],
@@ -35,7 +42,7 @@ flow = lt.Obstacle(
 flow.mask = ((2 < flow.grid[0]) & (flow.grid[0] < 10)
              & (2 < flow.grid[1]) & (flow.grid[1] < 10))
 high_ma_reporter = lt.HighMaReporter(100, outdir="./data/ma_reporter",
-                                     vtk=True)
+                                     vtk_out=True)
 simulation = lt.BreakableSimulation(
     flow=flow,
     collision=lt.BGKCollision(tau=flow.units.relaxation_parameter_lu),

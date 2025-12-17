@@ -6,6 +6,8 @@
 
 import numpy as np
 import torch
+from sympy import false
+
 torch.autograd.set_detect_anomaly(True)
 
 import sys
@@ -82,8 +84,9 @@ parser.add_argument("--periodic_region_start_relative", default=None, type=float
 parser.add_argument("--periodic_region_start_pu", default=None, type=float, help="ABSOLUTE PU-time; assumed start of the periodic region for measurement of temporal and spacial averaging of observables (drag, lift , velocity profiles...)")
 parser.add_argument("--periodic_region_start_lu", default=None, type=int, help="ABSOLUTE LU-steps; assumed start of the periodic region for measurement of temporal and spacial averaging of observables (drag, lift , velocity profiles...)")
 
-parser.add_argument("--calc_u_profiles", action='store_true', help="calculate average velocity profiles similar to [Di Ilio et al. 2018] and output plots and time-averages data for plots")
-parser.add_argument("--output_u_profiles_timeseries", default=False, help="output average velocity profiles over time (full timeseries)")
+parser.add_argument("--calc_u_profiles", action='store_true', help="calculate average velocity and reynolds stress profiles similar to [Di Ilio et al. 2018] and output plots and time-averages data for plots")
+parser.add_argument("--show_u_profiles", action='store_true', help="plot average velocity and reynolds stress profiles")
+parser.add_argument("--output_u_profiles_timeseries", default=False, help="output average velocity and reynolds stress profiles over time (full timeseries)")
 parser.add_argument("--profile_reference_path", default="../profile_reference_data/", type=str, help="path to reference profiles from [Di Ilio et al. 2018]")
 
 parser.add_argument("--vtk_full_basic", action='store_true', help="output vtk files of full domain each interval steps")
@@ -717,8 +720,12 @@ if args["calc_u_profiles"] and args["profile_reference_path"] is not None:
                                      u_timeseries3=ProfileReporter3.out)
 
     profile_plotter.process_data()
-    profile_plotter.plot_velocity_profiles(show_reference=True, save=True)
-    profile_plotter.plot_reynolds_stress_profiles(show_reference=True, save=True)
+    profile_plotter.plot_velocity_profiles(show_reference=True, save=True,
+                                           show=args["show_u_profiles"]
+                                           if args["show_u_profiles"] is not None else False)
+    profile_plotter.plot_reynolds_stress_profiles(show_reference=True,
+                                                  save=True, show=args["show_u_profiles"]
+                                                 if args["show_u_profiles"] is not None else False)
 
 
 # EXPORT OBSERVABLES:

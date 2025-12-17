@@ -629,7 +629,7 @@ class ProfilePlotter:
         np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
                 + "pos3" + "_timeseries_data.npy", np.array(self.u_timeseries3))
 
-    def plot_velocity_profiles(self, show_reference = False, save = False):
+    def plot_velocity_profiles(self, show_reference = False, save = False, show = False):
         cm = 1 / 2.54
         
         if not show_reference:
@@ -649,9 +649,11 @@ class ProfilePlotter:
             
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_velocity_noReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
+
         else:
             # PLOT ux against references
             fig, ax = plt.subplots(constrained_layout=True)
@@ -689,9 +691,10 @@ class ProfilePlotter:
                                ref_DI[0]], loc='best')
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_ux_withReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
 
             # PLOT uy against references
             fig, ax = plt.subplots(constrained_layout=True)
@@ -731,11 +734,12 @@ class ProfilePlotter:
                                ref_DI[0]], loc='best')
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uy_withReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
         
-    def plot_reynolds_stress_profiles(self, show_reference=False, save=False):
+    def plot_reynolds_stress_profiles(self, show_reference=False, save=False, show = False):
         cm = 1 / 2.54
         if not show_reference:
             fig, (ax_xx, ax_yy, ax_xy) = plt.subplots(1, 3,
@@ -761,9 +765,10 @@ class ProfilePlotter:
     
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_reynoldsStresses_noReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
         else:
             # plot reynolds stresses against reference
             # uxux - streamwise
@@ -804,9 +809,10 @@ class ProfilePlotter:
 
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uxux_withReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
 
             # uyuy - cross-stream
             fig, ax = plt.subplots(constrained_layout=True)
@@ -840,9 +846,10 @@ class ProfilePlotter:
 
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uyuy_withReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
 
             # uxuy - Reynolds shear stress
             fig, ax = plt.subplots(constrained_layout=True)
@@ -876,9 +883,10 @@ class ProfilePlotter:
 
             if save:
                 plt.savefig(self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_uxuy_withReference.png")
-                plt.close()
-            else:
+            if show:
                 plt.show()
+            else:
+                plt.close()
         
         
 # PLOTTING

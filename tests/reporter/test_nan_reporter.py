@@ -6,7 +6,7 @@ def test_nan_reporter(tmpdir):
     flow = TaylorGreenVortex(context=Context(), resolution=[16, 16],
                             reynolds_number=1e12, mach_number=1)
     collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
-    reporter = NaNReporter(10, outdir=tmpdir, vtk=True)
+    reporter = NaNReporter(10, outdir=tmpdir, vtk_out=True)
     simulation = BreakableSimulation(flow, collision, [reporter])
     simulation(100)
     assert os.path.isfile(tmpdir / "NaN_reporter.txt")

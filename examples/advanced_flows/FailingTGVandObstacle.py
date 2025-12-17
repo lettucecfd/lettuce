@@ -15,7 +15,7 @@ if not os.path.exists("./data"):
 # ... reporter, who interrupts the simulation.
 flow = lt.TaylorGreenVortex(
     lt.Context(dtype=torch.float64),
-    resolution=5,
+    resolution=32,
     reynolds_number=30000,
     mach_number=0.3,
     stencil=lt.D2Q9
@@ -41,7 +41,7 @@ flow = lt.Obstacle(
 )
 flow.mask = ((2 < flow.grid[0]) & (flow.grid[0] < 10)
              & (2 < flow.grid[1]) & (flow.grid[1] < 10))
-high_ma_reporter = lt.HighMaReporter(100, outdir="./data/ma_reporter",
+high_ma_reporter = lt.HighMaReporter(100, outdir="./data/highma_reporter",
                                      vtk_out=True)
 simulation = lt.BreakableSimulation(
     flow=flow,

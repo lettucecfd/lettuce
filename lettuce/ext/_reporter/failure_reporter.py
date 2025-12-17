@@ -3,7 +3,7 @@ import torch
 import os
 from typing import List
 
-from ... import Reporter, Simulation, BreakableSimulation
+from ... import Reporter, BreakableSimulation
 from .vtk_reporter import write_vtk
 
 __all__ = ["FailureReporterBase", "NaNReporter", "HighMaReporter"]

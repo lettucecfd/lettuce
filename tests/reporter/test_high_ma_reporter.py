@@ -8,7 +8,7 @@ def test_high_ma_reporter(tmpdir):
     flow.mask = ((2 < flow.grid[0]) & (flow.grid[0] < 10)
                  & (2 < flow.grid[1]) & (flow.grid[1] < 10))
     collision = BGKCollision(tau=flow.units.relaxation_parameter_lu)
-    reporter = HighMaReporter(1, outdir=tmpdir, vtk=True)
+    reporter = HighMaReporter(1, outdir=tmpdir, vtk_out=True)
     simulation = BreakableSimulation(flow, collision, [reporter])
     simulation(100)
     assert os.path.isfile(tmpdir / "02_HighMa_reporter.txt")

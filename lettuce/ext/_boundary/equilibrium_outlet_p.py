@@ -61,8 +61,8 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
             self.w = flow.torch_stencil.w[self.velocities]
 
     def __call__(self, flow: 'Flow'):
-        here = [slice(None)] + self.index
-        other = [slice(None)] + self.neighbor
+        here = tuple([slice(None)] + self.index)
+        other = tuple([slice(None)] + self.neighbor)
         rho = flow.rho()
         u = flow.u()
         rho_w = self.rho_outlet * torch.ones_like(rho[tuple(here)])

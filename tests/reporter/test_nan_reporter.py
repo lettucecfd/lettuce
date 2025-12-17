@@ -9,8 +9,8 @@ def test_nan_reporter(tmpdir):
     reporter = NaNReporter(10, outdir=tmpdir, vtk_out=True)
     simulation = BreakableSimulation(flow, collision, [reporter])
     simulation(100)
-    assert os.path.isfile(tmpdir / "NaN_reporter.txt")
+    assert os.path.isfile(tmpdir / "NaN_reporter.log")
     print(os.listdir(tmpdir))
-    assert os.path.isfile(tmpdir / "NaN_fail_00000070.vtr") or os.path.isfile(tmpdir / "NaN_fail_00000080.vtr")
+    assert os.path.isfile(tmpdir / "NaN_frame_00000070.vtr") or os.path.isfile(tmpdir / "NaN_frame_00000080.vtr")
     assert flow.i > 100
     assert reporter.failed_iteration in [70, 80]

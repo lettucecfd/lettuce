@@ -11,7 +11,7 @@ def test_high_ma_reporter(tmpdir):
     reporter = HighMaReporter(1, outdir=tmpdir, vtk_out=True)
     simulation = BreakableSimulation(flow, collision, [reporter])
     simulation(100)
-    assert os.path.isfile(tmpdir / "02_HighMa_reporter.txt")
-    assert os.path.isfile(tmpdir / "HighMa_fail_00000013.vtr")
+    assert os.path.isfile(tmpdir / "HighMa_reporter.log")
+    assert os.path.isfile(tmpdir / "HighMa_frame_00000013.vtr")
     assert flow.i > 100
     assert reporter.failed_iteration == 13

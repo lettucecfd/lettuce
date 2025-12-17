@@ -75,14 +75,14 @@ class AntiBounceBackOutlet(Boundary):
 
         # actual algorithm
         u = flow.u()
-        u_w = (u[[slice(None)] + self.index]
-               + 0.5 * (u[[slice(None)] + self.index]
-                        - u[[slice(None)] + self.neighbor]))
+        u_w = (u[tuple([slice(None)] + self.index)]
+               + 0.5 * (u[tuple([slice(None)] + self.index)]
+                        - u[tuple([slice(None)] + self.neighbor)]))
         f = flow.f
-        f[[flow.context.convert_to_ndarray(
-            flow.torch_stencil.opposite)[self.velocities]] + self.index] = (
-                - flow.f[[self.velocities] + self.index]
-                + self.w * flow.rho()[[slice(None)] + self.index]
+        f[tuple([flow.context.convert_to_ndarray(
+            flow.torch_stencil.opposite)[self.velocities]] + self.index)] = (
+                - flow.f[tuple([self.velocities] + self.index)]
+                + self.w * flow.rho()[tuple([slice(None)] + self.index)]
                 * (2 + torch.einsum(self.dims,
                                     flow.torch_stencil.e[self.velocities],
                                     u_w) ** 2 / flow.torch_stencil.cs ** 4
@@ -93,13 +93,13 @@ class AntiBounceBackOutlet(Boundary):
     def make_no_streaming_mask(self, f_shape, context: 'Context'):
         no_stream_mask = torch.zeros(size=f_shape, dtype=torch.bool,
                                      device=context.device)
-        no_stream_mask[[context.convert_to_ndarray(self.stencil.opposite)[
-                            self.velocities]] + self.index] = 1
+        no_stream_mask[tuple([context.convert_to_ndarray(self.stencil.opposite)[
+                            self.velocities]] + self.index)] = 1
         return no_stream_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):
         no_collision_mask = context.zero_tensor(shape, dtype=bool)
-        no_collision_mask[self.index] = 1
+        no_collision_mask[tuple(self.index)] = 1
         return no_collision_mask
 
     def native_available(self) -> bool:

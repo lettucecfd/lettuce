@@ -130,5 +130,5 @@ class LambOseenVortex2D(ExtFlow):
         return p_pu, U_pu
 
     @property
-    def boundaries(self) -> List['Boundary']:
+    def post_boundaries(self) -> List['Boundary']:
         return []

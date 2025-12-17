@@ -61,7 +61,7 @@ class CouetteFlow2D(ExtFlow):
         return torch.meshgrid(*xyz, indexing='ij')
 
     @property
-    def boundaries(self):
+    def post_boundaries(self):
         ktop = torch.zeros(self.resolution, dtype=torch.bool)
         ktop[:, 1] = True
         kbottom = torch.zeros(self.resolution, dtype=torch.bool)

@@ -11,7 +11,7 @@ from . import *
 from .cuda_native import NativeCollision, Generator, StreamingStrategy
 
 # todo StreamingStrategy was aliased here but should, see StreamingStrategy for todo
-__all__ = ['Collision', 'Reporter', 'Simulation', 'StreamingStrategy']
+__all__ = ['Collision', 'Reporter', 'Simulation', 'BreakableSimulation', 'StreamingStrategy']
 
 
 class Collision(ABC):
@@ -241,6 +241,27 @@ class Simulation:
             self._report()
 
         for _ in range(num_steps):
+            self._collide_and_stream(self)
+            self.flow.i += 1
+            self._report()
+
+        end = timer()
+        return num_steps * self.flow.rho().numel() / 1e6 / (end - beg)
+
+class BreakableSimulation(Simulation):
+    def __init__(self, flow: 'Flow', collision: 'Collision',
+                 reporter: List['Reporter']):
+        super().__init__(flow, collision, reporter)
+
+    def __call__(self, num_steps: int):
+        beg = timer()
+
+        if self.flow.i == 0:
+            self._report()
+
+        while self.flow.i < num_steps:
+            # flow.i is used instead of _,
+            # because it is mutable by the reporter!
             self._collide_and_stream(self)
             self.flow.i += 1
             self._report()

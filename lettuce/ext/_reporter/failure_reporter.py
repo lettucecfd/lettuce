@@ -1,19 +1,26 @@
 import torch
 
 import os
-from typing import List
+from typing import List, Tuple
+from abc import ABC, abstractmethod
 
 from ... import Reporter, BreakableSimulation
 from .vtk_reporter import write_vtk
 
 __all__ = ["FailureReporterBase", "NaNReporter", "HighMaReporter"]
 
-# Angenommene Superklasse (falls sie nicht importiert werden kann)
-# class Reporter: ...
-
-
-class FailureReporterBase(Reporter):
-    """Abstrakte Basis für Reporter, die bei Fehlern (NaN, HighMa) loggen."""
+class FailureReporterBase(Reporter, ABC):
+    """
+    abstract base class for reporters that detect a failing simulation, due
+    to conditions like NaN, high Mach number etc.
+    - relies on BreakableSimulation class (!)
+    """
+    #TODO (optional): make STOPPING the simulation optional
+    # -> for example the HighMa-Reporter only reports high Mach numbers and
+    # their location, but the simulation just continues normally.
+    # This could be useful and "ok" in some cases: EXAMPLE, in the event
+    # of a settling period (transient high velocities) at the beginning
+    # of the run.
 
     def __init__(self, interval, k=100, outdir=None, vtk_out=False):
         super().__init__(interval)
@@ -23,7 +30,7 @@ class FailureReporterBase(Reporter):
         self.vtk_out = vtk_out
         self.failed_iteration = None
 
-    def __call__(self, simulation: 'Simulation'):
+    def __call__(self, simulation: 'BreakableSimulation'):
         if simulation.flow.i % self.interval == 0:
             if self.is_failed(simulation):
                 results = self.get_results(simulation)
@@ -34,18 +41,21 @@ class FailureReporterBase(Reporter):
                     self.save_vtk(simulation)
 
                 print(
-                    f'(!) ABORT MESSAGE: {self.name}Reporter detected {self.name}'
-                    f' (reporter-interval = {self.interval}) at iteration '
-                    f'{simulation.flow.i}. See log in {self.outdir} for '
-                    f'details!')
+                    f'(!) ABORT MESSAGE: {self.name}Reporter detected '
+                    f'{self.name} (reporter-interval = {self.interval}) '
+                    f'at iteration {simulation.flow.i}. '
+                    f'See log in {self.outdir} for details!')
                 # telling simulation to abort simulation by setting i too high
                 simulation.flow.i = int(simulation.flow.i + 1e10)
-                # TODO: maybe make this more robust with a failed-flag in simulation and not rely on flow.i to be high/low?
+                # TODO: make this more robust with a failed-flag in simulation
+                #  and not rely on flow.i to be high "enough" to be higher than
+                #  the target steps number given to simulation(steps)?
                 # the 1e10 is "a lot", but in a very unlikely case of a very long simulation,
                 #  where num_steps >=1e10, this would not work...
 
-    def _get_top_failures(self, mask, values):
-        """Extrahiert Koordinaten und Werte."""
+    def _get_top_failures(self, mask, values) -> List[Tuple]:
+        """extract coordinates and values at nodes (mask);
+            returns list of (pos, val) tuples"""
         failed_values = values[mask]
         all_coords = torch.nonzero(mask)
         num_to_extract = min(self.k, failed_values.numel())
@@ -64,12 +74,12 @@ class FailureReporterBase(Reporter):
             for c, v in zip(top_coords, top_values)
         ]
 
-    def _write_log(self, simulation, results):
-        """Schreibt die Ergebnisse in die Datei."""
-        # Annahme: simulation hat Zugriff auf ein Dateiobjekt oder Pfad
+    def _write_log(self, simulation: 'BreakableSimulation', results):
+        """writes results to file and logs flow.i"""
+
         if not os.path.exists(self.outdir):
             os.mkdir(self.outdir)
-        # Pfad zusammenbauen
+
         filepath = os.path.join(self.outdir, f"{self.name}_reporter.log")
         with open(filepath, "w") as file:
             file.write(f"(!) {self.name} detected in step {simulation.flow.i} "
@@ -85,15 +95,8 @@ class FailureReporterBase(Reporter):
                 file.write(f"{line:<20} | {val:<15.6f}\n")
             file.write("\n")
 
-    def locations_string(self, simulation: 'Simulation') -> List[str]:
-        locations = ["q", "x"]
-        if simulation.flow.stencil.d > 1:
-            locations.append("y")
-        if simulation.flow.stencil.d > 2:
-            locations.append("z")
-        return locations
-
-    def save_vtk(self, simulation):
+    def save_vtk(self, simulation: 'BreakableSimulation'):
+        """saves vtk file to outdir"""
         point_dict = dict()
         u = simulation.flow.u_pu
         p = simulation.flow.p_pu
@@ -105,33 +108,41 @@ class FailureReporterBase(Reporter):
         else:
             point_dict["p"] = simulation.flow.context.convert_to_ndarray(p[0, ...])
             for d in range(simulation.flow.stencil.d):
-                point_dict[f"u{'xyz'[d]}"] = simulation.flow.context.convert_to_ndarray(
-                    u[d, ...])
+                point_dict[f"u{'xyz'[d]}"] = simulation.flow.context.convert_to_ndarray(u[d, ...])
         write_vtk(point_dict, simulation.flow.i, self.outdir + f"/{self.name}_frame")
 
-    def is_failed(self, simulation):
-        return torch.isnan(simulation.flow.f).any()
+    @abstractmethod
+    def locations_string(self, simulation: 'BreakableSimulation') -> List[str]:
+        ...
 
-    def get_results(self, simulation):
-        nan_mask = torch.isnan(simulation.flow.f)
-        return self._get_top_failures(nan_mask, simulation.flow.f)
+    @abstractmethod
+    def is_failed(self, simulation: 'BreakableSimulation'):
+        """checks if simulation meets criterion"""
+        ...
+
+    @abstractmethod
+    def get_results(self, simulation: 'BreakableSimulation'):
+        """calls specific method to create list of locations at which
+        simulation failed"""
+        ...
 
 
 class NaNReporter(FailureReporterBase):
 
     def __init__(self, interval, k=100, outdir=None, vtk_out=False):
-
         super().__init__(interval, k, outdir, vtk_out)
         self.name = "NaN"
 
-    def is_failed(self, simulation):
+    def is_failed(self, simulation: 'BreakableSimulation'):
         return torch.isnan(simulation.flow.f).any()
 
-    def get_results(self, simulation):
+    def get_results(self, simulation: 'BreakableSimulation'):
         nan_mask = torch.isnan(simulation.flow.f)
         return self._get_top_failures(nan_mask, simulation.flow.f)
 
-    def locations_string(self, simulation: 'Simulation') -> List[str]:
+    def locations_string(self, simulation: 'BreakableSimulation') -> List[str]:
+        """create locations string as a header for the table of locations and
+        values in the output"""
         locations = ["q", "x"]
         if simulation.flow.stencil.d > 1:
             locations.append("y")
@@ -147,20 +158,20 @@ class HighMaReporter(FailureReporterBase):
         self.name = "HighMa"
 
 
-    def is_failed(self, simulation):
+    def is_failed(self, simulation: 'BreakableSimulation'):
         u = simulation.flow.u()
-        # Machzahl auf GPU berechnen
         ma = torch.norm(u, dim=0) / simulation.flow.stencil.cs
         return (ma > self.threshold).any()
 
-    def get_results(self, simulation):
+    def get_results(self, simulation: 'BreakableSimulation'):
         u = simulation.flow.u()
-        # Machzahl auf GPU berechnen
         ma = torch.norm(u, dim=0) / simulation.flow.stencil.cs
         mask = ma > self.threshold
         return self._get_top_failures(mask, ma)
 
-    def locations_string(self, simulation: 'Simulation') -> List[str]:
+    def locations_string(self, simulation: 'BreakableSimulation') -> List[str]:
+        """create locations string as a header for the table of locations and
+                values in the output"""
         locations = ["x"]
         if simulation.flow.stencil.d > 1:
             locations.append("y")

@@ -11,6 +11,7 @@ import os
 if not os.path.exists("./data"):
     os.mkdir("./data")
 
+### SIMULATION 1: TGV with NaN Reporter###
 # a) unstable TGV, that causes NaN values in f, which are detected by the NaN
 # ... reporter, who interrupts the simulation.
 flow = lt.TaylorGreenVortex(
@@ -20,7 +21,8 @@ flow = lt.TaylorGreenVortex(
     mach_number=0.3,
     stencil=lt.D2Q9
 )
-nan_reporter = lt.NaNReporter(100, outdir="./data/nan_reporter", vtk_out=True)
+nan_reporter = lt.NaNReporter(100, outdir="./data/nan_reporter",
+                              vtk_out=True)
 simulation = lt.BreakableSimulation(
     flow=flow,
     collision=lt.BGKCollision(tau=flow.units.relaxation_parameter_lu),
@@ -28,8 +30,8 @@ simulation = lt.BreakableSimulation(
 simulation(10000)
 print(f"Failed after {nan_reporter.failed_iteration} iterations")
 
-############################################
-# b) unstable obstacle flow,m that causes high Ma values (Ma > 0.3), which are
+### SIMULATION 2: obstacle with High Ma Reporter ###
+# b) unstable obstacle flow, that causes high Ma values (Ma > 0.3), which are
 # ... detected by the HighMa reporter, who interrupts the simulation.
 flow = lt.Obstacle(
     lt.Context(dtype=torch.float64,use_native=False),

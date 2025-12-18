@@ -15,7 +15,8 @@ flow = lt.TaylorGreenVortex(
     stencil=lt.D2Q9
 )
 
-progress_reporter = ProgressReporter(interval=10000, t_max=40,  i_target=100000, print_message=True, outdir="./data/")
+progress_reporter = ProgressReporter(interval=10000, t_max=40,  i_target=100000,
+                                     print_message=True, outdir="./data/")
 
 simulation = lt.Simulation(
     flow=flow,

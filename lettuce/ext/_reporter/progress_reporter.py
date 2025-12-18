@@ -23,6 +23,9 @@ class ProgressReporter(Reporter):
         if sim. is stopped by host system (e.g. HPC cluster)!
 
     '''
+    # TODO (future improvements):
+    # - implement checkpointing functionality in lettuce
+    # - make progress reporter able to end simulation (similar to failureReporter)
 
     def __init__(self, interval=1000, t_max=0, i_target=0, i_start=0,
                  outdir=None, print_message=False, checkpoint=False):
@@ -50,6 +53,10 @@ class ProgressReporter(Reporter):
         super().__init__(interval)
 
     def __call__(self, simulation: 'Simulation'):
+        """start internal timer, if timer is not running;
+            get timestamp, calculate elapsed time, estimate time remaining etc.
+            write data to file.
+        """
         if not self.running:
             self.start_timer()
         elif simulation.flow.i % self.interval == 0:
@@ -57,27 +64,27 @@ class ProgressReporter(Reporter):
             timestamp_str = timestamp.strftime("%y%m%d_%H%M%S")
 
             t_now = timer()
-            t_elapsed = t_now - self.t_start
+            self.t_elapsed = t_now - self.t_start
             if simulation.flow.i == self.i_start:
-                t_per_step = t_elapsed / self.interval
+                t_per_step = self.t_elapsed / self.interval
             else:
-                t_per_step = t_elapsed / (simulation.flow.i - self.i_start)
+                t_per_step = self.t_elapsed / (simulation.flow.i - self.i_start)
             i_remaining = self.i_target - simulation.flow.i
             t_remaining_estimate = t_per_step * i_remaining
             datetime_finish_estimate = timestamp + datetime.timedelta(seconds=t_remaining_estimate)
-            t_total_estimate = t_elapsed + t_remaining_estimate
+            t_total_estimate = self.t_elapsed + t_remaining_estimate
 
             # write DATA and warn if t_total_estimate > t_max
             base_message = (timestamp_str.ljust(13)
                             + " " + str(simulation.flow.i).rjust(10)
                             + " " + "{:.2f}".format(t_now).rjust(10)
-                            + " " + "{:.2f}".format(t_elapsed).rjust(10)
+                            + " " + "{:.2f}".format(self.t_elapsed).rjust(10)
                             + " " + "{:.6f}".format(t_per_step).rjust(10)
                             + " " + "{:.2f}".format(t_remaining_estimate).rjust(15)
                             + " " + "{:.2f}".format(t_total_estimate).rjust(15)
                             + "  " + str(datetime_finish_estimate.strftime(
                                             '%Y-%m-%d %H:%M:%S')).ljust(20))
-            # sizes:
+            # (for reference) table column widths:
             # 13, 10, 7+2.(rjust10), 7+2.(rjust10), 1+6.(rjust10), 7+2.(rjust10), 7+2.(rjust15), 27
 
             if t_total_estimate > self.t_max:
@@ -89,8 +96,7 @@ class ProgressReporter(Reporter):
             if self.print_message:
                 print(message)
 
-            # write checkpoint if t_elapsed > t_max
-
+            # (NOT IMPLEMENTET YET) write checkpoint if t_elapsed > t_max
             if self.checkpoint and self.t_elapsed > self.t_max:
                 # checkpointing seems to be missing in current master...
                 print("PROGRESS REPORTER: checkpoint was requested, "
@@ -102,10 +108,12 @@ class ProgressReporter(Reporter):
                 #   + str(simulation.flow.i) + ".cpt")
 
     def start_timer(self):
+        """ start the internal timer and write table header to output file"""
         self.running = True
         self.t_start = timer()
+        self.t_elapsed = 0
         #print("starting timer")
-        print("-> PROGRESS_REPORTER ACTIVE:\nt_start: " + str(self.t_start)
+        print("(!) PROGRESS REPORTER ACTIVE:\nt_start: " + str(self.t_start)
               + ", interval: " + str(self.interval) + ", i_target: " + str(self.i_target))
         
         table_header = ("timestamp ".center(13)
@@ -120,7 +128,7 @@ class ProgressReporter(Reporter):
         if self.print_message:
             print(table_header)
         else:
-            print(f"print_message == False: see "
+            print(f"(ProgressReporter) print_message == False: see "
                   f"'{self.outdir}/progress_reporter_log.txt' for output")
 
         append_txt_file(self.outdir+"/progress_reporter_log.txt",

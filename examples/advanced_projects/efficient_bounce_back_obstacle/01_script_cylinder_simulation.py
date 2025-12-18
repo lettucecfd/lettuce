@@ -1,17 +1,30 @@
 
-# this file should contain all the MP2 stuff for low RE (basically a reworked MP1)
+"""
+    This script contains the code to run the efficient bounce back project with
+    the circular cylinder obstacle.
+    It is supposed to be invoked with parameters (arguments)! Examples are
+    given in the respective .ipynb file.
+
+    Content:
+    - ARGUMENT PARSING: read all command line arguments or apply defaults
+    - PARAMETER PROCESSING: all relevant parameters are processed, missing
+        stuff ist calculated
+    - INITIALIZATION AND ASSEMBLING OF SOLVER COMPONENTS: stencil, context etc.
+    - SIMULATION CALL: running the simulation
+    - DATA POST-PROCESSING AND PLOTTING: does what it's name suggests...
+
+    Work-In-Progress NOTE:
+    In some places there are TODOs and placeholders for future functionality!
+    This script still works, they are just future improvements!
+"""
 
 ####################
 # IMPORT
 
 import numpy as np
 import torch
-from sympy import false
-
-torch.autograd.set_detect_anomaly(True)
 
 import sys
-import warnings
 import os
 import psutil
 import shutil
@@ -38,9 +51,11 @@ from observables_force_coefficients import DragCoefficient, LiftCoefficient
 from helperCode import Logger
 from data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries, draw_circular_mask, ProfilePlotter
 
+torch.autograd.set_detect_anomaly(True)
 
 ####################
-# ARGUMENT PARSING: this script is supposed to be called with arguments, detailing all simulation- and system-parameters
+# ARGUMENT PARSING: this script is supposed to be called with arguments,
+#                   detailing all simulation- and system-parameters
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 
@@ -48,9 +63,9 @@ parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument("--name", default="cylinder_lowRe", help="name of the simulation, appears in output directory name")
 parser.add_argument("--default_device", default="cuda", type=str, help="run on cuda or cpu")
 parser.add_argument("--float_dtype", default="float64", choices=["float32", "float64", "single", "double", "half"], help="data type for floating point calculations in torch")
-parser.add_argument("--t_sim_max", default=(72*60*60), type=float, help="max. walltime [s] to run the simulationn(); default is 72 h. simulation will stops at 0.99*t_max_sim; IMPORTANT: this whole scipt may take longer to execute, depending on I/O etc.")
+parser.add_argument("--t_sim_max", default=(72*60*60), type=float, help="max. wall time [s] to run the simulation(); default is 72 h. simulation will stops at 0.99*t_max_sim; IMPORTANT: this whole script may take longer to execute, depending on I/O etc.")
 
-parser.add_argument("--text_output_only", action='store_true', help="if you don't want pngs etc. to open, please use this flag; data is still saved to files") ##FORMER: --cluster
+parser.add_argument("--text_output_only", action='store_true', help="if you don't want pngs etc. to open, please use this flag; data is still saved to files")
 parser.add_argument("--no_data", action='store_true', help="set, if you want no directories created and no date saved. Only direct output")
 parser.add_argument("--outdir", default=os.getcwd(), type=str, help="directory to save output files to; default is CWD")
 parser.add_argument("--outdir_data", default=None, type=str, help="directory to save large/many files to; if not set, everything os saved to outdir")
@@ -75,7 +90,7 @@ parser.add_argument("--n_steps", default=100000, type=int, help="number of steps
 parser.add_argument("--t_target", default=0, type=float, help="time in PU to simulate, overwrites n_steps if t_target > 0")
 parser.add_argument("--collision", default="bgk", type=str, choices=["kbc", "bgk", "reg", 'reg', "bgk_reg", 'kbc', 'bgk', 'bgk_reg'], help="collision operator (bgk, kbc, reg)")
 parser.add_argument("--stencil", default="D3Q27", choices=['D2Q9', 'D3Q15', 'D3Q19', 'D3Q27'], help="stencil (D2Q9, D3Q27, D3Q19, D3Q15), IMPORTANT: should match number of dimensions inferred from domain_width! Otherwise default D2Q9 or D3Q27 will be chosen for 2D and 3D respectively")
-parser.add_argument("--eqlm", action="store_true", help="use Equilibium LessMemory to save ~20% on GPU VRAM, sacrificing ~2% performance")
+parser.add_argument("--eqlm", action="store_true", help="use Equilibrium LessMemory to save ~20% on GPU VRAM, sacrificing ~2% performance")
 #TODO: how to use EQLM in lettuce 2025?
 parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1) for the solid obstacle")
 
@@ -110,11 +125,12 @@ parser.add_argument("--vtk_slice2D_step_end", type=int)
 parser.add_argument("--vtk_slice2D_t_start", type=float)
 parser.add_argument("--vtk_slice2D_t_end", type=float)
 
+## FUTURE IMPROVEMENTS (which need arguments/parameters)
 #TODO (optional): add NAN reporter (on/off, interval,...)
 #TODO (optional): add watchdog reporter (on/off, interval,...)
 #TODO (optional): add highMa reporter (on/off, interval,...)
 
-#TODO (optional): add 2D-mp4-reporter... (fps_video, number of frames OR fps_pu)
+#TODO (optional): add 2D-mp4-animation-reporter... (fps_video, number of frames OR fps_pu)
 
 # Checkpointing
 # TODO (optional): add checkpointing-utilities (read, write):
@@ -166,7 +182,7 @@ print(f"outdir/simID = {outdir}/{sim_id}")
 if outdir_data is None:
     outdir_data = outdir
 
-# adding individal sim-ID to outdir path to get individual DIR per simulation
+# adding individual sim-ID to outdir path to get individual DIR per simulation
 outdir = outdir+"/"+sim_id
 outdir_data = outdir_data+"/"+sim_id
 if not os.path.exists(outdir_data):
@@ -225,7 +241,7 @@ else: # will be 3D
 # CORRECT GPD for symmetry:
 '''
 if D/Y (height of the domain in number of cylinder diameters) is even, 
-the resulting GPD (gridpoints per diemeter) can't be odd for a symmetrical 
+the resulting GPD (gridpoints per diameter) can't be odd for a symmetrical 
 cylinder and symmetrical domain!
  - if D/Y is even, GPD will be corrected to be even for symmetrical cylinder
  => use odd D/Y value to use an odd GPD value!
@@ -306,7 +322,7 @@ EXAMPLE: For an Re=100 in a reasonable domain size, the flow needs
 '''
 #TODO (optional): change periodic_start parameter to abs. step-number, instead of relative start:
 # - ease of use for reporters and processing
-# - no round-off error in preocessing LU-parameter, if set
+# - no round-off error in processing LU-parameter, if set
 if args["periodic_region_start_lu"] is not None and args["periodic_region_start_lu"] >= 0:
     periodic_start = args["periodic_region_start_lu"] / n_steps
 elif args["periodic_region_start_pu"] is not None and args["periodic_region_start_pu"] >= 0:
@@ -323,7 +339,8 @@ else:
 # check EQLM parameter
 if args["eqlm"]:
     # TODO: use EQLM ( QuadraticEquilibriumLessMemory() ) how is this used in new lettuce?
-    pass
+    print("SCRIPT: EQLM-parameter was set, but usage of EQLM is not implemented yet!"
+          "...using default equilibrium")
 
 # print temporal parameters: steps, T_PU
 print(f"\n(INFO) parameters set for simulation of {n_steps} steps, "
@@ -407,7 +424,7 @@ if args["calc_u_profiles"]:
 
 # NAN REPORTER (if nan detected -> stop simulation)
 # TODO (optional): add NaN reporter (see PR for that topic)
-# - NEEDS breakable simulation (!) -> while loop. see ISSUE/Pull-request...
+# - NEEDS breakable simulation (!)
 
 # HighMa Reporter (if Ma>0.3 detected -> report and/or stop simulation)
 # TODO (optional): HighMa Reporter
@@ -753,7 +770,7 @@ if not no_data_flag:
                     pass
             output_file.close()
 
-            ### count occurence of tensors in list of tensors:
+            ### count occurrence of tensors in list of tensors:
             from collections import Counter
 
             my_file = open(outdir_data +  "/" + timestamp + "_GPU_list_of_tensors.txt", "r")

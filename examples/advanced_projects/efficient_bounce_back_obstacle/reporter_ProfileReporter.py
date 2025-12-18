@@ -1,5 +1,3 @@
-
-
 import torch
 import numpy as np
 import os
@@ -9,7 +7,12 @@ from typing import List
 from lettuce._simulation import Reporter, Simulation
 
 class ProfileReporter(Reporter):
-    
+    """ reporter to save average velocity profiles
+        -> use the ProfilePlotter in post-processing to further process
+        and plot data!
+    """
+
+
     def __init__(self, interval: int, flow, position_lu, i_start):
         super().__init__(interval)
         self.flow = flow

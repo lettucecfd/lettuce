@@ -81,7 +81,7 @@ packaging==24.1
     #   lettuce (pyproject.toml)
     #   matplotlib
     #   pytest
-pillow==11.3.0
+pillow==12.1.1
     # via matplotlib
 pluggy==1.6.0
     # via pytest

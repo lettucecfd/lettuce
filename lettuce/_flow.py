@@ -104,19 +104,17 @@ class Flow(ABC):
     # @abstractmethod
     def post_boundaries(self) -> List['Boundary']:
         """boundaries"""
-        warnings.warn(
-        "This warning occurs because either post_boundaries is not defined within"
-        "the flow class or the `boundaries` method is used"
-        "which is deprecated and will be removed in a future version. "
-        "Please use `pre_boundaries` or `post_boundaries` directly instead.",
-        stacklevel=2
-        )
-        return self.boundaries
+        return []
 
     @property
     # @abstractmethod
     def boundaries(self) -> List['Boundary']:
-        """boundaries"""
+        """boundaries (deprecated, use pre_boundaries or post_boundaries instead)"""
+        warnings.warn(
+        "The 'boundaries' method is deprecated and will be removed in a future version. "
+        "Please use 'pre_boundaries' or 'post_boundaries' instead.",
+        stacklevel=2
+        )
         return []
 
     @abstractmethod

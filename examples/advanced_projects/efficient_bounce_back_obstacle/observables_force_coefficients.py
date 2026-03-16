@@ -2,9 +2,11 @@
     - coefficient of drag
     - coefficient of lift
 """
-
+import numpy as np
 import torch
 from lettuce import Flow, Observable
+from . import (FullwayBounceBackBoundary, HalfwayBounceBackBoundary,
+               LinearInterpolatedBounceBackBoundary)
 
 __all__ = ['DragCoefficient', 'LiftCoefficient']
 
@@ -17,7 +19,9 @@ class DragCoefficient(Observable):
         - calculates the coefficient of drag
     """
 
-    def __init__(self, flow, obstacle_boundary, solid_mask, area_pu):
+    def __init__(self, flow: 'Flow', obstacle_boundary:
+    "FullwayBounceBackBoundary | HalfwayBounceBackBoundary | LinearInterpolatedBounceBackBoundary",
+                 solid_mask: np.ndarray | torch.Tensor, area_pu: float):
         super().__init__(flow)
         self.obstacle_boundary = obstacle_boundary
         self.solid_mask = solid_mask
@@ -38,7 +42,9 @@ class DragCoefficient(Observable):
         force_x_lu = self.obstacle_boundary.force_sum[0]
 
         # calculate drag_coefficient in LU
-        drag_coefficient = force_x_lu / (0.5 * rho_mean * self.flow.units.characteristic_velocity_lu ** 2 * self.area_lu)
+        drag_coefficient = (force_x_lu / (0.5 * rho_mean
+                                          * self.flow.units.characteristic_velocity_lu ** 2
+                                          * self.area_lu))
         return drag_coefficient
 
 
@@ -49,7 +55,9 @@ class LiftCoefficient(Observable):
         - calculates the coefficient of lift
     """
 
-    def __init__(self, flow, obstacle_boundary, solid_mask, area_pu):
+    def __init__(self, flow: 'Flow', obstacle_boundary:
+    "FullwayBounceBackBoundary | HalfwayBounceBackBoundary | LinearInterpolatedBounceBackBoundary",
+                 solid_mask: np.ndarray | torch.Tensor, area_pu: float):
         super().__init__(flow)
         self.obstacle_boundary = obstacle_boundary
         self.solid_mask = solid_mask
@@ -70,5 +78,7 @@ class LiftCoefficient(Observable):
         force_y_lu = self.obstacle_boundary.force_sum[1]
 
         # calculate lift_coefficient in LU
-        lift_coefficient = force_y_lu / (0.5 * rho_mean * self.flow.units.characteristic_velocity_lu ** 2 * self.area_lu)
+        lift_coefficient = force_y_lu / (0.5 * rho_mean
+                                         * self.flow.units.characteristic_velocity_lu ** 2
+                                         * self.area_lu)
         return lift_coefficient

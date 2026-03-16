@@ -27,19 +27,21 @@ class ObstacleCylinder(ExtFlow):
             - FWBB: fullway bounce back
             - HWBB: halfway bounce back
             - IBB1: linear interpolated bounce back
-        - initial perturbation (trigger Von Kármán vortex street for Re>46) can be initialized in y and z direction
-        - initial velocity can be 0, u_char or a parabolic profile (parabolic if lateral_walls are True)
+        - initial perturbation (trigger Von Kármán vortex street for Re>46) can be initialized
+            in y and z direction
+        - initial velocity can be 0, u_char or a parabolic profile
+            (parabolic if lateral_walls are True)
         - inlet/inflow velocity can be uniform u_char or parabolic
     """
 
 
     def __init__(self, context: Context, resolution: Union[int, List[int]],
-                 reynolds_number, mach_number,
-                 char_length_pu, char_length_lu, char_velocity_pu=1,
-                 lateral_walls='periodic', bc_type='fwbb',
-                 perturb_init=True, u_init=0,
-                 x_offset=0, y_offset=0,
-                 calc_force_coefficients=False,
+                 reynolds_number: float, mach_number: float,
+                 char_length_pu: float, char_length_lu: float, char_velocity_pu: float=1,
+                 lateral_walls: str = 'periodic', bc_type: str = 'fwbb',
+                 perturb_init: bool = True, u_init: int = 0,
+                 x_offset: float=0, y_offset: float=0,
+                 calc_force_coefficients: bool=False,
                  stencil: Optional[Stencil] = None,
                  equilibrium: Optional[Equilibrium] = None):
 
@@ -125,7 +127,8 @@ class ObstacleCylinder(ExtFlow):
         self.obstacle_mask[np.where(condition)] = 1
         self.solid_mask[np.where(condition)] = 1
 
-        print("CYLINDER OBSTACLE: x_pos, y_pos, radius:", self.x_pos_lu, self.y_pos_lu, self.radius_lu)
+        print("CYLINDER OBSTACLE: x_pos, y_pos, radius:", self.x_pos_lu, self.y_pos_lu,
+              self.radius_lu)
 
         # MASKS for solid boundaries (lateral walls, obstacle, solid (= obstacle and walls), inlet)
         # (INFO): indexing doesn't need z-Index for 3D, everything is broadcasted along z!
@@ -176,9 +179,10 @@ class ObstacleCylinder(ExtFlow):
                 parabola_yz = parabola_y[:, :, np.newaxis] * ones_z
                 parabola_yz_zeros = np.zeros_like(parabola_yz)
                 # create u_xyz inlet yz-plane and stack/pack u-field
-                self.u_inlet = np.stack([parabola_yz, parabola_yz_zeros, parabola_yz_zeros], axis=0)
+                self.u_inlet = np.stack([parabola_yz, parabola_yz_zeros, parabola_yz_zeros],
+                                        axis=0)
 
-    def make_units(self, reynolds_number, mach_number, resolution: List[int]
+    def make_units(self, reynolds_number: float, mach_number: float, resolution: List[int]
                    ) -> 'UnitConversion':
         return UnitConversion(
             reynolds_number=reynolds_number, mach_number=mach_number,
@@ -199,7 +203,7 @@ class ObstacleCylinder(ExtFlow):
         return self._obstacle_mask
 
     @obstacle_mask.setter
-    def obstacle_mask(self, m):
+    def obstacle_mask(self, m: np.ndarray | torch.Tensor):
         assert isinstance(m, np.ndarray) and m.shape == self.resolution
         self._obstacle_mask = m.astype(bool)
 
@@ -241,7 +245,8 @@ class ObstacleCylinder(ExtFlow):
                 # initial velocity u_PU=1 on every fluid node
                 u = (1 - self.solid_mask) * u_max_pu
 
-        ### perturb initial velocity field-symmetry (in y and z) to trigger 'von Karman' vortex street
+        ### perturb initial velocity field-symmetry (in y and z)
+            # to trigger 'von Karman' vortex street
         if self.perturb_init:  # perturb initial solution in y
             # overlays a sine-wave on the second column of nodes x_lu=1 (index 1)
             ny = self.grid[1].shape[1]
@@ -279,13 +284,13 @@ class ObstacleCylinder(ExtFlow):
                     u[0][1] = np.einsum('z,yz->yz', factor, u[0][1])
         return p, u
 
-    def make_solid_boundary_data(self, x_center, y_center, radius):
+    def make_solid_boundary_data(self, x_center: float, y_center: float, radius: float):
         print("(!) CYLINDER OBSTACLE WARNING: make_solid_boundary_data() is not implemented yet!")
         # NOT YET IMPLEMENTED; OCC-version for index lists;
         # CURRENTLY only make_ibb_index_lists is used with analytic function (see below)
         # TODO (future): make reading of externally supplied SolidBoundaryData object a thing
 
-    def make_ibb_index_lists(self, x_center, y_center, radius):
+    def make_ibb_index_lists(self, x_center: float, y_center: float, radius: float):
         """calculate interpolation constants and population indices for
             HWBB and IBB1 BBBC
         """
@@ -295,7 +300,8 @@ class ObstacleCylinder(ExtFlow):
         d_lt = []  # distances between node and boundary for d<0.5
         d_gt = []  # distances between node and boundary for d>0.5
 
-        # searching boundary-fluid-interface and append indices to f_index, distance to boundary to d
+        # searching boundary-fluid-interface and append indices to f_index,
+            # amd distance to boundary to d
         if self.stencil.d == 2:
             # TODO (optional): the 2D and 3D options could be condensed/unified
             nx, ny = self.obstacle_mask.shape  # domain size in x and y
@@ -319,13 +325,14 @@ class ObstacleCylinder(ExtFlow):
                     elif b[p] == ny - 1 and self.stencil.e[i][1] == 1:  # searching border on right [y]
                         border[1] = 1
 
-                    try:  # try in case the neighboring cell does not exist (= an f pointing out of the simulation domain)
+                    try:  # try in case the neighboring cell does not exist
+                                # (= an f pointing out of the simulation domain)
                         if not self.obstacle_mask[a[p] + self.stencil.e[i][0] - border[0] * nx,
                         b[p] + self.stencil.e[i][1] - border[1] * ny]:
-                            # if the neighbour of p is False in the boundary.mask,
-                            # p is a solid node, neighbouring a fluid node:
-                            # the direction pointing from the fluid neighbour
-                            # to solid p is marked on the neighbour
+                            # if the neighbor of p is False in the boundary.mask,
+                            # p is a solid node, neighboring a fluid node:
+                            # the direction pointing from the fluid neighbor
+                            # to solid p is marked on the neighbor
 
                             # calculate intersection point of boundary surface and link ->
                             # ...calculate distance between fluid node and boundary surface on the link

@@ -5,6 +5,7 @@ import os
 from typing import List
 
 from lettuce._simulation import Reporter, Simulation
+from lettuce import Flow
 
 class ProfileReporter(Reporter):
     """ reporter to save average velocity profiles
@@ -12,7 +13,7 @@ class ProfileReporter(Reporter):
         and plot data!
     """
 
-    def __init__(self, interval: int, flow, position_lu, i_start):
+    def __init__(self, interval: int, flow: 'Flow', position_lu: float, i_start: int):
         super().__init__(interval)
         self.flow = flow
         self.i_start = i_start

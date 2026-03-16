@@ -74,6 +74,7 @@ parser.add_argument("--outdir_data", default=None, type=str, help="directory to 
 parser.add_argument("--reynolds_number", default=200, type=float, help="Reynolds number")
 parser.add_argument("--mach_number", default=0.1, type=float, help="Mach number (should stay < 0.3, and < 0.1 for highest accuracy. low Ma can lead to instability because of round of errors ")
 parser.add_argument("--char_velocity_pu", default=1, type=float, help="characteristic velocity of the flow in physical units (PU)")
+#TODO (optional): add char_density_PU, char_pressure, viscosity_pu as parameters/arguments
 
 parser.add_argument("--char_length_lu", default=1, type=int, help="characteristic length of the flow in lattice units. Number of gridpoints per diameter for a circular cylinder")
 parser.add_argument("--char_length_pu", default=1, type=float, help="characteristic length of the flow in physical units. Diameter of the cylinder in PU")
@@ -91,7 +92,7 @@ parser.add_argument("--t_target", default=0, type=float, help="time in PU to sim
 parser.add_argument("--collision", default="bgk", type=str, choices=["kbc", "bgk", "reg", 'reg', "bgk_reg", 'kbc', 'bgk', 'bgk_reg'], help="collision operator (bgk, kbc, reg)")
 parser.add_argument("--stencil", default="D3Q27", choices=['D2Q9', 'D3Q15', 'D3Q19', 'D3Q27'], help="stencil (D2Q9, D3Q27, D3Q19, D3Q15), IMPORTANT: should match number of dimensions inferred from domain_width! Otherwise default D2Q9 or D3Q27 will be chosen for 2D and 3D respectively")
 parser.add_argument("--eqlm", action="store_true", help="use Equilibrium LessMemory to save ~20% on GPU VRAM, sacrificing ~2% performance")
-#TODO: how to use EQLM in lettuce 2025?
+#TODO: implement EQLM-usage -> how to use EQLM in lettuce 2025? (no documentation/example (as of 16.3.26))
 parser.add_argument("--bbbc_type", default='fwbb', help="bounce back algorithm (fwbb, hwbb, ibb1) for the solid obstacle")
 
 # reporter and observable settings
@@ -126,11 +127,11 @@ parser.add_argument("--vtk_slice2D_t_start", type=float)
 parser.add_argument("--vtk_slice2D_t_end", type=float)
 
 ## FUTURE IMPROVEMENTS (which need arguments/parameters)
-#TODO (optional): add NAN reporter (on/off, interval,...)
-#TODO (optional): add watchdog reporter (on/off, interval,...)
+#TODO (optional): add NAN/failure reporter (on/off, interval,...)
+#TODO (optional): add watchdog/progress reporter (on/off, interval,...)
 #TODO (optional): add highMa reporter (on/off, interval,...)
 
-#TODO (optional): add 2D-mp4-animation-reporter... (fps_video, number of frames OR fps_pu)
+#TODO (optional): implement/add 2D-mp4-animation-reporter... (fps_video, number of frames OR fps_pu)
 
 # Checkpointing
 # TODO (optional): add checkpointing-utilities (read, write):
@@ -319,6 +320,10 @@ needs to converge into - for example - a von Karman vortex street.
  => This time is also dependent on the domain size!
 EXAMPLE: For an Re=100 in a reasonable domain size, the flow needs 
          t_PU = 75-100 seconds to reach it's periodic state
+IMPORTANT: the start of the periodic region of the time signal depends on:
+    - (!) Domain dimensions: larger domain -> longer settling period
+    - resolution and numerical parameters: dampening, physical accuracy etc.
+    - (!) Reynolds number
 '''
 #TODO (optional): change periodic_start parameter to abs. step-number, instead of relative start:
 # - ease of use for reporters and processing
@@ -662,16 +667,16 @@ for key, value in drag_stats.items():
     print(f"{key:<20} = {str(value)}")
 print("")
 '''
-reminder:
- STATS ARE: {"mean_simple": mean_simple,
-             "mean_periodcorrected": mean_periodcorrected,
-             "min_simple": min_simple,
-             "max_simple": max_simple,
-             "max_mean": max_mean,
-             "min_mean": min_mean,
-             "frequency_fit": frequency_fit,
-             "frequency_fft": freq_peak,
-             "fft_resolution": freq_res}
+    reminder:
+     STATS ARE: {"mean_simple": mean_simple,
+                 "mean_periodcorrected": mean_periodcorrected,
+                 "min_simple": min_simple,
+                 "max_simple": max_simple,
+                 "max_mean": max_mean,
+                 "min_mean": min_mean,
+                 "frequency_fit": frequency_fit,
+                 "frequency_fft": freq_peak,
+                 "fft_resolution": freq_res}
 '''
 
 # LIFT

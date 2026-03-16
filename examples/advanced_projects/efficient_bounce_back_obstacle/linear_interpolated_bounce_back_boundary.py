@@ -1,5 +1,6 @@
 import torch
 
+from typing import List, Optional
 from lettuce import Boundary, Flow, Context
 from solid_boundary_data import SolidBoundaryData
 
@@ -16,7 +17,8 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
             which supplies the f_index and interpolation constants.
     """
 
-    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData, calc_force: bool =False):
+    def __init__(self, context: 'Context', flow: 'Flow', solid_boundary_data: SolidBoundaryData,
+                 calc_force: bool =False):
         self.context = context
         self.flow = flow
 
@@ -31,7 +33,6 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
             self.calc_force = False
 
         # convert relevant data to tensors:
-        ### TODO (QUESTION): fix batch-index-datatype (integer)?
         self.f_index_lt = torch.tensor(solid_boundary_data.f_index_lt,
                                        device=self.context.device,
                                        dtype=torch.int64)  # the batch-index has to be integer
@@ -45,15 +46,17 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                             device=self.context.device,
                                             dtype=torch.int64)  # batch-index has to be a tensor
         # TODO (optional): replace self.opposite_tensor with flow.torch_stencil.opposite
+            # in old lettuce (pre-2025) there was no torch_stencil!
 
         self.f_collided_lt = None
         self.f_collided_gt = None
         # will be populated in initialize_f_collided() method
 
 
-    def __call__(self, flow):
+    def __call__(self, flow: 'Flow'):
         """ IBB1: interpolate bounced populations from two fluid nodes"""
-        ## reminder: f_collided_lt = [f_collided_lt, f_collided_lt.opposite] (!) in compact storage-layout
+        ## reminder: f_collided_lt = [f_collided_lt, f_collided_lt.opposite]
+            # (!) this is for compact storage-layout
 
         if self.flow.stencil.d == 2:
             # BOUNCE
@@ -98,22 +101,22 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
         if self.calc_force:
             self.calc_force_on_boundary(flow.f)
 
-    def make_no_streaming_mask(self, f_shape, context: Context):
+    def make_no_streaming_mask(self, f_shape: List[int], context: Context):
         # no_stream_mask has to be dimensions: (q,x,y,z) (z optional),
         # but CAN be (x,y,z) (z optional).
         # in the latter case, torch.where broadcasts the mask to (q,x,y,z),
         # so ALL q populations of a lattice-node are marked equally
         return self.context.convert_to_tensor(self.mask, dtype=bool)
 
-    def make_no_collision_mask(self, f_shape, context: Context):
+    def make_no_collision_mask(self, f_shape: List[int], context: Context):
         # INFO: pay attention to the initialization of observable/moment-fields (u, rho,...)
         # on the boundary nodes, in the initial solution of your flow,
         # especially if visualization or post-processing uses the field-values
         # in the whole domain (including the boundary region)!
         return self.context.convert_to_tensor(self.mask, dtype=bool)
 
-    def calc_force_on_boundary(self, f_bounced):
-        """calulate the fluid force on the boundary by Momentum Exchange"""
+    def calc_force_on_boundary(self, f_bounced: torch.Tensor):
+        """calculate the fluid force on the boundary by Momentum Exchange"""
         ### basically: force = e * (f_collided + f_bounced[opp.])
         if self.flow.stencil.d == 2:
             self.force_sum = torch.einsum('i..., id -> d',
@@ -145,7 +148,7 @@ class LinearInterpolatedBounceBackBoundary(Boundary):
                                             self.flow.torch_stencil.e[self.f_index_gt[:, 0]])
 
 
-    def store_f_collided(self, f_collided):
+    def store_f_collided(self, f_collided: torch.Tensor):
         """store populations between collision and streaming, because they are
                     needed for calculation of bounce and force!"""
         if self.flow.stencil.d == 2:

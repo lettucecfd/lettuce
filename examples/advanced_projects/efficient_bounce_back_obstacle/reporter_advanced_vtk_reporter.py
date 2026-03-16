@@ -1,8 +1,12 @@
 import os
+from typing import Optional, List
+
 import numpy as np
 import pyevtk.hl as vtk
+import torch
 
 from lettuce._simulation import Reporter, Simulation
+from lettuce import Flow
 
 __all__ = [
     "write_vtk", "VTKReporterAdvanced", "VTKsliceReporter"
@@ -26,8 +30,9 @@ class VTKReporterAdvanced(Reporter):
             -> useful for suboptimal initialization or use of FWBB boundary
     """
 
-    def __init__(self, flow, interval=50, filename_base="./data/output",
-                 solid_mask=None, imin=0, imax=None):
+    def __init__(self, flow: 'Flow', interval: int = 50, filename_base: str ="./data/output",
+                 solid_mask: Optional[np.ndarray | torch.Tensor]=None,
+                 imin: int = 0, imax: int = None):
         super().__init__(interval)
         self.flow = flow
         if interval < 0:
@@ -51,11 +56,12 @@ class VTKReporterAdvanced(Reporter):
             os.makedirs(directory)
         self.point_dict = dict()
 
-    def __call__(self, simulation):
+    def __call__(self, simulation: Simulation):
         if self.flow.i % self.interval == 0 and self.imin <= self.flow.i <= self.imax:
             u = self.flow.units.convert_velocity_to_pu(self.flow.u(self.flow.f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.flow.rho(self.flow.f))
-#if you want density as well: rho = self.flow.units.convert_density_to_pu(self.flow.rho(f))
+#if you want density as well:
+                # rho = self.flow.units.convert_density_to_pu(self.flow.rho(f))
             if self.flow.stencil.d == 2:
                 if self.solid_mask is None:
                     self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ..., None])
@@ -70,7 +76,8 @@ class VTKReporterAdvanced(Reporter):
                         self.point_dict[f"u{'xyz'[d]}"] = (
                             np.where(self.solid_mask, 0,
                                      self.flow.context.convert_to_ndarray(u[d, ..., None])))
-#if you want density as well: self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ..., None])
+#if you want density as well:
+                # self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ..., None])
             else:
                 if self.solid_mask is None:
                     self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ...])
@@ -86,10 +93,12 @@ class VTKReporterAdvanced(Reporter):
                             np.where(self.solid_mask, 0,
                                      self.flow.context.convert_to_ndarray(u[d, ...])))
 
-#if you want density as well: self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ...])
+#if you want density as well:
+                # self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ...])
             write_vtk(self.point_dict, self.flow.i, self.filename_base)
 
-    def output_mask(self, mask, outdir=None, name="mask", point=False, no_offset=False):
+    def output_mask(self, mask: np.ndarray | torch.Tensor, outdir: Optional[str] = None,
+                    name: str ="mask", point: bool = False, no_offset: bool = False):
         """
             output the mask as a vtk-file for visualizatione etc.
                 (outputs mask as cell data)
@@ -137,8 +146,9 @@ class VTKsliceReporter(Reporter):
     '''
         reports a certain specified area portion of the domain as vtk-file
     '''
-    def __init__(self, flow, interval=50, filename_base="./data/output",
-                 solid_mask=None, sliceXY=None, sliceZ=None, imin=0,
+    def __init__(self, flow: 'Flow', interval: int = 50, filename_base: str = "./data/output",
+                 solid_mask: Optional[np.ndarray | torch.Tensor]=None,
+                 sliceXY: Optional[List | tuple]=None, sliceZ: float | int=None, imin: int=0,
                  imax=None):
         super().__init__(interval)
         self.flow = flow
@@ -182,7 +192,7 @@ class VTKsliceReporter(Reporter):
 
 
 
-    def __call__(self, simulation):
+    def __call__(self, simulation: Simulation):
         if self.flow.i % self.interval == 0 and self.imin <= self.flow.i <= self.imax:
             if self.z_index is not None:
                 f = self.flow.f[:,self.xmin:self.xmax+1, self.ymin:self.ymax+1, self.z_index, None]
@@ -192,7 +202,8 @@ class VTKsliceReporter(Reporter):
                 f = self.flow.f
             u = self.flow.units.convert_velocity_to_pu(self.flow.u(f))
             p = self.flow.units.convert_density_lu_to_pressure_pu(self.flow.rho(f))
-            # if you want the density: rho = self.flow.units.convert_density_to_pu(self.flow.rho(f))
+            # if you want the density:
+                # rho = self.flow.units.convert_density_to_pu(self.flow.rho(f))
             if self.flow.stencil.d == 2:
                 if self.solid_mask is None:
                     self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ..., None])
@@ -206,7 +217,8 @@ class VTKsliceReporter(Reporter):
                     else:
                         self.point_dict[f"u{'xyz'[d]}"] = np.where(self.solid_mask, 0,
                                            self.flow.context.convert_to_ndarray(u[d, ..., None]))
-            # if you want the density: self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ..., None])
+            # if you want the density:
+                # self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ..., None])
             else:
                 if self.solid_mask is None:
                     self.point_dict["p"] = self.flow.context.convert_to_ndarray(p[0, ...])
@@ -221,12 +233,14 @@ class VTKsliceReporter(Reporter):
                         self.point_dict[f"u{'xyz'[d]}"] = np.where(self.solid_mask, 0,
                                                self.flow.context.convert_to_ndarray(u[d, ...]))
 
-                # # if you want the density: self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ...])
+                # # if you want the density:
+                    # self.point_dict["rho"] = self.flow.context.convert_to_ndarray(rho[0, ...])
             write_vtk(self.point_dict, self.flow.i, self.filename_base,
                       origin=(self.xmin, self.ymin, self.z_index))
                 # origin added to show slice at correct position when superimposing on 3D vtk-data!
 
-    def output_mask(self, mask, outdir=None, name="mask", point=False, no_offset=False):
+    def output_mask(self, mask: np.ndarray | torch.Tensor, outdir: Optional[str]=None,
+                    name: str="mask", point: bool=False, no_offset: bool=False):
         """
             output the mask as a vtk-file for visualizatione etc.
 

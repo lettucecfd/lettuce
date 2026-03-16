@@ -11,16 +11,19 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Any
+from typing import Any, Optional
 import traceback
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from collections import Counter
 
+from lettuce import Flow
+
 
 def plot_force_coefficient(data_array: np.ndarray, ylabel: str, ylim: tuple[float, float],
-                           secax_functions_tuple: tuple[Any,Any], filenamebase,
-                           save_timeseries = False, periodic_start=0, adjust_ylim=False):
+                           secax_functions_tuple: tuple[Any,Any], filenamebase: str,
+                           save_timeseries: bool = False, periodic_start: float = 0,
+                           adjust_ylim: bool = False):
     """
         - plot force coefficient timeseries
         - (opt.) save png to outdir
@@ -99,7 +102,10 @@ def plot_force_coefficient(data_array: np.ndarray, ylabel: str, ylim: tuple[floa
 
 
 
-def analyze_periodic_timeseries(data_array: np.ndarray, periodic_start_rel: float,prominence: float = None, name: str = "periodic timeseries", outdir=None, pu_per_step = None, verbose=False):
+def analyze_periodic_timeseries(data_array: np.ndarray, periodic_start_rel: float,
+                                prominence: float = None, name: str = "periodic timeseries",
+                                outdir: Optional[str] = None, pu_per_step: Optional[float] = None,
+                                verbose: bool = False):
     """
        ANALYZE PERIODIC SIGNAL (verbose = plot peak-finding),
        - outputs: min, max, mean (simple + corrected for integer number of periods)
@@ -224,7 +230,8 @@ def analyze_periodic_timeseries(data_array: np.ndarray, periodic_start_rel: floa
                 plt.xlabel("Freq (Hz)")
                 plt.ylabel("FFT Amplitude |X(freq)|")
                 plt.xlim(0, 1)
-                # print("max. Amplitude np.abx(X).max():", np.abs(X).max())   # uncomment for debugging
+                # print("max. Amplitude np.abx(X).max():", np.abs(X).max())
+                    #  uncomment for debugging
 
                 # ylim, where highes peak is on left half of full spectrum:
                 plt.ylim(0, np.abs(X[:int(X.shape[0] * 0.5)]).max())
@@ -252,8 +259,8 @@ def analyze_periodic_timeseries(data_array: np.ndarray, periodic_start_rel: floa
             "fft_resolution": freq_res}
 
 
-def draw_circular_mask(flow, gridpoints_per_diameter, output_data=False,
-                       filebase=".", print_data=False):
+def draw_circular_mask(flow: 'Flow', gridpoints_per_diameter: int, output_data: bool = False,
+                       filebase: str =".", print_data: bool =False):
     """
         calculate and draw a 2D representation of:
         - the circular cylinder
@@ -429,8 +436,9 @@ class ProfilePlotter:
     """
 
 
-    def __init__(self, flow, output_path, reference_data_path, i_timeseries,
-                 u_timeseries1, u_timeseries2, u_timeseries3):
+    def __init__(self, flow: 'Flow', output_path: str, reference_data_path: str,
+                 i_timeseries: np.ndarray,
+                 u_timeseries1: np.ndarray, u_timeseries2: np.ndarray, u_timeseries3: np.ndarray):
         self.flow = flow
         self.output_path = output_path
         self.i_timeseries = i_timeseries
@@ -442,7 +450,7 @@ class ProfilePlotter:
         
         self.import_profile_reference_data(reference_data_path)
     
-    def import_profile_reference_data(self, data_path):
+    def import_profile_reference_data(self, data_path: str):
         # import reference data:
         # (data is: first column Y/D, second column u_d/u_char)
 
@@ -568,7 +576,7 @@ class ProfilePlotter:
         self.p3_R2016_uxuy = np.genfromtxt(
             data_path + 'Fig13_uxuy_profile_pos3_R2016.csv', delimiter=';')
 
-    def process_data(self, save=False):
+    def process_data(self, save: bool = False):
         """CALCULATE temporal velocity averages"""
         avg_u1_temporal = np.mean(np.array(self.u_timeseries1), axis=0)
         avg_u2_temporal = np.mean(np.array(self.u_timeseries2), axis=0)
@@ -646,16 +654,16 @@ class ProfilePlotter:
                 self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_3_ReStress_y.npy",
                 np.array([self.y_in_D, self.u3_diff_sq_mean[1]]))
             np.save(
-                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_1_ReShearStress.npy",
+                self.output_path + "/ProfileReporter_Data" +"/ProfileReporter_1_ReShearStress.npy",
                 np.array([self.y_in_D, self.u1_diff_xy_mean]))
             np.save(
-                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_2_ReShearStress.npy",
+                self.output_path + "/ProfileReporter_Data" +"/ProfileReporter_2_ReShearStress.npy",
                 np.array([self.y_in_D, self.u2_diff_xy_mean]))
             np.save(
-                self.output_path + "/ProfileReporter_Data" + "/ProfileReporter_3_ReShearStress.npy",
+                self.output_path + "/ProfileReporter_Data" +"/ProfileReporter_3_ReShearStress.npy",
                 np.array([self.y_in_D, self.u3_diff_xy_mean]))
 
-    def save_timeseries_to_files(self, basepath):
+    def save_timeseries_to_files(self, basepath: str):
         """save the FULL timeseries to files"""
         # timeseries (i)    
         np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
@@ -668,7 +676,9 @@ class ProfilePlotter:
         np.save(basepath + "/ProfileReporter_Data" + "/ProfileReporter_"
                 + "pos3" + "_timeseries_data.npy", np.array(self.u_timeseries3))
 
-    def plot_velocity_profiles(self, show_reference = False, save = False, show = False):
+    def plot_velocity_profiles(self, show_reference: bool = False,
+                               save: bool = False,
+                               show: bool = False):
         """plot tht average velocity profiles"""
         cm = 1 / 2.54
         
@@ -789,7 +799,9 @@ class ProfilePlotter:
             else:
                 plt.close()
         
-    def plot_reynolds_stress_profiles(self, show_reference=False, save=False, show = False):
+    def plot_reynolds_stress_profiles(self, show_reference: bool = False,
+                                      save: bool = False,
+                                      show: bool = False):
         """plot average reynolds stress profiles"""
         cm = 1 / 2.54
         if not show_reference:

@@ -90,7 +90,7 @@ class EbbSimulation(Simulation):
         for idx in self.store_f_collided_post_streaming_boundaries_index:
             self.post_streaming_boundaries[idx].store_f_collided(self.flow.f)
 
-    def __call__(self, num_steps):
+    def __call__(self, num_steps: int) -> float:
         beg = timer()
 
         if self.flow.i == 0:

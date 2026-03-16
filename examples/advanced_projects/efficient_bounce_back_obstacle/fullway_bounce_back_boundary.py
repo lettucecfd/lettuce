@@ -17,8 +17,9 @@ class FullwayBounceBackBoundary(Boundary):
         - able to calculate fluid force on boundary by momentum exchange
     """
 
-    def __init__(self, context, flow, mask, global_solid_mask=None,
-                 periodicity: tuple[bool,bool,bool|None] = None, calc_force=False):
+    def __init__(self, context: 'Context', flow: 'Flow', mask: np.ndarray | torch.Tensor,
+                 global_solid_mask: Optional[np.ndarray | torch.Tensor]=None,
+                 periodicity: tuple[bool,bool,bool|None] = None, calc_force: bool = False):
         self.context = context
         self.flow = flow
 
@@ -78,9 +79,9 @@ class FullwayBounceBackBoundary(Boundary):
                                     iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1]*ny]
                                 and not other_solid_bc_mask[ix_sp[sp_index] + self.flow.stencil.e[q_index][ 0] - border[0]*nx,
                                     iy_sp[sp_index] + self.flow.stencil.e[q_index][ 1] - border[1]*ny]):
-                            # if the neighbour of sp_index is False in the boundary.mask,
-                            # ...sp_index is ix_sp solid node, neighbouring ix_sp fluid node:
-                            # the direction pointing from the fluid neighbour to solid
+                            # if the neighbor of sp_index is False in the boundary.mask,
+                            # ...sp_index is ix_sp solid node, neighboring ix_sp fluid node:
+                            # the direction pointing from the fluid neighbor to solid
                             # ...sp_index is marked on the solid sp_index
 
                             # list of [q, nx, ny], marks all fs on the boundary-border, which point into the boundary/solid
@@ -131,7 +132,7 @@ class FullwayBounceBackBoundary(Boundary):
                                             dtype=torch.int64)  # batch-index has to be ix_sp tensor
 
 
-    def __call__(self, flow):
+    def __call__(self, flow: 'Flow'):
         # FULLWAY-BBBC: inverts populations on all boundary nodes
 
         # calc force on boundary:#
@@ -157,7 +158,7 @@ class FullwayBounceBackBoundary(Boundary):
             self.f_index_fwbb[:, 2],
             self.f_index_fwbb[:, 3]]
 
-    def calc_force_on_boundary(self, f):
+    def calc_force_on_boundary(self, f: torch.Tensor):
         """calculate fluid force on all relevant boundary nodes by
             momentum exchange"""
         if self.flow.torch_stencil.d == 2:

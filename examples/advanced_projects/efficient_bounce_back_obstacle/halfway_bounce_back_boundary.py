@@ -16,8 +16,9 @@ class HalfwayBounceBackBoundary(Boundary):
         - able to calculate fluid force on boundary by momentum exchange
     """
 
-    def __init__(self, context, flow, solid_boundary_data: SolidBoundaryData,
-                 global_solid_mask=None, periodicity: tuple[bool,bool,bool|None] = None,
+    def __init__(self, context: 'Context', flow: 'Flow', solid_boundary_data: SolidBoundaryData,
+                 global_solid_mask: Optional[np.ndarray | torch.Tensor]=None,
+                 periodicity: tuple[bool,bool,bool|None] = None,
                  calc_force: bool = False):
 
         self.context = context
@@ -63,7 +64,7 @@ class HalfwayBounceBackBoundary(Boundary):
               and solid_boundary_data.f_index_gt.shape[0] == 0):
             print("HWBB: SBD has got attributf_index_lt (NO f_index_gt)!")
             self.f_index = solid_boundary_data.f_index_lt
-        else:  #else do extra neighbour_search below
+        else:  #else do extra neighbor_search below
             print("(INFO) HWBB didn't find solid_boundary_data, "
                   "doing legacy neighbour_search on mask...")
             # searching boundary-fluid-interface and append indices to f_index
@@ -101,10 +102,10 @@ class HalfwayBounceBackBoundary(Boundary):
                                 and not global_solid_mask[
                                     a[p] + self.flow.stencil.e[i][ 0] - border[0] * nx,
                                     b[p] + self.flow.stencil.e[i][ 1] - border[1] * ny]):
-                                # if the neighbour of p is False in the boundary.mask,
-                                # p is a solid node, neighbouring a fluid node:
-                                # ...the direction pointing from the fluid neighbour
-                                # to solid p is marked on the neighbour
+                                # if the neighbor of p is False in the boundary.mask,
+                                # p is a solid node, neighboring a fluid node:
+                                # ...the direction pointing from the fluid neighbor
+                                # to solid p is marked on the neighbor
 
                                 self.f_index.append([self.flow.stencil.opposite[i],
                                                      a[p] + self.flow.stencil.e[i][ 0] - border[0] * nx,
@@ -166,7 +167,7 @@ class HalfwayBounceBackBoundary(Boundary):
                                             device=self.flow.context.device,
                                             dtype=torch.int64)  # batch-index has to be a tensor
 
-    def __call__(self, flow):
+    def __call__(self, flow: 'Flow'):
         # HWBB: bounce populations on neighboring fluid nodes
 
         # calc force on boundary:
@@ -216,7 +217,7 @@ class HalfwayBounceBackBoundary(Boundary):
         self.force_sum = 2 * torch.einsum('i..., id -> d', self.f_collided[:, 0],
                                           self.flow.torch_stencil.e[self.f_index[:, 0]])
 
-    def store_f_collided(self, f_collided):
+    def store_f_collided(self, f_collided: torch.Tensor):
         """store populations between collision and streaming, because they are
             needed for calculation of bounce and force!"""
         if self.flow.torch_stencil.d == 2:

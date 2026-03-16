@@ -12,7 +12,6 @@ class ProfileReporter(Reporter):
         and plot data!
     """
 
-
     def __init__(self, interval: int, flow, position_lu, i_start):
         super().__init__(interval)
         self.flow = flow

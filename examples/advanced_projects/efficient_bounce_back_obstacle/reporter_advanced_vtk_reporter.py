@@ -92,13 +92,15 @@ class VTKReporterAdvanced(Reporter):
     def output_mask(self, mask, outdir=None, name="mask", point=False, no_offset=False):
         """
             output the mask as a vtk-file for visualizatione etc.
-
-        UPDATE 28.08.2024 (MBille: outputs mask as cell data. cell data represents the approx.
-            location of solid boundaries, assuming Fullway or Halfway Bounce Back implementation,
-            if translated by (-0.5,-0.5,-0.5) LU.
-            Attention: point data is misleading, looking at masks rendered as solid objects or
-            point-clouds!
-            USE: in Paraview use Filter:
+                (outputs mask as cell data)
+                cell data represents the approx. location of solid boundaries,
+                assuming Fullway or Halfway Bounce Back implementation,
+                if translated by (-0.5,-0.5,-0.5) LU
+                (see export with "_cell" suffix below).
+            Attention: point data is misleading, looking at masks rendered as
+                solid objects or point-clouds!
+            USE of translated mask in Paraview
+                -> use Filter:
                 Threshold -> Above Upper Threshold (Upper Threshold 0.9)
                 -> Solid Color -> Volume/Wireframe,...
         """

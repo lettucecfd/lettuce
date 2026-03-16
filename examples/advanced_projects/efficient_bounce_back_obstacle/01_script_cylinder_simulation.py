@@ -41,17 +41,15 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 # LETTUCE RELATED
 import lettuce as lt
-from obstacle_cylinder import ObstacleCylinder
-from ebb_simulation import EbbSimulation
-from reporter_ProfileReporter import ProfileReporter
-from reporter_advanced_vtk_reporter import VTKReporterAdvanced, VTKsliceReporter
-from observables_force_coefficients import DragCoefficient, LiftCoefficient
+from examples.advanced_projects.efficient_bounce_back_obstacle.flow.obstacle_cylinder import ObstacleCylinder
+from examples.advanced_projects.efficient_bounce_back_obstacle.simulation.ebb_simulation import EbbSimulation
+from examples.advanced_projects.efficient_bounce_back_obstacle.reporter.reporter_ProfileReporter import ProfileReporter
+from examples.advanced_projects.efficient_bounce_back_obstacle.reporter.reporter_advanced_vtk_reporter import VTKReporterAdvanced, VTKsliceReporter
+from examples.advanced_projects.efficient_bounce_back_obstacle.reporter.observables_force_coefficients import DragCoefficient, LiftCoefficient
 
 # AUX. CODE
-from helperCode import Logger
-from data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries, draw_circular_mask, ProfilePlotter
-
-torch.autograd.set_detect_anomaly(True)
+from examples.advanced_projects.efficient_bounce_back_obstacle.auxiliary_code.helperCode import Logger
+from examples.advanced_projects.efficient_bounce_back_obstacle.auxiliary_code.data_processing_and_plotting import plot_force_coefficient, analyze_periodic_timeseries, draw_circular_mask, ProfilePlotter
 
 ####################
 # ARGUMENT PARSING: this script is supposed to be called with arguments,
@@ -685,7 +683,7 @@ plot_force_coefficient(lift_timeseries, ylabel="Coefficient of Lift$C_{L}$", yli
                        secax_functions_tuple=(flow.units.convert_time_to_lu,
                                               flow.units.convert_time_to_pu),
                        filenamebase=outdir_data+"/lift", periodic_start=periodic_start)
-#OLD: lift_prominence = ((abs(lift_timeseries[2].max()) - abs(lift_timeseries[2].min())) * 0.5)
+
 lift_stats = analyze_periodic_timeseries(lift_timeseries, periodic_start_rel=0.5,
                                          name="lift",
                                          verbose=True, pu_per_step=flow.units.convert_time_to_pu(1),

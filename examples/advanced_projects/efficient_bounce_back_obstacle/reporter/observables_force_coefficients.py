@@ -5,8 +5,8 @@
 import numpy as np
 import torch
 from lettuce import Flow, Observable
-from . import (FullwayBounceBackBoundary, HalfwayBounceBackBoundary,
-               LinearInterpolatedBounceBackBoundary)
+from examples.advanced_projects.efficient_bounce_back_obstacle import (FullwayBounceBackBoundary, HalfwayBounceBackBoundary,
+                                                                       LinearInterpolatedBounceBackBoundary)
 
 __all__ = ['DragCoefficient', 'LiftCoefficient']
 

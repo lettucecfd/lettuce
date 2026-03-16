@@ -16,7 +16,7 @@ class ObstacleCylinder(ExtFlow):
     """
         FLOW AROUND A CIRCULAR CYLINDER in 2D or 3D
 
-        Flow:
+        Flow:<
         - inflow (EquilibriumBoundaryPU) at x=0, outflow (EquilibriumOutletP) at x=xmax
         - further boundaries depend on parameters:
             - lateral (y direction): periodic, no-slip wall, slip wall

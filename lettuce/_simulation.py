@@ -327,7 +327,7 @@ class BreakableSimulation(Simulation):
                  reporter: List['Reporter']):
         super().__init__(flow, collision, reporter)
 
-    def __call__(self, num_steps: int):
+    def __call__(self, num_steps: int) -> float:
         beg = timer()
 
         if self.flow.i == 0:

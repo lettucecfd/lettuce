@@ -1,7 +1,7 @@
 import torch
 
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from abc import ABC, abstractmethod
 
 from ... import Reporter, BreakableSimulation
@@ -22,7 +22,8 @@ class FailureReporterBase(Reporter, ABC):
     # of a settling period (transient high velocities) at the beginning
     # of the run.
 
-    def __init__(self, interval, k=100, outdir=None, vtk_out=False):
+    def __init__(self, interval: int, k: int = 100, outdir: Optional[str]=None,
+                 vtk_out: bool=False):
         super().__init__(interval)
         self.k = k
         self.outdir = outdir
@@ -53,7 +54,7 @@ class FailureReporterBase(Reporter, ABC):
                 # the 1e10 is "a lot", but in a very unlikely case of a very long simulation,
                 #  where num_steps >=1e10, this would not work...
 
-    def _get_top_failures(self, mask, values) -> List[Tuple]:
+    def _get_top_failures(self, mask: torch.Tensor, values: torch.Tensor) -> List[Tuple]:
         """extract coordinates and values at nodes (mask);
             returns list of (pos, val) tuples"""
         failed_values = values[mask]
@@ -74,7 +75,7 @@ class FailureReporterBase(Reporter, ABC):
             for c, v in zip(top_coords, top_values)
         ]
 
-    def _write_log(self, simulation: 'BreakableSimulation', results):
+    def _write_log(self, simulation: 'BreakableSimulation', results: List[Tuple]):
         """writes results to file and logs flow.i"""
 
         if not os.path.exists(self.outdir):
@@ -116,12 +117,12 @@ class FailureReporterBase(Reporter, ABC):
         ...
 
     @abstractmethod
-    def is_failed(self, simulation: 'BreakableSimulation'):
+    def is_failed(self, simulation: 'BreakableSimulation') -> torch.Tensor:
         """checks if simulation meets criterion"""
         ...
 
     @abstractmethod
-    def get_results(self, simulation: 'BreakableSimulation'):
+    def get_results(self, simulation: 'BreakableSimulation') -> List[Tuple]:
         """calls specific method to create list of locations at which
         simulation failed"""
         ...
@@ -129,14 +130,15 @@ class FailureReporterBase(Reporter, ABC):
 
 class NaNReporter(FailureReporterBase):
 
-    def __init__(self, interval, k=100, outdir=None, vtk_out=False):
+    def __init__(self, interval: int, k: int =100, outdir: Optional[str]=None,
+                 vtk_out: bool =False):
         super().__init__(interval, k, outdir, vtk_out)
         self.name = "NaN"
 
-    def is_failed(self, simulation: 'BreakableSimulation'):
+    def is_failed(self, simulation: 'BreakableSimulation') -> torch.Tensor:
         return torch.isnan(simulation.flow.f).any()
 
-    def get_results(self, simulation: 'BreakableSimulation'):
+    def get_results(self, simulation: 'BreakableSimulation') -> List[Tuple]:
         nan_mask = torch.isnan(simulation.flow.f)
         return self._get_top_failures(nan_mask, simulation.flow.f)
 
@@ -152,18 +154,19 @@ class NaNReporter(FailureReporterBase):
 
 
 class HighMaReporter(FailureReporterBase):
-    def __init__(self, interval, threshold=0.3, k=100, outdir=None, vtk_out=False):
+    def __init__(self, interval: int, threshold: float =0.3, k: int =100,
+                 outdir: Optional[str]=None, vtk_out: bool =False):
         super().__init__(interval, k, outdir, vtk_out)
         self.threshold = threshold
         self.name = "HighMa"
 
 
-    def is_failed(self, simulation: 'BreakableSimulation'):
+    def is_failed(self, simulation: 'BreakableSimulation') -> torch.Tensor:
         u = simulation.flow.u()
         ma = torch.norm(u, dim=0) / simulation.flow.stencil.cs
         return (ma > self.threshold).any()
 
-    def get_results(self, simulation: 'BreakableSimulation'):
+    def get_results(self, simulation: 'BreakableSimulation') -> List[Tuple]:
         u = simulation.flow.u()
         ma = torch.norm(u, dim=0) / simulation.flow.stencil.cs
         mask = ma > self.threshold

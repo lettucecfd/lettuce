@@ -3,3 +3,4 @@ from .observable_reporter import *
 from .vtk_reporter import *
 from .write_image import *
 from .failure_reporter import *
+from .progress_reporter import *

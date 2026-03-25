@@ -75,8 +75,8 @@ class EquilibriumOutletP(AntiBounceBackOutlet):
     def make_no_streaming_mask(self, shape: List[int], context: 'Context'
                                ) -> Optional[torch.Tensor]:
         no_streaming_mask = context.zero_tensor(shape, dtype=bool)
-        no_streaming_mask[[np.setdiff1d(np.arange(shape[0]), self.velocities)]
-                          + self.index] = 1
+        no_streaming_mask[tuple([np.setdiff1d(np.arange(shape[0]), self.velocities)]
+                          + self.index)] = 1
         return no_streaming_mask
 
     def make_no_collision_mask(self, shape: List[int], context: 'Context'):

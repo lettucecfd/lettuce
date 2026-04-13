@@ -89,7 +89,7 @@ pyevtk==1.6.0
     # via lettuce (pyproject.toml)
 pyparsing==3.2.3
     # via matplotlib
-pytest==8.3.2
+pytest==9.0.3
     # via lettuce (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via matplotlib

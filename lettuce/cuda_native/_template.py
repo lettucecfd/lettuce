@@ -104,10 +104,10 @@ extra_compile_args = {{
 }}
 
 setup(
-    author='Robert Andreas Fritsch',
-    author_email='info@robert-fritsch.de',
-    maintainer='Robert Andreas Fritsch',
-    maintainer_email='info@robert-fritsch.de',
+    author='lettucecfd',
+    author_email='lettucecfd@users.noreply.github.com',
+    maintainer='lettucecfd',
+    maintainer_email='lettucecfd@users.noreply.github.com',
     install_requires=['torch>=1.2'],
     license='MIT license',
     keywords='lettuce',

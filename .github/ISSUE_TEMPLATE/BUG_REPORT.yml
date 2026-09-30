@@ -25,17 +25,16 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-  - type: dropdown
+  - type: input
     id: version
     attributes:
       label: Version
-      description: What version of our software are you running?
-      options:
-        - 0.2.0
-        - 0.2.1
-        - 0.2.2
-        - 0.2.3
-      default: 0
+      description: |
+        Which version of lettuce are you running? Get it with `lettuce --version`
+        or `python -c "import lettuce; print(lettuce.__version__)"`.
+        If you are working from a git checkout, please paste the full string
+        including the commit hash.
+      placeholder: "0.2.3"
     validations:
       required: true
   - type: dropdown

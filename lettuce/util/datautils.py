@@ -3,8 +3,9 @@ datautils for writing/reading hdf5 files.
 """
 
 import h5py
+import torch
 from torch.utils import data
-from lettuce._version import get_versions
+from lettuce import __version__ as lettuce_version
 import pickle
 import io
 import numpy as np
@@ -51,16 +52,20 @@ class HDF5Reporter(Reporter):
         self.interval = interval
         self.filebase = filebase
         fs = h5py.File(self.filebase + '.h5', 'w')
-        fs.attrs['lettuce_version'] = get_versions()['version']
+        fs.attrs['lettuce_version'] = lettuce_version
         fs.attrs["flow"] = self._pickle_to_h5(flow)
         fs.attrs['_collision'] = self._pickle_to_h5(collision)
         if metadata:
             for attr in metadata:
                 fs.attrs[attr] = metadata[attr]
         self.shape = (flow.stencil.q, *flow.grid[0].shape)
+        # Store at the simulation's precision. Without an explicit dtype h5py
+        # falls back to float32 and silently truncates float64 populations.
+        dtype = torch.empty(0, dtype=self.context.dtype).numpy().dtype
         fs.create_dataset(name="f",
                           shape=(0, *self.shape),
-                          maxshape=(None, *self.shape))
+                          maxshape=(None, *self.shape),
+                          dtype=dtype)
         fs.close()
 
     def __call__(self, simulation: 'Simulation'):  # i, t, f):

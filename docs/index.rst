@@ -5,13 +5,12 @@ Welcome to lettuce's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   readme
+   overview
    installation
    usage
    modules
    contributing
    authors
-   history
 
 Indices and tables
 ==================

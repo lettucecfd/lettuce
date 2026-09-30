@@ -1,0 +1,3 @@
+# Extra packages needed to build the documentation (Sphinx itself is provided
+# by Read the Docs). The README is Markdown, so Sphinx needs a Markdown parser.
+myst-parser>=2.0

@@ -1,0 +1,91 @@
+name: Publish
+
+# Releases are cut by pushing a version tag, e.g.:
+#
+#     git tag 0.2.4 && git push origin 0.2.4
+#
+# The version is derived from that tag by setuptools-scm. Building from an
+# untagged or dirty checkout produces a local version segment (0.2.4.dev3+g1a2b3c)
+# which PyPI rejects, so this workflow must only ever run on a tag.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+[ab][0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
+  # Allows a manual dry run against TestPyPI from the Actions tab.
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Where to publish"
+        type: choice
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # setuptools-scm needs the full history and the tags to see a version.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Show the version that was built
+        run: ls -l dist/
+
+      - name: Reject local version segments
+        # A "+..." segment means the build did not come from a clean tagged
+        # commit. PyPI would refuse the upload; fail here with a clear message.
+        run: |
+          for f in dist/*; do
+            case "$f" in
+              *+*) echo "::error::$f carries a local version segment - build is not from a clean tag"; exit 1 ;;
+            esac
+          done
+
+      - name: Check metadata
+        run: uvx twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  testpypi:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write  # required for trusted publishing, no API token needed
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v6
+      - run: uv publish --publish-url https://test.pypi.org/legacy/
+
+  pypi:
+    needs: build
+    if: github.event_name == 'push' || inputs.target == 'pypi'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v6
+      - run: uv publish

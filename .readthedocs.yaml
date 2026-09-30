@@ -14,6 +14,11 @@ build:
     # nodejs: "19"
     # rust: "1.64"
     # golang: "1.19"
+  jobs:
+    # Read the Docs clones shallowly; setuptools-scm needs the tags to
+    # derive the version shown in the documentation.
+    post_checkout:
+      - git fetch --unshallow --tags || true
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -29,5 +34,9 @@ sphinx:
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
    install:
-   - requirements: requirements.txt
+   # First, so that torch comes from the CPU index (see docs/requirements.txt)
+   # and is already satisfied when the package itself is installed.
    - requirements: docs/requirements.txt
+   # Runtime dependencies come from pyproject.toml, docs/conf.py imports lettuce.
+   - method: pip
+     path: .

@@ -165,7 +165,8 @@ Then open `docs/_build/html/index.html`.
 
 The README is written in Markdown and pulled into the documentation through
 `docs/overview.md`, which is why `myst-parser` is required. Read the Docs
-installs it from `docs/requirements.txt`.
+installs it from `docs/requirements.txt`, together with a CPU-only torch;
+the package itself is installed from `pyproject.toml`.
 
 The API reference in `docs/modules.rst` lists the public classes and functions
 by name (`lettuce.BGKCollision`, not the private module they are defined in).

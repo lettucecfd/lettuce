@@ -108,3 +108,6 @@ ENV/
 
 # data folder
 data/
+
+# macOS
+.DS_Store

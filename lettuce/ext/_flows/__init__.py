@@ -10,3 +10,18 @@ from .liddrivencavity import *
 from .lamboseenvortex import *
 
 from ._flow_by_name import *
+
+__all__ = [
+    'ExtFlow',
+    'TaylorGreenVortex',
+    'TaylorGreenVortex2D',
+    'TaylorGreenVortex3D',
+    'CouetteFlow2D',
+    'PoiseuilleFlow2D',
+    'DoublyPeriodicShear2D',
+    'DecayingTurbulence',
+    'Obstacle',
+    'Cavity2D',
+    'LambOseenVortex2D',
+    'flow_by_name'
+]

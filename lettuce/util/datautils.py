@@ -3,8 +3,9 @@ datautils for writing/reading hdf5 files.
 """
 
 import h5py
+import torch
 from torch.utils import data
-from lettuce._version import get_versions
+from lettuce import __version__ as lettuce_version
 import pickle
 import io
 import numpy as np
@@ -51,16 +52,20 @@ class HDF5Reporter(Reporter):
         self.interval = interval
         self.filebase = filebase
         fs = h5py.File(self.filebase + '.h5', 'w')
-        fs.attrs['lettuce_version'] = get_versions()['version']
+        fs.attrs['lettuce_version'] = lettuce_version
         fs.attrs["flow"] = self._pickle_to_h5(flow)
         fs.attrs['_collision'] = self._pickle_to_h5(collision)
         if metadata:
             for attr in metadata:
                 fs.attrs[attr] = metadata[attr]
         self.shape = (flow.stencil.q, *flow.grid[0].shape)
+        # Store at the simulation's precision. Without an explicit dtype h5py
+        # falls back to float32 and silently truncates float64 populations.
+        dtype = torch.empty(0, dtype=self.context.dtype).numpy().dtype
         fs.create_dataset(name="f",
                           shape=(0, *self.shape),
-                          maxshape=(None, *self.shape))
+                          maxshape=(None, *self.shape),
+                          dtype=dtype)
         fs.close()
 
     def __call__(self, simulation: 'Simulation'):  # i, t, f):
@@ -81,33 +86,32 @@ class HDF5Reporter(Reporter):
 
 
 class LettuceDataset(data.Dataset):
-    """ Custom dataset for HDF5 files in lettuce that can be used by torch's
-        dataloader.
+    """Custom dataset for HDF5 files in lettuce that can be used by torch's
+    dataloader.
 
     Parameters
     ----------
-        filebase : string
-            Path to the hdf5 file with annotations.
-        transform : class object
-            Optional transform to be applied on a f loaded from HDF5 file.
-        target : logical operation (True, False)
-            Returns also the next dataset[idx + skip_idx_to_target] - default=False
-        skip_idx_to_target : integer
-            Define which next target dataset is returned if target is True - default=1
+    filebase : string
+        Path to the hdf5 file written by :class:`HDF5Reporter`.
+    transform : class object
+        Optional transform to be applied on a f loaded from HDF5 file.
+    target : logical operation (True, False)
+        Returns also the next dataset[idx + skip_idx_to_target] - default=False
+    skip_idx_to_target : integer
+        Define which next target dataset is returned if target is True - default=1
 
     Examples
-        --------
-        Create a data loader.
-        >>> import lettuce as lt
-        >>> import torch
-        >>> lattice = lt.Lattice(lt.D3Q27, device="cpu")
-        >>> dataset_train = lt.LettuceDataset(lattice=lattice,
-        >>>              filebase= "./hdf5_output.h5",
-        >>>              target=True)
-        >>> train_loader = torch.utils.data.DataLoader(dataset_train, shuffle=True)
-        >>> for (f, target, idx) in train_loader:
-        >>>     ...
-        """
+    --------
+    Create a data loader.
+
+    >>> import lettuce as lt
+    >>> import torch
+    >>> dataset_train = lt.LettuceDataset(filebase="./hdf5_output.h5",
+    ...                                   target=True)
+    >>> train_loader = torch.utils.data.DataLoader(dataset_train, shuffle=True)
+    >>> for (f, target, idx) in train_loader:
+    ...     ...
+    """
 
     def __init__(self, filebase, transform=None, target=False, skip_idx_to_target=1):
         super().__init__()

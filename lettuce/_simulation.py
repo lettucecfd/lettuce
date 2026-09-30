@@ -64,8 +64,8 @@ class Simulation:
         Example: [boundary0, boundary1, collision_index=2, boundary3],
         In this example, boundary0 and boundary1 are pre_boundaries and
         boundary3 is a post_boundary. So the collision_index ist 2, because
-        collision is performed after two boundaries (index 0 and 1 of the list) 
-         -> see also: comments under the method _collide() below...
+        collision is performed after two boundaries (index 0 and 1 of the list)
+        -> see also: comments under the method _collide() below...
         '''
         self.transformer = (flow.pre_boundaries or []) + [collision] + (flow.post_boundaries or [])
         self.reporter = reporter
@@ -85,7 +85,7 @@ class Simulation:
         not applied. 
         This is technically NOT a boolean mask, but an INT field with indices 
         of boundaries and the collision-substep (see collision_index 
-        and pre_/post_boundaries above)
+        and ``pre_boundaries``/``post_boundaries`` above)
         All nodes that are marked with the value of self.collision_index will 
         have the collision operator applied.
         '''

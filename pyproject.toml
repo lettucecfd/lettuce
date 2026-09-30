@@ -1,26 +1,61 @@
 [build-system]
-requires = ["setuptools>=61", "wheel", "versioneer>=0.28"]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lettuce"
-version = "0.2.3"
+name = "lettucecfd"
+dynamic = ["version"]
 description = "Lattice Boltzmann Python GPU"
 readme = "README.md"
-requires-python = "==3.12.*"
-license = { text = "MIT" }
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Andreas Kraemer" },
+    { name = "Mario Bedrunka" },
+    { name = "Philipp Spelten" },
+    { name = "Dominik Wilde" },
+    { name = "Robert Fritsch" },
+    { name = "Maximilian Bille" },
+    { name = "Martin Kliemank" },
+]
+maintainers = [
+    { email = "lettuce.cfd@gmail.com" },
+]
+keywords = [
+    "lattice-boltzmann",
+    "lbm",
+    "cfd",
+    "computational-fluid-dynamics",
+    "gpu",
+    "pytorch",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "click>=8.1.7",
-    "h5py==3.11.0",
+    "h5py>=3.11.0",
     "matplotlib>=3.9.2",
     "mmh3>=4.1.0",
     "numpy>=2.1.0",
     "packaging>=24.1",
     "pyevtk>=1.6.0",
-    "pytest>=8.3.2",
+    # Needed at runtime by the generated setup.py that builds the native CUDA
+    # extension, see lettuce/cuda_native/_template.py.
     "setuptools>=78.1.1",
     "torch>=2.6.0",
-    "vtk>=9.5.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.2",
 ]
 
 [project.scripts]
@@ -28,17 +63,17 @@ lettuce = "lettuce.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/lettucecfd/lettuce"
+Documentation = "https://lettucecfd.readthedocs.io"
+Repository = "https://github.com/lettucecfd/lettuce"
+Issues = "https://github.com/lettucecfd/lettuce/issues"
 
 [tool.setuptools.packages.find]
 include = ["lettuce*"]
 
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "lettuce/_version.py"
-versionfile_build = "lettuce/_version.py"
-tag_prefix = ""
-parentdir_prefix_version = "lettuce-"
+[tool.setuptools_scm]
+# Version comes from the git tag (e.g. "0.2.3"); untagged commits become
+# a .devN pre-release of the next patch version.
+fallback_version = "0.0.0+unknown"
 
 [project.optional-dependencies]
 cpu = [
@@ -58,6 +93,9 @@ cu130 = [
 ]
 
 [tool.uv]
+# The version comes from git (setuptools-scm), so rebuild the project on every
+# new commit or tag; otherwise uv reuses a cached build with a stale version.
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 conflicts = [
   [
     { extra = "cpu" },

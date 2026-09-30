@@ -27,6 +27,15 @@ jobs:
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu128' }
           - { os: ubuntu-latest, python-version: '3.12', extra: 'cu130' }
           - { os: macos-latest, python-version: '3.12', extra: 'cpu' }
+          # Upper end of the supported range declared in requires-python.
+          - { os: ubuntu-latest, python-version: '3.13', extra: 'cpu' }
+          - { os: macos-latest, python-version: '3.13', extra: 'cpu' }
+
+    # Pins the interpreter for every uv command below. Without this uv would
+    # pick the newest interpreter allowed by requires-python and the
+    # python-version in the matrix would not describe what actually ran.
+    env:
+      UV_PYTHON: ${{ matrix.cfg.python-version }}
 
     steps:
       - uses: actions/checkout@v4

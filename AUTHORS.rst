@@ -1,16 +1,11 @@
 =======
-Credits
+Authors
 =======
 
-Development Lead
-----------------
-
-* Andreas Kraemer <kraemer.research@gmail.com>
-
-Contributors
-------------
-
-* Dominik Wilde
+* Andreas Kraemer
 * Mario Bedrunka
 * Philipp Spelten
-* You?
+* Dominik Wilde
+* Robert Fritsch
+* Maximilian Bille
+* Martin Kliemank

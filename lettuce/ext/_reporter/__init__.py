@@ -2,6 +2,7 @@ from .error_reporter import *
 from .observable_reporter import *
 from .vtk_reporter import *
 from .write_image import *
+from .failure_reporter import *
 from .progress_reporter import *
 
 __all__ = [
@@ -14,6 +15,10 @@ __all__ = [
     'EnergySpectrum',
     'Mass',
     'VTKReporter',
+    'write_vtk',
     'write_image',
+    'FailureReporterBase',
+    'NaNReporter',
+    'HighMaReporter',
     'ProgressReporter'
 ]

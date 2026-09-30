@@ -19,6 +19,11 @@ Core
     :members:
     :undoc-members:
 
+.. autoclass:: BreakableSimulation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. autoclass:: StreamingStrategy
     :members:
     :undoc-members:
@@ -232,6 +237,17 @@ Reporters and observables
 .. autoclass:: ProgressReporter
     :show-inheritance:
 
+.. autoclass:: FailureReporterBase
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: NaNReporter
+    :show-inheritance:
+
+.. autoclass:: HighMaReporter
+    :show-inheritance:
+
 .. autoclass:: Observable
     :members:
     :undoc-members:
@@ -256,6 +272,8 @@ Reporters and observables
     :show-inheritance:
 
 .. autofunction:: write_image
+
+.. autofunction:: write_vtk
 
 
 Utilities

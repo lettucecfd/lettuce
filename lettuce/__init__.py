@@ -1,13 +1,14 @@
 """Top-level package for lettuce."""
 
-from importlib.metadata import PackageNotFoundError, metadata as _metadata
+from importlib.metadata import (PackageNotFoundError as _PackageNotFoundError,
+                                metadata as _metadata)
 
 try:
     # Distribution name, keep in sync with [project] name in pyproject.toml.
     # Everything below is read from the installed metadata so that it cannot
     # drift away from pyproject.toml and AUTHORS.rst.
     _dist = _metadata('lettucecfd')
-except PackageNotFoundError:
+except _PackageNotFoundError:
     # Running from a source tree without the package being installed.
     __version__ = '0.0.0+unknown'
     __author__ = ''

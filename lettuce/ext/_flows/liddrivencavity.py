@@ -10,6 +10,8 @@ from ... import UnitConversion
 from .. import BounceBackBoundary, EquilibriumBoundaryPU
 from ._ext_flow import ExtFlow
 
+__all__ = ['Cavity2D']
+
 
 class Cavity2D(ExtFlow):
 

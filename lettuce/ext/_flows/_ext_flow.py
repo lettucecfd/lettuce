@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from .. import D1Q3, D2Q9, D3Q19, QuadraticEquilibrium
 from ... import Flow
 
+__all__ = ['ExtFlow']
+
 
 class ExtFlow(Flow, ABC):
     """

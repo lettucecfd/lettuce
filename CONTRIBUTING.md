@@ -167,8 +167,9 @@ The README is written in Markdown and pulled into the documentation through
 `docs/overview.md`, which is why `myst-parser` is required. Read the Docs
 installs it from `docs/requirements.txt`.
 
-Note that the API reference in `docs/modules.rst` currently points at an older
-module layout and largely fails to import. Rewriting it is an open task.
+The API reference in `docs/modules.rst` lists the public classes and functions
+by name (`lettuce.BGKCollision`, not the private module they are defined in).
+When you add a public class, add an entry there as well.
 
 ## Versioning and releases
 

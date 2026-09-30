@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import torch
 from copy import copy
+from typing import List, Optional, Union
 
 from lettuce import *
 from lettuce.util.moments import *

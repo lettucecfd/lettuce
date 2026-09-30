@@ -86,33 +86,32 @@ class HDF5Reporter(Reporter):
 
 
 class LettuceDataset(data.Dataset):
-    """ Custom dataset for HDF5 files in lettuce that can be used by torch's
-        dataloader.
+    """Custom dataset for HDF5 files in lettuce that can be used by torch's
+    dataloader.
 
     Parameters
     ----------
-        filebase : string
-            Path to the hdf5 file with annotations.
-        transform : class object
-            Optional transform to be applied on a f loaded from HDF5 file.
-        target : logical operation (True, False)
-            Returns also the next dataset[idx + skip_idx_to_target] - default=False
-        skip_idx_to_target : integer
-            Define which next target dataset is returned if target is True - default=1
+    filebase : string
+        Path to the hdf5 file written by :class:`HDF5Reporter`.
+    transform : class object
+        Optional transform to be applied on a f loaded from HDF5 file.
+    target : logical operation (True, False)
+        Returns also the next dataset[idx + skip_idx_to_target] - default=False
+    skip_idx_to_target : integer
+        Define which next target dataset is returned if target is True - default=1
 
     Examples
-        --------
-        Create a data loader.
-        >>> import lettuce as lt
-        >>> import torch
-        >>> lattice = lt.Lattice(lt.D3Q27, device="cpu")
-        >>> dataset_train = lt.LettuceDataset(lattice=lattice,
-        >>>              filebase= "./hdf5_output.h5",
-        >>>              target=True)
-        >>> train_loader = torch.utils.data.DataLoader(dataset_train, shuffle=True)
-        >>> for (f, target, idx) in train_loader:
-        >>>     ...
-        """
+    --------
+    Create a data loader.
+
+    >>> import lettuce as lt
+    >>> import torch
+    >>> dataset_train = lt.LettuceDataset(filebase="./hdf5_output.h5",
+    ...                                   target=True)
+    >>> train_loader = torch.utils.data.DataLoader(dataset_train, shuffle=True)
+    >>> for (f, target, idx) in train_loader:
+    ...     ...
+    """
 
     def __init__(self, filebase, transform=None, target=False, skip_idx_to_target=1):
         super().__init__()

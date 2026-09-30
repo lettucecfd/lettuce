@@ -3,6 +3,8 @@ import datetime
 from timeit import default_timer as timer
 from lettuce import Reporter, Simulation
 
+__all__ = ['ProgressReporter']
+
 def append_txt_file(filename, line: str):
     ''' append a line to a file with an added linebreak'''
     file = open(filename, "a")
@@ -11,17 +13,15 @@ def append_txt_file(filename, line: str):
 
 class ProgressReporter(Reporter):
     '''
-        Progress reporter that logs: current wall time, elapsed wall time,
-        elapsed steps and estimates wall time remaining.
-        future feature: Option to write a checkpoint file,
-                        when t_max is reached.
-                        (Sim. can be restarted from checkpoint)
+    Progress reporter that logs: current wall time, elapsed wall time,
+    elapsed steps and estimates wall time remaining.
 
-        (!) This reporter does not export other reporters observable values
-        etc.,
-        so make sure you save them in other ways,
-        if sim. is stopped by host system (e.g. HPC cluster)!
+    Future feature: Option to write a checkpoint file when t_max is reached
+    (simulation can be restarted from checkpoint).
 
+    (!) This reporter does not export other reporters observable values
+    etc., so make sure you save them in other ways, if the simulation is
+    stopped by the host system (e.g. HPC cluster)!
     '''
     # TODO (future improvements):
     # - implement checkpointing functionality in lettuce

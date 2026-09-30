@@ -93,6 +93,9 @@ cu130 = [
 ]
 
 [tool.uv]
+# The version comes from git (setuptools-scm), so rebuild the project on every
+# new commit or tag; otherwise uv reuses a cached build with a stale version.
+cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true, tags = true } }]
 conflicts = [
   [
     { extra = "cpu" },

@@ -1,3 +1,9 @@
 # Extra packages needed to build the documentation (Sphinx itself is provided
 # by Read the Docs). The README is Markdown, so Sphinx needs a Markdown parser.
 myst-parser>=2.0
+
+# docs/conf.py imports lettuce, which needs torch. Install the CPU build: the
+# default Linux wheel on PyPI pulls in several GB of CUDA libraries. The
+# package itself and its other dependencies are installed from pyproject.toml.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.6.0

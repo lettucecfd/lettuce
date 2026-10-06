@@ -83,6 +83,7 @@ three orders of magnitude below the baseline outlet's error.
 | `plot_reference.py` | Plots the reference solution to `reference.png` | no |
 | `plot_progress.py` | Plots the progress of a run from `results.tsv` to `progress.png` | no |
 | `plot_solution.py` | Plots the solution of the current `boundary.py` against the reference and the baseline: density to `solution.png`, vorticity to `solution_vorticity.png` | no |
+| `plot_history.py` | Re-simulates every committed `boundary.py` of a run and plots their error over time to `history.png` | no |
 | `results.tsv` | Log of all experiments (created by the agent, not committed) | — |
 | `run.log` | Output of the last evaluation (not committed) | — |
 
@@ -115,6 +116,9 @@ uv run --extra cpu python evaluate.py    # score boundary.py (~2 s)
   `boundary.py` does, for density and vorticity: the field next to the
   reference, the difference (boundary columns hidden), and the error over
   time compared with the baseline.
+- `uv run --extra cpu python plot_history.py` re-simulates every committed
+  version of `boundary.py` on the run branch, baseline included, and draws
+  their density and vorticity error over time in one figure.
 - `git log` on the run branch contains only the kept improvements, in order.
   Each commit is a working boundary condition.
 - `git diff autoresearch/vortex-cbc..autoresearch/vortex-cbc-<tag> -- boundary.py`

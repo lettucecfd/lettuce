@@ -131,6 +131,63 @@ the outlet column and use local flow quantities. It may not import from
 `prepare.py`, read the reference or hard-code the vortex. This makes the
 result a genuine boundary condition that transfers to other flows.
 
+## Results of run oct06
+
+Run on 2026-10-06 on the branch `autoresearch/vortex-cbc-oct06`. The agent
+made three experiments and kept all three; the score dropped from 0.047 to
+**0.00136**, about 35 times lower.
+
+| # | Commit | score | err_rho_late | Idea |
+|---|---|---|---|---|
+| 0 | `e17ad01` | 0.04745 | 0.00591 | baseline `EquilibriumOutletP` |
+| 1 | `5c3f3db` | 0.00173 | 0.00051 | delayed interior copy: the outlet node takes the state of the last interior column from ~1/U₀ steps ago |
+| 2 | `1fa1250` | 0.00136 | 0.00051 | fractional delay (17.3 steps), interpolated linearly in time |
+| 3 | `c52c61b` | 0.00136 | 0.00051 | delay measured online as 1 / mean(u_x), smoothed with an exponential moving average |
+
+**The resulting boundary** (`boundary.py`, `DelayedCopyOutlet`) is a
+convective outflow condition in the spirit of the frozen-flow (Taylor)
+hypothesis: structures leave the domain with the mean velocity U₀, so the
+outlet node should carry the state the neighbouring interior column had
+1/U₀ time steps earlier. The boundary keeps a ring buffer of the macroscopic
+state (ρ, u) of the column x = −2, replays it with that delay at x = −1 and
+reconstructs the populations there regularised: the equilibrium of the
+delayed state plus the non-equilibrium part of the interior neighbour. The
+delay is measured from the flow itself, not hard-coded.
+
+![Error over time for every committed version of boundary.py](results/history.png)
+
+Nearly all of the gain came with the first idea. Versions 2 and 3 lowered the
+density error while the vortex approaches the outlet (steps ~400–900) but are
+slightly worse than version 1 after it has left (from step ~1000); the
+time-averaged score weighs the first effect more. Version 3 matches version 2
+within 3·10⁻⁶ but does not depend on a tuned delay.
+
+![Density: reference, current boundary, difference, and error over time](results/solution.png)
+
+The density field of the final boundary is visually indistinguishable from the
+reference. The remaining difference, at most ~4·10⁻⁵ (about 3 % of the
+vortex density dip), is a dipole in front of the outlet that appears while the
+vortex is still in the domain: the boundary disturbs the far velocity field
+that the vortex pushes ahead of itself. After the vortex has left, a nearly
+uniform density offset of ~5·10⁻⁴ of the dip remains and does not decay.
+
+![Vorticity: reference, current boundary, difference, and error over time](results/solution_vorticity.png)
+
+In vorticity the improvement over the baseline is smaller (about 6×, against
+about 40× in density): the baseline already lets the vortex itself out
+reasonably well, its main defect is reflected sound. The remaining vorticity
+error is confined to the last one or two columns, and after the vortex has
+left it falls to ~10⁻⁶.
+
+**Open points**
+
+- The delay follows the convection speed U₀. Acoustic waves leave at U₀ + c_s,
+  so the boundary is convective rather than characteristic in the strict sense;
+  the remaining density offset is likely related to that.
+- Only normal incidence at Ma = 0.1 was tested (see *Limitations*).
+- The commit hashes in this run's `results.tsv` are shifted by one row (each
+  row names the previous commit); the table above is taken from `git log`.
+
 ## Limitations
 
 - One test case. A boundary tuned on it can overfit, for example to the

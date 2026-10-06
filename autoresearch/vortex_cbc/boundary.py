@@ -20,11 +20,12 @@ import lettuce as lt
 
 
 class DelayedCopyOutlet(lt.Boundary):
-    def __init__(self, flow, delay: int = 17):
+    def __init__(self, flow, delay: int = 17, frac: float = 0.7):
         ctx = flow.context
         e = ctx.convert_to_ndarray(flow.stencil.e)
         self._unknown: List[int] = np.argwhere(e[:, 0] < -0.5).reshape(-1).tolist()
         self._delay = delay
+        self._frac = frac
         self._device = ctx.device
         self._history = []
 
@@ -33,9 +34,12 @@ class DelayedCopyOutlet(lt.Boundary):
         u = flow.u()
         qi = torch.stack([rho[-2], u[0, -2], u[1, -2]])
         self._history.append(qi)
-        if len(self._history) > self._delay + 1:
+        if len(self._history) > self._delay + 2:
             self._history.pop(0)
-        q = self._history[0]
+        if len(self._history) < self._delay + 2:
+            q = qi
+        else:
+            q = (1.0 - self._frac) * self._history[0] + self._frac * self._history[1]
         rho_g, u_g = rho.clone(), u.clone()
         rho_g[-1], u_g[0, -1], u_g[1, -1] = q[0], q[1], q[2]
         feq = flow.equilibrium(flow, rho_g[..., None], u_g[..., None])[..., 0]

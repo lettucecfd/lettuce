@@ -31,73 +31,62 @@ features. Please ensure you have Jupyter installed to run the Jupyter notebooks.
 
 ## Installation
 
-- Install the uv package manager from <https://docs.astral.sh/uv/>
+Lettuce is published on PyPI as **`lettucecfd`**; the import name and the command line tool stay `lettuce`.
+Python 3.12 or newer is required.
 
-- Clone this repository from github and change to it:
+```console
+pip install lettucecfd
+```
 
-  ```console
-  git clone https://github.com/lettucecfd/lettuce
-  cd lettuce
-  ```
+or, in a project managed with [uv](https://docs.astral.sh/uv/):
 
-- Create a new virtual environment and activate it:
+```console
+uv add lettucecfd
+```
 
-  ```console
-  uv venv
-  source .venv/bin/activate
-  ```
+This installs the default PyTorch build from PyPI. To select a specific build (CPU only, or a particular CUDA
+version), see the section *Depending on lettuce from another project* below.
 
-- The `pyproject.toml` file currently requires at least **CUDA 12.4** (we successfully tested CUDA 12.4, 12.6, 12.8 and
-  13.0). If your GPU does not support this version, you may need to downgrade it. Please note that we cannot guarantee
-  the maintenance for older CUDA versions.
+Check the installation by computing the convergence order on the CPU:
 
-- Run the install command, depending on your needs (run one of the three options below):
+```console
+lettuce --no-cuda convergence
+```
 
-  1. use lettuce (no development) with GPU support:
+For a CUDA-driven simulation on one GPU, omit `--no-cuda`, e.g. to measure the performance:
 
-     ```console
-     uv pip install .
-     ```
+```console
+lettuce benchmark
+```
 
-  2. use lettuce (no development) with CPU only or specific older CUDA versions (if you do not have access to a GPU or
-     an older GPU) use (cpu, cu124, cu126):
+If CUDA is not found, make sure that CUDA-capable GPU drivers are installed and compatible with the CUDA version
+of the installed PyTorch build.
 
-     ```console
-     uv pip install ".[cpu]"
-     ```
+## Installing from source
 
-  3. use and **develop** lettuce (code changes take effect in program execution): use the changeable-installation-flag
-     (`-e`):
+To work on lettuce itself, install the [uv](https://docs.astral.sh/uv/) package manager, clone the repository and
+let uv set up the environment, choosing one of the hardware extras `cpu`, `cu124`, `cu126`, `cu128` or `cu130`:
 
-     ```console
-     uv pip install -e .
-     ```
+```console
+git clone https://github.com/lettucecfd/lettuce
+cd lettuce
+uv sync --extra cpu    # or cu124, cu126, cu128, cu130
+```
 
-- Check out the convergence order, running on CPU:
+This installs lettuce in editable mode together with the development tools, so code changes take effect
+immediately. Run the test suite with:
 
-  ```console
-  lettuce --no-cuda convergence
-  ```
+```console
+uv run --extra cpu pytest tests
+```
 
-- For running a CUDA-driven LBM simulation on one GPU omit the `--no-cuda`. If CUDA is not found, make sure that
-  CUDA-capable GPU drivers are installed and compatible with the installed cudatoolkit (check cuda version number).
-
-- Check out the performance, running on GPU:
-
-  ```console
-  lettuce benchmark
-  ```
-
-- Run the test cases:
-
-  ```console
-  pytest tests
-  ```
+We successfully tested CUDA 12.4, 12.6, 12.8 and 13.0. See [CONTRIBUTING.md](https://github.com/lettucecfd/lettuce/blob/master/CONTRIBUTING.md) for details on the
+development setup.
 
 ## Depending on lettuce from another project
 
 The distribution is published as **`lettucecfd`**; the import name stays
-`lettuce`. Note that the extras above only constrain the PyTorch *version* —
+`lettuce`. Note that the extras (`cpu`, `cu124`, `cu126`, `cu128`, `cu130`) only constrain the PyTorch *version* —
 uv's index configuration is not carried in the published package metadata, so
 `uv add lettucecfd[cu128]` on its own installs the default PyTorch build from
 PyPI. To get a specific CUDA build, copy the index configuration into your own

@@ -39,6 +39,15 @@ the domain (Wissocq et al. 2017).
 re-enter the measurement window during the run. Within the window this is the
 solution of an infinite domain. It is computed once and cached in `.cache/`.
 
+![Reference solution: density deviation and vorticity at steps 20, 500, 1000 and 1500](reference.png)
+
+The vortex is a density dip of about 1.2·10⁻³ held by radial pressure
+equilibrium, with a positive vorticity core and a weak negative ring (zero net
+circulation). It moves with the mean flow (≈ 0.058 nodes per step) and weakens
+by viscous spreading of the core (about 15 % over the first 500 steps). After
+step ~1500 the window of the reference is empty, so anything left in the test
+run is reflection from the outlet.
+
 All constants live at the top of `prepare.py`.
 
 ## Metric
@@ -71,6 +80,7 @@ three orders of magnitude below the baseline outlet's error.
 | `prepare.py` | Test case, reference solution, metric | no |
 | `evaluate.py` | Scores `boundary.py` and prints the result | no |
 | `boundary.py` | The candidate outflow boundary (`make_outlet(flow)`) | **yes** |
+| `plot_reference.py` | Plots the reference solution to `reference.png` | no |
 | `results.tsv` | Log of all experiments (created by the agent, not committed) | — |
 | `run.log` | Output of the last evaluation (not committed) | — |
 

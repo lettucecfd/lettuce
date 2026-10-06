@@ -3,11 +3,13 @@ Candidate outflow boundary: delayed interior copy (frozen-flow convective outlet
 
 Idea: structures leave the domain advected by the mean flow U0 (LU units), i.e.
 with velocity U0 cells per step. A ghost column one cell outside the outlet
-should therefore carry the state the last interior column had D ~ 1/U0 steps
-ago. We keep a ring buffer of the interior macroscopic state (rho, ux, uy),
-replay it with delay D at the ghost column, and rebuild the unknown populations
+should therefore carry the state the last interior column had p = 1/U0 steps
+ago (fractional p by linear interpolation in time). We keep a ring buffer of
+the interior macroscopic state (rho, ux, uy), replay it with delay p at the
+ghost column, and rebuild the unknown populations
 (e_x < 0) from a regularized ansatz: equilibrium of the delayed macro state
-plus the non-equilibrium part of the interior. This transports vortical,
+plus the non-equilibrium part of the interior (p is measured online
+from the running mean of the interior ux, EMA-filtered). This transports vortical,
 entropy and acoustic structures out of the domain with nearly zero reflection
 without ever touching the interior fields.
 """
@@ -20,26 +22,35 @@ import lettuce as lt
 
 
 class DelayedCopyOutlet(lt.Boundary):
-    def __init__(self, flow, delay: int = 17, frac: float = 0.7):
+    def __init__(self, flow, buffer: int = 22, ema: float = 0.02):
         ctx = flow.context
         e = ctx.convert_to_ndarray(flow.stencil.e)
         self._unknown: List[int] = np.argwhere(e[:, 0] < -0.5).reshape(-1).tolist()
-        self._delay = delay
-        self._frac = frac
+        self._buffer = buffer
+        self._ema = ema
         self._device = ctx.device
         self._history = []
+        self._ubar = None
 
     def __call__(self, flow):
         rho = flow.rho()[0]
         u = flow.u()
         qi = torch.stack([rho[-2], u[0, -2], u[1, -2]])
         self._history.append(qi)
-        if len(self._history) > self._delay + 2:
+        if len(self._history) > self._buffer:
             self._history.pop(0)
-        if len(self._history) < self._delay + 2:
+        if len(self._history) < self._buffer:
             q = qi
         else:
-            q = (1.0 - self._frac) * self._history[0] + self._frac * self._history[1]
+            mean_u = qi[1].mean()
+            self._ubar = mean_u if self._ubar is None else \
+                (1.0 - self._ema) * self._ubar + self._ema * mean_u
+            p = float((1.0 / self._ubar).clamp(5.0, self._buffer - 1.0))
+            i = (self._buffer - 1) - p
+            i0 = int(i)
+            f = i - i0
+            h = self._history
+            q = (1.0 - f) * h[i0] + f * h[i0 + 1]
         rho_g, u_g = rho.clone(), u.clone()
         rho_g[-1], u_g[0, -1], u_g[1, -1] = q[0], q[1], q[2]
         feq = flow.equilibrium(flow, rho_g[..., None], u_g[..., None])[..., 0]
@@ -66,4 +77,4 @@ class DelayedCopyOutlet(lt.Boundary):
 
 
 def make_outlet(flow):
-    return DelayedCopyOutlet(flow, delay=17)
+    return DelayedCopyOutlet(flow)

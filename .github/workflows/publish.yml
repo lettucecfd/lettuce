@@ -38,6 +38,13 @@ jobs:
 
       - name: Build sdist and wheel
         run: uv build
+        env:
+          # On a tag push, build exactly the version of that tag. actions/checkout
+          # re-creates the triggering tag as a lightweight tag, and git describe
+          # prefers annotated tags: with 0.2.4a1 and 0.3.0 on the same commit,
+          # setuptools-scm picked 0.2.4a1 and the 0.3.0 run uploaded the wrong
+          # version. Empty (i.e. ignored) on manual runs.
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.event_name == 'push' && github.ref_name || '' }}
 
       - name: Show the version that was built
         run: ls -l dist/

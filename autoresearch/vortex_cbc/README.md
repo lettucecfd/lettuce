@@ -82,6 +82,7 @@ three orders of magnitude below the baseline outlet's error.
 | `boundary.py` | The candidate outflow boundary (`make_outlet(flow)`) | **yes** |
 | `plot_reference.py` | Plots the reference solution to `reference.png` | no |
 | `plot_progress.py` | Plots the progress of a run from `results.tsv` to `progress.png` | no |
+| `plot_solution.py` | Plots the solution of the current `boundary.py` against the reference and the baseline to `solution.png` | no |
 | `results.tsv` | Log of all experiments (created by the agent, not committed) | — |
 | `run.log` | Output of the last evaluation (not committed) | — |
 
@@ -110,6 +111,10 @@ uv run --extra cpu python evaluate.py    # score boundary.py (~2 s)
 - `uv run --extra cpu python plot_progress.py` turns it into `progress.png`:
   every experiment as a dot, the best score so far as a step line, and the
   largest improvements labelled with their description.
+- `uv run --extra cpu python plot_solution.py` shows what the current
+  `boundary.py` does: its density field next to the reference, the
+  difference (boundary columns hidden), and the error over time compared
+  with the baseline.
 - `git log` on the run branch contains only the kept improvements, in order.
   Each commit is a working boundary condition.
 - `git diff autoresearch/vortex-cbc..autoresearch/vortex-cbc-<tag> -- boundary.py`
